@@ -3,7 +3,7 @@
 // import { useRef } from 'react';
 // import { useInView } from './shared/useInView';
 import Image from 'next/image';
-import image from '@/public/assets/Image-6.jpg';
+import image from '@/public/assets/image-11.jpg';
 
 export default function HeroCarousel() {
   // const ref = useRef(null);
@@ -16,7 +16,7 @@ export default function HeroCarousel() {
         alt="Picture of the author"
         placeholder="blur" // Optional: gives a smooth blur-up effect while loading
         fill
-        className="w-full h-auto object-contain object-center"
+        className="w-full h-auto object-cover object-center"
       />
     </section>
   );
