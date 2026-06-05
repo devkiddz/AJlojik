@@ -45,22 +45,19 @@ export default function NavbarComponent() {
             </Link>
           ))} */}
 
-          <div className="actions flex items-center space-x-4">
-            <div className="flex relative">
-              {/* <ShoppingCart className="w-5 h-5" /> */}
-              <CartLogics />
-              <span className="w-1 h-1  bg-rose-500 text-primary text-xs rounded-full absolute -top-3 flex items-center justify-center p-2">
-                1
-              </span>
-            </div>
-
+          <div className="actions flex items-center gap-2">
             <span className="">
               {/* THEME CONTROLLER */}
               <ThemeController />
             </span>
-            <Link href="/">
+
+            <div className="flex relative">
+              {/* <ShoppingCart className="w-5 h-5" /> */}
+              <CartLogics />
+            </div>
+            <span>
               <UserActionComponent />
-            </Link>
+            </span>
           </div>
           {/* <AsideChategories className="hidden" /> */}
         </div>
