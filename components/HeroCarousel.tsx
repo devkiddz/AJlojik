@@ -10,7 +10,7 @@ export default function HeroCarousel() {
   // const isVisible = useInView(ref);
 
   return (
-    <section ref={ref} className="h-[80vh] w-full bg-muted rounded-md">
+    <section ref={ref} className="h-[50vh] md:h-[80vh] w-full bg-muted rounded-md">
       <Image
         src={image}
         alt="Picture of the author"
