@@ -3,7 +3,7 @@ import Link from 'next/dist/client/link';
 
 export default function FooterComponent() {
   return (
-    <footer className="border-t flex items-center px-6 py-2 w-full mt-auto bg-primary-foreground/80 z-10 backdrop-blur-xs shadow-lg overflow-hidden">
+    <footer className="border-t flex items-center px-6 py-2 w-full mt-auto bg-primary-foreground/80 backdrop-blur-xs shadow-lg overflow-hidden">
       <div className="container mx-auto px-4 py-16">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
