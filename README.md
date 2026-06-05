@@ -1,5 +1,27 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+README Intro
+AJlojik
+
+AJlojik is a modern ecommerce platform focused on delivering a fast, elegant, and user-friendly shopping experience for premium liquors, kitchen essentials, snacks, and everyday convenience products.
+
+Features
+Modern responsive UI
+Dark & Light theme support
+Category-driven product discovery
+Interactive product cards
+Hero carousel promotions
+Scalable Next.js architecture
+Mobile-first experience
+Performance-focused design
+Tech Stack
+Next.js
+React
+TypeScript
+Tailwind CSS
+Framer Motion
+shadcn/ui
+
 ## Getting Started
 
 First, run the development server:
