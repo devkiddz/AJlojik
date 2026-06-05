@@ -1,24 +1,26 @@
 'use client';
 
-import { useRef } from 'react';
-import { useInView } from './shared/useInView';
-import Image from 'next/image';
-import image from '@/public/assets/Image-6.jpg';
+import React from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 export default function HeroCarousel() {
-  const ref = useRef(null);
-  // const isVisible = useInView(ref);
+  const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay()]);
 
   return (
-    <section ref={ref} className="h-[40vh] md:h-[80vh] w-full bg-muted rounded-md">
-      <Image
-        src={image}
-        alt="Picture of the author"
-        placeholder="blur" // Optional: gives a smooth blur-up effect while loading
-        width={1200}
-        height={400}
-        className="w-full h-auto object-cover object-center"
-      />
-    </section>
+    //<section className="h-[40vh] md:h-[60vh] w-full ">
+    <div className="embla mx-auto h-84 bg-muted rounded-md overflow-hidden">
+      <div className="embla__viewpor h-full" ref={emblaRef}>
+        <div className="embla__container">
+          <div className="embla__slide flex items-center justify-center">Slide 1</div>
+          <div className="embla__slide flex items-center justify-center">Slide 2</div>
+          <div className="embla__slide flex items-center justify-center">Slide 3</div>
+        </div>
+      </div>
+
+      <button className="embla__prev">Scroll to prev</button>
+      <button className="embla__next">Scroll to next</button>
+    </div>
+    // </section>
   );
 }
