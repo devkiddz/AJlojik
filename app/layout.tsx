@@ -44,15 +44,16 @@ export default function RootLayout({
       )}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <SidebarProvider>
+          {/* 
+          <SidebarProvider className="">
             <AppSidebar />
-            <SidebarTrigger className="text-rose-500 top-5  w-10 h-10 rounded-full bg-primary-foreground sticky z-10" />
-            <main className="flex flex-col w-full h-full">
-              <NavbarComponent />
-              <div className="w-full h-full flex flex-col m-auto grow">{children}</div>
-              <FooterComponent />
-            </main>
-          </SidebarProvider>
+            <SidebarTrigger className="text-rose-500 top-5  w-10 h-10 rounded-full bg-primary-foreground hidden md:sticky z-10" /> */}
+          <main className="flex flex-col w-full h-full">
+            <NavbarComponent />
+            <div className="w-full h-full flex flex-col m-auto grow px-6">{children}</div>
+            <FooterComponent />
+          </main>
+          {/* </SidebarProvider>*/}
         </ThemeProvider>
       </body>
     </html>
