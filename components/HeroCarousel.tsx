@@ -7,7 +7,7 @@ import image from '@/public/assets/Image-6.jpg';
 
 export default function HeroCarousel() {
   const ref = useRef(null);
-  const isVisible = useInView(ref);
+  // const isVisible = useInView(ref);
 
   return (
     <section ref={ref} className="h-[80vh] w-full bg-muted rounded-md">
