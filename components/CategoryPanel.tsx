@@ -12,7 +12,7 @@ const categories = [
 
 export default function CategoryPanel({ active }: { active: string }) {
   return (
-    <div className="relative grow flex flex-col gap-1 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg">
+    <div className="relative grow flex flex-col gap-1 xl:p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg">
       {/* ACTIVE INDICATOR BAR */}
       <motion.div
         layout

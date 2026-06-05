@@ -50,7 +50,7 @@ export default function RootLayout({
             <SidebarTrigger className="text-rose-500 top-5  w-10 h-10 rounded-full bg-primary-foreground hidden md:sticky z-10" /> */}
           <main className="flex flex-col w-full h-full">
             <NavbarComponent />
-            <div className="w-full h-full flex flex-col m-auto grow px-6">{children}</div>
+            <div className="w-full h-full flex flex-col m-auto grow lg:px-6">{children}</div>
             <FooterComponent />
           </main>
           {/* </SidebarProvider>*/}
