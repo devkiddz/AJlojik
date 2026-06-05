@@ -18,10 +18,10 @@ export default function NavbarComponent() {
     ]
   };
   return (
-    <header className="flex items-center px-8 py-2 w-full sticky top-0 bg-primary-foreground/80 z-10 backdrop-blur-lg shadow-lg overflow-hidden">
-      <nav className="flex space-x-4 justify-between px-4 w-full mx-auto">
+    <header className="flex items-center px-2 md:px-4 py-2 w-full sticky top-0 bg-primary-foreground/80 z-10 backdrop-blur-lg shadow-lg overflow-hidden">
+      <nav className="flex space-x-4 justify-between px-2 md:px-4 w-full mx-auto">
         <div className="flex items-center space-x-4">
-          <div className="text-xl flex items-center space-x-1">
+          <div className="text-sm flex items-center space-x-1">
             {/* <Link className="flex items-baseline gap-1" href="/">
               <h1 className="text-rose-500 text-xl font-bold">AJ</h1>{' '}
               <span className="font-light tracking-tight">Concepts</span>
@@ -46,14 +46,14 @@ export default function NavbarComponent() {
 
           <div className="actions flex items-center space-x-4">
             <Link className="text-rose-500 flex relative" href="/">
-              <HeartPlus />
-              <span className="w-1 h-2  bg-rose-500 text-primary text-xs rounded-full absolute -top-4 flex items-center justify-center p-2">
+              <HeartPlus className="w-5 h-5" />
+              <span className="w-1 h-1  bg-rose-500 text-primary text-xs rounded-full absolute -top-4 flex items-center justify-center p-2">
                 9
               </span>
             </Link>
             <Link className="text-green-500 flex relative" href="/">
-              <ShoppingCart />
-              <span className="w-2 h-2 bg-green-500 text-primary text-xs rounded-full absolute -top-4 flex items-center justify-center p-2">
+              <ShoppingCart className="w-5 h-5" />
+              <span className="w-1 h-1 bg-green-500 text-primary text-xs rounded-full absolute -top-4 flex items-center justify-center p-2">
                 1
               </span>
             </Link>
