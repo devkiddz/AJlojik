@@ -4,6 +4,7 @@ import SearchBarComponent from './SearchBarComponent';
 import UserActionComponent from './UserActionComponent';
 import ThemeController from './ThemeController';
 import LogoComponent from './shared/LogoComponent';
+import { CartLogics } from './shared/CartLogics';
 
 export default function NavbarComponent() {
   const navbarData = {
@@ -45,18 +46,13 @@ export default function NavbarComponent() {
           ))} */}
 
           <div className="actions flex items-center space-x-4">
-            <Link className="text-rose-500 flex relative" href="/">
-              <HeartPlus className="w-5 h-5" />
-              <span className="w-1 h-1  bg-rose-500 text-primary text-xs rounded-full absolute -top-4 flex items-center justify-center p-2">
-                9
-              </span>
-            </Link>
-            <Link className="text-green-500 flex relative" href="/">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="w-1 h-1 bg-green-500 text-primary text-xs rounded-full absolute -top-4 flex items-center justify-center p-2">
+            <div className="flex relative">
+              {/* <ShoppingCart className="w-5 h-5" /> */}
+              <CartLogics />
+              <span className="w-1 h-1  bg-rose-500 text-primary text-xs rounded-full absolute -top-3 flex items-center justify-center p-2">
                 1
               </span>
-            </Link>
+            </div>
 
             <span className="">
               {/* THEME CONTROLLER */}
