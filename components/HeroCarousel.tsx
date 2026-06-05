@@ -16,7 +16,7 @@ export default function HeroCarousel() {
         alt="Picture of the author"
         placeholder="blur" // Optional: gives a smooth blur-up effect while loading
         fill
-        className="w-full h-auto object-cover object-center"
+        className="w-full h-auto object-contain object-center"
       />
     </section>
   );
