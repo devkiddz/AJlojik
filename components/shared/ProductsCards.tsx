@@ -3,12 +3,17 @@
 import { motion } from 'framer-motion';
 
 const products = [
-  { name: 'Red Wine', price: '$12', tag: 'Liquors' },
-  { name: 'BBQ Chicken', price: '$8', tag: 'Kitchen' },
-  { name: 'Whiskey', price: '$25', tag: 'Liquors' },
-  { name: 'Spices Pack', price: '$5', tag: 'Kitchen' },
-  { name: 'Champagne', price: '$18', tag: 'Liquors' },
-  { name: 'Brandy', price: '$28', tag: 'Liquors' }
+  {
+    name: 'Red Wine',
+    price: '$12',
+    tag: 'Vine',
+    description: 'You may add neccessary descriptions, but keep it little. A bottle of fine red wine.'
+  },
+  { name: 'BBQ Chicken', price: '$8', tag: 'Kitchen', description: 'Juicy grilled chicken with BBQ sauce.' },
+  { name: 'Whiskey', price: '$25', tag: 'Liqz', description: 'Premium whiskey with a smooth finish.' },
+  { name: 'Spices Pack', price: '$5', tag: 'Kitchen', description: 'A collection of premium spices.' },
+  { name: 'Champagne', price: '$18', tag: 'Liqz', description: 'Effervescent champagne for celebrations.' },
+  { name: 'Brandy', price: '$28', tag: 'Liqz', description: 'Rich and complex brandy with a hint of oak.' }
 ];
 
 export default function ProductGrid() {
@@ -24,6 +29,7 @@ export default function ProductGrid() {
 
           <h3 className="font-semibold">{item.name}</h3>
           <p className="text-sm text-muted-foreground">{item.tag}</p>
+          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
 
           <div className="mt-2 font-bold text-rose-500">{item.price}</div>
         </motion.div>
