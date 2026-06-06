@@ -4,9 +4,14 @@ import './globals.css';
 import NavbarComponent from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import FooterComponent from '@/components/FooterComponent';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/AppSidebar';
+//import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+//import { AppSidebar } from '@/components/AppSidebar';
 import ThemeProvider from '@/components/providers/ThemeProvider';
+
+// type BrandType = {
+//   brandName: string;
+//   brandSlug: string;
+// };
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -49,9 +54,9 @@ export default function RootLayout({
             <AppSidebar />
             <SidebarTrigger className="text-rose-500 top-5  w-10 h-10 rounded-full bg-primary-foreground hidden md:sticky z-10" /> */}
           <main className="flex flex-col w-full h-full">
-            <NavbarComponent />
+            <NavbarComponent brandName="AJ" brandSlug="Lojik" />
             <div className="w-full h-full flex flex-col m-auto grow lg:px-6">{children}</div>
-            <FooterComponent />
+            <FooterComponent brandName="AJ" brandSlug="Lojik" />
           </main>
           {/* </SidebarProvider>*/}
         </ThemeProvider>

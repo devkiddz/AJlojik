@@ -6,8 +6,14 @@ import ThemeController from './ThemeController';
 import LogoComponent from './shared/LogoComponent';
 import { CartLogics } from './shared/CartLogics';
 
-export default function NavbarComponent() {
+type BrandType = {
+  brandName: string;
+  brandSlug: string;
+};
+
+export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   const navbarData = {
+    //brand: [{ brandName: 'AJ', brandSlug: 'Lojik' }],
     links: [
       { name: 'Home', href: '/' },
       { name: 'Shop', href: '/shop' }
@@ -18,6 +24,7 @@ export default function NavbarComponent() {
       { name: 'Account', href: '/account', icon: User }
     ]
   };
+
   return (
     <header className="flex items-center px-2 md:px-4 py-2 w-full sticky top-0 bg-primary-foreground/80 z-10 backdrop-blur-lg shadow-lg overflow-hidden">
       <nav className="flex space-x-4 justify-between px-2 md:px-4 w-full mx-auto">
@@ -28,7 +35,7 @@ export default function NavbarComponent() {
               <span className="font-light tracking-tight">Concepts</span>
               <Aperture className="text-rose-500 w-2 h-2" />
             </Link> */}
-            <LogoComponent />
+            <LogoComponent brandName="AJ" brandSlug="Lojik" />
           </div>
           {navbarData.links.map(link => (
             <Link key={link.name} href={link.href} className="hidden md:flex">

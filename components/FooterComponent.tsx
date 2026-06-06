@@ -1,7 +1,7 @@
 import { Aperture, AtSign } from 'lucide-react';
 import Link from 'next/dist/client/link';
 
-export default function FooterComponent() {
+export default function FooterComponent({ brandName, brandSlug }: { brandName: string; brandSlug: string }) {
   return (
     <footer className="border-t flex items-center px-6 py-2 w-full mt-auto bg-primary-foreground/80 backdrop-blur-xs shadow-lg overflow-hidden">
       <div className="container mx-auto px-4 py-16">
@@ -10,8 +10,8 @@ export default function FooterComponent() {
           <div>
             <div className="text-xl flex items-center space-x-1">
               <Link className="flex items-baseline gap-1" href="/">
-                <h1 className="text-rose-500 text-xl font-bold">AJ</h1>{' '}
-                <span className="font-light tracking-tight">Concepts</span>
+                <h1 className="text-rose-500 text-xl font-bold">{brandName}</h1>{' '}
+                <span className="font-light tracking-tight">{brandSlug}</span>
                 <Aperture className="text-rose-500 w-2 h-2" />
               </Link>
             </div>
