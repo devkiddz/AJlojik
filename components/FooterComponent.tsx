@@ -3,7 +3,7 @@ import Link from 'next/dist/client/link';
 
 export default function FooterComponent({ brandName, brandSlug }: { brandName: string; brandSlug: string }) {
   return (
-    <footer className="border-t flex items-center px-6 py-2 w-full mt-auto bg-primary-foreground/80 backdrop-blur-xs shadow-lg overflow-hidden">
+    <footer className=" flex items-center px-6 py-2 w-full mt-auto bg-primary-foreground/80 backdrop-blur-xs shadow-lg overflow-hidden">
       <div className="container mx-auto px-4 py-16">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -102,12 +102,19 @@ export default function FooterComponent({ brandName, brandSlug }: { brandName: s
         </div>
 
         <div className="mt-12 border-t pt-6 flex justify-around items-center">
-          <p className="text-center text-sm text-muted-foreground flex gap-x-2 items-center">
+          <div className="text-center text-sm text-muted-foreground flex gap-x-2 items-center">
             <span className="flex text-rose-500 text-xs font-normal items-center mt-0.5">
               <AtSign className="w-3" /> {new Date().getFullYear()}
             </span>{' '}
-            Liquors & Kitchen Quick Services. All rights reserved.
-          </p>
+            <div className="text-xl flex items-center space-x-1">
+              <Link className="flex items-baseline gap-1" href="/">
+                <span className="text-rose-500 text-sm font-normal">{brandName}</span>{' '}
+                <span className="text-xs font-light tracking-tight">{brandSlug}</span>
+                <Aperture className="text-rose-500 w-2 h-2" />
+              </Link>
+            </div>
+            Kitchen Quick Services. All rights reserved.
+          </div>
         </div>
       </div>
     </footer>

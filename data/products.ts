@@ -1,4 +1,4 @@
-import { ProductsType } from "./types";
+import { ProductsType } from "@/types";
 
 export const products: ProductsType = [
   {

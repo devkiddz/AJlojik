@@ -4,11 +4,11 @@ import React from 'react';
 import { useScrollSpy } from './shared/useScrollSpy';
 import CategoryPanel from './CategoryPanel';
 import HeroCarousel from './HeroCarousel';
-import ProductGrid from './shared/ProductsCards';
 import SideCards from './SideCards';
+import ProductsComponent from './shared/ProductsComponent';
 //import AsideCategories from './AsideChategories';
 
-export default function HeroCategoryGrid() {
+export default function MainSectionGrid() {
   const active = useScrollSpy(['featured', 'deals', 'liquors', 'kitchen']);
   return (
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
@@ -22,7 +22,7 @@ export default function HeroCategoryGrid() {
         <HeroCarousel />
 
         <div className="mt-6">
-          <ProductGrid />
+          <ProductsComponent />
         </div>
       </section>
 

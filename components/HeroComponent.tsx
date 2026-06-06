@@ -1,7 +1,7 @@
 import React from 'react';
 import ImageLight from '@/public/assets/Image-1.png';
 import ImageDark from '@/public/assets/Image-2.png';
-import HeroCategoryGrid from './HeroCategoryGrid';
+import MainSectionGrid from './MainSectionGrid';
 
 export default function HeroComponent() {
   return (
@@ -26,7 +26,7 @@ export default function HeroComponent() {
 
       {/* CONTENT */}
       <div className="relative w-full flex flex-col items-center justify-center pt-1">
-        <HeroCategoryGrid />
+        <MainSectionGrid />
       </div>
     </section>
   );
