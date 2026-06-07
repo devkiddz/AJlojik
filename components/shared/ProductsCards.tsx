@@ -4,6 +4,9 @@ import { ProductsType } from '@/types';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import RatingComponent from './RatingComponent';
+import { Button } from '../ui/button';
+import { Plus } from 'lucide-react';
+import LikedComponent from './LikedComponent';
 
 type ProductCardProps = {
   products: ProductsType;
@@ -33,16 +36,29 @@ export default function ProductCard({ products }: ProductCardProps) {
           transition={{ type: 'spring', stiffness: 300 }}
           className="rounded-xl border bg-background p-4 shadow-sm">
           <div className="relative h-60 bg-muted rounded-lg mb-3">
-            <Image src={item.images} alt={item.name} fill className="object-cover object-bottom" />
+            <Image src={item.images} alt={item.name} fill className="object-cover object-bottom rounded-lg" />
+            <LikedComponent liked={item.liked} />
           </div>
           <div>
-            <h3 className="font-semibold text-md p-2 rounded-full inset shadow-inner">{item.name}</h3>
+            <h3 className="font-semibold rounded-full inset pt-2 text-sm md:text-md">{item.name}</h3>
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.shortDescription}</p>
           </div>
           <div>
             <RatingComponent rating={item.rating} reviews={item.reviews} />
           </div>
-          <div className="mt-2 font-bold text-rose-500">{item.price}</div>
+          <div className="flex items-center justify-between gap-0.5 text-sm md:text-md mt-2 font-bold text-rose-500">
+            <div>
+              <span className="">₦</span>
+              {item.price}
+            </div>
+
+            <div>
+              <Button size="sm" variant="outline" className="hover:bg-background transition-all">
+                {' '}
+                <Plus /> Buy Now{' '}
+              </Button>
+            </div>
+          </div>
         </motion.div>
       ))}
     </>
