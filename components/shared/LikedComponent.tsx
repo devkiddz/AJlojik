@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 type LikedComponentProps = {
   productId: string;
-  liked?: boolean;
+  liked: boolean;
 };
 
 type LikedProducts = Record<string, boolean>;
