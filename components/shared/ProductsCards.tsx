@@ -46,7 +46,7 @@ export default function ProductCard({ products }: ProductCardProps) {
           <div>
             <RatingComponent rating={item.rating} reviews={item.reviews} />
           </div>
-          <div className="flex items-center justify-between gap-0.5 text-sm md:text-md mt-2 font-bold text-rose-500">
+          <div className="flex items-center justify-between gap-0.5 text-sm md:text-md mt-2 font-bold text-rose-500 pb-2">
             <div>
               <span className="">₦</span>
               {item.price}

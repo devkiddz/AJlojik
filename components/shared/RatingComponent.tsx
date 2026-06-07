@@ -8,7 +8,7 @@ type RatingComponentProps = {
 
 export default function RatingComponent({ rating, reviews }: RatingComponentProps) {
   return (
-    <div className="flex items-center justify-between px-2">
+    <div className="flex items-center justify-between px-2 pt-2">
       {/* Stars */}
       <div className="flex items-center gap-0.3 relative -left-2">
         {[...Array(5)].map((_, index) => (
@@ -24,9 +24,9 @@ export default function RatingComponent({ rating, reviews }: RatingComponentProp
       </div>
 
       {/* Reviews */}
-      <div className="flex items-center gap-1 text-emerald-500 relative -left-2">
+      <div className="flex items-center gap-1 text-emerald-500 relative">
         <UserStar className="w-3 h-3" />
-        <span className="text-xs">{reviews}</span>
+        <span className="text-xs font-medium">{reviews}</span>
       </div>
     </div>
   );
