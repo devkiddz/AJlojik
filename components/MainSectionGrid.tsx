@@ -13,12 +13,12 @@ export default function MainSectionGrid() {
   return (
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
       {/* LEFT PANEL */}
-      <aside className="hidden md:block md:col-span-1 lg:col-span-1 sticky top-0 h-screen overflow-hidden">
+      <aside className="absolute md:col-span-1 lg:col-span-1 top-0 h-screen overflow-hidden z-10 left-1">
         <CategoryPanel active={active} />
       </aside>
 
       {/* CAROUSEL + PRODUCTS */}
-      <section className="col-span-12 md:col-span-10 lg:col-span-8">
+      <section className="col-span-12 md:col-span-9">
         <HeroCarousel />
 
         <div className="mt-6">

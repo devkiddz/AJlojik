@@ -35,7 +35,7 @@ export default function CategoryPanel({ active }: { active: string }) {
             className={`flex flex-col items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer
               ${isActive ? 'text-rose-500 font-semibold' : 'text-muted-foreground'}
             `}>
-            <Icon className="w-8 h-8 font-light" />
+            <Icon className="w-5 h-5 md:w-8 md:h-8 font-light" />
             <span className="taegory-names hidden md:block">{cat.label}</span>
           </motion.div>
         );
