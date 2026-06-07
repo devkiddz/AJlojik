@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Wine, Utensils, Sparkles, Flame } from 'lucide-react';
+import { Menu, Wine, Utensils, Sparkles, Flame } from 'lucide-react';
+import { Button } from './ui/button';
+import UserActionComponent from './UserActionComponent';
 
 const categories = [
   { id: 'featured', label: 'Featured', icon: Sparkles },
@@ -11,17 +14,33 @@ const categories = [
 ];
 
 export default function CategoryPanel({ active }: { active: string }) {
+  const [collapsed, setCollapsed] = useState(true);
+
   return (
-    <div className="relative grow flex flex-col gap-1 xl:p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg">
-      {/* ACTIVE INDICATOR BAR */}
+    <motion.div
+      animate={{
+        width: collapsed ? 70 : 150
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 250,
+        damping: 25
+      }}
+      className="relative flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg">
+      <Button
+        variant="outline"
+        onClick={() => setCollapsed(prev => !prev)}
+        className="flex items-center justify-center p-2 rounded-lg hover:bg-muted">
+        <Menu className="w-5 h-5" />
+      </Button>
+
       <motion.div
         layout
         className="absolute left-0 w-1 bg-rose-500 rounded-full"
         style={{
-          top: categories.findIndex(c => c.id === active) * 40,
-          height: 32
+          top: categories.findIndex(c => c.id === active) * 56 + 52,
+          height: 40
         }}
-        transition={{ type: 'spring', stiffness: 300 }}
       />
 
       {categories.map(cat => {
@@ -32,14 +51,27 @@ export default function CategoryPanel({ active }: { active: string }) {
           <motion.div
             key={cat.id}
             whileHover={{ x: 4 }}
-            className={`flex flex-col items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer
-              ${isActive ? 'text-rose-500 font-semibold' : 'text-muted-foreground'}
-            `}>
-            <Icon className="w-5 h-5 md:w-8 md:h-8 font-light" />
-            <span className="taegory-names hidden md:block">{cat.label}</span>
+            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer
+            ${isActive ? 'text-rose-500 font-semibold' : 'text-muted-foreground'}`}>
+            <Icon className="w-5 h-5 shrink-0" />
+
+            {!collapsed && (
+              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {cat.label}
+              </motion.span>
+            )}
           </motion.div>
         );
       })}
-    </div>
+
+      <motion.div className="flex items-center gap-3">
+        <UserActionComponent />
+        {!collapsed && (
+          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            Account
+          </motion.span>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
