@@ -35,7 +35,7 @@ export const products: ProductsType = [
 
     soldCount: 324,
 
-    likes: 142,
+    liked: false,
 
     stockLeft: 8,
 
@@ -79,7 +79,7 @@ export const products: ProductsType = [
 
     soldCount: 278,
 
-    likes: 188,
+    liked: false,
 
     stockLeft: 14,
 
@@ -123,7 +123,7 @@ export const products: ProductsType = [
 
     soldCount: 311,
 
-    likes: 201,
+    liked: false,
 
     stockLeft: 0,
 
@@ -167,7 +167,7 @@ export const products: ProductsType = [
 
     soldCount: 142,
 
-    likes: 96,
+    liked: false,
 
     stockLeft: 12,
 
@@ -211,7 +211,7 @@ export const products: ProductsType = [
 
     soldCount: 193,
 
-    likes: 134,
+    liked:  false,
 
     stockLeft: 17,
 
@@ -256,7 +256,7 @@ export const products: ProductsType = [
 
     soldCount: 389,
 
-    likes: 210,
+    liked: false,
 
     stockLeft: 5,
 

@@ -12,7 +12,6 @@ export type ProductType = {
   rating: number;
   reviews: number;
   soldCount: number;
-  likes: number;
   liked: boolean;
   stockLeft: number;
   featured: boolean;
