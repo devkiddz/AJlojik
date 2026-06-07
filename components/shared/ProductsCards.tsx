@@ -37,7 +37,7 @@ export default function ProductCard({ products }: ProductCardProps) {
           className="rounded-xl border bg-background p-4 shadow-sm">
           <div className="relative h-60 bg-muted rounded-lg mb-3">
             <Image src={item.images} alt={item.name} fill className="object-cover object-bottom rounded-lg" />
-            <LikedComponent liked={item.liked} />
+            <LikedComponent productId={item.id} liked={item.liked} />
           </div>
           <div>
             <h3 className="font-semibold rounded-full inset pt-2 text-sm md:text-md">{item.name}</h3>
