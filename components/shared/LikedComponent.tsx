@@ -44,7 +44,7 @@ export default function LikedComponent({ productId, liked = false }: LikedCompon
   };
 
   return (
-    <div className="absolute top-3 right-3 z-10 flex size-6 items-center justify-center rounded-full bg-white shadow-lg">
+    <div className="absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full bg-muted shadow-lg">
       <button type="button" onClick={handleLike} aria-label={isLiked ? 'Unlike product' : 'Like product'}>
         <Heart
           className={`h-4 w-4 transition-all cursor-pointer duration-200 ${
