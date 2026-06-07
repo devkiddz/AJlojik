@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import RatingComponent from './RatingComponent';
 import { Button } from '../ui/button';
-import { Plus } from 'lucide-react';
+import { ChartColumnStacked, Plus } from 'lucide-react';
 import LikedComponent from './LikedComponent';
 
 type ProductCardProps = {
@@ -41,6 +41,10 @@ export default function ProductCard({ products }: ProductCardProps) {
           </div>
           <div>
             <h3 className="font-semibold rounded-full inset pt-2 text-sm md:text-md">{item.name}</h3>
+            <span className="text-primary flex items-center gap-1 pb-2 text-xs">
+              <ChartColumnStacked className="w-3 h-3 text-rose-500 rounded-full" />
+              Category: {item.category}
+            </span>
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.shortDescription}</p>
           </div>
           <div>

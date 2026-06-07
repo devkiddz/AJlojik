@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Menu, Wine, Utensils, Sparkles, Flame } from 'lucide-react';
 import { Button } from './ui/button';
 import UserActionComponent from './UserActionComponent';
+// import { useSearchParams } from 'next/navigation';
 
 const categories = [
   { id: 'featured', label: 'Featured', icon: Sparkles },
@@ -14,7 +15,10 @@ const categories = [
 ];
 
 export default function CategoryPanel({ active }: { active: string }) {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // const searchParams = useSearchParams();
+  // const selectedCatebory = searchParams.get('category');
 
   return (
     <motion.div
@@ -53,10 +57,14 @@ export default function CategoryPanel({ active }: { active: string }) {
             whileHover={{ x: 4 }}
             className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer
             ${isActive ? 'text-rose-500 font-semibold' : 'text-muted-foreground'}`}>
-            <Icon className="w-5 h-5 shrink-0" />
+            <Icon className="w-3 h-3 lg:w-5 lg:h-5 shrink-0" />
 
             {!collapsed && (
-              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.span
+                className="text-xs md:text-md"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}>
                 {cat.label}
               </motion.span>
             )}

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Wine, Utensils, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 
 const items = [
   {
@@ -22,6 +23,8 @@ const items = [
 ];
 export default function AsideCategories() {
   const [collapsed, setCollapsed] = useState(false);
+  const searchParams = useSearchParams();
+  const selectedCatebory = searchParams.get('category');
 
   return (
     <motion.aside
@@ -43,7 +46,7 @@ export default function AsideCategories() {
         </Button>
       </div>
 
-      <nav className="space-y-1 p-2">
+      <div className="space-y-1 p-2">
         {items.map(item => {
           const Icon = item.icon;
 
@@ -71,7 +74,7 @@ export default function AsideCategories() {
             </button>
           );
         })}
-      </nav>
+      </div>
     </motion.aside>
   );
 }

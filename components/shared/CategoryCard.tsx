@@ -51,6 +51,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           transition-transform
           duration-500
           group-hover:scale-110
+          
         "
       />
 
@@ -88,7 +89,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       />
 
       {/* CONTENT */}
-      <div className="absolute bottom-4 left-4 z-10">
+      <div className="absolute bottom-4 left-4 z-10 shadow-2xs p-5">
         <h3 className="text-white font-semibold text-sm">{category.name}</h3>
 
         <p className="text-white/70 text-xs">{category.type}</p>
