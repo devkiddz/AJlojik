@@ -10,6 +10,7 @@ export type ProductType = {
   price: number;
   discountPercentage: number;
   rating: number;
+  reviews: number;
   soldCount: number;
   likes: number;
   stockLeft: number;

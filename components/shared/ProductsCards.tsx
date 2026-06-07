@@ -3,6 +3,7 @@
 import { ProductsType } from '@/types';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import RatingComponent from './RatingComponent';
 
 type ProductCardProps = {
   products: ProductsType;
@@ -34,10 +35,13 @@ export default function ProductCard({ products }: ProductCardProps) {
           <div className="relative h-60 bg-muted rounded-lg mb-3">
             <Image src={item.images} alt={item.name} fill className="object-cover object-bottom" />
           </div>
-
-          <h3 className="font-semibold">{item.name}</h3>
-          <p className="text-xs text-muted-foreground mt-1">{item.shortDescription}</p>
-
+          <div>
+            <h3 className="font-semibold text-md p-2 rounded-full inset shadow-inner">{item.name}</h3>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.shortDescription}</p>
+          </div>
+          <div>
+            <RatingComponent rating={item.rating} reviews={item.reviews} />
+          </div>
           <div className="mt-2 font-bold text-rose-500">{item.price}</div>
         </motion.div>
       ))}

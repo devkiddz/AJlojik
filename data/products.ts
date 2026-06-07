@@ -30,7 +30,8 @@ export const products: ProductsType = [
 
     discountPercentage: 15,
 
-    rating: 4.9,
+    rating: 4.7,
+    reviews: 186,
 
     soldCount: 324,
 
@@ -74,6 +75,7 @@ export const products: ProductsType = [
     discountPercentage: 10,
 
     rating: 4.8,
+    reviews: 154,
 
     soldCount: 278,
 
@@ -117,6 +119,7 @@ export const products: ProductsType = [
     discountPercentage: 12,
 
     rating: 4.7,
+    reviews: 173,
 
     soldCount: 311,
 
@@ -160,6 +163,7 @@ export const products: ProductsType = [
     discountPercentage: 8,
 
     rating: 4.6,
+    reviews: 87,
 
     soldCount: 142,
 
@@ -203,6 +207,7 @@ export const products: ProductsType = [
     discountPercentage: 5,
 
     rating: 4.8,
+    reviews: 121,
 
     soldCount: 193,
 
@@ -247,6 +252,7 @@ export const products: ProductsType = [
     discountPercentage: 25,
 
     rating: 4.9,
+    reviews: 243,
 
     soldCount: 389,
 
