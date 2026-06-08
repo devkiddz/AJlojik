@@ -14,21 +14,23 @@ export default function RatingComponent({ rating, reviews }: RatingComponentProp
         {[...Array(5)].map((_, index) => (
           <Star
             key={index}
-            className={`h-3 w-3 ${
+            className={`h-2 w-2 md:h-3 md:w-3 ${
               index < Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'
             }`}
           />
         ))}
 
         {rating > 0 && (
-          <span className="text-xs font-medium mt-0.5 ml-1 text-amber-500">{rating.toFixed(1)}</span>
+          <span className="text-[0.7rem] md:text-sm font-medium mt-0.5 ml-1 text-amber-500">
+            {rating.toFixed(1)}
+          </span>
         )}
       </div>
 
       {/* Reviews */}
       <div className="flex items-center gap-1 text-emerald-500 relative">
-        <UserStar className="w-3 h-3" />
-        <span className="text-xs font-medium">{reviews}</span>
+        <UserStar className="h-3 w-3" />
+        <span className="text-[0.7rem] md:text-sm font-medium">{reviews}</span>
       </div>
     </div>
   );

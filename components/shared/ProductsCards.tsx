@@ -20,7 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <motion.div
       whileHover={{ scale: 1.05, y: -4 }}
       transition={{ type: 'spring', stiffness: 300 }}
-      className="rounded-xl border bg-background p-4 shadow-sm">
+      className="rounded-xl border bg-background p-1 shadow-sm">
       <Link href={`/products/${product.id}`} aria-label={product.name}>
         <div className="relative aspect-4/3 bg-muted rounded-lg mb-3 overflow-hidden">
           {/* Note: if product.images is an array, use product.images[0] */}
@@ -49,15 +49,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             <RatingComponent rating={product.rating} reviews={product.reviews} />
           </div>
 
-          <div className="flex items-center justify-between gap-0.5 text-sm md:text-md mt-2 font-bold text-rose-500 pb-2">
+          <div className="flex items-center justify-between gap-0.5 text-[0.7rem] md:text-sm md:text-md mt-2 font-bold text-rose-500 pb-2">
             <div>
               <span>₦</span>
               {product.price}
             </div>
 
             <div>
-              <Button size="sm" variant="outline" className="hover:bg-background transition-all">
-                <Wine className="w-4 h-4 mr-2" />
+              <Button size="xs" variant="outline" className="hover:bg-background transition-all">
+                <Wine className="w-2 h-2 md:w-4 md:h-4 text-[0.7rem] md:text-sm mr-2 " />
                 Add Item
               </Button>
             </div>
