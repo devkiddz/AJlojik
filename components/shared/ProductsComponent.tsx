@@ -12,7 +12,7 @@ export default function ProductsComponent() {
       </div>
       <div className="relative top-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {products.map(product => (
-          <ProductCard key={product.id} products={products} />
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </div>

@@ -266,4 +266,93 @@ export const products: ProductsType = [
 
     estimatedDelivery: "1 - 2 Hours",
   },
+
+    {
+    id: "prod_7",
+
+    slug: "moet-chandon-imperial",
+
+    name: "Moët & Chandon Impérial",
+
+    shortDescription:
+      "Premium French champagne crafted for celebrations and luxury events.",
+
+    longDescription:
+      "Moët & Chandon Impérial is one of the world's most celebrated champagnes. Its vibrant fruitiness, elegant maturity, and seductive palate make it the perfect choice for weddings, birthdays, corporate celebrations, and exclusive gatherings. Best served chilled and paired with light appetizers or seafood dishes.",
+
+    category: "Wines",
+
+    tags: [
+      "Express Delivery",
+      "Party Plan",
+      "Luxury",
+      "Best Seller",
+    ],
+
+    images:
+      "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
+
+    price: 85000,
+
+    discountPercentage: 15,
+
+    rating: 4.7,
+    reviews: 186,
+
+    soldCount: 324,
+
+    liked: false,
+
+    stockLeft: 8,
+
+    featured: true,
+
+    isNew: false,
+
+    estimatedDelivery: "1 - 3 Hours",
+  },
+
+  {
+    id: "prod_8",
+
+    slug: "hennessy-vs-cognac",
+
+    name: "Hennessy VS Cognac",
+
+    shortDescription:
+      "Smooth and bold cognac perfect for parties and nightlife events.",
+
+    longDescription:
+      "Hennessy VS Cognac offers a balanced blend of strength and elegance. Known for its rich oak notes and warm finish, it is a popular choice for club events, celebrations, VIP gatherings, and private parties.",
+
+    category: "Spirits",
+
+    tags: [
+      "Express Delivery",
+      "Popular",
+      "Party Favorite",
+    ],
+
+    images:
+      "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
+
+    price: 62000,
+
+    discountPercentage: 10,
+
+    rating: 4.8,
+    reviews: 154,
+
+    soldCount: 278,
+
+    liked: false,
+
+    stockLeft: 14,
+
+    featured: true,
+
+    isNew: false,
+
+    estimatedDelivery: "1 - 3 Hours",
+  },
 ];
