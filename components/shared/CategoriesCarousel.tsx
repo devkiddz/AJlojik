@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CategoryCard from './CategoryCard';
-import { CategoryType } from '../Categories';
+import { CategoryType } from '@/types';
 import { Button } from '../ui/button';
 
 type Props = {

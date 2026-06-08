@@ -7,6 +7,9 @@ import HeroCarousel from './HeroCarousel';
 import SideCards from './SideCards';
 import ProductsComponent from './shared/ProductsComponent';
 //import AsideCategories from './AsideChategories';
+//import { usePathname } from 'next/navigation';
+// const searchParams = useSearchParams();
+// const selectedCatebory = searchParams.get('category');
 
 export default function MainSectionGrid() {
   const active = useScrollSpy(['featured', 'deals', 'liquors', 'kitchen']);
@@ -14,7 +17,7 @@ export default function MainSectionGrid() {
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
       {/* LEFT PANEL */}
       <aside className="absolute md:col-span-1 lg:col-span-1 top-0 h-screen overflow-hidden z-10 left-1">
-        <CategoryPanel active={active} />
+        <CategoryPanel activeSlug={active} />
       </aside>
 
       {/* CAROUSEL + PRODUCTS */}

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { CategoryType } from '../Categories';
+import { CategoryType } from '@/types';
 
 type CategoryCardProps = {
   category: CategoryType;
@@ -44,14 +44,13 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       {/* IMAGE */}
       <Image
         src={category.image}
-        alt={category.name}
+        alt={category.label}
         fill
         className="
           object-cover
           transition-transform
           duration-500
           group-hover:scale-110
-          
         "
       />
 
@@ -90,13 +89,13 @@ export default function CategoryCard({ category }: CategoryCardProps) {
 
       {/* CONTENT */}
       <div className="absolute bottom-4 left-4 z-10 shadow-2xs p-5">
-        <h3 className="text-white font-semibold text-sm">{category.name}</h3>
+        <h3 className="text-white font-semibold text-sm">{category.label}</h3>
 
         <p className="text-white/70 text-xs">{category.type}</p>
       </div>
 
       {/* TOP SHINE (optional polish) */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none bg-linear-to-t from-black/40 via-transparent to-transparent" />
     </div>
   );
 }

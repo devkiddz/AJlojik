@@ -1,5 +1,5 @@
 import { products } from '@/data/products';
-import { categories } from '../Categories';
+import { categories } from '@/categories';
 import ProductCard from './ProductsCards';
 // import CategoriesRow from './CategoriesRow';
 import CategoriesCarousel from './CategoriesCarousel';

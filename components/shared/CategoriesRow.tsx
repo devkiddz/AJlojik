@@ -1,7 +1,7 @@
 'use client';
 
 import CategoryCard from './CategoryCard';
-import { CategoryType } from '../Categories';
+import { CategoryType } from '@/types';
 
 type Props = {
   categories: CategoryType[];
@@ -25,8 +25,8 @@ export default function CategoriesRow({ categories }: Props) {
         <div
           key={category.id}
           className="
-            min-w-[220px]
-            sm:min-w-[260px]
+            min-w-55
+            sm:min-w-65
             snap-start
           ">
           <CategoryCard category={category} />

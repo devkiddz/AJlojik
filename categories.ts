@@ -1,0 +1,82 @@
+import {
+  Sparkles,
+  BadgePercent,
+  Wine,
+  UtensilsCrossed,
+  CakeSlice,
+  Beef,
+  PartyPopper,
+  Coffee,
+} from 'lucide-react';
+
+export const categories = [
+    {
+    id: 'featured',
+    slug: 'featured',
+    label: 'Featured',
+    icon: Sparkles,
+    image: 'https://images.unsplash.com/photo-1660627254751-792e5dcf3e1c?q=80&w=1170&auto=format&fit=crop',
+    name: 'Featured',
+    type: 'featured',
+    },
+
+    {
+    id: 'deals',
+    slug: 'deals',
+    label: 'Deals',
+    icon: BadgePercent,
+    image: 'https://plus.unsplash.com/premium_photo-1684923611429-11861669297f?q=80&w=1170&auto=format&fit=crop',
+    name: 'Deals',
+    type: 'deals',
+    },
+  {
+    id: 'wines',
+    slug: 'wines',
+    type: 'Liquors',
+    image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop',
+    label: 'Wines',
+    icon: Wine,
+  },
+  {
+    id: 'bbq',
+    slug: 'bbq',
+    name: 'BBQ Chicken',
+    type: 'Kitchen',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop',
+    label: 'Deals', 
+    icon: Beef,
+  },
+  {
+    id: 'confectioneries',
+    slug: 'confectioneries',
+    type: 'Bakery',
+    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200&auto=format&fit=crop',
+    label: 'Confectioneries',
+    icon: CakeSlice,
+  },
+  {
+    id: 'kitchen',
+    slug: 'kitchen',
+    type: 'Snacks',
+    image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=1200&auto=format&fit=crop',
+    label: 'Kitchen', 
+    icon: UtensilsCrossed,
+  },
+  {
+    id: 'party-plans',
+    slug: 'party-plans',
+    name: 'Soft Drinks',
+    type: 'Beverages',
+    image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1200&auto=format&fit=crop',
+    label: 'Party Plans',
+    icon: PartyPopper,
+  },
+  {
+    id: 'drinks',
+    slug: 'drinks',
+    type: 'Seafood',
+    image: 'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?q=80&w=1200&auto=format&fit=crop',
+    label: 'Soft Drinks',
+    icon: Coffee,
+  }
+];
