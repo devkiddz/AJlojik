@@ -41,7 +41,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
         </div>
 
-        <div className="product-details rounded-2xl border border-muted bg-gradient-to-b from-background/80 to-background/30 backdrop-blur-md shadow-sm overflow-hidden group hover:border-muted-foreground/20 transition-all duration-300 p-3">
+        <div className="product-details rounded-2xl border border-muted bg-linear-to-b from-background/80 to-background/30 backdrop-blur-md shadow-sm overflow-hidden group hover:border-muted-foreground/20 transition-all duration-300 p-3">
           <div className="product-descript">
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.shortDescription}</p>
           </div>
@@ -56,8 +56,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
 
             <div>
-              <Button size="xs" variant="outline" className="hover:bg-background transition-all">
-                <Wine className="w-2 h-2 md:w-4 md:h-4 text-[0.7rem] md:text-sm mr-2 " />
+              <Button size="xs" variant="outline" className="hover:bg-background transition-all p-2">
+                <Wine className="w-2 h-2 md:w-4 md:h-4 text-[0.7rem] md:text-sm" />
                 Add Item
               </Button>
             </div>
