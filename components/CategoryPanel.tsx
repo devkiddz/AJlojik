@@ -29,7 +29,8 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
       animate={{ width: collapsed ? 70 : 200 }}
       transition={{ type: 'spring', stiffness: 250, damping: 25 }}
       onMouseLeave={() => setHoveredCategory(null)}
-      className="relative flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg h-screen">
+      // FIXED: h-fit for content sizing across both devices, and rounded edges for the floating look
+      className="relative flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg h-fit max-h-[calc(100vh-2rem)] rounded-2xl border border-white/5">
       {/* toggle */}
       <Button
         onClick={() => setCollapsed(p => !p)}
@@ -48,7 +49,7 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
       />
 
       {/* items */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar">
         {categories.map(cat => {
           const Icon = cat.icon;
           const isActive = selectedCategory === cat.slug;
@@ -84,7 +85,7 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
       </div>
 
       {/* account */}
-      <div className="mt-auto flex items-center gap-3">
+      <div className="mt-auto flex items-center gap-3 pt-2 border-t border-white/5">
         <UserActionComponent />
         {!collapsed && <span>Account</span>}
       </div>
@@ -97,14 +98,15 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute top-0 left-full h-full w-64 bg-background/95 backdrop-blur-md border-l border-border/50 shadow-2xl p-4 flex flex-col gap-3 z-50">
+            // MATCHED: Added rounded corners to match the parent menu structure cleanly
+            className="absolute top-0 left-[calc(100%+0.5rem)] h-full w-64 bg-background/95 backdrop-blur-md border border-border/50 shadow-2xl p-4 flex flex-col gap-3 z-50 rounded-2xl">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
                 Shop {hoveredCategory.label}
               </h3>
             </div>
             <hr className="border-border/40" />
-            <div className="flex flex-col gap-1 overflow-y-auto">
+            <div className="flex flex-col gap-1 overflow-y-auto no-scrollbar">
               {hoveredCategory.subcategories.map(sub => (
                 <Link
                   key={sub.slug}

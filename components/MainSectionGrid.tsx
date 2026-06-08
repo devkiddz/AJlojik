@@ -14,9 +14,9 @@ export default function MainSectionGrid() {
   const active = useScrollSpy(sectionIds);
 
   return (
-    <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
-      {/* LEFT PANEL */}
-      <aside className="absolute md:col-span-1 lg:col-span-1 top-0 h-screen overflow-hidden z-50 left-1">
+    <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4 relative items-start">
+      {/* LEFT PANEL: Swapped 'absolute top-0 h-screen' to 'sticky top-4 h-fit' */}
+      <aside className="sticky top-4 md:col-span-1 lg:col-span-1 h-fit z-50 left-1">
         <CategoryPanel activeSlug={active} />
       </aside>
 
@@ -30,7 +30,7 @@ export default function MainSectionGrid() {
       </section>
 
       {/* RIGHT PANEL */}
-      <aside className="hidden lg:block lg:col-span-3 sticky top-0 h-screen overflow-hidden">
+      <aside className="hidden lg:block lg:col-span-3 sticky top-4 h-screen overflow-hidden">
         <SideCards />
       </aside>
     </div>
