@@ -6,13 +6,18 @@ import CategoryPanel from './CategoryPanel';
 import HeroCarousel from './HeroCarousel';
 import SideCards from './SideCards';
 import ProductsComponent from './shared/ProductsComponent';
+import { categories } from '@/categories';
+
+const sectionIds = categories.map(c => c.slug);
+// const activeScroll = useScrollSpy(sectionIds);
+
 //import AsideCategories from './AsideChategories';
-//import { usePathname } from 'next/navigation';
-// const searchParams = useSearchParams();
-// const selectedCatebory = searchParams.get('category');
+// type CategoryPanelProps = {
+//   activeSlug: string;
+// };
 
 export default function MainSectionGrid() {
-  const active = useScrollSpy(['featured', 'deals', 'liquors', 'kitchen']);
+  const active = useScrollSpy(sectionIds);
   return (
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
       {/* LEFT PANEL */}

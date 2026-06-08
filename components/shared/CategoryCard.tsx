@@ -89,13 +89,13 @@ export default function CategoryCard({ category }: CategoryCardProps) {
 
       {/* CONTENT */}
       <div className="absolute bottom-4 left-4 z-10 shadow-2xs p-5">
-        <h3 className="text-white font-semibold text-sm">{category.label}</h3>
+        <h3 className="text-rose-500 font-semibold text-sm">{category.label}</h3>
 
-        <p className="text-white/70 text-xs">{category.type}</p>
+        <p className="text-white/70 text-xs pb-3 border-b border-rose-500">{category.type}</p>
       </div>
 
       {/* TOP SHINE (optional polish) */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none bg-linear-to-t from-black/40 via-transparent to-transparent" />
+      <div className="absolute inset-0 opacity-100 group-hover:opacity-100 transition duration-300 pointer-events-none bg-linear-to-t from-black/60 via-black/10 to-transparent" />
     </div>
   );
 }
