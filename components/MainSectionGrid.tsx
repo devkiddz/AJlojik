@@ -21,7 +21,7 @@ export default function MainSectionGrid() {
   return (
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
       {/* LEFT PANEL */}
-      <aside className="absolute md:col-span-1 lg:col-span-1 top-0 h-screen overflow-hidden z-11 left-1">
+      <aside className="absolute md:col-span-1 lg:col-span-1 top-0 h-screen overflow-hidden z-50 left-1">
         <CategoryPanel activeSlug={active} />
       </aside>
 
