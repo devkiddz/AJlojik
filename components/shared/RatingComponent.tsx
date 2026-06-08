@@ -20,7 +20,9 @@ export default function RatingComponent({ rating, reviews }: RatingComponentProp
           />
         ))}
 
-        <span className="text-xs font-medium text-amber-500">{rating.toFixed(1)}</span>
+        {rating > 0 && (
+          <span className="text-xs font-medium mt-0.5 ml-1 text-amber-500">{rating.toFixed(1)}</span>
+        )}
       </div>
 
       {/* Reviews */}
