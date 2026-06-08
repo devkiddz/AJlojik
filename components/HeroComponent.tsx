@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import React from 'react';
 import ImageLight from '@/public/assets/Image-1.png';
 import ImageDark from '@/public/assets/Image-2.png';
@@ -26,7 +28,9 @@ export default function HeroComponent() {
 
       {/* CONTENT */}
       <div className="relative w-full flex flex-col items-center justify-center pt-1">
-        <MainSectionGrid />
+        <Suspense fallback={<div>Loading...</div>}>
+          <MainSectionGrid />
+        </Suspense>
       </div>
     </section>
   );
