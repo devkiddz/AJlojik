@@ -9,15 +9,10 @@ import ProductsComponent from './shared/ProductsComponent';
 import { categories } from '@/categories';
 
 const sectionIds = categories.map(c => c.slug);
-// const activeScroll = useScrollSpy(sectionIds);
-
-//import AsideCategories from './AsideChategories';
-// type CategoryPanelProps = {
-//   activeSlug: string;
-// };
 
 export default function MainSectionGrid() {
   const active = useScrollSpy(sectionIds);
+
   return (
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4">
       {/* LEFT PANEL */}
