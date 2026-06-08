@@ -14,7 +14,7 @@ type CategoryPanelProps = {
 };
 
 export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get('category') ?? 'featured';
