@@ -1,6 +1,5 @@
 import { LucideIcon } from "lucide-react";
 
-
 export type ProductType = {
   id: string;
   slug: string;
@@ -22,21 +21,22 @@ export type ProductType = {
   estimatedDelivery: string;
 };
 
+// Subcategory Structure Definition
+export type SubcategoryType = {
+  label: string;
+  slug: string;
+};
 
-
-// Types for CategoryTypes
-
+// Updated Category Structure
 export type CategoryType = {
   id: string;
   slug: string;
- // name: string;
-  type: string;
-  image: string;
   label: string;
   icon: LucideIcon;
+  image: string;
+  subcategories: SubcategoryType[]; // Replaced 'type: string' with your subcategory array
   className?: string;
 };
-
 
 export type ProductsType = ProductType[];
 export type CategoriesType = CategoryType[];

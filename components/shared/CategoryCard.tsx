@@ -37,7 +37,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
         transition-all
         duration-300
 
-        group-hover:scale-[1.03]
+        hover:scale-[1.03]
         hover:-translate-y-1
         hover:shadow-[0_0_40px_rgba(255,255,255,0.08)]
       ">
@@ -91,7 +91,12 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       <div className="absolute bottom-4 left-4 z-10 shadow-2xs p-5">
         <h3 className="text-rose-500 font-semibold text-sm">{category.label}</h3>
 
-        <p className="text-white/70 text-xs pb-3 border-b border-rose-500">{category.type}</p>
+        {/* Displays subcategories as a clean comma-separated preview string */}
+        <p className="text-white/70 text-xs pb-3 border-b border-rose-500">
+          {category.subcategories && category.subcategories.length > 0
+            ? category.subcategories.map(sub => sub.label).join(', ')
+            : 'Explore Products'}
+        </p>
       </div>
 
       {/* TOP SHINE (optional polish) */}
