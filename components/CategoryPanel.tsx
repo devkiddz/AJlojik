@@ -110,7 +110,7 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
             </div>
             <hr className="border-border/40" />
             <div className="flex flex-col gap-1 overflow-y-auto">
-              {hoveredCategory.subcategories.map((sub: any) => (
+              {hoveredCategory.subcategories.map(sub => (
                 <Link
                   key={sub.slug}
                   href={`/?category=${hoveredCategory.slug}&sub=${sub.slug}`}
