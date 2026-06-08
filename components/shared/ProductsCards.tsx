@@ -22,7 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       transition={{ type: 'spring', stiffness: 300 }}
       className="rounded-xl border bg-background p-2 shadow-sm">
       <Link href={`/products/${product.id}`} aria-label={product.name}>
-        <div className="relative aspect-4/3 bg-muted rounded-lg mb-3 overflow-hidden">
+        <div className="relative aspect-4/3 bg-muted rounded-lg overflow-hidden">
           {/* Note: if product.images is an array, use product.images[0] */}
           <Image
             src={product.images}
