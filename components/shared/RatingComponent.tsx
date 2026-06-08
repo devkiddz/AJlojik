@@ -29,8 +29,8 @@ export default function RatingComponent({ rating, reviews }: RatingComponentProp
 
       {/* Reviews */}
       <div className="flex items-center gap-1 text-emerald-500 relative">
-        <UserStar className="h-3 w-3" />
-        <span className="text-[0.7rem] md:text-sm font-medium">{reviews}</span>
+        <UserStar className="h-4 w-4" />
+        <span className="text-[0.8rem] md:text-sm font-medium mt-0.5">{reviews}</span>
       </div>
     </div>
   );
