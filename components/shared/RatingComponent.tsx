@@ -14,14 +14,14 @@ export default function RatingComponent({ rating, reviews }: RatingComponentProp
         {[...Array(5)].map((_, index) => (
           <Star
             key={index}
-            className={`h-2 w-2 md:h-3 md:w-3 ${
+            className={`h-3 w-3 ${
               index < Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'
             }`}
           />
         ))}
 
         {rating > 0 && (
-          <span className="text-[0.7rem] md:text-sm font-medium mt-0.5 ml-1 text-amber-500">
+          <span className="text-[0.8rem] md:text-sm font-medium mt-0.5 ml-1 text-amber-500">
             {rating.toFixed(1)}
           </span>
         )}

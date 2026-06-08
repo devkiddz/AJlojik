@@ -57,7 +57,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             <div>
               <Button size="xs" variant="outline" className="hover:bg-background transition-all p-2">
-                <Wine className="w-2 h-2 md:w-4 md:h-4 text-[0.7rem] md:text-sm" />
+                <Wine className="w-3 h-3 md:w-4 md:h-4 text-[0.8rem] md:text-sm" />
                 Add Item
               </Button>
             </div>
