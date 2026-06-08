@@ -41,7 +41,7 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
         stiffness: 250,
         damping: 25
       }}
-      className="relative flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg">
+      className="relative z-2 flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg">
       <Button
         variant="outline"
         onClick={() => setCollapsed(prev => !prev)}
@@ -68,7 +68,7 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
               whileHover={{ x: 4 }}
               className={`flex items-center gap-3 p-2 rounded-lg transition-colors
               ${isActive ? 'text-rose-500 bg-rose-500/10 font-semibold' : 'text-muted-foreground'}`}>
-              <Icon className="w-3 h-3 lg:w-5 lg:h-5 shrink-0" />
+              <Icon className="w-4 h-4 lg:w-5 lg:h-5 shrink-0" />
               {!collapsed && (
                 <motion.span
                   className="text-xs md:text-md"

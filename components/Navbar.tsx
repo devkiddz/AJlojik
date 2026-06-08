@@ -26,7 +26,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   };
 
   return (
-    <header className="flex items-center px-2 md:px-4 py-2 w-full sticky top-0 bg-primary-foreground/80 z-10 backdrop-blur-lg shadow-lg overflow-hidden">
+    <header className="flex items-center px-2 md:px-4 py-2 w-full sticky top-0 bg-primary-foreground/80 z-9999 backdrop-blur-lg shadow-lg overflow-hidden">
       <nav className="flex space-x-4 justify-between px-2 md:px-4 w-full mx-auto">
         <div className="flex items-center space-x-4">
           <div className="text-sm flex items-center space-x-1">
