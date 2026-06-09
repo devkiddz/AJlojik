@@ -16,7 +16,7 @@ export default function MainSectionGrid() {
   return (
     <div className="w-full grid grid-cols-12 gap-2 min-h-screen md:px-4 relative items-start">
       {/* LEFT PANEL: Swapped 'absolute top-0 h-screen' to 'sticky top-4 h-fit' */}
-      <aside className="absolute -top-1 md:col-span-1 lg:col-span-1 h-fit z-15 left-1 border-l-2 border-l-rose-500">
+      <aside className="absolute -top-1 md:col-span-1 lg:col-span-1 h-fit z-15 left-1">
         <CategoryPanel activeSlug={active} />
       </aside>
 
