@@ -30,7 +30,7 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
       transition={{ type: 'spring', stiffness: 250, damping: 25 }}
       onMouseLeave={() => setHoveredCategory(null)}
       // FIXED: h-fit for content sizing across both devices, and rounded edges for the floating look
-      className="relative flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg h-fit max-h-[calc(100vh-2rem)] rounded-2xl border border-white/5">
+      className="relative flex flex-col gap-2 p-3 bg-primary-foreground/80 backdrop-blur-xs shadow-lg h-fit max-h-[calc(100vh-2rem)] border border-white/5">
       {/* toggle */}
       <Button
         onClick={() => setCollapsed(p => !p)}
@@ -99,10 +99,10 @@ export default function CategoryPanel({ activeSlug }: CategoryPanelProps) {
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             // MATCHED: Added rounded corners to match the parent menu structure cleanly
-            className="absolute top-0 left-[calc(100%+0.5rem)] h-full w-64 bg-background/95 backdrop-blur-md border border-border/50 shadow-2xl p-4 flex flex-col gap-3 z-50 rounded-2xl">
+            className="absolute top-0 left-[calc(100%+0.5rem)] h-full w-50 bg-background/95 backdrop-blur-md border border-border/50 shadow-2xl p-4 flex flex-col gap-3 z-50 border-l-2 border-l-rose-500">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
-                Shop {hoveredCategory.label}
+              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-500 px-2 pb-4 border-b border-b-rose-500">
+                {hoveredCategory.label}
               </h3>
             </div>
             <hr className="border-border/40" />
