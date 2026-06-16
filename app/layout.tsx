@@ -5,8 +5,8 @@ import NavbarComponent from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import FooterComponent from '@/components/FooterComponent';
 import ThemeProvider from '@/components/providers/ThemeProvider';
-// import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-// import { AppSidebar } from '@/components/providers/AppSideBar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/providers/AppSideBar';
 
 // type BrandType = {
 //   brandName: string;
@@ -49,15 +49,15 @@ export default function RootLayout({
       )}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {/* <SidebarProvider>
-            <AppSidebar /> */}
-          <main className="flex flex-col w-full h-full">
-            {/* <SidebarTrigger /> */}
-            <NavbarComponent brandName="AJ" brandSlug="Lojik" />
-            <div className="w-full h-full flex flex-col m-auto">{children}</div>
-            <FooterComponent brandName="AJ" brandSlug="Lojik" />
-          </main>
-          {/* </SidebarProvider> */}
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="flex flex-col w-full h-full">
+              <SidebarTrigger />
+              <NavbarComponent brandName="AJ" brandSlug="Lojik" />
+              <div className="w-full h-full flex flex-col m-auto">{children}</div>
+              <FooterComponent brandName="AJ" brandSlug="Lojik" />
+            </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>
