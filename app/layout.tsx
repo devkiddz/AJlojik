@@ -4,9 +4,9 @@ import './globals.css';
 import NavbarComponent from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import FooterComponent from '@/components/FooterComponent';
-//import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-//import { AppSidebar } from '@/components/AppSidebar';
 import ThemeProvider from '@/components/providers/ThemeProvider';
+// import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+// import { AppSidebar } from '@/components/providers/AppSideBar';
 
 // type BrandType = {
 //   brandName: string;
@@ -49,16 +49,15 @@ export default function RootLayout({
       )}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {/* 
-          <SidebarProvider className="">
-            <AppSidebar />
-            <SidebarTrigger className="text-rose-500 top-5  w-10 h-10 rounded-full bg-primary-foreground hidden md:sticky z-10" /> */}
+          {/* <SidebarProvider>
+            <AppSidebar /> */}
           <main className="flex flex-col w-full h-full">
+            {/* <SidebarTrigger /> */}
             <NavbarComponent brandName="AJ" brandSlug="Lojik" />
-            <div className="w-full h-full flex flex-col m-auto grow lg:px-6">{children}</div>
+            <div className="w-full h-full flex flex-col m-auto">{children}</div>
             <FooterComponent brandName="AJ" brandSlug="Lojik" />
           </main>
-          {/* </SidebarProvider>*/}
+          {/* </SidebarProvider> */}
         </ThemeProvider>
       </body>
     </html>

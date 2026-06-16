@@ -21,7 +21,7 @@ export default function MainSectionGrid() {
       </aside>
 
       {/* CAROUSEL + PRODUCTS */}
-      <section className="col-span-12 md:col-span-9">
+      <section className="col-span-12 md:col-span-9 ">
         <HeroCarousel />
 
         <div className="mt-6">
