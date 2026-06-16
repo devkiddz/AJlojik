@@ -51,10 +51,15 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <SidebarProvider>
             <AppSidebar />
-            <main className="flex flex-col w-full h-full">
-              <SidebarTrigger />
-              <NavbarComponent brandName="AJ" brandSlug="Lojik" />
-              <div className="w-full h-full flex flex-col m-auto">{children}</div>
+
+            <main className="flex flex-col w-full min-h-screen">
+              {/* SINGLE UNIFIED TOP BAR */}
+              <div className="sticky top-0 z-50">
+                <NavbarComponent brandName="AJ" brandSlug="Lojik" />
+              </div>
+
+              <div className="w-full flex flex-col flex-1">{children}</div>
+
               <FooterComponent brandName="AJ" brandSlug="Lojik" />
             </main>
           </SidebarProvider>
