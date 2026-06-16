@@ -5,7 +5,7 @@ import NavbarComponent from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import FooterComponent from '@/components/FooterComponent';
 import ThemeProvider from '@/components/providers/ThemeProvider';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/providers/AppSideBar';
 
 // type BrandType = {
@@ -49,7 +49,7 @@ export default function RootLayout({
       )}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <SidebarProvider>
+          <SidebarProvider defaultOpen={false}>
             <AppSidebar />
 
             <main className="flex flex-col w-full min-h-screen">

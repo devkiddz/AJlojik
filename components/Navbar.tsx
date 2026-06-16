@@ -11,6 +11,7 @@ import ThemeController from './ThemeController';
 import LogoComponent from './shared/LogoComponent';
 import { CartLogics } from './shared/CartLogics';
 import { SidebarTrigger } from './ui/sidebar';
+import SidebarToggle from './shared/SidebarToggle';
 
 type BrandType = {
   brandName: string;
@@ -55,7 +56,8 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl h-20">
       <div className="relative mx-auto px-6 h-full flex items-center justify-between">
         <div className="flex items-center justify-start gap-2">
-          <SidebarTrigger className="hover:bg-muted rounded-md transition" />
+          {/* <SidebarTrigger className="hover:bg-muted rounded-md transition" /> */}
+          <SidebarToggle />
           {/* LEFT - LOGO */}
           <LogoComponent brandName={brandName} brandSlug={brandSlug} />
         </div>
