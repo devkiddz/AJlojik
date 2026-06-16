@@ -3,8 +3,6 @@ import {
   BadgePercent,
   Wine,
   UtensilsCrossed,
-  CakeSlice,
-  Beef,
   PartyPopper,
   Coffee,
 } from 'lucide-react';
@@ -47,31 +45,7 @@ export const categories = [
       { label: 'Spirits & Whiskey', slug: 'spirits' }
     ]
   },
-  {
-    id: 'bbq',
-    slug: 'bbq',
-    label: 'BBQ Chicken',
-    icon: Beef,
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop',
-    subcategories: [
-      { label: 'Grilled Chicken', slug: 'grilled-chicken' },
-      { label: 'BBQ Wings', slug: 'bbq-wings' },
-      { label: 'Sides & Fries', slug: 'bbq-sides' }
-    ]
-  },
-  {
-    id: 'confectioneries',
-    slug: 'confectioneries',
-    label: 'Confectioneries',
-    icon: CakeSlice,
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200&auto=format&fit=crop',
-    subcategories: [
-      { label: 'Cakes & Slices', slug: 'cakes' },
-      { label: 'Pastries', slug: 'pastries' },
-      { label: 'Donuts', slug: 'donuts' },
-      { label: 'Chocolates', slug: 'chocolates' }
-    ]
-  },
+
   {
     id: 'kitchen',
     slug: 'kitchen',
@@ -96,17 +70,4 @@ export const categories = [
       { label: 'Custom Event Catering', slug: 'custom-catering' }
     ]
   },
-  {
-    id: 'drinks',
-    slug: 'drinks',
-    label: 'Soft Drinks',
-    icon: Coffee,
-    image: 'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?q=80&w=1200&auto=format&fit=crop',
-    subcategories: [
-      { label: 'Sodas & Colas', slug: 'sodas' },
-      { label: 'Fresh Juices', slug: 'juices' },
-      { label: 'Energy Drinks', slug: 'energy-drinks' },
-      { label: 'Bottled Water', slug: 'water' }
-    ]
-  }
 ];
