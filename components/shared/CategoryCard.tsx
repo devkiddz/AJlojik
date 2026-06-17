@@ -10,7 +10,7 @@ type CategoryCardProps = {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <article className="group relative w-65 hover:w-87 sm:w-85 h-30 shrink-0 rounded-2xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-rose-500/40 hover:bg-zinc-800 overflow-hidden">
+    <article className="group relative w-85 hover:w-87 sm:w-85 h-30 shrink-0 rounded-2xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-rose-500/40 hover:bg-zinc-800 overflow-hidden">
       <div className="flex h-full items-center gap-4 p-4">
         {/* Image */}
         <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl">
@@ -48,11 +48,11 @@ export default function CategoryCard({ category }: CategoryCardProps) {
         aria-label="view Category"
         type="button"
         className="
-          absolute bottom-1 right-3
+          absolute bottom-5 md:bottom-1 right-3
           flex items-center gap-1
           rounded-full bg-rose-500 px-4 py-1
           text-xs font-medium text-white
-          opacity-0 translate-y-2
+          md:opacity-0 translate-y-2
           transition-all duration-300
           group-hover:opacity-100 group-hover:translate-y-0
           hover:bg-rose-600
