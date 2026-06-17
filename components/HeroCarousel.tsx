@@ -3,7 +3,7 @@
 // import { useRef } from 'react';
 // import { useInView } from './shared/useInView';
 import Image from 'next/image';
-import image from '@/public/assets/Image-8.jpg';
+import image from '@/public/assets/image-8.jpg';
 
 export default function HeroCarousel() {
   // const ref = useRef(null);
