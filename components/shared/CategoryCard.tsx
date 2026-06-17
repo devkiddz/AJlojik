@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { CategoryType } from '@/types';
+import { ArrowRight } from 'lucide-react';
 
 type CategoryCardProps = {
   category: CategoryType;
@@ -9,8 +10,9 @@ type CategoryCardProps = {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <article className="group w-[260px] sm:w-[300px] h-[120px] shrink-0 rounded-2xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-rose-500/40 hover:bg-zinc-800">
+    <article className="group relative w-65 hover:w-87 sm:w-85 h-30 shrink-0 rounded-2xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-rose-500/40 hover:bg-zinc-800 overflow-hidden">
       <div className="flex h-full items-center gap-4 p-4">
+        {/* Image */}
         <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl">
           <Image
             src={category.image}
@@ -20,6 +22,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           />
         </div>
 
+        {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col">
           <h3 className="truncate text-base font-semibold text-white sm:text-lg">{category.label}</h3>
 
@@ -39,6 +42,25 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           </div>
         </div>
       </div>
+
+      {/* VIEW BUTTON (hover reveal) */}
+      <button
+        aria-label="view Category"
+        type="button"
+        className="
+          absolute bottom-1 right-3
+          flex items-center gap-1
+          rounded-full bg-rose-500 px-4 py-1
+          text-xs font-medium text-white
+          opacity-0 translate-y-2
+          transition-all duration-300
+          group-hover:opacity-100 group-hover:translate-y-0
+          hover:bg-rose-600
+          cursor-pointer
+        ">
+        Explore
+        <ArrowRight size={14} />
+      </button>
     </article>
   );
 }
