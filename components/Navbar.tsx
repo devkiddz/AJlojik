@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { UtensilsCrossed, Wine, PartyPopper } from 'lucide-react';
+import { UtensilsCrossed, Wine, PartyPopper, Landmark } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 import SearchBarComponent from './SearchBarComponent';
@@ -19,6 +19,12 @@ type BrandType = {
 };
 
 const brands = [
+  {
+    id: 'Market',
+    label: 'AJ Stores',
+    icon: Landmark,
+    href: '/'
+  },
   {
     id: 'kitchen',
     label: 'AJ Kitchen',

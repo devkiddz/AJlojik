@@ -24,7 +24,7 @@ export default function ProductModal({ product, open, onClose, onToggleLike }: P
       <DialogContent className="max-w-3xl overflow-hidden p-0">
         {!product ? null : (
           <div>
-            <div className="relative aspect-video overflow-hidden bg-muted">
+            <div className="relative aspect-4/3 overflow-hidden bg-muted overflow-y-scroll scrollbar-none">
               <Image src={product.images} alt={product.name} fill className="object-cover" />
 
               <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
@@ -53,7 +53,7 @@ export default function ProductModal({ product, open, onClose, onToggleLike }: P
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  aria-label="Add to Cart"
+                  aria-label="Add to"
                   className="flex-1 rounded-full px-4 py-2 bg-primary text-primary-foreground">
                   Add to Cart
                 </button>
