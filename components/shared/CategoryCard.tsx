@@ -47,12 +47,15 @@ export default function CategoryCard({ category }: CategoryCardProps) {
               aria-label="view Category"
               className="
                 flex items-center gap-1
-                rounded-full bg-rose-500/10 px-4 py-1
-                text-xs font-medium text-rose-400
+                rounded-full bg-white-500/10 px-4 py-1
+                text-xs font-medium text-white-400
+                border
+                border-white-500
                 md:opacity-0 
                 transition-all duration-300
                 group-hover:opacity-100 group-hover:translate-y-0
                 hover:bg-rose-600 hover:text-white
+                hover:border-rose-500
                 cursor-pointer
               ">
               Explore
