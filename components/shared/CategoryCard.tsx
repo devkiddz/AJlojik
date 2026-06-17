@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { CategoryType } from '@/types';
 import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 type CategoryCardProps = {
   category: CategoryType;
@@ -35,32 +36,31 @@ export default function CategoryCard({ category }: CategoryCardProps) {
               : 'Explore products'}
           </p>
 
-          <div className="mt-auto pt-3">
+          <div className="flex items-center justify-between mt-auto pt-3">
             <span className="rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-400">
               {category.subcategories?.length ?? 0} items
             </span>
+
+            {/* VIEW BUTTON (hover reveal) */}
+            <Link
+              href="/shop"
+              aria-label="view Category"
+              className="
+                flex items-center gap-1
+                rounded-full bg-rose-500/10 px-4 py-1
+                text-xs font-medium text-rose-400
+                md:opacity-0 
+                transition-all duration-300
+                group-hover:opacity-100 group-hover:translate-y-0
+                hover:bg-rose-600 hover:text-white
+                cursor-pointer
+              ">
+              Explore
+              <ArrowRight size={14} />
+            </Link>
           </div>
         </div>
       </div>
-
-      {/* VIEW BUTTON (hover reveal) */}
-      <button
-        aria-label="view Category"
-        type="button"
-        className="
-          absolute bottom-5 md:bottom-1 right-3
-          flex items-center gap-1
-          rounded-full bg-rose-500 px-4 py-1
-          text-xs font-medium text-white
-          md:opacity-0 translate-y-2
-          transition-all duration-300
-          group-hover:opacity-100 group-hover:translate-y-0
-          hover:bg-rose-600
-          cursor-pointer
-        ">
-        Explore
-        <ArrowRight size={14} />
-      </button>
     </article>
   );
 }
