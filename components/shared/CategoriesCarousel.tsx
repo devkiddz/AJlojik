@@ -107,7 +107,7 @@ export default function CategoriesCarousel({ categories }: Props) {
         ref={containerRef}
         onScroll={handleScroll}
         onWheel={handleWheel}
-        className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        className="flex gap-0.5 md:gap-2 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {categories.map(category => (
           <CategoryCard key={category.id} category={category} />
         ))}
