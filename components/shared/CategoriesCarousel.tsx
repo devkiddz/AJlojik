@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 import CategoryCard from './CategoryCard';
 import { CategoryType } from '@/types';
-import { Button } from '../ui/button';
 
 type Props = {
   categories: CategoryType[];
@@ -12,108 +12,119 @@ type Props = {
 
 export default function CategoriesCarousel({ categories }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [maxScroll, setMaxScroll] = useState(0);
 
-  const looped = [...categories, ...categories, ...categories];
+  const calculateMetrics = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-  // 🖱 drag start
-  const onMouseDown = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setMaxScroll(max > 0 ? max : 0);
+  }, []);
 
-    setIsDragging(true);
-    setStartX(e.pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
-  };
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-  // 🖱 drag move
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
+    const max = el.scrollWidth - el.clientWidth;
 
-    e.preventDefault();
+    if (max <= 0) {
+      setProgress(0);
+      return;
+    }
 
-    const x = e.pageX - containerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.2;
+    setProgress((el.scrollLeft / max) * 100);
+  }, []);
 
-    containerRef.current.scrollLeft = scrollLeft - walk;
-  };
+  const scroll = (direction: 'left' | 'right') => {
+    const el = containerRef.current;
+    if (!el) return;
 
-  const stopDrag = () => setIsDragging(false);
-
-  // ⬅️➡️ arrows
-  const scroll = (dir: 'left' | 'right') => {
-    if (!containerRef.current) return;
-
-    containerRef.current.scrollBy({
-      left: dir === 'left' ? -300 : 300,
+    el.scrollBy({
+      left: direction === 'left' ? -400 : 400,
       behavior: 'smooth'
     });
   };
 
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    const track = trackRef.current;
+    if (!el || !track || maxScroll === 0) return;
+
+    const rect = track.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+
+    const ratio = Math.min(Math.max(clickX / rect.width, 0), 1);
+    const target = ratio * maxScroll;
+
+    el.scrollTo({
+      left: target,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    el.scrollLeft += e.deltaY;
+  };
+
+  useEffect(() => {
+    calculateMetrics();
+
+    const handleResize = () => calculateMetrics();
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, [categories, calculateMetrics]);
+
   return (
-    <div className="relative group overflow-x-auto">
-      {/* LEFT ARROW */}
-      <Button
-        onClick={() => scroll('left')}
-        className="
-          hidden md:flex
-          absolute left-0 top-1/2 -translate-y-1/2
-          z-10
-          bg-black/50
-          text-white
-          p-2
-          rounded-full
-          opacity-0 group-hover:opacity-100
-          transition
-        ">
-        <ChevronLeft />
-      </Button>
+    <section className="relative bg-muted p-4 rounded-2xl">
+      {/* Header Controls */}
+      <div className="flex justify-between items-center mb-4 pb-4 border-b border-muted">
+        <Button variant="outline">
+          <h1 className="md:text-lg text-primary">Trending Categories</h1>
+          <ChevronRight />
+        </Button>
 
-      {/* RIGHT ARROW */}
-      <Button
-        onClick={() => scroll('right')}
-        className="
-          hidden md:flex
-          absolute right-0 top-1/2 -translate-y-1/2
-          z-10
-          bg-black/50
-          text-white
-          p-2
-          rounded-full
-          opacity-0 group-hover:opacity-100
-          transition
-        ">
-        <ChevronRight />
-      </Button>
+        <div className="flex items-center gap-2">
+          <Button size="icon" variant="secondary" onClick={() => scroll('left')} className="rounded-full">
+            <ChevronLeft />
+          </Button>
 
-      {/* SCROLL AREA */}
+          <Button size="icon" variant="secondary" onClick={() => scroll('right')} className="rounded-full">
+            <ChevronRight />
+          </Button>
+        </div>
+      </div>
+
+      {/* Carousel (no scrollbar visible) */}
       <div
         ref={containerRef}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={stopDrag}
-        onMouseLeave={stopDrag}
-        className="
-          flex
-          gap-4
-          overflow-x-auto
-          scroll-smooth
-          px-2
-          py-4
-          cursor-grab
-          active:cursor-grabbing
-          snap-x
-          snap-mandatory
-          scrollbar-hide
-        ">
-        {looped.map((category, index) => (
-          <div key={`${category.id}-${index}`} className="min-w-55">
-            <CategoryCard category={category} />
-          </div>
+        onScroll={handleScroll}
+        onWheel={handleWheel}
+        className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {categories.map(category => (
+          <CategoryCard key={category.id} category={category} />
         ))}
       </div>
-    </div>
+
+      {/* Progress Tracker */}
+      {/* <div
+        ref={trackRef}
+        onClick={handleTrackClick}
+        className="mt-4 h-2 w-full rounded-full bg-zinc-800 cursor-pointer relative">
+        <div
+          className="h-full rounded-full bg-rose-500 transition-all duration-150"
+          style={{
+            width: `${progress}%`
+          }}
+        />
+      </div> */}
+    </section>
   );
 }

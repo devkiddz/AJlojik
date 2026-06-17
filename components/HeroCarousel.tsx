@@ -10,7 +10,7 @@ export default function HeroCarousel() {
   // const isVisible = useInView(ref);
 
   return (
-    <section className="relative aspect-5/3 lg:aspect-3/1 cover">
+    <section className="relative aspect-5/2 lg:aspect-3/1 cover">
       <Image
         src={image}
         alt="Picture of the author"

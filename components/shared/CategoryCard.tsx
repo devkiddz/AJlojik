@@ -1,106 +1,44 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
 import { CategoryType } from '@/types';
 
 type CategoryCardProps = {
   category: CategoryType;
-  index?: number;
 };
 
 export default function CategoryCard({ category }: CategoryCardProps) {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
   return (
-    <div
-      onMouseMove={e => {
-        const rect = e.currentTarget.getBoundingClientRect();
+    <article className="group w-[260px] sm:w-[300px] h-[120px] shrink-0 rounded-2xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-rose-500/40 hover:bg-zinc-800">
+      <div className="flex h-full items-center gap-4 p-4">
+        <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl">
+          <Image
+            src={category.image}
+            alt={category.label}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </div>
 
-        setPosition({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        });
-      }}
-      className="
-        group
-        relative
-        w-full
-        h-32
-        md:h-52
-        rounded-2xl
-        overflow-hidden
-        border
-        border-white/10
-        bg-black
-        cursor-pointer
-        transition-all
-        duration-300
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h3 className="truncate text-base font-semibold text-white sm:text-lg">{category.label}</h3>
 
-        hover:scale-[1.03]
-        hover:-translate-y-1
-        hover:shadow-[0_0_40px_rgba(255,255,255,0.08)]
-      ">
-      {/* IMAGE */}
-      <Image
-        src={category.image}
-        alt={category.label}
-        fill
-        className="
-          object-cover
-          transition-transform
-          duration-500
-          group-hover:scale-110
-        "
-      />
+          <p className="mt-1 line-clamp-2 text-xs text-white/60 sm:text-sm">
+            {category.subcategories?.length
+              ? category.subcategories
+                  .slice(0, 3)
+                  .map(sub => sub.label)
+                  .join(', ')
+              : 'Explore products'}
+          </p>
 
-      {/* DARK OVERLAY */}
-      <div
-        className="
-            absolute inset-0
-            opacity-0
-            group-hover:opacity-100
-            transition
-            duration-300
-            pointer-events-none
-            bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_60%)]
-        "
-      />
-
-      {/* MOUSE GLOW */}
-      <div
-        className="
-          absolute
-          inset-0
-          opacity-0
-          group-hover:opacity-100
-          transition-opacity
-          duration-300
-          pointer-events-none
-        "
-        style={{
-          background: `radial-gradient(
-            300px circle at ${position.x}px ${position.y}px,
-            rgba(255,255,255,0.18),
-            transparent 60%
-          )`
-        }}
-      />
-
-      {/* CONTENT */}
-      <div className="absolute bottom-4 left-4 z-10 shadow-2xs p-5">
-        <h3 className="text-rose-500 font-semibold text-sm">{category.label}</h3>
-
-        {/* Displays subcategories as a clean comma-separated preview string */}
-        <p className="text-white/70 text-xs pb-3 border-b border-rose-500">
-          {category.subcategories && category.subcategories.length > 0
-            ? category.subcategories.map(sub => sub.label).join(', ')
-            : 'Explore Products'}
-        </p>
+          <div className="mt-auto pt-3">
+            <span className="rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-400">
+              {category.subcategories?.length ?? 0} items
+            </span>
+          </div>
+        </div>
       </div>
-
-      {/* TOP SHINE (optional polish) */}
-      <div className="absolute inset-0 opacity-100 group-hover:opacity-100 transition duration-300 pointer-events-none bg-linear-to-t from-black/60 via-black/10 to-transparent" />
-    </div>
+    </article>
   );
 }
