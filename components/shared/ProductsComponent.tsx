@@ -4,17 +4,23 @@ import { useState } from 'react';
 import { products as initialProducts } from '@/data/products';
 import { categories } from '@/categories';
 
-import ProductCard from './ProductsCards';
+import ItemsCarousel from './ItemsCarousel';
+import ProductsCarousel from '../ProductsCarousel';
 import ProductModal from '@/components/shared/ProductModal';
-import CategoriesCarousel from './CategoriesCarousel';
 
 export default function ProductsComponent() {
   const [productList, setProductList] = useState(initialProducts);
-
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
-  const selectedProduct = productList.find(p => p.id === selectedId) ?? null;
+  const selectedProduct = productList.find(product => product.id === selectedId) ?? null;
+
+  const currentIndex = productList.findIndex(product => product.id === selectedId);
+
+  const previousProduct = currentIndex > 0 ? productList[currentIndex - 1] : null;
+
+  const nextProduct =
+    currentIndex >= 0 && currentIndex < productList.length - 1 ? productList[currentIndex + 1] : null;
 
   const toggleLike = (productId: string) => {
     setProductList(prev =>
@@ -34,24 +40,19 @@ export default function ProductsComponent() {
 
   return (
     <div className="w-full">
-      <CategoriesCarousel categories={categories} />
+      <ItemsCarousel categories={categories} />
 
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {productList.map(product => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onSelect={() => handleSelect(product.id)}
-            onToggleLike={() => toggleLike(product.id)}
-          />
-        ))}
-      </div>
+      <ProductsCarousel products={productList} onSelect={handleSelect} onToggleLike={toggleLike} />
 
       <ProductModal
         product={selectedProduct}
         open={open}
         onClose={handleClose}
         onToggleLike={selectedProduct ? () => toggleLike(selectedProduct.id) : undefined}
+        onPrevious={previousProduct ? () => setSelectedId(previousProduct.id) : undefined}
+        onNext={nextProduct ? () => setSelectedId(nextProduct.id) : undefined}
+        hasPrevious={!!previousProduct}
+        hasNext={!!nextProduct}
       />
     </div>
   );

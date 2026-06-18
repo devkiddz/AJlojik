@@ -13,6 +13,9 @@ type Props = {
 export default function CategoriesCarousel({ categories }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
 
   const [progress, setProgress] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
@@ -73,6 +76,31 @@ export default function CategoriesCarousel({ categories }: Props) {
     el.scrollLeft += e.deltaY;
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    isDragging.current = true;
+    startX.current = e.pageX;
+    scrollLeft.current = el.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+
+    if (!el || !isDragging.current) return;
+
+    e.preventDefault();
+
+    const walk = (e.pageX - startX.current) * 1.2;
+
+    el.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const stopDragging = () => {
+    isDragging.current = false;
+  };
+
   useEffect(() => {
     calculateMetrics();
 
@@ -107,7 +135,11 @@ export default function CategoriesCarousel({ categories }: Props) {
         ref={containerRef}
         onScroll={handleScroll}
         onWheel={handleWheel}
-        className="flex gap-0.5 md:gap-2 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={stopDragging}
+        onMouseLeave={stopDragging}
+        className="flex gap-0.5 md:gap-2 overflow-x-auto scroll-smooth pb-2 cursor-grab active:cursor-grabbing select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {categories.map(category => (
           <CategoryCard key={category.id} category={category} />
         ))}

@@ -1,10 +1,12 @@
 'use client';
 
-import { ProductType } from '@/types';
 import Image from 'next/image';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ProductType } from '@/types';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ChartColumnStacked, ChevronLeft, ChevronRight } from 'lucide-react';
+
 import RatingComponent from './RatingComponent';
-import { ChartColumnStacked } from 'lucide-react';
 import LikedComponent from './LikedComponent';
 
 type ProductModalProps = {
@@ -12,58 +14,117 @@ type ProductModalProps = {
   open: boolean;
   onClose: () => void;
   onToggleLike?: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
+  currentIndex?: number;
+  totalProducts?: number;
 };
 
-export default function ProductModal({ product, open, onClose, onToggleLike }: ProductModalProps) {
+export default function ProductModal({
+  product,
+  open,
+  onClose,
+  onToggleLike,
+  onPrevious,
+  onNext,
+  hasPrevious,
+  hasNext,
+  currentIndex,
+  totalProducts
+}: ProductModalProps) {
   return (
     <Dialog
       open={open}
       onOpenChange={isOpen => {
         if (!isOpen) onClose();
       }}>
-      <DialogContent className="max-w-3xl overflow-hidden p-0">
+      <DialogContent className="max-w-4xl overflow-hidden p-0">
         {!product ? null : (
-          <div>
-            <div className="relative aspect-4/3 overflow-hidden bg-muted overflow-y-scroll scrollbar-none">
-              <Image src={product.images} alt={product.name} fill className="object-cover" />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}>
+              {/* HERO IMAGE */}
+              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                <Image src={product.images} alt={product.name} fill className="object-cover" />
 
-              <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
-            </div>
+                <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
 
-            <div className="p-6 space-y-4">
-              <div>
-                <h2 className="text-2xl font-semibold">{product.name}</h2>
+                {/* PREVIOUS */}
+                <div className="absolute inset-y-0 left-3 flex items-center">
+                  <button
+                    type="button"
+                    aria-label="Previous product"
+                    onClick={onPrevious}
+                    disabled={!hasPrevious}
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:scale-105 hover:bg-black/70 active:scale-95 disabled:opacity-30">
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                </div>
 
-                <span className="text-xs text-primary flex items-center gap-1 mt-1">
-                  <ChartColumnStacked className="w-3 h-3 text-rose-500" />
-                  {product.category}
-                </span>
+                {/* NEXT */}
+                <div className="absolute inset-y-0 right-3 flex items-center">
+                  <button
+                    type="button"
+                    aria-label="Next product"
+                    onClick={onNext}
+                    disabled={!hasNext}
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:scale-105 hover:bg-black/70 active:scale-95 disabled:opacity-30">
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* COUNTER */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur-md">
+                  {(currentIndex ?? 0) + 1} / {totalProducts}
+                </div>
               </div>
 
-              <p className="text-sm text-muted-foreground">{product.shortDescription}</p>
+              {/* CONTENT */}
+              <div className="space-y-5 p-6">
+                <div>
+                  <h2 className="text-2xl font-semibold">{product.name}</h2>
 
-              <RatingComponent rating={product.rating} reviews={product.reviews} />
+                  <span className="mt-1 flex items-center gap-1 text-xs text-primary">
+                    <ChartColumnStacked className="h-3 w-3 text-rose-500" />
+                    {product.category}
+                  </span>
+                </div>
 
-              <div className="text-2xl font-bold text-rose-500">₦{product.price}</div>
+                <p className="text-sm text-muted-foreground">{product.shortDescription}</p>
 
-              <div className="text-sm text-muted-foreground leading-relaxed">
-                {product.longDescription ?? 'No additional description available.'}
+                <RatingComponent rating={product.rating} reviews={product.reviews} />
+
+                <div className="text-2xl font-bold text-rose-500">₦{product.price}</div>
+
+                <div className="text-sm leading-relaxed text-muted-foreground">
+                  {product.longDescription ?? 'No additional description available.'}
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    aria-label="Add to cart"
+                    className="flex-1 rounded-full bg-rose-500 px-5 py-3 font-medium text-white transition hover:bg-rose-600">
+                    Add to Cart
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-label="Save product"
+                    className="rounded-full border px-5 py-3 font-medium transition hover:bg-muted">
+                    Save
+                  </button>
+                </div>
               </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  aria-label="Add to"
-                  className="flex-1 rounded-full px-4 py-2 bg-primary text-primary-foreground">
-                  Add to Cart
-                </button>
-
-                <button type="button" aria-label="save product" className="rounded-full border px-4 py-2">
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
+            </motion.div>
+          </AnimatePresence>
         )}
       </DialogContent>
     </Dialog>
