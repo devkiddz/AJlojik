@@ -9,6 +9,7 @@ type PreviewPanelProps = {
 };
 
 export default function PreviewPanel({ product }: PreviewPanelProps) {
+  const activeVariant = product?.variants?.[0];
   return (
     <div className="w-[380px] border-l bg-background h-full p-4">
       {!product ? (
@@ -17,7 +18,9 @@ export default function PreviewPanel({ product }: PreviewPanelProps) {
         <div className="space-y-4">
           {/* IMAGE / VIDEO */}
           <div className="rounded-xl overflow-hidden bg-muted h-44 relative">
-            <Image src={product.images} alt={product.name} fill className="object-cover" />
+            {activeVariant?.image && (
+              <Image src={activeVariant.image} alt={product.name} fill className="object-cover" />
+            )}
           </div>
 
           {/* TITLE */}
@@ -34,7 +37,7 @@ export default function PreviewPanel({ product }: PreviewPanelProps) {
           <RatingComponent rating={product.rating} reviews={product.reviews} />
 
           {/* PRICE */}
-          <div className="text-lg font-bold text-rose-500">₦{product.price}</div>
+          <div className="text-lg font-bold text-rose-500">₦{activeVariant?.price ?? 0}</div>
 
           {/* ACTIONS */}
           <div className="flex gap-2 pt-2">

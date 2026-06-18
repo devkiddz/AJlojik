@@ -34,6 +34,7 @@ export default function ProductModal({
   currentIndex,
   totalProducts
 }: ProductModalProps) {
+  const activeVariant = product?.variants?.[0];
   return (
     <Dialog
       open={open}
@@ -50,8 +51,10 @@ export default function ProductModal({
               exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}>
               {/* HERO IMAGE */}
-              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                <Image src={product.images} alt={product.name} fill className="object-cover" />
+              <div className="relative aspect-[16/10] bg-muted">
+                {activeVariant?.image && (
+                  <Image src={activeVariant.image} alt={product.name} fill className="object-cover" />
+                )}
 
                 <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
 
@@ -100,7 +103,7 @@ export default function ProductModal({
 
                 <RatingComponent rating={product.rating} reviews={product.reviews} />
 
-                <div className="text-2xl font-bold text-rose-500">₦{product.price}</div>
+                <div className="text-2xl font-bold text-rose-500">₦{activeVariant?.price ?? 0}</div>
 
                 <div className="text-sm leading-relaxed text-muted-foreground">
                   {product.longDescription ?? 'No additional description available.'}

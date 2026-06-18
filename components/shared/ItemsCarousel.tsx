@@ -42,6 +42,25 @@ export default function CategoriesCarousel({ categories }: Props) {
     setProgress((el.scrollLeft / max) * 100);
   }, []);
 
+  // Hook into native wheel event to override passive browser scrolling defaults
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      // Locks browser window vertical scrolling
+      e.preventDefault();
+      // Scrolls the carousel row horizontally instead
+      el.scrollLeft += e.deltaY;
+    };
+
+    el.addEventListener('wheel', handleNativeWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
+
   const scroll = (direction: 'left' | 'right') => {
     const el = containerRef.current;
     if (!el) return;
@@ -67,13 +86,6 @@ export default function CategoriesCarousel({ categories }: Props) {
       left: target,
       behavior: 'smooth'
     });
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    el.scrollLeft += e.deltaY;
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -113,7 +125,6 @@ export default function CategoriesCarousel({ categories }: Props) {
   return (
     <section className="relative bg-muted p-4 rounded-2xl">
       {/* Header Controls */}
-
       <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
         <Button variant="ghost">
           <h1 className="md:text-lg text-primary">Trending Categories</h1>
@@ -131,11 +142,10 @@ export default function CategoriesCarousel({ categories }: Props) {
         </div>
       </div>
 
-      {/* Carousel (no scrollbar visible) */}
+      {/* Carousel */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={stopDragging}

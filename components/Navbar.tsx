@@ -3,15 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { UtensilsCrossed, Wine, PartyPopper, Landmark } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import SearchBarComponent from './SearchBarComponent';
 import UserActionComponent from './UserActionComponent';
 import ThemeController from './ThemeController';
 import LogoComponent from './shared/LogoComponent';
 import { CartLogics } from './shared/CartLogics';
-import { SidebarTrigger } from './ui/sidebar';
 import SidebarToggle from './shared/SidebarToggle';
+import { Button } from './ui/button';
 
 type BrandType = {
   brandName: string;
@@ -23,31 +23,35 @@ const brands = [
     id: 'Market',
     label: 'AJ Stores',
     icon: Landmark,
-    href: '/'
+    slug: 'all'
   },
   {
     id: 'kitchen',
     label: 'AJ Kitchen',
     icon: UtensilsCrossed,
-    href: '/shop/kitchen'
+    slug: 'kitchen'
   },
   {
     id: 'liqz',
     label: 'AJ Liqz',
     icon: Wine,
-    href: '/shop/wines'
+    slug: 'wines'
   },
   {
     id: 'party',
     label: 'Party Plans',
     icon: PartyPopper,
-    href: '/shop/party-plans'
+    slug: 'party-plans'
   }
 ];
 
 export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   const [scrolled, setScrolled] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const pathname = usePathname();
+
+  //console.log(selecteCategory);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,18 +96,29 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           <div className="flex items-center shrink-0">
             {brands.map(item => {
               const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
+              // const isActive = pathname.startsWith(item.slug);
+              // ROUTER HANDLE FUNCTION
+              //######################################################
+              const selecteCategory = searchParams.get('category');
+              const isActive = selecteCategory === item.slug;
+              const handleChange = (value: string | null) => {
+                const params = new URLSearchParams(searchParams);
+                params.set(`category`, value || 'all');
+                router.push(`${pathname}/?${params.toString()}`, { scroll: false });
+              };
 
               return (
-                <Link
+                <Button
+                  variant="ghost"
                   key={item.id}
-                  href={item.href}
+                  // href={item.slug}
+                  onClick={() => handleChange(item.slug)}
                   className={`flex items-center gap-1 px-3 py-2 rounded-full transition-all duration-300
                     ${isActive ? 'text-rose-500 bg-rose-500/10' : 'text-muted-foreground hover:text-rose-500'}
                   `}>
                   <Icon className="h-4 w-4" />
                   <span className="text-xs font-medium whitespace-nowrap">{item.label}</span>
-                </Link>
+                </Button>
               );
             })}
           </div>

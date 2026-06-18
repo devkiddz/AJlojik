@@ -3,7 +3,7 @@
 import { ProductType } from '@/types';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-// import RatingComponent from './RatingComponent';
+import RatingComponent from './RatingComponent';
 import { ChartColumnStacked, Eye } from 'lucide-react';
 import LikedComponent from './LikedComponent';
 
@@ -15,7 +15,7 @@ type ProductCardProps = {
 
 export default function ProductCard({ product, onSelect, onToggleLike }: ProductCardProps) {
   const router = useRouter();
-  const imageUrl = Array.isArray(product.images) ? product.images[0] : product.images;
+  const defaultVariant = product.variants?.[1];
 
   const handleCardClick = () => {
     router.push(`/products/${product.id}`);
@@ -26,14 +26,13 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
       onClick={onSelect}
       className="group cursor-pointer rounded-xl border bg-background p-2 transition hover:shadow-md">
       {/* IMAGE CONTAINER */}
-      <div className="relative aspect-3/3 bg-muted rounded-lg overflow-hidden isolation-auto">
-        {imageUrl && (
+      <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+        {defaultVariant?.image && (
           <Image
-            src={imageUrl}
+            src={defaultVariant.image}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover group-hover:scale-[1.02] transition-transform z-0"
+            className="object-cover group-hover:scale-[1.02] transition-transform"
           />
         )}
 

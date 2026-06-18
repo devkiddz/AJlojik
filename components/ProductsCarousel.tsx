@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import ProductCard from './shared/ProductsCards';
@@ -19,6 +19,26 @@ export default function ProductsCarousel({ products, onSelect, onToggleLike }: P
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
+  // Hook into native wheel event to override modern passive browser defaults
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      // Prevent default page vertical scrolling
+      e.preventDefault();
+      // Translate vertical delta to horizontal scroll movement
+      el.scrollLeft += e.deltaY;
+    };
+
+    // { passive: false } allows us to block window layout scrolling
+    el.addEventListener('wheel', handleNativeWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
+
   const scroll = (direction: 'left' | 'right') => {
     const el = containerRef.current;
     if (!el) return;
@@ -27,13 +47,6 @@ export default function ProductsCarousel({ products, onSelect, onToggleLike }: P
       left: direction === 'left' ? -400 : 400,
       behavior: 'smooth'
     });
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    el.scrollLeft += e.deltaY;
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -83,7 +96,6 @@ export default function ProductsCarousel({ products, onSelect, onToggleLike }: P
 
       <div
         ref={containerRef}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={stopDragging}
