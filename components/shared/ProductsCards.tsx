@@ -3,7 +3,7 @@
 import { ProductType } from '@/types';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import RatingComponent from './RatingComponent';
+// import RatingComponent from './RatingComponent';
 import { ChartColumnStacked, Eye } from 'lucide-react';
 import LikedComponent from './LikedComponent';
 

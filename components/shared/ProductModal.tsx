@@ -40,7 +40,7 @@ export default function ProductModal({
       onOpenChange={isOpen => {
         if (!isOpen) onClose();
       }}>
-      <DialogContent className="max-w-4xl overflow-hidden p-0">
+      <DialogContent className="max-w-4xl overflow-hidden overflow-y-scroll scroll-smooth scrollbar-thumb-sidebar-border scrollbar-none p-0">
         {!product ? null : (
           <AnimatePresence mode="wait">
             <motion.div
@@ -48,7 +48,7 @@ export default function ProductModal({
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}>
+              transition={{ duration: 0.2, ease: 'easeOut' }}>
               {/* HERO IMAGE */}
               <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                 <Image src={product.images} alt={product.name} fill className="object-cover" />

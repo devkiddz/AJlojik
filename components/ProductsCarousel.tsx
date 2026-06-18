@@ -47,13 +47,9 @@ export default function ProductsCarousel({ products, onSelect, onToggleLike }: P
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = containerRef.current;
-
     if (!el || !isDragging.current) return;
-
     e.preventDefault();
-
     const walk = (e.pageX - startX.current) * 1.2;
-
     el.scrollLeft = scrollLeft.current - walk;
   };
 

@@ -48,7 +48,11 @@ export default function ProductsComponent() {
         product={selectedProduct}
         open={open}
         onClose={handleClose}
-        onToggleLike={selectedProduct ? () => toggleLike(selectedProduct.id) : undefined}
+        // FIXED: Pass current index and list length down to the modal
+        currentIndex={currentIndex >= 0 ? currentIndex : 0}
+        totalProducts={productList.length}
+        // OPTIMIZATION: Uses selectedId directly to avoid transition lag bugs with AnimatePresence
+        onToggleLike={selectedId ? () => toggleLike(selectedId) : undefined}
         onPrevious={previousProduct ? () => setSelectedId(previousProduct.id) : undefined}
         onNext={nextProduct ? () => setSelectedId(nextProduct.id) : undefined}
         hasPrevious={!!previousProduct}
