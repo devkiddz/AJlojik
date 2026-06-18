@@ -13,6 +13,7 @@ type Props = {
 
 export default function ProductQuickViewSheet({ product, open, onOpenChange }: Props) {
   if (!product) return null;
+  const activeVariant = product?.variants?.[0];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -23,12 +24,14 @@ export default function ProductQuickViewSheet({ product, open, onOpenChange }: P
 
         <div className="mt-4 space-y-4">
           <div className="relative h-64 rounded-xl overflow-hidden">
-            <Image src={product.images} alt={product.name} fill className="object-cover" />
+            {activeVariant?.image && (
+              <Image src={activeVariant.image} alt={product.name} fill className="object-cover" />
+            )}
           </div>
 
           <p className="text-muted-foreground">{product.shortDescription}</p>
 
-          <div className="font-bold text-xl">₦{product.price}</div>
+          <div className="font-bold text-xl">₦{activeVariant?.price ?? 0}</div>
 
           <button className="w-full rounded-lg bg-rose-500 py-3 text-white">Add To Cart</button>
         </div>
