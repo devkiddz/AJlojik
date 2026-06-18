@@ -14,7 +14,7 @@ export default function MainSectionGrid() {
       <section className="col-span-12 md:col-span-9 ">
         <HeroCarousel />
 
-        <div className="mt-6">
+        <div className="my-6">
           <ProductsComponent />
         </div>
       </section>

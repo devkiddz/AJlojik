@@ -26,7 +26,7 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
       onClick={onSelect}
       className="group cursor-pointer rounded-xl border bg-background p-2 transition hover:shadow-md">
       {/* IMAGE CONTAINER */}
-      <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden isolation-auto">
+      <div className="relative aspect-3/3 bg-muted rounded-lg overflow-hidden isolation-auto">
         {imageUrl && (
           <Image
             src={imageUrl}
@@ -48,22 +48,14 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
       {/* INFO */}
       <div className="p-3">
         <h3 className="font-semibold text-sm line-clamp-1">{product.name}</h3>
-
-        <span className="text-xs text-primary flex items-center gap-1 mt-1">
-          <ChartColumnStacked className="w-3 h-3 text-rose-500" />
-          {product.category}
-        </span>
-
         <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{product.shortDescription}</p>
 
-        <div className="mt-2">
-          <RatingComponent rating={product.rating} reviews={product.reviews} />
-        </div>
+        <div className="flex justify-between items-center p-2">
+          <span className="text-xs text-primary flex items-center gap-1 mt-1">
+            <ChartColumnStacked className="w-3 h-3 text-rose-500" />
+            {product.category}
+          </span>
 
-        <div className="flex items-center justify-between mt-3">
-          <div className="font-bold text-rose-500 text-sm">₦{product.price}</div>
-
-          {/* PREVIEW BUTTON */}
           <span
             onClick={e => {
               e.stopPropagation();
@@ -73,6 +65,16 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
             Preview
             <Eye className="w-3 h-3" />
           </span>
+        </div>
+
+        {/* <div className="mt-2">
+          <RatingComponent rating={product.rating} reviews={product.reviews} />
+        </div> */}
+
+        <div className="flex items-center justify-between mt-3">
+          {/* <div className="font-bold text-rose-500 text-sm">₦{product.price}</div> */}
+
+          {/* PREVIEW BUTTON */}
         </div>
       </div>
     </div>

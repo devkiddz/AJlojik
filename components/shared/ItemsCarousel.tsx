@@ -113,8 +113,9 @@ export default function CategoriesCarousel({ categories }: Props) {
   return (
     <section className="relative bg-muted p-4 rounded-2xl">
       {/* Header Controls */}
-      <div className="flex justify-between items-center mb-4 pb-4 border-b border-muted">
-        <Button variant="outline">
+
+      <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
+        <Button variant="ghost">
           <h1 className="md:text-lg text-primary">Trending Categories</h1>
           <ChevronRight />
         </Button>
@@ -139,7 +140,7 @@ export default function CategoriesCarousel({ categories }: Props) {
         onMouseMove={handleMouseMove}
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
-        className="flex gap-0.5 md:gap-2 overflow-x-auto scroll-smooth pb-2 cursor-grab active:cursor-grabbing select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        className="flex gap-4 overflow-x-auto scroll-smooth pb-2 cursor-grab select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {categories.map(category => (
           <CategoryCard key={category.id} category={category} />
         ))}
