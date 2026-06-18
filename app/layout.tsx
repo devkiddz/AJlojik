@@ -7,6 +7,7 @@ import FooterComponent from '@/components/FooterComponent';
 import ThemeProvider from '@/components/providers/ThemeProvider';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/providers/AppSideBar';
+import { Suspense } from 'react';
 
 // type BrandType = {
 //   brandName: string;
@@ -55,7 +56,9 @@ export default function RootLayout({
             <main className="flex flex-col w-full min-h-screen">
               {/* SINGLE UNIFIED TOP BAR */}
               <div className="sticky top-0 z-50">
-                <NavbarComponent brandName="AJ" brandSlug="Lojik" />
+                <Suspense fallback={null}>
+                  <NavbarComponent brandName="AJ Logiks" brandSlug="aj-logiks" />
+                </Suspense>
               </div>
 
               <div className="w-full flex flex-col flex-1">{children}</div>
