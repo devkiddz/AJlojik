@@ -15,28 +15,28 @@ const slides = [
     image: image1,
     badge: 'AJ Liqz',
     title: 'Premium Wines Collection',
-    description: 'Discover exclusive wines, spirits, and curated beverage selections.'
+    description: 'Discover exclusive wines and beverages.'
   },
   {
     id: 2,
     image: image2,
     badge: 'AJ Kitchen',
-    title: 'Everything For Your Kitchen',
-    description: 'Quality ingredients and kitchen essentials delivered to your doorstep.'
+    title: 'Kitchen Essentials',
+    description: 'Everything you need for your kitchen.'
   },
   {
     id: 3,
     image: image3,
     badge: 'Party Plans',
     title: 'Celebrate Without Stress',
-    description: 'Packages and event solutions for birthdays, weddings, and corporate events.'
+    description: 'Packages and solutions for every event.'
   },
   {
     id: 4,
     image: image4,
     badge: 'AJ Store',
-    title: 'Featured Deals & Discounts',
-    description: 'Explore trending products and limited-time offers across all categories.'
+    title: 'Featured Deals',
+    description: 'Explore trending products and discounts.'
   }
 ];
 
@@ -48,81 +48,68 @@ export default function HeroCarousel() {
   };
 
   const prevSlide = () => {
-    setCurrent(prev => (prev - 1 + slides.length) % slides.length);
+    setCurrent(prev => (prev + 1) % slides.length);
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      nextSlide();
-    }, 5000);
-
+    const timer = setTimeout(nextSlide, 5000);
     return () => clearTimeout(timer);
   }, [current]);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl mb-2">
-      <div className="relative aspect-[16/8] min-h-[300px]">
-        {slides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-all duration-1000 ease-out ${
-              current === index ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-            }`}>
-            {/* Background Image */}
-            <Image
-              src={slide.image}
-              alt={slide.title}
-              fill
-              priority={index === 0}
-              className={`object-cover transition-transform duration-[6000ms] ease-linear ${
-                current === index ? 'scale-105' : 'scale-100'
-              }`}
-            />
+    <section className="relative overflow-hidden rounded-2xl">
+      <div className="relative aspect-16/8 min-h-[320px]">
+        {/* Slides */}
+        <div
+          className="flex h-full transition-transform duration-700 ease-in-out"
+          style={{
+            transform: `translateX(-${current * 100}%)`
+          }}>
+          {slides.map(slide => (
+            <div key={slide.id} className="relative min-w-full">
+              <Image src={slide.image} alt={slide.title} fill className="object-cover scale-105" />
 
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/45" />
+              <div className="absolute inset-0 bg-black/45" />
 
-            {/* Content */}
-            <div className="absolute inset-0 flex items-center">
-              <div
-                className={`max-w-xl px-8 md:px-16 text-white transition-all duration-1000 ${
-                  current === index ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                }`}>
-                <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
-                  {slide.badge}
-                </span>
+              <div className="absolute inset-0 flex items-center">
+                <div className="max-w-xl px-8 md:px-16 text-white">
+                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs backdrop-blur">
+                    {slide.badge}
+                  </span>
 
-                <h1 className="mt-4 text-3xl font-bold md:text-5xl">{slide.title}</h1>
+                  <h1 className="mt-4 text-3xl font-bold md:text-5xl">{slide.title}</h1>
 
-                <p className="mt-3 max-w-lg text-sm text-white/90 md:text-base">{slide.description}</p>
+                  <p className="mt-3 text-white/90">{slide.description}</p>
 
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button className="rounded-full bg-rose-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-rose-600">
-                    Shop Now
-                  </button>
+                  <div className="mt-6 flex gap-3">
+                    <button className="rounded-full bg-rose-500 px-5 py-2 text-sm text-white">
+                      Shop Now
+                    </button>
 
-                  <button className="rounded-full border border-white/30 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20">
-                    View Deals
-                  </button>
+                    <button className="rounded-full border border-white/30 px-5 py-2 text-sm">
+                      View Deals
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
-        {/* Bootstrap-style Previous Control */}
+        {/* Bootstrap-style Controls */}
         <button
+          aria-label="slide left"
+          type="button"
           onClick={prevSlide}
-          aria-label="Previous Slide"
-          className="absolute left-0 top-0 z-20 flex h-full w-16 items-center justify-center from-black/30 to-transparent transition hover:from-black/50">
+          className="absolute left-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-r from-black/30 to-transparent">
           <ChevronLeft className="h-8 w-8 text-white" />
         </button>
 
-        {/* Bootstrap-style Next Control */}
         <button
+          aria-label="slide right"
+          type="button"
           onClick={nextSlide}
-          aria-label="Next Slide"
-          className="absolute right-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-l from-black/30 to-transparent transition hover:from-black/50">
+          className="absolute right-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-l from-black/30 to-transparent">
           <ChevronRight className="h-8 w-8 text-white" />
         </button>
 
@@ -130,16 +117,19 @@ export default function HeroCarousel() {
         <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
           {slides.map((_, index) => (
             <button
+              aria-label="slider index"
+              type="button"
               key={index}
-              aria-label={`Go to slide ${index + 1}`}
               onClick={() => setCurrent(index)}
-              className={`h-1 rounded-full transition-all duration-300 ${
-                current === index ? 'w-10 bg-white' : 'w-6 bg-white/50 hover:bg-white/80'
+              className={`h-2 rounded-full transition-all ${
+                current === index ? 'w-4 bg-white' : 'w-6 bg-white/50'
               }`}
             />
           ))}
         </div>
       </div>
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
     </section>
   );
 }
