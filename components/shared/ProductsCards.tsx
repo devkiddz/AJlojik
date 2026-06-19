@@ -13,11 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 type ProductCardProps = {
   product: ProductType;
+  variant?: 'home' | 'store';
   onSelect?: () => void;
   onToggleLike?: () => void;
 };
 
-export default function ProductCard({ product, onSelect, onToggleLike }: ProductCardProps) {
+export default function ProductCard({ product, variant = 'home', onSelect, onToggleLike }: ProductCardProps) {
   const router = useRouter();
 
   const [selectedVariantId, setSelectedVariantId] = useState<string>(product.variants[0]?.id ?? '');
@@ -52,8 +53,10 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
           <span className="absolute top-3">
             <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
           </span>
+
+          {/* DISCOUNT BADGE */}
           {product.discountPercentage > 0 && (
-            <span className="top-5 absolute right-1 rounded-full border-b bg-rose-500/50 px-2 py-1 text-xs font-medium text-primary">
+            <span className="top-6 absolute right-1 rounded-full border-b bg-rose-500/80 px-2 py-1 text-xs font-medium text-white">
               -{product.discountPercentage}% off
             </span>
           )}
@@ -62,6 +65,30 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
 
       {/* CONTENT */}
       <div className="p-3">
+        {/* STORE VARIANT */}
+        {variant === 'store' && (
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onSelect?.();
+              }}
+              className="rounded-full bg-rose-500 px-3 py-1 text-xs text-white hover:bg-rose-600">
+              Add to Cart
+            </button>
+
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                router.push(`/products/${product.slug}`);
+              }}
+              className="text-xs text-muted-foreground hover:text-rose-500">
+              View
+            </button>
+          </div>
+        )}
+        {/* STORE VARIANT */}
+
         <h3 className="line-clamp-1 text-sm font-semibold">{product.name}</h3>
 
         <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{product.shortDescription}</p>

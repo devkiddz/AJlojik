@@ -63,7 +63,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky top-0 z-50 h-14 w-full bg-background/80 backdrop-blur-xl shadow">
+    <header className="sticky top-0 z-50 h-14 w-full bg-background/80 backdrop-blur-5xl shadow">
       <div className="relative mx-auto flex h-full items-center justify-between px-4">
         {/* LEFT */}
         <div className="flex items-center gap-1.5">

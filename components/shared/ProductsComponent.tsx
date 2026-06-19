@@ -42,7 +42,7 @@ export default function ProductsComponent() {
   const featuredProducts = productList.filter(product => product.featured);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full">
       {/* Categories */}
       <ItemsCarousel categories={categories} />
 
