@@ -1,11 +1,15 @@
 'use client';
 
-import { ProductType } from '@/types';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import RatingComponent from './RatingComponent';
 import { ChartColumnStacked, Eye } from 'lucide-react';
+
+import { ProductType } from '@/types';
+
 import LikedComponent from './LikedComponent';
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type ProductCardProps = {
   product: ProductType;
@@ -15,67 +19,109 @@ type ProductCardProps = {
 
 export default function ProductCard({ product, onSelect, onToggleLike }: ProductCardProps) {
   const router = useRouter();
-  const defaultVariant = product.variants?.[1];
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(product.variants[0]?.id ?? '');
+
+  const activeVariant =
+    product.variants.find(variant => variant.id === selectedVariantId) ?? product.variants[0];
 
   const handleCardClick = () => {
-    router.push(`/products/${product.id}`);
+    if (onSelect) {
+      onSelect();
+      return;
+    }
+
+    router.push(`/products/${product.slug}`);
   };
 
   return (
-    <div
-      onClick={onSelect}
-      className="group cursor-pointer rounded-xl border bg-background p-2 transition hover:shadow-md">
-      {/* IMAGE CONTAINER */}
-      <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-        {defaultVariant?.image && (
-          <Image
-            src={defaultVariant.image}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-[1.02] transition-transform"
-          />
-        )}
+    <article
+      onClick={handleCardClick}
+      className="group cursor-pointer rounded-xl border bg-background p-2 transition-all hover:shadow-md">
+      {/* IMAGE */}
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+        <Image
+          src={activeVariant.image}
+          alt={product.name}
+          fill
+          sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 25vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        />
 
-        {/* LIKE BUTTON - Forced size, padding, and high z-index */}
-        <div
-          className="absolute top right-3 z-30 min-w-[32px] min-h-[32px] flex items-center justify-center"
-          onClick={e => e.stopPropagation()}>
-          <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+        <div className="absolute z-30 flex flex-col right-1 top-3" onClick={e => e.stopPropagation()}>
+          <span className="">
+            <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+          </span>
+          {product.discountPercentage > 0 && (
+            <span className="top-5 relative right-40 rounded-full border-b bg-rose-500/50 px-2 py-1 text-xs font-medium text-primary">
+              -{product.discountPercentage}% off
+            </span>
+          )}
         </div>
       </div>
 
-      {/* INFO */}
+      {/* CONTENT */}
       <div className="p-3">
-        <h3 className="font-semibold text-sm line-clamp-1">{product.name}</h3>
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{product.shortDescription}</p>
+        <h3 className="line-clamp-1 text-sm font-semibold">{product.name}</h3>
 
-        <div className="flex justify-between items-center p-2">
-          <span className="text-xs text-primary flex items-center gap-1 mt-1">
-            <ChartColumnStacked className="w-3 h-3 text-rose-500" />
+        <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{product.shortDescription}</p>
+
+        {/* CATEGORY + PREVIEW */}
+        <div className="mt-3 flex items-center justify-between">
+          <span className="flex items-center gap-1 text-xs text-primary">
+            <ChartColumnStacked className="h-3 w-3 text-rose-500" />
             {product.category}
           </span>
 
-          <span
+          <button
+            type="button"
             onClick={e => {
               e.stopPropagation();
-              if (handleCardClick) handleCardClick();
+              onSelect?.();
             }}
-            className="text-xs px-3 py-1 rounded-full border flex gap-2 items-center justify-around hover:bg-muted transition-colors">
+            className="flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition hover:bg-muted">
             Preview
-            <Eye className="w-3 h-3" />
-          </span>
+            <Eye className="h-3 w-3" />
+          </button>
         </div>
 
-        {/* <div className="mt-2">
-          <RatingComponent rating={product.rating} reviews={product.reviews} />
-        </div> */}
+        {/* SIZE + PRICE */}
+        <div className="mt-4 flex items-end justify-between gap-4">
+          <div className="flex flex-col items-start gap-2" onClick={e => e.stopPropagation()}>
+            <div className="flex gap-2">
+              <span className="text-xs text-muted-foreground">Size</span>
+              <span className="text-xs text-muted-foreground">{activeVariant.stockLeft} left</span>
+            </div>
 
-        <div className="flex items-center justify-between mt-3">
-          {/* <div className="font-bold text-rose-500 text-sm">₦{product.price}</div> */}
+            <div className="flex items-center justify-between gap-8">
+              <Select
+                value={selectedVariantId}
+                onValueChange={value => {
+                  if (value) {
+                    setSelectedVariantId(value);
+                  }
+                }}>
+                <SelectTrigger className="h-8 w-[120px]">
+                  <SelectValue placeholder="Select Size" />
+                </SelectTrigger>
 
-          {/* PREVIEW BUTTON */}
+                <SelectContent>
+                  {product.variants.map(variant => (
+                    <SelectItem key={variant.id} value={variant.id}>
+                      {variant.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center justify-end">
+                <span className="text-md font-bold text-rose-500">
+                  ₦{activeVariant.price.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

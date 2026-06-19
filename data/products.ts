@@ -17,23 +17,26 @@ export const products: ProductsType = [
 
     variants: [
       {
-        size: "Sm",
+        id: "Sm",
+        label: "small",
         image:
           "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
         price: 75000,
         stockLeft: 8,
       },
       {
-        size: "Md",
+        id: "Md",
+        label: "Medium",
         image:
-          "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
+         "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
         price: 85000,
         stockLeft: 6,
       },
       {
-        size: "Lg",
+        id: "Lg",
+        label: "Large",
         image:
-          "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
+          "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 95000,
         stockLeft: 3,
       },
@@ -67,21 +70,24 @@ export const products: ProductsType = [
 
     variants: [
       {
-        size: "Sm",
+        id: "Sm",
+        label: "Small",
         image:
           "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 55000,
         stockLeft: 10,
       },
       {
-        size: "Md",
+        id: "Md",
+        label: "Medium",
         image:
           "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 62000,
         stockLeft: 14,
       },
       {
-        size: "Lg",
+        id: "Lg",
+        label: "Large",
         image:
           "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 70000,
@@ -117,21 +123,24 @@ export const products: ProductsType = [
 
     variants: [
       {
-        size: "Sm",
+        id: "Sm",
+        label: "Small",
         image:
           "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b",
         price: 40000,
         stockLeft: 0,
       },
       {
-        size: "Md",
+        id: "Md",
+        label: "Medium",
         image:
           "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b",
         price: 45000,
         stockLeft: 0,
       },
       {
-        size: "Lg",
+        id: "Lg",
+        label: "Large",
         image:
           "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b",
         price: 50000,
@@ -167,21 +176,24 @@ export const products: ProductsType = [
 
     variants: [
       {
-        size: "Small",
+        id: "sm",
+        label: "Small",
         image:
           "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
         price: 15000,
         stockLeft: 6,
       },
       {
-        size: "Medium",
+        id: "md",
+        label: "Medium",
         image:
           "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
         price: 18000,
         stockLeft: 12,
       },
       {
-        size: "Large",
+        id: "lg",
+        label: "Large",
         image:
           "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
         price: 22000,
@@ -217,21 +229,24 @@ export const products: ProductsType = [
 
     variants: [
       {
-        size: "Sm",
+        id: "sm",
+        label: "Small",
         image:
           "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
         price: 75000,
         stockLeft: 8,
       },
       {
-        size: "Md",
+        id: "Md",
+        label: "Medium",
         image:
           "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
         price: 85000,
         stockLeft: 6,
       },
       {
-        size: "Lg",
+        id: "Lg",
+        label: "Large",
         image:
           "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
         price: 95000,
@@ -267,21 +282,24 @@ export const products: ProductsType = [
 
     variants: [
       {
-        size: "Sm",
+        id: "Sm",
+        label: "Small",
         image:
           "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 55000,
         stockLeft: 10,
       },
       {
-        size: "Md",
+        id: "Md",
+        label: "Medium",
         image:
           "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 62000,
         stockLeft: 14,
       },
       {
-        size: "Lg",
+        id: "Lg",
+        label: "Large",
         image:
           "https://images.unsplash.com/photo-1569529465841-dfecdab7503b",
         price: 70000,

@@ -1,11 +1,11 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon } from 'lucide-react';
 
 /**
- * Variant = actual sellable unit
- * (size, image, price, stock are tied together)
+ * Actual sellable product variation
  */
 export type ProductVariant = {
-  size: string; // dynamic (S, M, L, XL, 40, etc.)
+  id: string;
+  label: string;
   image: string;
   price: number;
   stockLeft: number;
@@ -26,7 +26,7 @@ export type ProductType = {
   tags: string[];
 
   /**
-   * All purchasable options live here
+   * Product options (sizes, volumes, packs, etc.)
    */
   variants: ProductVariant[];
 

@@ -57,7 +57,7 @@ export default function RootLayout({
               {/* SINGLE UNIFIED TOP BAR */}
               <div className="sticky top-0 z-50">
                 <Suspense fallback={null}>
-                  <NavbarComponent brandName="AJ Logiks" brandSlug="aj-logiks" />
+                  <NavbarComponent brandName="AJ" brandSlug="Logiks" />
                 </Suspense>
               </div>
 

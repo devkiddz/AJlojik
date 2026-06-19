@@ -26,10 +26,10 @@ export default function ThemeController() {
       <div
         className={cn(
           buttonVariants({
-            variant: 'outline',
-            size: 'icon'
+            variant: 'outline'
+            //size: 'icon'
           }),
-          'rounded-full'
+          'rounded-full h-6 w-6 p-0 flex items-center justify-center'
         )}
       />
     );
@@ -40,13 +40,13 @@ export default function ThemeController() {
       <DropdownMenuTrigger
         className={cn(
           buttonVariants({
-            variant: 'outline',
-            size: 'icon'
+            variant: 'outline'
+            //size: 'icon'
           }),
-          'rounded-full'
+          'rounded-full h-6 w-6 p-0 flex items-center justify-center'
         )}>
-        <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-        <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+        <Sun className="h-6 w-6 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+        <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
         <span className="sr-only">Toggle theme</span>
       </DropdownMenuTrigger>
 
