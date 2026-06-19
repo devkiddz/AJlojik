@@ -46,17 +46,27 @@ function ProductContent({
 
   return (
     <motion.div
-      className="flex flex-col h-full"
       key={product.id}
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.2 }}>
+      transition={{ duration: 0.2 }}
+      // FIXED: Added full height allocation and internal scrolling context here
+      className="flex flex-col h-full overflow-y-auto scrollbar-none">
       {/* HERO IMAGE */}
-      <div className="relative aspect-16/10 overflow-hidden bg-muted">
-        <Image src={activeVariant.image} alt={product.name} fill className="object-cover" />
+      {/* FIXED: Changed aspect-16/10 to aspect-[16/10] */}
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted">
+        <Image
+          src={activeVariant.image}
+          alt={product.name}
+          fill
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          className="object-cover"
+        />
 
-        <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+        <div className="absolute top-3 left-5 outline-0 z-10" onClick={e => e.stopPropagation()}>
+          <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+        </div>
 
         <div className="absolute inset-y-0 left-3 flex items-center">
           <button
@@ -86,7 +96,7 @@ function ProductContent({
       </div>
 
       {/* CONTENT */}
-      <div className="flex-1 overflow-y-auto space-y-5 p-6">
+      <div className="space-y-5 p-6 flex-1">
         <div>
           <h2 className="text-2xl font-semibold">{product.name}</h2>
 
@@ -106,7 +116,6 @@ function ProductContent({
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
               <span className="text-xs text-muted-foreground">Size</span>
-
               <span className="text-xs text-muted-foreground">{activeVariant.stockLeft} left</span>
             </div>
 
@@ -137,7 +146,7 @@ function ProductContent({
             type="button"
             className="flex-1 rounded-full bg-rose-500 px-5 py-3 font-medium text-white transition hover:bg-rose-600"
             onClick={() => {
-              alert(`Added product:, ${product.id} of size: ${activeVariant.label} to Cart`);
+              alert(`Added product: ${product.id} of size: ${activeVariant.label} to Cart`);
             }}>
             Add {activeVariant.label} to Cart
           </button>
@@ -146,7 +155,7 @@ function ProductContent({
             type="button"
             className="rounded-full border px-5 py-3 font-medium transition hover:bg-muted"
             onClick={() => {
-              alert(`Saved product:, ${product.id}`);
+              alert(`Saved product: ${product.id}`);
             }}>
             Save
           </button>
@@ -170,10 +179,12 @@ export default function ProductModal(props: ProductModalProps) {
       <DialogContent
         className="
           max-w-4xl p-0 overflow-hidden
-          max-h-[90dvh]
+          w-[90vw] md:w-full
+          h-full max-h-[80dvh] md:max-h-[70dvh]
           flex flex-col
         ">
-        <div className="flex-1 overflow-hidden">
+        {/* FIXED: Replaced overflow-hidden with flex/h-full configurations */}
+        <div className="w-full h-full min-h-0 flex flex-col">
           <AnimatePresence mode="wait">
             <ProductContent key={product.id} {...props} product={product} />
           </AnimatePresence>
