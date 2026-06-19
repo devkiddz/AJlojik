@@ -64,8 +64,15 @@ function ProductContent({
           className="object-cover"
         />
 
-        <div className="absolute top-3 left-5 outline-0 z-10" onClick={e => e.stopPropagation()}>
-          <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+        <div className="relative z-30 flex flex-col" onClick={e => e.stopPropagation()}>
+          <span className="absolute top-3 left-2">
+            <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+          </span>
+          {product.discountPercentage > 0 && (
+            <span className="top-6 absolute left-10 rounded-full border-b bg-rose-500/50 px-2 py-1 text-xs font-medium text-primary">
+              -{product.discountPercentage}% off
+            </span>
+          )}
         </div>
 
         <div className="absolute inset-y-0 left-3 flex items-center">

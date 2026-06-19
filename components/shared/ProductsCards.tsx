@@ -48,12 +48,12 @@ export default function ProductCard({ product, onSelect, onToggleLike }: Product
           className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
 
-        <div className="absolute z-30 flex flex-col right-1 top-3" onClick={e => e.stopPropagation()}>
-          <span className="">
+        <div className="relative z-30 flex flex-col" onClick={e => e.stopPropagation()}>
+          <span className="absolute top-3">
             <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
           </span>
           {product.discountPercentage > 0 && (
-            <span className="top-5 relative right-40 rounded-full border-b bg-rose-500/50 px-2 py-1 text-xs font-medium text-primary">
+            <span className="top-5 absolute right-1 rounded-full border-b bg-rose-500/50 px-2 py-1 text-xs font-medium text-primary">
               -{product.discountPercentage}% off
             </span>
           )}
