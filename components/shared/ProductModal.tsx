@@ -46,6 +46,7 @@ function ProductContent({
 
   return (
     <motion.div
+      className="flex flex-col h-full"
       key={product.id}
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
@@ -85,7 +86,7 @@ function ProductContent({
       </div>
 
       {/* CONTENT */}
-      <div className="space-y-5 p-6">
+      <div className="flex-1 overflow-y-auto space-y-5 p-6">
         <div>
           <h2 className="text-2xl font-semibold">{product.name}</h2>
 
@@ -166,10 +167,17 @@ export default function ProductModal(props: ProductModalProps) {
       onOpenChange={isOpen => {
         if (!isOpen) onClose();
       }}>
-      <DialogContent className="max-w-4xl overflow-hidden p-0">
-        <AnimatePresence mode="wait">
-          <ProductContent key={product.id} {...props} product={product} />
-        </AnimatePresence>
+      <DialogContent
+        className="
+          max-w-4xl p-0 overflow-hidden
+          max-h-[90dvh]
+          flex flex-col
+        ">
+        <div className="flex-1 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <ProductContent key={product.id} {...props} product={product} />
+          </AnimatePresence>
+        </div>
       </DialogContent>
     </Dialog>
   );
