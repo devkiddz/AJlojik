@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { products as initialProducts } from '@/data/products';
 import { categories } from '@/categories';
 
@@ -38,20 +39,47 @@ export default function ProductsComponent() {
     setSelectedId(null);
   };
 
+  const featuredProducts = productList.filter(product => product.featured);
+
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
+      {/* Categories */}
       <ItemsCarousel categories={categories} />
 
-      <ProductsCarousel products={productList} onSelect={handleSelect} onToggleLike={toggleLike} />
+      {/* Featured Products */}
+      <ProductsCarousel
+        title="Featured Products"
+        category="all"
+        products={featuredProducts}
+        onSelect={handleSelect}
+        onToggleLike={toggleLike}
+      />
 
+      {/* Category Carousels */}
+      {categories.map(category => {
+        const categoryProducts = productList.filter(product => product.category === category.slug);
+
+        if (!categoryProducts.length) return null;
+
+        return (
+          <ProductsCarousel
+            key={category.slug}
+            title={category.label}
+            category={category.slug}
+            products={categoryProducts}
+            onSelect={handleSelect}
+            onToggleLike={toggleLike}
+          />
+        );
+      })}
+
+      {/* Product Modal */}
       <ProductModal
         product={selectedProduct}
         open={open}
         onClose={handleClose}
-        // FIXED: Pass current index and list length down to the modal
         currentIndex={currentIndex >= 0 ? currentIndex : 0}
         totalProducts={productList.length}
-        // OPTIMIZATION: Uses selectedId directly to avoid transition lag bugs with AnimatePresence
         onToggleLike={selectedId ? () => toggleLike(selectedId) : undefined}
         onPrevious={previousProduct ? () => setSelectedId(previousProduct.id) : undefined}
         onNext={nextProduct ? () => setSelectedId(nextProduct.id) : undefined}

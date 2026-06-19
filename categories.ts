@@ -4,7 +4,7 @@ import {
   Wine,
   UtensilsCrossed,
   PartyPopper,
-  Coffee,
+
 } from 'lucide-react';
 
 export const categories = [

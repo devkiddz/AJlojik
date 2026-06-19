@@ -117,35 +117,46 @@ function ProductContent({
 
         <RatingComponent rating={product.rating} reviews={product.reviews} />
 
-        <div className="flex flex-col gap-4">
-          <div className="text-2xl font-bold text-rose-500">₦{activeVariant.price.toLocaleString()}</div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <span className="text-xs text-muted-foreground">Size</span>
-              <span className="text-xs text-muted-foreground">{activeVariant.stockLeft} left</span>
+        {/* SIZE + PRICE */}
+        <div className="mt-4 flex items-end justify-between gap-4">
+          <div className="flex flex-col items-start gap-2" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Size: {activeVariant.label} </span>
+              <span className="text-xs p-2 bg-rose-500/10 text-rose-500 rounded-2xl">
+                Available: {activeVariant.stockLeft} left
+              </span>
             </div>
 
-            <Select
-              value={selectedVariantId}
-              onValueChange={value => {
-                setSelectedVariantId(value ?? '');
-              }}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Size" />
-              </SelectTrigger>
+            <div className="flex items-center justify-between gap-8">
+              <Select
+                value={selectedVariantId}
+                onValueChange={value => {
+                  if (value) {
+                    setSelectedVariantId(value);
+                  }
+                }}>
+                <SelectTrigger className="h-8 w-[150px]">
+                  <SelectValue placeholder="Select Size" />
+                </SelectTrigger>
 
-              <SelectContent>
-                {product.variants.map(variant => (
-                  <SelectItem key={variant.id} value={variant.id}>
-                    {variant.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {product.variants.map(variant => (
+                    <SelectItem key={variant.id} value={variant.id}>
+                      {variant.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center justify-end">
+                <span className="text-xl font-bold text-rose-500">
+                  ₦{activeVariant.price.toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* DESCRIPTION AREA */}
         <div className="text-sm leading-relaxed text-muted-foreground">{product.longDescription}</div>
 
         <div className="flex flex-col gap-3 pt-4 sm:flex-row">
