@@ -107,7 +107,7 @@ export default function FooterComponent({ brandName, brandSlug }: { brandName: s
               <AtSign className="w-3" /> {new Date().getFullYear()}
             </span>{' '}
             <div className="text-xl flex items-center space-x-1">
-              <Link className="flex items-baseline gap-1" href="/">
+              <Link className="flex items-baseline gap-1" href="">
                 <span className="text-rose-500 text-sm font-normal">{brandName}</span>{' '}
                 <span className="text-xs font-light tracking-tight">{brandSlug}</span>
                 <Aperture className="text-rose-500 w-2 h-2" />

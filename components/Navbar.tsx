@@ -12,6 +12,7 @@ import LogoComponent from './shared/LogoComponent';
 import { CartLogics } from './shared/CartLogics';
 import SidebarToggle from './shared/SidebarToggle';
 import { Button } from './ui/button';
+import Link from 'next/link';
 
 type BrandType = {
   brandName: string;
@@ -19,7 +20,6 @@ type BrandType = {
 };
 
 const brands = [
-  { id: 'Market', label: 'AJ Stores', icon: Landmark, slug: 'all' },
   { id: 'kitchen', label: 'AJ Kitchen', icon: UtensilsCrossed, slug: 'kitchen' },
   { id: 'liqz', label: 'AJ Liqz', icon: Wine, slug: 'wines' },
   { id: 'party', label: 'Party Plans', icon: PartyPopper, slug: 'party-plans' }
@@ -33,6 +33,10 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   const searchParams = useSearchParams();
 
   const activeCategory = searchParams.get('category') || 'all';
+
+  // ✅ ADD THIS HERE (IMPORTANT)
+  const isStoreActive = pathname.startsWith('/store');
+
   const isLoggedIn = true;
   const user = isLoggedIn
     ? {
@@ -97,6 +101,27 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           `}>
           {/* BRANDS */}
           <div className="flex items-center shrink-0">
+            <div className="store-btn">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  const params = new URLSearchParams();
+
+                  if (activeCategory && activeCategory !== 'all') {
+                    params.set('category', activeCategory);
+                  }
+
+                  router.push(`/store?${params.toString()}`, { scroll: false });
+                }}
+                className={`
+                flex h-8 items-center gap-2 rounded-full px-3 text-xs cursor-pointer
+                transition-all duration-300
+                ${isStoreActive ? 'text-rose-500 bg-rose-500/10' : 'text-muted-foreground hover:text-rose-500'}
+              `}>
+                <Landmark className="h-4 w-4" />
+                AJ Store
+              </Button>
+            </div>
             {brands.map(item => {
               const Icon = item.icon;
               const isActive = activeCategory === item.slug;
@@ -107,6 +132,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                   variant="ghost"
                   onClick={() => handleCategoryChange(item.slug)}
                   className={`
+                    cursor-pointer
                     flex h-8 p-2 text-xs items-center rounded-full
                     transition-all duration-300
                     ${isActive ? 'text-rose-500 bg-rose-500/10' : 'text-muted-foreground hover:text-rose-500'}
