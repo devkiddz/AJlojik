@@ -9,7 +9,7 @@ export default function MainSectionGrid() {
   return (
     <div className="w-full">
       {/* 1. HERO CAROUSEL (Left Feature Area) */}
-      <section className="w-full grid grid-cols-12 gap-1 -mt-15 bg-primary  shadow-yellow-800 shadow-2xl">
+      <section className="w-full grid grid-cols-12 gap-1 -mt-15 bg-rose-900/10  shadow-rose-800/30 shadow-2xl">
         <section className="col-span-12 md:col-span-8">
           <HeroCarousel />
         </section>

@@ -114,7 +114,7 @@ export default function HeroCarousel() {
         <button
           onClick={prevSlide}
           aria-label="Previous Slide"
-          className="absolute left-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-r from-black/30 to-transparent transition hover:from-black/50">
+          className="absolute left-0 top-0 z-20 flex h-full w-16 items-center justify-center from-black/30 to-transparent transition hover:from-black/50">
           <ChevronLeft className="h-8 w-8 text-white" />
         </button>
 
