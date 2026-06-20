@@ -14,7 +14,7 @@ export const categories = [
     slug: 'all',
     label: 'All Products',
     icon: Logs,
-    image: 'https://images.unsplash.com/photo-1660627254751-792e5dcf3e1c?q=80&w=1170&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1577538928305-3807c3993047?q=80&w=1170&auto=format&fit=crop',
     subcategories: [
       { label: 'New Arrivals', slug: 'new-arrivals' },
       { label: 'Best Sellers', slug: 'best-sellers' },
