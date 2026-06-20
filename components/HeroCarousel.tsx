@@ -57,7 +57,7 @@ export default function HeroCarousel() {
   }, [current]);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl">
+    <section className="relative overflow-hidden rounded-md">
       <div className="relative aspect-16/8 min-h-[320px]">
         {/* Slides */}
         <div

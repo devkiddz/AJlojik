@@ -11,7 +11,7 @@ type CategoryCardProps = {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <article className="group relative w-95 hover:w-107 sm:w-95 h-35 shrink-0 rounded-2xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-rose-500/40 hover:bg-zinc-800 overflow-hidden">
+    <article className="group relative w-95 hover:w-107 sm:w-95 h-35 shrink-0 rounded-2xl border border-primary/10 transition-all duration-300 overflow-hidden">
       <div className="flex h-full items-center gap-4 p-4">
         {/* Image */}
         <div className="relative h-25 w-35 sm:h-30 sm:w-39 shrink-0 overflow-hidden rounded-xl">
@@ -27,7 +27,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
         <div className="flex min-w-0 flex-1 flex-col">
           <h3 className="truncate text-base font-semibold text-primary sm:text-lg">{category.label}</h3>
 
-          <p className="mt-1 line-clamp-2 text-xs text-white/60 sm:text-sm">
+          <p className="mt-1 line-clamp-2 text-xs text-primary sm:text-sm">
             {category.subcategories?.length
               ? category.subcategories
                   .slice(0, 3)

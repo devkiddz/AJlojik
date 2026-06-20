@@ -43,10 +43,10 @@ export default function FeaturedCategoriesGrid() {
   return (
     <section className="w-full px-1">
       {/* Main Grid Wrapper */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 relative aspect-5/2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 relative aspect-5/2 rounded-md bg-transparent">
         {/* LEFT SIDE: Big Hero (Kitchen Logik) */}
         {mainHero && (
-          <div className="group relative lg:col-span-12 flex flex-col justify-end w-full h-105 rounded-md overflow-hidden shadow-md cursor-pointer">
+          <div className="group relative lg:col-span-12 flex flex-col justify-end w-full h-105 rounded-md overflow-hidden cursor-pointer">
             <div className="absolute inset-0 z-0">
               <Image
                 fill
@@ -75,7 +75,7 @@ export default function FeaturedCategoriesGrid() {
         )}
 
         {/* RIGHT SIDE: Sub-grid holding the two next to each other */}
-        <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 gap-1 h-53">
+        <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 gap-1 h-50 bg-transparent">
           {subPairs.map(card => (
             <div
               key={card.id}

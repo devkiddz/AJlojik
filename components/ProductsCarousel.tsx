@@ -86,7 +86,7 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
           <p className="text-xs text-muted-foreground">{products.length} products available</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 z-3">
           <Link
             href={`/store?category=${category}`}
             className="text-sm font-medium text-rose-500 transition hover:text-rose-600">
