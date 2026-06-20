@@ -1,12 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { CategoryType } from '@/types';
+import { categoryType } from '@/types';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 type CategoryCardProps = {
-  category: CategoryType;
+  category: categoryType;
 };
 
 export default function CategoryCard({ category }: CategoryCardProps) {
@@ -44,7 +44,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             {/* VIEW BUTTON (hover reveal) */}
             <Link
               href="/shop"
-              aria-label="view Category"
+              aria-label="view category"
               className="
                 flex items-center gap-1
                 rounded-full bg-white-500/10 px-4 py-1

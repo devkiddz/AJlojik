@@ -32,7 +32,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const activeCategory = searchParams.get('category') || 'all';
+  const activecategory = searchParams.get('category') || 'all';
 
   // ✅ ADD THIS HERE (IMPORTANT)
   const isStoreActive = pathname.startsWith('/store');
@@ -52,7 +52,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleCategoryChange = useCallback(
+  const handlecategoryChange = useCallback(
     (slug: string) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('category', slug);
@@ -63,7 +63,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky top-0 z-50 h-14 w-full bg-background/80 backdrop-blur-5xl shadow">
+    <header className="sticky top-0 z-50 h-14 w-full bg-background/80 backdrop-blur-xl shadow">
       <div className="relative mx-auto flex h-full items-center justify-between px-4">
         {/* LEFT */}
         <div className="flex items-center gap-1.5">
@@ -107,8 +107,8 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                 onClick={() => {
                   const params = new URLSearchParams();
 
-                  if (activeCategory && activeCategory !== 'all') {
-                    params.set('category', activeCategory);
+                  if (activecategory && activecategory !== 'all') {
+                    params.set('category', activecategory);
                   }
 
                   router.push(`/store?${params.toString()}`, { scroll: false });
@@ -124,13 +124,13 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
             </div>
             {brands.map(item => {
               const Icon = item.icon;
-              const isActive = activeCategory === item.slug;
+              const isActive = activecategory === item.slug;
 
               return (
                 <Button
                   key={item.id}
                   variant="ghost"
-                  onClick={() => handleCategoryChange(item.slug)}
+                  onClick={() => handlecategoryChange(item.slug)}
                   className={`
                     cursor-pointer
                     flex h-8 p-2 text-xs items-center rounded-full

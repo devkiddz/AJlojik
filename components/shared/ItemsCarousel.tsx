@@ -4,10 +4,10 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import CategoryCard from './CategoryCard';
-import { CategoryType } from '@/types';
+import { categoryType } from '@/types';
 
 type Props = {
-  categories: CategoryType[];
+  categories: categoryType[];
 };
 
 export default function CategoriesCarousel({ categories }: Props) {

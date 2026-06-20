@@ -55,7 +55,7 @@ export default function ProductsComponent() {
         onToggleLike={toggleLike}
       />
 
-      {/* Category Carousels */}
+      {/* category Carousels */}
       {categories.map(category => {
         const categoryProducts = productList.filter(product => product.category === category.slug);
 

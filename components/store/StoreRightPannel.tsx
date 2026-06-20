@@ -2,9 +2,9 @@ import React from 'react';
 
 export default function StoreRightPannel() {
   return (
-    <div className="sticky top-15 space-y-4">
+    <div className="sticky top-15 p-2 rounded-md bg-muted">
       {/* CART */}
-      <div className="rounded-2xl bg-card p-4">
+      <div className="rounded-2xl p-4">
         <h2 className="mb-3 text-sm font-semibold">Shopping Cart</h2>
 
         <p className="text-xs text-muted-foreground">No items added yet.</p>

@@ -1,10 +1,10 @@
 'use client';
 
 import CategoryCard from './CategoryCard';
-import { CategoryType } from '@/types';
+import { categoryType } from '@/types';
 
 type Props = {
-  categories: CategoryType[];
+  categories: categoryType[];
 };
 
 export default function CategoriesRow({ categories }: Props) {

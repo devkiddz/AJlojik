@@ -1,10 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { CategoryType } from '@/types';
+import { categoryType } from '@/types';
 
 type Props = {
-  category: CategoryType;
+  category: categoryType;
   active?: boolean;
   onClick?: () => void;
 };
@@ -13,7 +13,7 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
   return (
     <article
       onClick={onClick}
-      className="group relative h-40 w-full cursor-pointer rounded-2xl border border-primary/10 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+      className="group relative h-30 w-full cursor-pointer rounded-md border border-primary/10 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
       <div className="flex h-full items-center gap-4 p-4">
         {/* IMAGE */}
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl sm:h-24 sm:w-24">

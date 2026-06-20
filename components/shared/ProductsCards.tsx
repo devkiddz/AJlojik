@@ -60,7 +60,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
         <h3 className="line-clamp-1 text-sm font-semibold">{product.name}</h3>
         <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{product.shortDescription}</p>
 
-        {/* CATEGORY + PREVIEW */}
+        {/* category + PREVIEW */}
         <div className="mt-3 flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs text-primary">
             <ChartColumnStacked className="h-3 w-3 text-rose-500" />

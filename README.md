@@ -8,7 +8,7 @@ AJlojik is a modern ecommerce platform focused on delivering a fast, elegant, an
 Features
 Modern responsive UI
 Dark & Light theme support
-Category-driven product discovery
+category-driven product discovery
 Interactive product cards
 Hero carousel promotions
 Scalable Next.js architecture

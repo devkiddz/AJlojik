@@ -30,7 +30,7 @@ export default function PreviewPanel({ product }: PreviewPanelProps) {
             <p className="text-sm text-muted-foreground mt-1">{product.shortDescription}</p>
           </div>
 
-          {/* CATEGORY */}
+          {/* category */}
           <div className="text-xs text-primary">{product.category}</div>
 
           {/* RATING */}

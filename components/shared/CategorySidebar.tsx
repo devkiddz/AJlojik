@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type CategorySidebarProps = {
+type categorySidebarProps = {
   open: boolean;
   onClose: () => void;
 };
 
-export default function CategorySidebar({ open, onClose }: CategorySidebarProps) {
+export default function categorySidebar({ open, onClose }: categorySidebarProps) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();

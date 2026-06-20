@@ -27,7 +27,7 @@ export default function HeroComponent() {
       <div className="absolute inset-0 bg-black/30 dark:bg-black/60" />
 
       {/* CONTENT */}
-      <div className="relative w-full flex flex-col items-center justify-center pt-1">
+      <div className="relative w-full flex flex-col items-center justify-center">
         <Suspense fallback={<div>Loading...</div>}>
           <MainSectionGrid />
         </Suspense>

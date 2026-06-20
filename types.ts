@@ -1,3 +1,6 @@
+// 
+
+
 import { LucideIcon } from 'lucide-react';
 
 /**
@@ -12,37 +15,6 @@ export type ProductVariant = {
 };
 
 /**
- * Main Product Model
- */
-export type ProductType = {
-  id: string;
-  slug: string;
-  name: string;
-
-  shortDescription: string;
-  longDescription: string;
-
-  category: string;
-  tags: string[];
-
-  /**
-   * Product options (sizes, volumes, packs, etc.)
-   */
-  variants: ProductVariant[];
-
-  rating: number;
-  reviews: number;
-  soldCount: number;
-
-  liked: boolean;
-  featured: boolean;
-  isNew: boolean;
-
-  estimatedDelivery: string;
-  discountPercentage: number;
-};
-
-/**
  * Subcategory structure
  */
 export type SubcategoryType = {
@@ -51,9 +23,9 @@ export type SubcategoryType = {
 };
 
 /**
- * Category structure
+ * category structure
  */
-export type CategoryType = {
+export type categoryType = {
   id: string;
   slug: string;
   label: string;
@@ -64,7 +36,58 @@ export type CategoryType = {
 };
 
 /**
+ * Main Product Model
+ */
+export type ProductType = {
+  id: string;
+  slug: string;
+  name: string;
+
+  shortDescription: string;
+  longDescription: string;
+
+  /**
+   * Relationship to categoryType.slug
+   */
+  category: string;
+
+  /**
+   * Optional relationship to a subcategory
+   */
+  subcategory?: string;
+
+  tags: string[];
+
+  variants: ProductVariant[];
+
+  rating: number;
+  reviews: number;
+  soldCount: number;
+
+  liked: boolean;
+
+  /**
+   * Store merchandising flags
+   */
+  featured: boolean;
+  isNew: boolean;
+
+  estimatedDelivery: string;
+  discountPercentage: number;
+};
+
+/**
+ * Discovery Section
+ * Used for the Spotify-style:
+ * Featured category + Product Carousel
+ */
+export type DiscoverySectionType = {
+  category: categoryType;
+  products: ProductType[];
+};
+
+/**
  * Collections
  */
 export type ProductsType = ProductType[];
-export type CategoriesType = CategoryType[];
+export type CategoriesType = categoryType[];

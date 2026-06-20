@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function StoreAside() {
   return (
-    <div className="sticky top-14 space-y-4 rounded-2xl bg-card p-4">
+    <div className="sticky top-15 p-2 rounded-md bg-muted">
       <div>
         <h2 className="mb-3 text-sm font-semibold">Browse</h2>
 
