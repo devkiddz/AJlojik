@@ -24,7 +24,7 @@ export default function AJStorePage() {
     <div className="mx-auto px-4 py-4 -mt-5">
       <div className="grid min-h-screen grid-cols-12 gap-4">
         {/* LEFT */}
-        <aside className="col-span-12 lg:col-span-2">
+        <aside className="hidden md:block col-span-12 lg:col-span-2">
           <StoreAside />
         </aside>
 

@@ -13,10 +13,10 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
   return (
     <article
       onClick={onClick}
-      className="group relative h-30 w-full cursor-pointer rounded-md border border-primary/10 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
-      <div className="flex h-full items-center gap-4 p-4">
+      className="group relative h-14 md:h-30 w-full cursor-pointer rounded-md border border-primary/10 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+      <div className="flex h-full items-center gap-4 p-1 md:p-4">
         {/* IMAGE */}
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl sm:h-24 sm:w-24">
+        <div className="relative h-10 w-10 rounded-md md:h-20 md:w-20 shrink-0 overflow-hidden md:rounded-xl">
           <Image
             src={category.image}
             alt={category.label}
@@ -26,10 +26,10 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
         </div>
 
         {/* CONTENT */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <h3 className="truncate text-base font-semibold text-primary">{category.label}</h3>
+        <div className="flex min-w-0 md:flex-1 flex-col justify-center">
+          <h3 className="md:truncate md:text-base font-semibold text-primary">{category.label}</h3>
 
-          <p className="mt-1 line-clamp-2 text-xs text-primary/70">
+          <p className="hidden md:block mt-1 line-clamp-2 text-xs text-primary/70">
             {category.subcategories?.length
               ? category.subcategories
                   .slice(0, 3)
@@ -38,7 +38,7 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
               : 'Explore products'}
           </p>
 
-          <div className="mt-auto pt-2">
+          <div className="mt-auto md:pt-2">
             <span className="rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-400">
               {category.subcategories?.length ?? 0} items
             </span>
