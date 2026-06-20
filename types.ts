@@ -39,6 +39,7 @@ export type categoryType = {
  * Main Product Model
  */
 export type ProductType = {
+
   id: string;
   slug: string;
   name: string;
@@ -89,5 +90,30 @@ export type DiscoverySectionType = {
 /**
  * Collections
  */
+
+/**
+ * User's Dummy Types
+ */
+
+export type UserType = {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+
+  wishlist: string[]; // product IDs
+  cart: {
+    productId: string;
+    quantity: number;
+  }[];
+};
+
+export type ProductVariantType = {
+  id: string | number;
+  label: string;       // e.g., "750ml", "1 Litre", "Box of 6"
+  price: number;       // Base price for this specific variant option
+};
+
+
 export type ProductsType = ProductType[];
 export type CategoriesType = categoryType[];
