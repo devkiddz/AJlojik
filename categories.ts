@@ -1,4 +1,5 @@
 import {
+  Logs,
   Sparkles,
   BadgePercent,
   Wine,
@@ -8,6 +9,18 @@ import {
 } from 'lucide-react';
 
 export const categories = [
+  {
+    id: 'all',
+    slug: 'all',
+    label: 'All Products',
+    icon: Logs,
+    image: 'https://images.unsplash.com/photo-1660627254751-792e5dcf3e1c?q=80&w=1170&auto=format&fit=crop',
+    subcategories: [
+      { label: 'New Arrivals', slug: 'new-arrivals' },
+      { label: 'Best Sellers', slug: 'best-sellers' },
+      { label: 'Trending Now', slug: 'trending' }
+    ]
+  },
   {
     id: 'featured',
     slug: 'featured',
