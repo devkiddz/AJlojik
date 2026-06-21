@@ -34,21 +34,23 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
       //  group overflow-hidden rounded-md transition-all bg-card/50 hover:bg-card
       className="group cursor-pointer rounded-md bg-background transition-all hover:shadow-md">
       {/* IMAGE CONTAINER */}
-      <div className="relative aspect-2/1.5 md:aspect-5/4 overflow-hidden rounded-lg bg-muted ">
+      <div className="relative aspect-2/1.5 md:aspect-5/4 overflow-hidden rounded-lg bg-muted w-full">
         <Image
           src={activeVariant.image}
           alt={product.name}
           fill
-          sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 25vw"
+          sizes="(max-w: 768px) 75vw, 240px" /* Adjusted sizes to match slider constraints */
           className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
 
-        <div className="relative flex flex-col" onClick={e => e.stopPropagation()}>
-          <span className="absolute top-3 z-30">
+        {/* FIXED: Added clear pointer containment layout boundary */}
+        <div className="absolute inset-0 z-20 pointer-events-none" onClick={e => e.stopPropagation()}>
+          <span className="absolute top-3 left-3 pointer-events-auto">
             <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
           </span>
+
           {product.discountPercentage > 0 && (
-            <span className="top-5 absolute right-1 rounded-full border-b bg-rose-500/90 px-2 py-1 text-xs font-medium text-white shadow-sm">
+            <span className="top-3 right-3 absolute rounded-full bg-rose-500 px-2 py-1 text-[10px] font-medium text-white shadow-sm">
               -{product.discountPercentage}% off
             </span>
           )}

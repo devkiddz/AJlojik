@@ -30,7 +30,7 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
   };
 
   return (
-    <section className="w-full">
+    <section className="">
       {/* HEADER */}
       <div className="mb-4 flex items-center justify-between px-2 mt-5">
         <div className="flex items-baseline gap-2">
@@ -63,9 +63,9 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
       {/* SLIDER */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-2 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide pb-2">
+        className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide pb-2 min-w-0 ">
         {featuredProducts.map(product => (
-          <div key={product.id} className=" max-w-[230px] flex-shrink-0 snap-start">
+          <div key={product.id} className="w-[32%] min-w-30 sm:w-45 md:w-55 flex-shrink-0 snap-start ">
             <StoreProductCard
               product={product}
               onPreview={() => onPreview?.(product)}

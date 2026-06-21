@@ -40,7 +40,7 @@ export default function AJStorePage() {
               </div>
 
               {/* CLEAN GRID (NO EXTRA WRAPPER COMPONENT) */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-3 gap-2  pt-10 -mt-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-2  pt-10 -mt-5">
                 {categories.map(category => (
                   <StoreCategoryCard key={category.id} category={category} />
                 ))}
@@ -49,15 +49,12 @@ export default function AJStorePage() {
 
             {/* FEATURED */}
             <section className="grid gap-6 lg:grid-cols-5">
-              <div className="col-span-1 lg:col-span-2">
+              <div className="lg:col-span-2 min-w-0">
                 <StoreFeaturedProductCard product={featuredProduct} />
               </div>
 
-              <div className="lg:col-span-3">
-                {/* Carousel comes next */}
-                <section className="col-span-5 mb-6">
-                  <StoreFeaturedProductsSlide products={featuredProducts} />
-                </section>
+              <div className="lg:col-span-3 min-w-0">
+                <StoreFeaturedProductsSlide products={featuredProducts} />
               </div>
             </section>
 
