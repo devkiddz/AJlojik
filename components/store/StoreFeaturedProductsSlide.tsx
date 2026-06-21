@@ -65,7 +65,7 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
         ref={scrollContainerRef}
         className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide pb-2 min-w-0 ">
         {featuredProducts.map(product => (
-          <div key={product.id} className="w-[32%] min-w-30 sm:w-45 md:w-55 flex-shrink-0 snap-start ">
+          <div key={product.id} className="w-[35%] min-w-30 sm:w-65 md:w-55 flex-shrink-0 snap-start ">
             <StoreProductCard
               product={product}
               onPreview={() => onPreview?.(product)}
