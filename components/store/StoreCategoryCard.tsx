@@ -27,7 +27,7 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
 
         {/* CONTENT */}
         <div className="flex min-w-0 md:flex-1 flex-col justify-center">
-          <h3 className="md:truncate md:text-base font-semibold text-primary">{category.label}</h3>
+          <h3 className="md:truncate text-xs md:text-base font-semibold text-primary">{category.label}</h3>
 
           <p className="hidden md:block mt-1 line-clamp-2 text-xs text-primary/70">
             {category.subcategories?.length
