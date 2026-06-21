@@ -58,7 +58,7 @@ export default function HeroCarousel() {
 
   return (
     <section className="relative overflow-hidden rounded-md">
-      <div className="relative aspect-16/8 min-h-[320px]">
+      <div className="relative min-h-50 aspect-16/8 md:min-h-80">
         {/* Slides */}
         <div
           className="flex h-full transition-transform duration-700 ease-in-out"
@@ -71,18 +71,18 @@ export default function HeroCarousel() {
 
               <div className="absolute inset-0 bg-black/45" />
 
-              <div className="absolute inset-0 flex items-center">
+              <div className="absolute -top-3 md:top-0 inset-0 flex items-center">
                 <div className="max-w-xl px-8 md:px-16 text-white">
-                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs backdrop-blur">
+                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs md:text-xs backdrop-blur">
                     {slide.badge}
                   </span>
 
-                  <h1 className="mt-4 text-3xl font-bold md:text-5xl">{slide.title}</h1>
+                  <h1 className="mt-1 md:mt-4 text-lg font-bold md:text-5xl">{slide.title}</h1>
 
-                  <p className="mt-3 text-white/90">{slide.description}</p>
+                  <p className="text-sm md:text-base md:mt-2 text-white/90">{slide.description}</p>
 
-                  <div className="mt-6 flex gap-3">
-                    <button className="rounded-full bg-rose-500 px-5 py-2 text-sm text-white">
+                  <div className="relative top-1 md:top-4 flex gap-3">
+                    <button className="rounded-full bg-rose-500 px-5 py-2 text-xs md:text-sm text-white">
                       Shop Now
                     </button>
 
@@ -97,24 +97,25 @@ export default function HeroCarousel() {
         </div>
 
         {/* Bootstrap-style Controls */}
-        <button
-          aria-label="slide left"
-          type="button"
-          onClick={prevSlide}
-          className="absolute left-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-r from-black/30 to-transparent">
-          <ChevronLeft className="h-8 w-8 text-white" />
-        </button>
+        <div className="hidden hover:flex relative bottom-40 md:bottom-80 w-100">
+          <button
+            aria-label="slide left"
+            type="button"
+            onClick={prevSlide}
+            className="absolute left-0 top-0 z-20 flex h-full w-10 md:w-16 items-center justify-center bg-gradient-to-r from-black/30 to-transparent">
+            <ChevronLeft className="h-8 w-8 text-white cursor-pointer" />
+          </button>
 
-        <button
-          aria-label="slide right"
-          type="button"
-          onClick={nextSlide}
-          className="absolute right-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-l from-black/30 to-transparent">
-          <ChevronRight className="h-8 w-8 text-white" />
-        </button>
-
+          <button
+            aria-label="slide right"
+            type="button"
+            onClick={nextSlide}
+            className="absolute right-0 top-0 z-20 flex h-full w-16 items-center justify-center bg-gradient-to-l from-black/30 to-transparent">
+            <ChevronRight className="h-8 w-8 text-white cursor-pointer" />
+          </button>
+        </div>
         {/* Indicators */}
-        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+        <div className="absolute left-1/3 bottom-5 md:left-1/2 z-20 flex -translate-x-1/2 gap-2">
           {slides.map((_, index) => (
             <button
               aria-label="slider index"
@@ -122,7 +123,7 @@ export default function HeroCarousel() {
               key={index}
               onClick={() => setCurrent(index)}
               className={`h-2 rounded-full transition-all ${
-                current === index ? 'w-4 bg-white' : 'w-6 bg-white/50'
+                current === index ? 'w-3 bg-white' : 'w-2 bg-white/50'
               }`}
             />
           ))}

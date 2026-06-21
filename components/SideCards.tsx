@@ -41,12 +41,12 @@ export default function FeaturedCategoriesGrid() {
   const subPairs = featuredCategories.filter(c => c.size === 'small');
 
   return (
-    <section className="w-full px-1">
+    <section className="w-full px-1 min-h-120">
       {/* Main Grid Wrapper */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 relative aspect-5/2 rounded-md bg-transparent">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 relative aspect-5/2 rounded-md bg-muted">
         {/* LEFT SIDE: Big Hero (Kitchen Logik) */}
         {mainHero && (
-          <div className="group relative lg:col-span-12 flex flex-col justify-end w-full h-105 rounded-md overflow-hidden cursor-pointer">
+          <div className="group relative lg:col-span-12 flex flex-col justify-end w-full h-40 md:h-105 rounded-md overflow-hidden cursor-pointer">
             <div className="absolute inset-0 z-0">
               <Image
                 fill
@@ -80,7 +80,7 @@ export default function FeaturedCategoriesGrid() {
             <div
               key={card.id}
               // whileHover={{ y: -2 }}
-              className="group relative flex flex-col justify-end w-full h-[180px] lg:h-full rounded-md overflow-hidden shadow-sm cursor-pointer">
+              className="group relative flex flex-col justify-end w-full h-40 md:h-45 lg:h-full rounded-md overflow-hidden shadow-sm cursor-pointer">
               <div className="absolute inset-0 z-0">
                 <Image
                   fill

@@ -77,7 +77,7 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
   if (!products.length) return null;
 
   return (
-    <section className="mt-4 rounded-2xl bg-muted p-4">
+    <section className="mt-4 rounded-sm md:rounded-2xl bg-muted p-4">
       {/* HEADER */}
       <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
         <div>

@@ -18,7 +18,7 @@ export default function MainSectionGrid() {
 
         {/* 2. SIDE PANEL (Right Editorial Cards) */}
         {/* Making this sticky keeps it tracked with the viewport while scrolling down */}
-        <aside className="col-span-12 md:col-span-4 md:top-4 h-fit space-y-4">
+        <aside className="col-span-12 md:col-span-4 space-y-4">
           <SideCards />
         </aside>
       </section>

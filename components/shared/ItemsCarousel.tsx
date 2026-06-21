@@ -123,7 +123,7 @@ export default function CategoriesCarousel({ categories }: Props) {
   }, [categories, calculateMetrics]);
 
   return (
-    <section className="relative bg-muted p-4 rounded-2xl">
+    <section className="relative bg-muted p-4 rounded-sm md:rounded-2xl">
       {/* Header Controls */}
       <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
         <Button variant="ghost">

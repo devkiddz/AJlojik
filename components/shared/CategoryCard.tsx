@@ -11,7 +11,7 @@ type CategoryCardProps = {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <article className="group relative w-95 hover:w-107 sm:w-95 h-35 shrink-0 rounded-2xl border border-primary/10 transition-all duration-300 overflow-hidden">
+    <article className="group relative w-95 hover:w-107 sm:w-95 h-35 shrink-0 rounded-lg md:rounded-2xl border border-primary/10 transition-all duration-300 overflow-hidden">
       <div className="flex h-full items-center gap-4 p-4">
         {/* Image */}
         <div className="relative h-25 w-35 sm:h-30 sm:w-39 shrink-0 overflow-hidden rounded-xl">
