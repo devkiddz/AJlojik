@@ -4,9 +4,10 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductType } from '@/types';
-import { ChartColumnStacked, Eye, Form } from 'lucide-react';
+import { ChartColumnStacked, Eye, Form, ShoppingCart } from 'lucide-react';
 import LikedComponent from '@/components/shared/LikedComponent';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '../ui/button';
 
 type Props = {
   product: ProductType;
@@ -72,19 +73,27 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
           <div className="mt-4 flex items-end justify-between gap-4">
             {/* Prevent clicks inside this interactive area from bubbling out to the card container */}
             <div className="flex flex-col items-start gap-2 w-full" onClick={e => e.stopPropagation()}>
-              <div className="flex gap-2">
-                <span className="text-xs text-muted-foreground">Size</span>
-                <span className="text-xs text-muted-foreground">{activeVariant.stockLeft} left</span>
+              <div className="flex w-full justify-between items-center">
+                <div className="flex gap-2">
+                  <span className="text-xs text-muted-foreground">Size</span>
+                  <span className="text-xs text-muted-foreground">{activeVariant.stockLeft} left</span>
+                </div>
+
+                <div className="flex items-center justify-end shrink-0">
+                  <span className="text-xs md:text-sm font-bold text-rose-500">
+                    ₦{activeVariant.price.toLocaleString()}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center w-full gap-4">
+              <div className="flex justify-between items-center w-full gap-4 mt-2">
                 <Select
                   value={selectedVariantId}
                   onValueChange={value => {
                     if (value) setSelectedVariantId(value);
                   }}>
                   {/* Intercept the trigger click to preserve state focus rules */}
-                  <SelectTrigger className="h-8 w-[120px]" onClick={e => e.stopPropagation()}>
+                  <SelectTrigger className="h-8 w-[100px]" onClick={e => e.stopPropagation()}>
                     <SelectValue placeholder="Select Size" />
                   </SelectTrigger>
 
@@ -98,9 +107,11 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   </SelectContent>
                 </Select>
 
-                <div className="flex items-center justify-end shrink-0">
+                <div className="flex items-center justify-between shrink-0">
                   <span className="text-sm font-bold text-rose-500">
-                    ₦{activeVariant.price.toLocaleString()}
+                    <Button variant="outline" size="icon" className="rounded-full cursor-pointer">
+                      <ShoppingCart />
+                    </Button>
                   </span>
                 </div>
               </div>
