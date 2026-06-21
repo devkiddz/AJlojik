@@ -13,7 +13,7 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
   return (
     <article
       onClick={onClick}
-      className="group relative h-14 md:h-30 w-full cursor-pointer rounded-md border border-primary/10 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+      className="group relative h-12 md:h-30 w-full cursor-pointer rounded-md border border-primary/10 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
       <div className="flex h-full items-center gap-4 p-1 md:p-4">
         {/* IMAGE */}
         <div className="relative h-10 w-10 rounded-md md:h-20 md:w-20 shrink-0 overflow-hidden md:rounded-xl">
@@ -27,7 +27,9 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
 
         {/* CONTENT */}
         <div className="flex min-w-0 md:flex-1 flex-col justify-center">
-          <h3 className="md:truncate text-xs md:text-base font-semibold text-primary">{category.label}</h3>
+          <h3 className="md:truncate text-[0.8rem] md:text-base font-semibold text-primary">
+            {category.label}
+          </h3>
 
           <p className="hidden md:block mt-1 line-clamp-2 text-xs text-primary/70">
             {category.subcategories?.length
