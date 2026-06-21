@@ -24,22 +24,22 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
     product.variants.find(variant => variant.id === selectedVariantId) ?? product.variants[0];
 
   return (
-    <article className="group flex flex-col gap-2 mt-5 max-w-2xl ">
+    <article className="group flex flex-col gap-2 mt-5 w-md md:max-w-2xl ">
       <div className="flex items-center gap-2">
-        <Form className="w-5 h-5" />
-        <h1 className="text-2xl">Picked for you</h1>
+        <Form className="w-4 h-4 md:w-5 md:h-5" />
+        <h1 className="text-md md:text-2xl">Picked for you</h1>
       </div>
-      <div className="grid grid-cols-5 justify-between items-center px-2 w-full min-h-75 group overflow-hidden rounded-md transition-all bg-card/50 hover:bg-card">
+      <div className="grid grid-cols-5 justify-between items-center px-2 w-full md:min-h-75 group overflow-hidden rounded-md transition-all bg-card/50 hover:bg-card">
         {/* FEATURED PRODUCT IMAGE */}
 
-        <div className="col-span-2 relative aspect-16/16">
+        <div className="col-span-2 relative aspect-square md:aspect-16/16">
           <Image src={activeVariant.image} alt={product.name} fill className="object-cover rounded-md" />
         </div>
 
         {/* FEATURED PRODUCT CONTENTS */}
         {/* CONTENT DETAILS */}
         <div className="p-4 items-center justify-center col-span-3">
-          <h3 className="line-clamp-1 text-2xl font-semibold">{product.name}</h3>
+          <h3 className="line-clamp-1 text-md md:text-2xl font-semibold">{product.name}</h3>
           <p className="mt-2 line-clamp-2 text-xs md:text-sm text-muted-foreground">
             {product.shortDescription}
           </p>

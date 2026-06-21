@@ -34,8 +34,8 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
       {/* HEADER */}
       <div className="mb-4 flex items-center justify-between px-2 mt-5">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-xl font-semibold tracking-tight">Featured Products</h2>
-          <span className="text-xs md:text-md text-rose-400 py-1 px-2 rounded-sm bg-rose-900/20 relative bottom-1">
+          <h2 className="text-md md:text-xl font-semibold tracking-tight">Featured Products</h2>
+          <span className="text-xs md:text-md text-rose-400 py-1 px-2 rounded-sm bg-rose-900/20 relative md:bottom-1">
             ({featuredProducts.length})
           </span>
         </div>

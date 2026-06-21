@@ -1,4 +1,19 @@
 import { ProductsType } from "@/types";
+import moetchandonimperiallg from '@/public/products/moet-chandon-imperial_lg.jpg'
+import moetchandonimperial_md from '@/public/products/moet-chandon-imperial_md.jpg'
+import moetchandonimperial_sm from '@/public/products/moet-chandon-imperial_sm.jpg'
+import hennessy_lg from '@/public/products/hennessy_lg.jpg'
+import jackdaniels_lg from '@/public/products/jackdaniels_lg.jpg'
+import hennessyXO_lg from '@/public/products/hennessyXO_lg.jpg'
+import DomPérignon_lg from '@/public/products/DomPérignon_lg.jpg'
+import moetchandonnectar_lg from '@/public/products/moetchandonnectar_lg.jpg'
+import martellblue_lg from '@/public/products/martellblue_lg.jpg'
+import remymartin_lg from '@/public/products/remymartin_lg.jpg'
+import patronsilvertequila_aj from '@/public/products/patronsilvertequila_aj.jpg'
+import Nespresso_Vertuo_Coffee_Machine from '@/public/products/Nespresso_Vertuo_Coffee_Machine.jpg'
+import KitchenAid_Artisan_Stand_Mixer from '@/public/products/KitchenAid_Artisan_Stand_Mixer.jpg'
+import Birthday_Party_Package from '@/public/products/Birthday_Party_Package.jpg'
+import Premium_Backyard_BBQ_Package from '@/public/products/Premium_Backyard_BBQ_Package.jpg'
 
 export const products: ProductsType = [
   // --- INCLUDED BASE PRODUCTS (1 to 11) ---
@@ -11,9 +26,9 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "Party Plan", "Luxury", "Best Seller"],
     variants: [
-      { id: "Sm", label: "small", image: "https://images.unsplash.com/photo-1594462215881-229cfb20155a?auto=format&fit=crop&w=600&q=80", price: 75000, stockLeft: 8 },
-      { id: "Md", label: "Medium", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 85000, stockLeft: 6 },
-      { id: "Lg", label: "Large", image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=600&q=80", price: 95000, stockLeft: 3 }
+      { id: "Sm", label: "small", image: moetchandonimperiallg.src, price: 75000, stockLeft: 8 },
+      { id: "Md", label: "Medium", image: moetchandonimperial_md.src, price: 85000, stockLeft: 6 },
+      { id: "Lg", label: "Large", image: moetchandonimperial_sm.src, price: 95000, stockLeft: 3 }
     ],
     rating: 4.7,
     reviews: 186,
@@ -33,9 +48,9 @@ export const products: ProductsType = [
     category: "spirits",
     tags: ["Express Delivery", "Popular", "Party Favorite"],
     variants: [
-      { id: "Sm", label: "Small", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 55000, stockLeft: 10 },
-      { id: "Md", label: "Medium", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 62000, stockLeft: 14 },
-      { id: "Lg", label: "Large", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 70000, stockLeft: 7 }
+      { id: "Sm", label: "Small", image: hennessy_lg.src, price: 55000, stockLeft: 10 },
+      { id: "Md", label: "Medium", image: hennessy_lg.src, price: 62000, stockLeft: 14 },
+      { id: "Lg", label: "Large", image: hennessy_lg.src, price: 70000, stockLeft: 7 }
     ],
     rating: 4.8,
     reviews: 154,
@@ -55,9 +70,9 @@ export const products: ProductsType = [
     category: "spirits",
     tags: ["Bulk Order", "Best Seller", "Premium"],
     variants: [
-      { id: "Sm", label: "Small", image: "https://images.unsplash.com/photo-1608885898957-a599fb1b4666?auto=format&fit=crop&w=600&q=80", price: 40000, stockLeft: 0 },
-      { id: "Md", label: "Medium", image: "https://images.unsplash.com/photo-1608885898957-a599fb1b4666?auto=format&fit=crop&w=600&q=80", price: 45000, stockLeft: 0 },
-      { id: "Lg", label: "Large", image: "https://images.unsplash.com/photo-1608885898957-a599fb1b4666?auto=format&fit=crop&w=600&q=80", price: 50000, stockLeft: 0 }
+      { id: "Sm", label: "Small", image: jackdaniels_lg.src, price: 40000, stockLeft: 0 },
+      { id: "Md", label: "Medium", image: jackdaniels_lg.src, price: 45000, stockLeft: 0 },
+      { id: "Lg", label: "Large", image: jackdaniels_lg.src, price: 50000, stockLeft: 0 }
     ],
     rating: 4.7,
     reviews: 173,
@@ -77,9 +92,9 @@ export const products: ProductsType = [
     category: "confectioneries",
     tags: ["Express Delivery", "Party Plan", "Freshly Baked"],
     variants: [
-      { id: "sm", label: "Small", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 15000, stockLeft: 6 },
-      { id: "md", label: "Medium", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 18000, stockLeft: 12 },
-      { id: "lg", label: "Large", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 22000, stockLeft: 4 }
+      { id: "sm", label: "Small", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop", price: 15000, stockLeft: 6 },
+      { id: "md", label: "Medium", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop", price: 18000, stockLeft: 12 },
+      { id: "lg", label: "Large", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop", price: 22000, stockLeft: 4 }
     ],
     rating: 4.6,
     reviews: 87,
@@ -99,8 +114,8 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "Luxury", "Sweet Wine"],
     variants: [
-      { id: "sm", label: "Small", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 78000, stockLeft: 5 },
-      { id: "md", label: "Medium", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 88000, stockLeft: 7 }
+      { id: "sm", label: "Small", image: moetchandonnectar_lg.src, price: 78000, stockLeft: 5 },
+      { id: "md", label: "Medium", image: moetchandonnectar_lg.src, price: 88000, stockLeft: 7 }
     ],
     rating: 4.7,
     reviews: 112,
@@ -120,8 +135,8 @@ export const products: ProductsType = [
     category: "spirits",
     tags: ["Luxury", "Premium", "VIP Favorite"],
     variants: [
-      { id: "md", label: "70cl", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 245000, stockLeft: 4 },
-      { id: "lg", label: "1.5L", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 480000, stockLeft: 2 }
+      { id: "md", label: "70cl", image: hennessyXO_lg.src, price: 245000, stockLeft: 4 },
+      { id: "lg", label: "1.5L", image: hennessyXO_lg.src, price: 480000, stockLeft: 2 }
     ],
     rating: 4.9,
     reviews: 64,
@@ -141,8 +156,8 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Luxury", "Premium", "Best Seller"],
     variants: [
-      { id: "sm", label: "750ml", image: "https://images.unsplash.com/photo-1594462215881-229cfb20155a?auto=format&fit=crop&w=600&q=80", price: 165000, stockLeft: 4 },
-      { id: "md", label: "1.5L", image: "https://images.unsplash.com/photo-1594462215881-229cfb20155a?auto=format&fit=crop&w=600&q=80", price: 290000, stockLeft: 2 }
+      { id: "sm", label: "750ml", image: DomPérignon_lg.src, price: 165000, stockLeft: 4 },
+      { id: "md", label: "1.5L", image: DomPérignon_lg.src, price: 290000, stockLeft: 2 }
     ],
     rating: 4.9,
     reviews: 241,
@@ -162,8 +177,8 @@ export const products: ProductsType = [
     category: "spirits",
     tags: ["Premium", "Popular"],
     variants: [
-      { id: "sm", label: "70cl", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 78000, stockLeft: 11 },
-      { id: "md", label: "1L", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 99000, stockLeft: 6 }
+      { id: "sm", label: "70cl", image: martellblue_lg.src, price: 78000, stockLeft: 11 },
+      { id: "md", label: "1L", image: martellblue_lg.src, price: 99000, stockLeft: 6 }
     ],
     rating: 4.8,
     reviews: 193,
@@ -205,9 +220,9 @@ export const products: ProductsType = [
     category: "party-plans",
     tags: ["Party Plan", "Event Package"],
     variants: [
-      { id: "basic", label: "Basic", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 85000, stockLeft: 12 },
-      { id: "premium", label: "Premium", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 150000, stockLeft: 7 },
-      { id: "vip", label: "VIP", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 300000, stockLeft: 3 }
+      { id: "basic", label: "Basic", image: Birthday_Party_Package.src, price: 85000, stockLeft: 12 },
+      { id: "premium", label: "Premium", image: Birthday_Party_Package.src, price: 150000, stockLeft: 7 },
+      { id: "vip", label: "VIP", image: Birthday_Party_Package.src, price: 300000, stockLeft: 3 }
     ],
     rating: 4.8,
     reviews: 97,
@@ -291,7 +306,7 @@ export const products: ProductsType = [
     category: "spirits",
     tags: ["Premium", "Express Delivery"],
     variants: [
-      { id: "sm", label: "70cl", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 74000, stockLeft: 16 }
+      { id: "sm", label: "70cl", image: remymartin_lg.src, price: 74000, stockLeft: 16 }
     ],
     rating: 4.6,
     reviews: 134,
@@ -352,7 +367,7 @@ export const products: ProductsType = [
     category: "spirits",
     tags: ["Tequila", "Premium", "Express Delivery"],
     variants: [
-      { id: "md", label: "750ml", image: "https://images.unsplash.com/photo-1527281400828-ac3fe76b0041?auto=format&fit=crop&w=600&q=80", price: 72000, stockLeft: 18 }
+      { id: "md", label: "750ml", image: patronsilvertequila_aj.src, price: 72000, stockLeft: 18 }
     ],
     rating: 4.8,
     reviews: 142,
@@ -516,8 +531,8 @@ export const products: ProductsType = [
     category: "party-plans",
     tags: ["Party Plan", "Premium Service", "Corporate"],
     variants: [
-      { id: "std", label: "Up to 50 Guests", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 450000, stockLeft: 2 },
-      { id: "xl", label: "Up to 120 Guests", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 850000, stockLeft: 1 }
+      { id: "std", label: "Up to 50 Guests", image: KitchenAid_Artisan_Stand_Mixer.src, price: 450000, stockLeft: 2 },
+      { id: "xl", label: "Up to 120 Guests", image: KitchenAid_Artisan_Stand_Mixer.src, price: 850000, stockLeft: 1 }
     ],
     rating: 4.9,
     reviews: 38,
@@ -537,7 +552,7 @@ export const products: ProductsType = [
     category: "party-plans",
     tags: ["Party Plan", "Outdoor Event", "Live Catering"],
     variants: [
-      { id: "base", label: "Standard Setup", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 280000, stockLeft: 4 }
+      { id: "base", label: "Standard Setup", image: Premium_Backyard_BBQ_Package.src, price: 280000, stockLeft: 4 }
     ],
     rating: 4.8,
     reviews: 51,
@@ -557,8 +572,8 @@ export const products: ProductsType = [
     category: "kitchen",
     tags: ["Kitchen", "Premium Appliance"],
     variants: [
-      { id: "solo", label: "Machine Only", image: "https://images.unsplash.com/photo-1517256064527-09c53b2d0c6f?auto=format&fit=crop&w=600&q=80", price: 185000, stockLeft: 6 },
-      { id: "bundle", label: "Machine + Aeroccino", image: "https://images.unsplash.com/photo-1517256064527-09c53b2d0c6f?auto=format&fit=crop&w=600&q=80", price: 240000, stockLeft: 4 }
+      { id: "solo", label: "Machine Only", image: Nespresso_Vertuo_Coffee_Machine.src, price: 185000, stockLeft: 6 },
+      { id: "bundle", label: "Machine + Aeroccino", image: Nespresso_Vertuo_Coffee_Machine.src, price: 240000, stockLeft: 4 }
     ],
     rating: 4.7,
     reviews: 82,
@@ -763,7 +778,7 @@ export const products: ProductsType = [
     category: "kitchen",
     tags: ["Kitchen", "Premium Appliance", "Baker Classic"],
     variants: [
-      { id: "std", label: "4.8L Bowl", image: "https://images.unsplash.com/photo-1594385208974-2e75f9d8a8bf?auto=format&fit=crop&w=600&q=80", price: 320000, stockLeft: 5 }
+      { id: "std", label: "4.8L Bowl", image: KitchenAid_Artisan_Stand_Mixer.src, price: 320000, stockLeft: 5 }
     ],
     rating: 4.9,
     reviews: 86,

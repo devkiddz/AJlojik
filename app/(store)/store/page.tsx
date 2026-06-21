@@ -49,7 +49,7 @@ export default function AJStorePage() {
 
             {/* FEATURED */}
             <section className="grid gap-6 lg:grid-cols-5">
-              <div className="lg:col-span-2">
+              <div className="col-span-1 lg:col-span-2">
                 <StoreFeaturedProductCard product={featuredProduct} />
               </div>
 

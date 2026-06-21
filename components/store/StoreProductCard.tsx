@@ -34,7 +34,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
       //  group overflow-hidden rounded-md transition-all bg-card/50 hover:bg-card
       className="group cursor-pointer rounded-md bg-background transition-all hover:shadow-md">
       {/* IMAGE CONTAINER */}
-      <div className="relative aspect-5/4 overflow-hidden rounded-lg bg-muted ">
+      <div className="relative aspect-2/1.5 md:aspect-5/4 overflow-hidden rounded-lg bg-muted ">
         <Image
           src={activeVariant.image}
           alt={product.name}
@@ -57,8 +57,8 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
 
       {/* CONTENT DETAILS */}
       <div className="p-3">
-        <h3 className="line-clamp-1 text-sm font-semibold">{product.name}</h3>
-        <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{product.shortDescription}</p>
+        <h3 className="line-clamp-1 text-xs md:text-sm font-semibold">{product.name}</h3>
+        <p className="mt-2 line-clamp-2 pr-2 text-xs text-muted-foreground">{product.shortDescription}</p>
 
         {/* category + PREVIEW */}
         <div className="mt-3 flex items-center justify-between">
