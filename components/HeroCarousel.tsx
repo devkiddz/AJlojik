@@ -73,7 +73,7 @@ export default function HeroCarousel() {
 
               <div className="absolute -top-3 md:top-0 inset-0 flex items-center">
                 <div className="max-w-xl px-8 md:px-16 text-white">
-                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs md:text-xs backdrop-blur">
+                  <span className="rounded-full bg-white/15 px-3 py-1 text-xs md:text-xs backdrop-blur-3xl">
                     {slide.badge}
                   </span>
 
@@ -81,7 +81,7 @@ export default function HeroCarousel() {
                     {slide.title}
                   </h1>
 
-                  <p className="text-sm md:text-base md:mt-2 text-white/90">{slide.description}</p>
+                  <p className="text-sm md:text-base md:mt-2 text-white font-bold">{slide.description}</p>
 
                   <div className="relative top-1 md:top-4 flex gap-3">
                     <button className="rounded-full bg-rose-500 px-5 py-2 text-xs md:text-sm text-white">
@@ -131,7 +131,7 @@ export default function HeroCarousel() {
           ))}
         </div>
       </div>
-      {/* <div className="absolute inset-0 bg-black/30" /> */}
+      {/* <div className="absolute inset-0 bg-black/20" /> */}
       //
       {/* <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background/20" /> */}
     </section>
