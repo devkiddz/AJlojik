@@ -41,7 +41,7 @@ export default function FeaturedCategoriesGrid() {
   const subPairs = featuredCategories.filter(c => c.size === 'small');
 
   return (
-    <section className="w-full px-1 min-h-120">
+    <section className="w-full px-1">
       {/* Main Grid Wrapper */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-1 relative aspect-5/2 rounded-md bg-muted">
         {/* LEFT SIDE: Big Hero (Kitchen Logik) */}
@@ -75,7 +75,7 @@ export default function FeaturedCategoriesGrid() {
         )}
 
         {/* RIGHT SIDE: Sub-grid holding the two next to each other */}
-        <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 gap-1 h-50 bg-transparent">
+        <div className="lg:col-span-12 grid grid-cols-2 sm:grid-cols-2 gap-1 bg-transparent">
           {subPairs.map(card => (
             <div
               key={card.id}

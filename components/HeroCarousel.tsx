@@ -69,7 +69,7 @@ export default function HeroCarousel() {
             <div key={slide.id} className="relative min-w-full">
               <Image src={slide.image} alt={slide.title} fill className="object-cover scale-105" />
 
-              <div className="absolute inset-0 bg-black/45" />
+              {/* <div className="absolute inset-0 bg-black/45" /> */}
 
               <div className="absolute -top-3 md:top-0 inset-0 flex items-center">
                 <div className="max-w-xl px-8 md:px-16 text-white">
@@ -77,7 +77,9 @@ export default function HeroCarousel() {
                     {slide.badge}
                   </span>
 
-                  <h1 className="mt-1 md:mt-4 text-lg font-bold md:text-5xl">{slide.title}</h1>
+                  <h1 className="mt-1 md:mt-4 text-lg font-bold md:text-5xl shadow-2xl text-white">
+                    {slide.title}
+                  </h1>
 
                   <p className="text-sm md:text-base md:mt-2 text-white/90">{slide.description}</p>
 
@@ -129,8 +131,9 @@ export default function HeroCarousel() {
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 bg-black/30" />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+      {/* <div className="absolute inset-0 bg-black/30" /> */}
+      //
+      {/* <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background/20" /> */}
     </section>
   );
 }

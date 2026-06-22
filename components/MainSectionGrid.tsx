@@ -11,8 +11,8 @@ export default function MainSectionGrid() {
       {/* 1. HERO CAROUSEL (Left Feature Area) */}
       <section className="w-full grid grid-cols-12 gap-1 px-2">
         <section className="col-span-12 md:col-span-8 py-2">
-          <div className="absolute inset-0 bg-rose/30" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+          {/* <div className="absolute inset-0 bg-rose/30" /> */}
+          {/* <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" /> */}
           <HeroCarousel />
         </section>
 
