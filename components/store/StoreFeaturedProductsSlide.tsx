@@ -67,7 +67,7 @@ export default function StoreFeaturedProductsSlide({ products, onAddToCart, onLi
         {featuredProducts.map(product => (
           <div
             key={product.id}
-            className="w-[70vw] sm:w-[240px] max-w-[240px] flex-shrink-0 snap-start min-w-0">
+            className="w-[40vw] sm:w-[240px] max-w-[240px] flex-shrink-0 snap-start min-w-0">
             <StoreProductCard
               product={product}
               // PASSED DOWN: Wire up the active variant addition
