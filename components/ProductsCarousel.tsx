@@ -119,14 +119,14 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
         className="
-          flex gap-4 overflow-x-auto scroll-smooth pb-2
+          flex gap-2 overflow-x-auto scroll-smooth
           cursor-grab select-none active:cursor-grabbing
           [&::-webkit-scrollbar]:hidden
           [-ms-overflow-style:none]
           [scrollbar-width:none]
         ">
         {products.map(product => (
-          <div key={product.id} className="w-45 md:w-65 shrink-0">
+          <div key={product.id} className="w-40 md:w-65 shrink-0">
             <ProductCard
               product={product}
               onSelect={() => onSelect(product.id)}
