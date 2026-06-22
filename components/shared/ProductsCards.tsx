@@ -31,7 +31,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
     <article
       onClick={handleCardClick}
       className="group cursor-pointer rounded-xl border bg-background p-2 transition-all duration-300 hover:shadow-md">
-      <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-3/5 overflow-hidden rounded-lg bg-muted">
         {/* CATEGORY TAG */}
         <span className="absolute top-0 left-0 w-full z-35 flex items-center justify-center gap-1.5 p-2 text-[11px] font-medium text-white bg-gradient-to-r from-rose-950 via-rose-900 to-rose-600 backdrop-blur-sm border-b border-white/10">
           <ChartColumnStacked className="h-3 w-3 text-rose-300 animate-pulse" />
