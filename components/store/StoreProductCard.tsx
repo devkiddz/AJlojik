@@ -31,10 +31,10 @@ export default function ProductCard({ product, onAddToCart, onToggleLike }: Prod
       onClick={handleCardClick}
       className="group cursor-pointer rounded-xl border bg-background p-1.5 transition-all duration-300 hover:shadow-lg">
       {/* MASTER HOVER CANVAS CONTAINER */}
-      <div className="relative aspect-7/10 md:aspect-6/8 overflow-hidden rounded-lg bg-muted w-full">
+      <div className="relative aspect-5/6 overflow-hidden rounded-lg bg-muted w-full">
         {/* PREMIUM WINE GRADIENT CATEGORY BANNER */}
         <span className="absolute top-0 left-0 w-full z-30 flex items-center justify-center gap-1.5 p-2 text-[10px] font-medium text-white bg-gradient-to-r from-rose-950 via-rose-900 to-rose-600 backdrop-blur-sm border-b border-white/10">
-          <ChartColumnStacked className="h-3 w-3 text-rose-300 animate-pulse" />
+          <ChartColumnStacked className="h-3 w-3 text-white animate-pulse" />
           <span className="tracking-wide uppercase text-[9px] text-white/90">{product.category}</span>
         </span>
 
