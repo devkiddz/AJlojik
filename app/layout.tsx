@@ -57,13 +57,13 @@ export default function RootLayout({
               {/* SINGLE UNIFIED TOP BAR */}
               <div className="sticky top-0 z-50">
                 <Suspense fallback={null}>
-                  <NavbarComponent brandName="AJ" brandSlug="Store" />
+                  <NavbarComponent brandName="AJ" brandSlug="Logiks" />
                 </Suspense>
               </div>
 
               <div className="w-full flex flex-col flex-1">{children}</div>
 
-              <FooterComponent brandName="AJ" brandSlug="Store" />
+              <FooterComponent brandName="AJ" brandSlug="Lojik" />
             </main>
           </SidebarProvider>
         </ThemeProvider>
