@@ -2,23 +2,23 @@
 
 import { useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ProductType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
 import StoreProductCard from '@/components/store/StoreProductCard';
 
 type Props = {
   products: ProductType[];
-  onPreview?: (product: ProductType) => void;
+  // UPDATED: Replaced onPreview with onAddToCart to lock in type alignment
+  onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
   onLike?: (product: ProductType) => void;
 };
 
-export default function StoreFeaturedProductsSlide({ products, onPreview, onLike }: Props) {
+export default function StoreFeaturedProductsSlide({ products, onAddToCart, onLike }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const featuredProducts = useMemo(() => products.filter(product => product.featured), [products]);
 
   const scroll = (direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
-
     if (!container) return;
 
     const scrollAmount = container.clientWidth * 0.8;
@@ -30,7 +30,7 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
   };
 
   return (
-    <section className="">
+    <section className="w-full overflow-hidden">
       {/* HEADER */}
       <div className="mb-4 flex items-center justify-between px-2 mt-5">
         <div className="flex items-baseline gap-2">
@@ -41,11 +41,11 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
         </div>
 
         {/* NAVIGATION */}
-        <div className="flex items-center gap-2 ">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => scroll('left')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground active:scale-95 cursor-pointer"
             aria-label="Scroll left">
             <ChevronLeft size={18} />
           </button>
@@ -53,22 +53,25 @@ export default function StoreFeaturedProductsSlide({ products, onPreview, onLike
           <button
             type="button"
             onClick={() => scroll('right')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground active:scale-95 cursor-pointer"
             aria-label="Scroll right">
             <ChevronRight size={18} />
           </button>
         </div>
       </div>
 
-      {/* SLIDER */}
+      {/* SLIDER CONTAINER */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide pb-2 min-w-0 ">
+        className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide pb-2 px-2 w-full min-w-0">
         {featuredProducts.map(product => (
-          <div key={product.id} className="w-[35%] min-w-30 sm:w-65 md:w-55 flex-shrink-0 snap-start ">
+          <div
+            key={product.id}
+            className="w-[70vw] sm:w-[240px] max-w-[240px] flex-shrink-0 snap-start min-w-0">
             <StoreProductCard
               product={product}
-              onPreview={() => onPreview?.(product)}
+              // PASSED DOWN: Wire up the active variant addition
+              onAddToCart={onAddToCart}
               onToggleLike={() => onLike?.(product)}
             />
           </div>
