@@ -89,7 +89,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                 <button
                   type="button"
                   className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs backdrop-blur-md font-medium text-white transition active:scale-95 cursor-pointer">
-                  {/* <span>Preview</span> */}
+                  <span className="hidden md:inline">Preview</span>
                   <Eye className="h-3 w-3 text-rose-500" />
                 </button>
               </div>
