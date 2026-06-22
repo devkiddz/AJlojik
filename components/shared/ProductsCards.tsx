@@ -72,7 +72,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
               <p className="line-clamp-1 text-[0.7rem]">{product.shortDescription}</p>
             </div>
             <div className="flex items-center justify-between min-h-8">
-              <div className="text-sm font-bold text-rose-400">
+              <div className="text-sm font-bold text-rose-500">
                 {/* RATING */}
                 {/* <RatingComponent rating={product.rating} reviews={product.reviews} />₦ */}
                 {activeVariant.price.toLocaleString()}
@@ -90,7 +90,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   type="button"
                   className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs backdrop-blur-md font-medium text-white transition active:scale-95 cursor-pointer">
                   {/* <span>Preview</span> */}
-                  <Eye className="h-3 w-3 text-rose-300" />
+                  <Eye className="h-3 w-3 text-rose-500" />
                 </button>
               </div>
             </div>
