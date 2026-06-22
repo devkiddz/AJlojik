@@ -126,7 +126,7 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
           [scrollbar-width:none]
         ">
         {products.map(product => (
-          <div key={product.id} className="w-65 shrink-0">
+          <div key={product.id} className="w-45 md:w-65 shrink-0">
             <ProductCard
               product={product}
               onSelect={() => onSelect(product.id)}
