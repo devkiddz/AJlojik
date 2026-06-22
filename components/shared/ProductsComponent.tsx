@@ -49,29 +49,20 @@ export default function ProductsComponent() {
       {/* Featured Products */}
       <ProductsCarousel
         title="Featured Products"
-        category="all"
+        category={'featured'}
         products={featuredProducts}
         onSelect={handleSelect}
         onToggleLike={toggleLike}
       />
 
-      {/* category Carousels */}
-      {categories.map(category => {
-        const categoryProducts = productList.filter(product => product.category === category.slug);
-
-        if (!categoryProducts.length) return null;
-
-        return (
-          <ProductsCarousel
-            key={category.slug}
-            title={category.label}
-            category={category.slug}
-            products={categoryProducts}
-            onSelect={handleSelect}
-            onToggleLike={toggleLike}
-          />
-        );
-      })}
+      {/* Example single category carousel */}
+      <ProductsCarousel
+        title="Wines & Liquors"
+        category="wines"
+        products={productList}
+        onSelect={handleSelect}
+        onToggleLike={toggleLike}
+      />
 
       {/* Product Modal */}
       <ProductModal

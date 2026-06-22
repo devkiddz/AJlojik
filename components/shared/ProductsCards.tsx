@@ -34,7 +34,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
       <div className="relative aspect-3/5 overflow-hidden rounded-lg bg-muted">
         {/* CATEGORY TAG */}
         <span className="absolute top-0 left-0 w-full z-35 flex items-center justify-center gap-1.5 p-2 text-[11px] font-medium text-white bg-gradient-to-r from-rose-950 via-rose-900 to-rose-600 backdrop-blur-sm border-b border-white/10">
-          <ChartColumnStacked className="h-3 w-3 text-rose-300 animate-pulse" />
+          <ChartColumnStacked className="h-3 w-3 text-white animate-pulse" />
           <span className="tracking-wide uppercase text-[10px] text-white/90">{product.category}</span>
         </span>
 
@@ -55,7 +55,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
             <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
           </span>
           {product.discountPercentage > 0 && (
-            <span className="rounded-full absolute top-3 right-1 bg-rose-500/30 px-2 py-1 text-[0.6rem] font-semibold text-white backdrop-blur-md shadow-sm border border-white/5">
+            <span className="rounded-full animate-pulse absolute top-3 right-1 bg-rose-500/30 px-2 py-1 text-[0.6rem] font-semibold text-white backdrop-blur-md shadow-sm border border-white/5">
               -{product.discountPercentage}% OFF
             </span>
           )}
