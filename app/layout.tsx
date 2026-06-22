@@ -63,7 +63,7 @@ export default function RootLayout({
 
               <div className="w-full flex flex-col flex-1">{children}</div>
 
-              <FooterComponent brandName="AJ" brandSlug="Lojik" />
+              <FooterComponent brandName="AJ" brandSlug="Store" />
             </main>
           </SidebarProvider>
         </ThemeProvider>
