@@ -24,7 +24,7 @@ export default async function ProductPage({ params }: Props) {
         <ProductHeroSection product={product} />
       </div>
 
-      <div>
+      <div className="">
         <ProductPageClientView product={product} />
       </div>
     </main>

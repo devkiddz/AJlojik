@@ -25,16 +25,38 @@ export type SubcategoryType = {
 /**
  * category structure
  */
+// export type categoryType = {
+//   id: string;
+//   slug: string;
+//   label: string;
+//   icon: LucideIcon;
+//   image: string;
+//   subcategories: SubcategoryType[];
+//   className?: string;
+//   accentColor?: string;
+// };
+
+
 export type categoryType = {
   id: string;
   slug: string;
   label: string;
+
   icon: LucideIcon;
+
   image: string;
-  subcategories: SubcategoryType[];
-  className?: string;
+  coverImages: string[];
+
+  shortDescription: string;
+  description: string;
+
   accentColor?: string;
+
+  subcategories: SubcategoryType[];
+
+  className?: string;
 };
+
 
 /**
  * Main Product Model

@@ -11,7 +11,7 @@ type Props = {
 
 export default function ProductPageClientView({ product }: Props) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 space-y-10 relative -top-100">
+    <section className="w-full py-16 space-y-10 relative -top-100">
       <SingleProductGalleryView product={product} />
       <ProductActions product={product} />
 
