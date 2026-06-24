@@ -33,6 +33,7 @@ export type categoryType = {
   image: string;
   subcategories: SubcategoryType[];
   className?: string;
+  accentColor?: string;
 };
 
 /**
