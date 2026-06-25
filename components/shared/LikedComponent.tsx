@@ -16,9 +16,10 @@ export default function LikedComponent({ liked, onToggle }: LikedComponentProps)
       onClick={e => {
         e.stopPropagation();
         onToggle?.();
+        console.log('liked:', liked);
       }}
       className="absolute left-1 top-3 z-10 cursor-pointer">
-      <Heart className={liked ? 'w-5 h-5 fill-red-500 text-red-500' : 'text-white w-5 h-5'} />
+      <Heart className={liked ? 'w-5 h-5 fill-secondary text-secondary' : 'text-primary w-5 h-5'} />
     </button>
   );
 }

@@ -3,10 +3,9 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChartColumnStacked, Eye, Form, ShoppingCart } from 'lucide-react';
-
-import { ProductType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
+import { useRouter } from 'next/navigation';
 import { categories } from '@/categories';
-
 import LikedComponent from '@/components/shared/LikedComponent';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,19 +14,24 @@ import { Button } from '../ui/button';
 
 type Props = {
   product: ProductType;
-  onSelect?: () => void;
-  onPreview?: () => void;
-  onToggleLike?: () => void;
+  onPreview?: (product: ProductType) => void;
+  onSelect?: (product: ProductType) => void;
+  onToggleLike?: (productId: string) => void;
+
+  onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
 
-export default function ProductCard({ product, onSelect, onPreview, onToggleLike }: Props) {
+export default function ProductCard({ product, onPreview, onToggleLike, onAddToCart }: Props) {
   const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? '');
-
+  const router = useRouter();
   const activeVariant =
     product.variants.find(variant => variant.id === selectedVariantId) ?? product.variants[0];
 
   const categoryLabel =
     categories.find(category => category.slug === product.category)?.label ?? product.category;
+  const goToProduct = () => {
+    router.push(`/products/${product.slug}`);
+  };
 
   return (
     <article className="group mt-5 flex w-full flex-col gap-2 ">
@@ -41,7 +45,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
       <div className="py-7 rounded-md bg-card mt-2 transition-all overflow-hidden">
         <div className="grid grid-cols-5 overflow-hidden bg-card/50 transition-colors ">
           {/* IMAGE */}
-          <div className="relative col-span-2 min-h-[150px] overflow-hidden">
+          <div className="relative col-span-2 min-h-[150px] overflow-hidden" onClick={goToProduct}>
             <Image
               src={activeVariant.image}
               alt={product.name}
@@ -51,7 +55,11 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
             />
 
             <div className="absolute left-2 top-2 z-10" onClick={e => e.stopPropagation()}>
-              <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
+              <LikedComponent
+                productId={product.id}
+                liked={product.liked}
+                onToggle={() => onToggleLike?.(product.id)}
+              />
             </div>
           </div>
 
@@ -67,7 +75,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
 
               <div className="mt-2 flex items-center gap-3 md:mt-3">
                 <span className="flex items-center gap-1 text-[10px] text-primary md:text-sm">
-                  <ChartColumnStacked className="h-3 w-3 text-secondary md:h-4 md:w-4" />
+                  <ChartColumnStacked className="h-3 w-3 text-rose-500 md:h-4 md:w-4" />
                   {categoryLabel}
                 </span>
 
@@ -76,12 +84,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   size="sm"
                   onClick={e => {
                     e.stopPropagation();
-
-                    if (onPreview) {
-                      onPreview();
-                    } else {
-                      onSelect?.();
-                    }
+                    onPreview?.(product);
                   }}
                   className="h-6 gap-1 rounded-full px-3 text-[10px] md:h-8 md:text-sm">
                   Preview
@@ -99,7 +102,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   <span>{activeVariant.stockLeft} left</span>
                 </div>
 
-                <span className="text-xs font-bold text-secondary md:text-sm">
+                <span className="text-xs font-bold text-rose-500 md:text-sm">
                   ₦{activeVariant.price.toLocaleString()}
                 </span>
               </div>
@@ -126,8 +129,18 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   </SelectContent>
                 </Select>
 
-                <Button variant="outline" size="icon" className="rounded-full">
-                  <ShoppingCart />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={e => {
+                    e.stopPropagation();
+
+                    if (activeVariant) {
+                      onAddToCart?.(product, activeVariant);
+                    }
+                  }}>
+                  <ShoppingCart className="h-4 w-4" />
                 </Button>
               </div>
             </div>

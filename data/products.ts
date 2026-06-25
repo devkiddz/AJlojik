@@ -34,7 +34,7 @@ export const products: ProductsType = [
     reviews: 186,
     soldCount: 324,
     liked: false,
-    featured: true,
+    featured: false,
     isNew: false,
     estimatedDelivery: "1 - 3 Hours",
     discountPercentage: 15

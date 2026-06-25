@@ -341,3 +341,30 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.premium-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid rgba(201, 162, 39, 0.12);
+  isolation: isolate;
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  background: radial-gradient(
+    400px circle at var(--mouse-x) var(--mouse-y),
+    rgba(255, 255, 255, 0.12),
+    transparent 45%
+  );
+}
+
+.premium-card:hover::before {
+  opacity: 1;
+}

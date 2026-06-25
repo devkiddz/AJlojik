@@ -7,12 +7,14 @@ import StoreProductCard from '@/components/store/StoreProductCard';
 
 type Props = {
   products: ProductType[];
-  // UPDATED: Replaced onPreview with onAddToCart to lock in type alignment
+
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
+
+  onPreview?: (product: ProductType) => void;
+
   onLike?: (product: ProductType) => void;
 };
-
-export default function StoreFeaturedProductsSlide({ products, onAddToCart, onLike }: Props) {
+export default function StoreFeaturedProductsSlide({ products, onAddToCart, onPreview, onLike }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const featuredProducts = useMemo(() => products.filter(product => product.featured), [products]);
@@ -70,8 +72,8 @@ export default function StoreFeaturedProductsSlide({ products, onAddToCart, onLi
             className="w-[40vw] sm:w-[240px] max-w-[240px] flex-shrink-0 snap-start min-w-0">
             <StoreProductCard
               product={product}
-              // PASSED DOWN: Wire up the active variant addition
               onAddToCart={onAddToCart}
+              onPreview={onPreview}
               onToggleLike={() => onLike?.(product)}
             />
           </div>
