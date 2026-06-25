@@ -37,7 +37,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           </p>
 
           <div className="flex items-center justify-between mt-auto pt-3">
-            <span className="rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-400">
+            <span className="rounded-full bg-secondary/10 px-2 py-1 text-xs font-medium text-rose-400">
               {category.subcategories?.length ?? 0} items
             </span>
 
@@ -55,7 +55,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
                 transition-all duration-300
                 group-hover:opacity-100 group-hover:translate-y-0
                 hover:bg-rose-600 hover:text-primary
-                hover:border-rose-500
+                hover:border-secondary
                 cursor-pointer
               ">
               Explore

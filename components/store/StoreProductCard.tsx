@@ -54,7 +54,7 @@ export default function ProductCard({ product, onAddToCart, onToggleLike }: Prod
           </span>
 
           {product.discountPercentage > 0 && (
-            <span className="rounded-full absolute top-10 right-1 bg-rose-500/30 px-2 py-1 text-[0.6rem] font-semibold text-white backdrop-blur-md shadow-sm border border-white/5">
+            <span className="rounded-full absolute top-10 right-1 bg-secondary/30 px-2 py-1 text-[0.6rem] font-semibold text-white backdrop-blur-md shadow-sm border border-white/5">
               -{product.discountPercentage}% OFF
             </span>
           )}
@@ -75,7 +75,7 @@ export default function ProductCard({ product, onAddToCart, onToggleLike }: Prod
 
           {/* PRICE + ADD TO CART HOVER ROW */}
           <div className=" flex items-center justify-between min-h-7">
-            <span className="text-xs md:text-sm font-bold text-rose-500 drop-shadow-sm">
+            <span className="text-xs md:text-sm font-bold text-secondary drop-shadow-sm">
               ₦{activeVariant.price.toLocaleString()}
             </span>
 
@@ -90,7 +90,7 @@ export default function ProductCard({ product, onAddToCart, onToggleLike }: Prod
               }}>
               <button
                 type="button"
-                className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-rose-600 hover:border-rose-500 px-3 py-1.5 text-[10px] font-medium text-white backdrop-blur-md transition active:scale-95 cursor-pointer">
+                className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-rose-600 hover:border-secondary px-3 py-1.5 text-[10px] font-medium text-white backdrop-blur-md transition active:scale-95 cursor-pointer">
                 <span className="hidden md:inline">Add Item</span>
                 <ShoppingCartIcon className="h-3 w-3 text-rose-400 group-hover/btn:text-white" />
               </button>

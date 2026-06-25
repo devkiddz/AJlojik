@@ -37,7 +37,7 @@ export default function PreviewPanel({ product }: PreviewPanelProps) {
           <RatingComponent rating={product.rating} reviews={product.reviews} />
 
           {/* PRICE */}
-          <div className="text-lg font-bold text-rose-500">₦{activeVariant?.price ?? 0}</div>
+          <div className="text-lg font-bold text-secondary">₦{activeVariant?.price ?? 0}</div>
 
           {/* ACTIONS */}
           <div className="flex gap-2 pt-2">

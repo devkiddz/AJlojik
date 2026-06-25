@@ -67,7 +67,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
 
               <div className="mt-2 flex items-center gap-3 md:mt-3">
                 <span className="flex items-center gap-1 text-[10px] text-primary md:text-sm">
-                  <ChartColumnStacked className="h-3 w-3 text-rose-500 md:h-4 md:w-4" />
+                  <ChartColumnStacked className="h-3 w-3 text-secondary md:h-4 md:w-4" />
                   {categoryLabel}
                 </span>
 
@@ -99,7 +99,7 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   <span>{activeVariant.stockLeft} left</span>
                 </div>
 
-                <span className="text-xs font-bold text-rose-500 md:text-sm">
+                <span className="text-xs font-bold text-secondary md:text-sm">
                   ₦{activeVariant.price.toLocaleString()}
                 </span>
               </div>

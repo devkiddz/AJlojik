@@ -12,7 +12,7 @@ export default function SearchBarComponent() {
       <button
         aria-label="search products"
         type="submit"
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-600">
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-white hover:bg-rose-600">
         <Search size={18} />
       </button>
     </div>

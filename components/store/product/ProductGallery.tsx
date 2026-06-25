@@ -46,7 +46,7 @@ export default function ProductGallery({ images, activeVariantImage }: Props) {
             onClick={() => setActive(img)}
             className={`relative w-20 h-20 rounded-xl overflow-hidden border shrink-0 transition-all duration-200 cursor-pointer ${
               active === img
-                ? 'border-rose-500 scale-105 shadow-md shadow-rose-500/10'
+                ? 'border-secondary scale-105 shadow-md shadow-secondary/10'
                 : 'border-white/10 opacity-60 hover:opacity-100'
             }`}>
             <Image src={img} alt={`Thumbnail preview ${i + 1}`} fill className="object-cover" />

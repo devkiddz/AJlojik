@@ -33,7 +33,7 @@ export default function ProductQuickViewSheet({ product, open, onOpenChange }: P
 
           <div className="font-bold text-xl">₦{activeVariant?.price ?? 0}</div>
 
-          <button className="w-full rounded-lg bg-rose-500 py-3 text-white">Add To Cart</button>
+          <button className="w-full rounded-lg bg-secondary py-3 text-white">Add To Cart</button>
         </div>
       </SheetContent>
     </Sheet>

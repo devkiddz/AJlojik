@@ -10,9 +10,9 @@ export default function FooterComponent({ brandName, brandSlug }: { brandName: s
           <div>
             <div className="text-xl flex items-center space-x-1">
               <Link className="flex items-baseline gap-1" href="/">
-                <h1 className="text-rose-500 text-xl font-bold">{brandName}</h1>{' '}
+                <h1 className="text-secondary text-xl font-bold">{brandName}</h1>{' '}
                 <span className="font-light tracking-tight">{brandSlug}</span>
-                <Aperture className="text-rose-500 w-2 h-2" />
+                <Aperture className="text-secondary w-2 h-2" />
               </Link>
             </div>
             <h3 className="mb-4 text-xl font-bold">Liquors & Kitchen</h3>
@@ -103,14 +103,14 @@ export default function FooterComponent({ brandName, brandSlug }: { brandName: s
 
         <div className="mt-12 border-t pt-6 flex justify-around items-center">
           <div className="text-center text-sm text-muted-foreground flex gap-x-2 items-center">
-            <span className="flex text-rose-500 text-xs font-normal items-center mt-0.5">
+            <span className="flex text-secondary text-xs font-normal items-center mt-0.5">
               <AtSign className="w-3" /> {new Date().getFullYear()}
             </span>{' '}
             <div className="text-xl flex items-center space-x-1">
               <Link className="flex items-baseline gap-1" href="">
-                <span className="text-rose-500 text-sm font-normal">{brandName}</span>{' '}
+                <span className="text-secondary text-sm font-normal">{brandName}</span>{' '}
                 <span className="text-xs font-light tracking-tight">{brandSlug}</span>
-                <Aperture className="text-rose-500 w-2 h-2" />
+                <Aperture className="text-secondary w-2 h-2" />
               </Link>
             </div>
             Kitchen Quick Services. All rights reserved.

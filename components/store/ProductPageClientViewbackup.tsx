@@ -68,7 +68,7 @@ export default function ProductPageClientView({ product }: ClientViewProps) {
 
                 <p className="mt-2 text-sm text-zinc-400">{product.shortDescription}</p>
 
-                <p className="mt-3 text-xl font-semibold text-rose-500 md:text-2xl">
+                <p className="mt-3 text-xl font-semibold text-secondary md:text-2xl">
                   ₦{activePrice.toLocaleString()}
                 </p>
               </div>
@@ -95,7 +95,7 @@ export default function ProductPageClientView({ product }: ClientViewProps) {
                         onClick={() => setSelectedVariantId(variant.id)}
                         className={`rounded-lg border px-4 py-2 text-xs transition ${
                           activeVariant?.id === variant.id
-                            ? 'border-rose-500 bg-rose-500/10 text-rose-400'
+                            ? 'border-secondary bg-secondary/10 text-rose-400'
                             : 'border-white/10 text-zinc-300 hover:border-white/20'
                         }`}>
                         {variant.label}
@@ -122,7 +122,7 @@ export default function ProductPageClientView({ product }: ClientViewProps) {
                   aria-label="Add to wishlist"
                   onClick={() => setIsLiked(prev => !prev)}
                   className={`flex h-12 w-12 items-center justify-center rounded-xl border ${
-                    isLiked ? 'border-rose-500 text-rose-500' : 'border-white/10 text-zinc-400'
+                    isLiked ? 'border-secondary text-secondary' : 'border-white/10 text-zinc-400'
                   }`}>
                   <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} />
                 </button>

@@ -22,7 +22,7 @@ const featuredCategories = [
     desc: 'Premium wines & luxury champagnes.',
     image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80',
     size: 'small',
-    accent: 'bg-rose-500'
+    accent: 'bg-secondary'
   },
   {
     id: 'cat_party',

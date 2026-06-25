@@ -51,11 +51,11 @@ export default function categorySidebar({ open, onClose }: categorySidebarProps)
 
         {/* CONTENT */}
         <div className="p-4 space-y-3 bg-muted h-screen">
-          <button className="w-full text-left hover:text-rose-500">Wines</button>
-          <button className="w-full text-left hover:text-rose-500">Whiskey</button>
-          <button className="w-full text-left hover:text-rose-500">Champagne</button>
-          <button className="w-full text-left hover:text-rose-500">Beers</button>
-          <button className="w-full text-left hover:text-rose-500">Spirits</button>
+          <button className="w-full text-left hover:text-secondary">Wines</button>
+          <button className="w-full text-left hover:text-secondary">Whiskey</button>
+          <button className="w-full text-left hover:text-secondary">Champagne</button>
+          <button className="w-full text-left hover:text-secondary">Beers</button>
+          <button className="w-full text-left hover:text-secondary">Spirits</button>
         </div>
       </aside>
     </>

@@ -41,7 +41,7 @@ export default function StoreCategoryCard({ category, active, onClick }: Props) 
           </p>
 
           <div className="mt-auto md:pt-2">
-            <span className="hidden md:inline rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-400">
+            <span className="hidden md:inline rounded-full bg-secondary/10 px-2 py-1 text-xs font-medium text-rose-400">
               {category.subcategories?.length ?? 0} items
             </span>
           </div>

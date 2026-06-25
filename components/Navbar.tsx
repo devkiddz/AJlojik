@@ -116,7 +116,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                 className={`
                 flex h-8 items-center gap-2 rounded-full px-3 text-xs cursor-pointer
                 transition-all duration-300
-                ${isStoreActive ? 'text-rose-500 bg-rose-500/10' : 'text-muted-foreground hover:text-rose-500'}
+                ${isStoreActive ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:text-secondary'}
               `}>
                 <Landmark className="h-4 w-4" />
                 AJ Store
@@ -135,7 +135,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                     cursor-pointer
                     flex h-8 p-2 text-xs items-center rounded-full
                     transition-all duration-300
-                    ${isActive ? 'text-rose-500 bg-rose-500/10' : 'text-muted-foreground hover:text-rose-500'}
+                    ${isActive ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:text-secondary'}
                   `}>
                   <Icon className="h-4 w-4" />
                   <span className="text-xs font-medium whitespace-nowrap">{item.label}</span>

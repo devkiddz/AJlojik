@@ -69,7 +69,7 @@ function ProductContent({
             <LikedComponent productId={product.id} liked={product.liked} onToggle={onToggleLike} />
           </span>
           {product.discountPercentage > 0 && (
-            <span className="top-6 absolute left-10 rounded-full border-b bg-rose-500/50 px-2 py-1 text-xs font-medium text-primary">
+            <span className="top-6 absolute left-10 rounded-full border-b bg-secondary/50 px-2 py-1 text-xs font-medium text-primary">
               -{product.discountPercentage}% off
             </span>
           )}
@@ -108,7 +108,7 @@ function ProductContent({
           <h2 className="text-2xl font-semibold">{product.name}</h2>
 
           <span className="mt-1 flex items-center gap-1 text-xs text-primary">
-            <ChartColumnStacked className="h-3 w-3 text-rose-500" />
+            <ChartColumnStacked className="h-3 w-3 text-secondary" />
             {product.category}
           </span>
         </div>
@@ -122,7 +122,7 @@ function ProductContent({
           <div className="flex flex-col items-start gap-2" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Size: {activeVariant.label} </span>
-              <span className="text-xs p-2 bg-rose-500/10 text-rose-500 rounded-2xl">
+              <span className="text-xs p-2 bg-secondary/10 text-secondary rounded-2xl">
                 Available: {activeVariant.stockLeft} left
               </span>
             </div>
@@ -148,7 +148,7 @@ function ProductContent({
                 </SelectContent>
               </Select>
               <div className="flex items-center justify-end">
-                <span className="text-xl font-bold text-rose-500">
+                <span className="text-xl font-bold text-secondary">
                   ₦{activeVariant.price.toLocaleString()}
                 </span>
               </div>
@@ -162,7 +162,7 @@ function ProductContent({
         <div className="flex flex-col gap-3 pt-4 sm:flex-row">
           <button
             type="button"
-            className="flex-1 rounded-full bg-rose-500 px-5 py-3 font-medium text-white transition hover:bg-rose-600"
+            className="flex-1 rounded-full bg-secondary px-5 py-3 font-medium text-white transition hover:bg-rose-600"
             onClick={() => {
               alert(`Added product: ${product.id} of size: ${activeVariant.label} to Cart`);
             }}>

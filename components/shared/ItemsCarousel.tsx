@@ -162,7 +162,7 @@ export default function CategoriesCarousel({ categories }: Props) {
         onClick={handleTrackClick}
         className="mt-4 h-2 w-full rounded-full bg-zinc-800 cursor-pointer relative">
         <div
-          className="h-full rounded-full bg-rose-500 transition-all duration-150"
+          className="h-full rounded-full bg-secondary transition-all duration-150"
           style={{
             width: `${progress}%`
           }}

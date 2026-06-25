@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -77,19 +77,25 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
   if (!products.length) return null;
 
   return (
-    <section className="mt-4 rounded-sm md:rounded-2xl bg-muted p-4">
+    <section className="rounded-2xl premium-card px-6 py-4">
       {/* HEADER */}
-      <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
+      <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold text-gradient-gold">{title}</h2>
 
-          <p className="text-xs text-muted-foreground">{products.length} products available</p>
+          <div className="mt-1 h-0.5 w-16 rounded-full bg-gradient-premium" />
+
+          <p className="mt-2 text-xs text-muted-foreground">{products.length} products available</p>
         </div>
 
-        <div className="flex items-center gap-2 z-3">
+        <div className="z-10 flex items-center gap-2">
           <Link
             href={`/store?category=${category}`}
-            className="text-sm font-medium text-rose-500 transition hover:text-rose-600">
+            className="
+          text-sm font-medium text-accent
+          transition-all duration-200
+          hover:text-accent
+        ">
             View All
           </Link>
 
@@ -97,7 +103,17 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
             type="button"
             aria-label="Scroll left"
             onClick={() => scroll('left')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border transition hover:bg-background">
+            className="
+          flex h-10 w-10 items-center justify-center
+          rounded-full
+          border border-accent/50
+          bg-background
+          text-primary
+          transition-all duration-200
+          hover:border-accent
+          hover:text-accent
+          cursor-pointer
+        ">
             <ChevronLeft className="h-5 w-5" />
           </button>
 
@@ -105,7 +121,17 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
             type="button"
             aria-label="Scroll right"
             onClick={() => scroll('right')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border transition hover:bg-background">
+            className="
+          flex h-10 w-10 items-center justify-center
+          rounded-full
+          border border-accent/50
+          bg-background
+          text-primary
+          transition-all duration-200
+          hover:border-accent
+          hover:text-accent
+          cursor-pointer
+        ">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
@@ -119,14 +145,14 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
         className="
-          flex gap-2 overflow-x-auto scroll-smooth
-          cursor-grab select-none active:cursor-grabbing
-          [&::-webkit-scrollbar]:hidden
-          [-ms-overflow-style:none]
-          [scrollbar-width:none]
-        ">
+      flex gap-4 overflow-x-auto scroll-smooth
+      cursor-grab select-none active:cursor-grabbing
+      [&::-webkit-scrollbar]:hidden
+      [-ms-overflow-style:none]
+      [scrollbar-width:none]
+    ">
         {products.map(product => (
-          <div key={product.id} className="w-40 md:w-65 shrink-0">
+          <div key={product.id} className="w-40 shrink-0 md:w-65">
             <ProductCard
               product={product}
               onSelect={() => onSelect(product.id)}
