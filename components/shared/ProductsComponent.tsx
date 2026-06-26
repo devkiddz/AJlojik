@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { products as initialProducts } from '@/data/products';
 import { categories } from '@/categories';
@@ -10,25 +11,69 @@ import ProductsCarousel from '../ProductsCarousel';
 import ProductModal from '@/components/shared/ProductModal';
 
 export default function ProductsComponent() {
+  const searchParams = useSearchParams();
+
+  const selectedCategory = searchParams.get('category') ?? 'all';
+  const searchQuery = (searchParams.get('q') ?? '').toLowerCase();
+
   const [productList, setProductList] = useState(initialProducts);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
-  const selectedProduct = productList.find(product => product.id === selectedId) ?? null;
+  /**
+   * FILTERED PRODUCTS
+   */
+  const filteredProducts = useMemo(() => {
+    return productList.filter(product => {
+      const categoryMatch = selectedCategory === 'all' || product.category === selectedCategory;
 
-  const currentIndex = productList.findIndex(product => product.id === selectedId);
+      const searchMatch =
+        !searchQuery ||
+        product.name.toLowerCase().includes(searchQuery) ||
+        product.shortDescription.toLowerCase().includes(searchQuery);
 
-  const previousProduct = currentIndex > 0 ? productList[currentIndex - 1] : null;
+      return categoryMatch && searchMatch;
+    });
+  }, [productList, selectedCategory, searchQuery]);
+
+  /**
+   * FEATURED
+   */
+  const featuredProducts = filteredProducts.filter(product => product.featured);
+
+  /**
+   * MODAL
+   */
+  const selectedProduct = filteredProducts.find(product => product.id === selectedId) ?? null;
+
+  const currentIndex = filteredProducts.findIndex(product => product.id === selectedId);
+
+  const previousProduct = currentIndex > 0 ? filteredProducts[currentIndex - 1] : null;
 
   const nextProduct =
-    currentIndex >= 0 && currentIndex < productList.length - 1 ? productList[currentIndex + 1] : null;
+    currentIndex >= 0 && currentIndex < filteredProducts.length - 1
+      ? filteredProducts[currentIndex + 1]
+      : null;
 
+  /**
+   * LIKE
+   */
   const toggleLike = (productId: string) => {
     setProductList(prev =>
-      prev.map(product => (product.id === productId ? { ...product, liked: !product.liked } : product))
+      prev.map(product =>
+        product.id === productId
+          ? {
+              ...product,
+              liked: !product.liked
+            }
+          : product
+      )
     );
   };
 
+  /**
+   * MODAL
+   */
   const handleSelect = (productId: string) => {
     setSelectedId(productId);
     setOpen(true);
@@ -39,38 +84,40 @@ export default function ProductsComponent() {
     setSelectedId(null);
   };
 
-  const featuredProducts = productList.filter(product => product.featured);
-
   return (
     <div className="w-full">
-      {/* Categories */}
+      {/* CATEGORY STRIP */}
       <ItemsCarousel categories={categories} />
 
-      {/* Featured Products */}
+      {/* FEATURED */}
       <ProductsCarousel
         title="Featured Products"
-        category={'featured'}
+        category="featured"
         products={featuredProducts}
         onSelect={handleSelect}
         onToggleLike={toggleLike}
       />
 
-      {/* Example single category carousel */}
+      {/* FILTERED PRODUCTS */}
       <ProductsCarousel
-        title="Wines & Liquors"
-        category="wines"
-        products={productList}
+        title={
+          selectedCategory === 'all'
+            ? 'All Products'
+            : (categories.find(c => c.slug === selectedCategory)?.label ?? 'Products')
+        }
+        category={selectedCategory}
+        products={filteredProducts}
         onSelect={handleSelect}
         onToggleLike={toggleLike}
       />
 
-      {/* Product Modal */}
+      {/* MODAL */}
       <ProductModal
         product={selectedProduct}
         open={open}
         onClose={handleClose}
         currentIndex={currentIndex >= 0 ? currentIndex : 0}
-        totalProducts={productList.length}
+        totalProducts={filteredProducts.length}
         onToggleLike={selectedId ? () => toggleLike(selectedId) : undefined}
         onPrevious={previousProduct ? () => setSelectedId(previousProduct.id) : undefined}
         onNext={nextProduct ? () => setSelectedId(nextProduct.id) : undefined}

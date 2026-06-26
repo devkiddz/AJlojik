@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import StoreAside from '@/components/store/StoreAside';
 import StoreCategoriesPill from '@/components/store/StoreCategoriesPill';
@@ -8,23 +9,45 @@ import StoreCategoryCard from '@/components/store/StoreCategoryCard';
 import StoreRightPannel from '@/components/store/StoreRightPannel';
 import StoreFeaturedProductCard from '@/components/store/StoreFeaturedProductCard';
 import StoreFeaturedProductsSlide from '@/components/store/StoreFeaturedProductsSlide';
+import StoreProductGridCard from '@/components/store/product/StoreProductGridCard';
 import ProductModal from '@/components/shared/ProductModal';
 
 import { categories } from '@/categories';
 import { products } from '@/data/products';
 
 import { ProductType, ProductVariantType } from '@/types';
-import StoreProductGridCard from '@/components/store/product/StoreProductGridCard';
 
 export default function AJStorePage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const selectedCategory = searchParams.get('category') ?? 'all';
+
   const [storeProducts, setStoreProducts] = useState(products);
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-
-  // State to track if the pill should be visible
   const [showStickyPill, setShowStickyPill] = useState(false);
+
   const triggerRef = useRef<HTMLDivElement>(null);
+
+  const updateQuery = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (!value || value === 'all') {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      router.push(`/store?${params.toString()}`, {
+        scroll: false
+      });
+    },
+    [router, searchParams]
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -33,7 +56,7 @@ export default function AJStorePage() {
       },
       {
         threshold: 0,
-        rootMargin: '-56px 0px 0px 0px' // Clearance offset for navbar (top-14)
+        rootMargin: '-56px 0px 0px 0px'
       }
     );
 
@@ -62,6 +85,7 @@ export default function AJStorePage() {
    */
   const [featuredProductId] = useState(() => {
     const featured = products.filter(product => product.featured);
+
     return featured.length ? featured[Math.floor(Math.random() * featured.length)].id : products[0].id;
   });
 
@@ -75,10 +99,24 @@ export default function AJStorePage() {
    */
   const handleToggleLike = (productId: string) => {
     setStoreProducts(prev =>
-      prev.map(product => (product.id === productId ? { ...product, liked: !product.liked } : product))
+      prev.map(product =>
+        product.id === productId
+          ? {
+              ...product,
+              liked: !product.liked
+            }
+          : product
+      )
     );
 
-    setSelectedProduct(prev => (prev && prev.id === productId ? { ...prev, liked: !prev.liked } : prev));
+    setSelectedProduct(prev =>
+      prev && prev.id === productId
+        ? {
+            ...prev,
+            liked: !prev.liked
+          }
+        : prev
+    );
   };
 
   /**
@@ -87,6 +125,7 @@ export default function AJStorePage() {
   const handleAddToCart = (product: ProductType, variant: ProductVariantType) => {
     console.log(product.name);
     console.log(variant.label);
+
     alert(`${product.name} added to cart`);
   };
 
@@ -107,60 +146,71 @@ export default function AJStorePage() {
 
   const handleNextProduct = () => {
     if (selectedIndex === -1) return;
-    const nextIndex = selectedIndex + 1;
-    if (nextIndex < filteredProducts.length) {
-      setSelectedProduct(filteredProducts[nextIndex]);
+
+    const next = selectedIndex + 1;
+
+    if (next < filteredProducts.length) {
+      setSelectedProduct(filteredProducts[next]);
     }
   };
 
   const handlePreviousProduct = () => {
     if (selectedIndex === -1) return;
-    const previousIndex = selectedIndex - 1;
-    if (previousIndex >= 0) {
-      setSelectedProduct(filteredProducts[previousIndex]);
+
+    const previous = selectedIndex - 1;
+
+    if (previous >= 0) {
+      setSelectedProduct(filteredProducts[previous]);
     }
   };
 
   return (
-    <div className="mx-auto px-4 py-4 -mt-5">
+    <div className="mx-auto -mt-5 px-4 py-4">
       <div className="grid min-h-screen grid-cols-12 gap-4">
         {/* LEFT */}
-        <aside className="hidden md:block col-span-12 lg:col-span-2">
+        <aside className="col-span-12 hidden lg:col-span-2 md:block">
           <StoreAside />
         </aside>
 
         {/* MAIN */}
         <main className="relative col-span-12 lg:col-span-8">
-          <div className="bg-transparent space-y-6">
-            {/* DYNAMIC HEIGHT STICKY CONTAINER */}
-            {/* When hidden, h-0 minimizes layout footprint entirely */}
+          <div className="space-y-6">
+            {/* STICKY FILTER */}
             <div
-              className={`sticky top-14 z-50 w-full bg-muted shadow-md transition-all duration-300 ease-in-out ${
+              className={`sticky top-14 z-50 w-full bg-muted shadow-md transition-all duration-300 ${
                 showStickyPill
-                  ? 'h-auto opacity-100 translate-y-0 pointer-events-auto px-4 py-5 mb-6'
-                  : 'h-0 opacity-0 -translate-y-4 pointer-events-none p-0 overflow-hidden mb-0'
+                  ? 'mb-6 h-auto translate-y-0 px-4 py-5 opacity-100'
+                  : 'mb-0 h-0 -translate-y-4 overflow-hidden p-0 opacity-0 pointer-events-none'
               }`}>
               <StoreCategoriesPill
                 selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
+                onSelectCategory={category =>
+                  updateQuery({
+                    category
+                  })
+                }
               />
             </div>
 
-            {/* CATEGORY CARDS GRID CONTAINER */}
-            <section ref={triggerRef} className="rounded-md bg-transparent !mt-0">
+            {/* CATEGORY GRID */}
+            <section ref={triggerRef} className="!mt-0 rounded-md bg-transparent">
               <div className="grid grid-cols-2 gap-2 pt-2 md:grid-cols-3 xl:grid-cols-3">
                 {categories.map(category => (
                   <StoreCategoryCard
                     key={category.id}
                     category={category}
                     active={selectedCategory === category.slug}
-                    onClick={() => setSelectedCategory(category.slug)}
+                    onClick={() =>
+                      updateQuery({
+                        category: category.slug
+                      })
+                    }
                   />
                 ))}
               </div>
             </section>
 
-            {/* FEATURED PRODUCTS */}
+            {/* FEATURED */}
             <section className="grid gap-6 lg:grid-cols-5">
               <div className="min-w-0 lg:col-span-2">
                 {featuredProduct && (
@@ -204,7 +254,7 @@ export default function AJStorePage() {
         </aside>
       </div>
 
-      {/* MODAL */}
+      {/* PRODUCT MODAL */}
       <ProductModal
         product={selectedProduct}
         open={previewOpen}
