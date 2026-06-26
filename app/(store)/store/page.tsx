@@ -135,7 +135,7 @@ export default function AJStorePage() {
           <div className="bg-transparent">
             {/* CATEGORY SECTION */}
             <section className="gap-4 rounded-md bg-transparent">
-              <div className="sticky top-14 z-5 items-center rounded-md bg-muted px-4 py-5">
+              <div className="sticky top-14 z-10 w-full overflow-hidden rounded-md bg-muted px-4 py-5">
                 <StoreCategoriesPill
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
@@ -144,7 +144,12 @@ export default function AJStorePage() {
 
               <div className="grid grid-cols-2 gap-2 pt-10 -mt-5 md:grid-cols-3 xl:grid-cols-3">
                 {categories.map(category => (
-                  <StoreCategoryCard key={category.id} category={category} />
+                  <StoreCategoryCard
+                    key={category.id}
+                    category={category}
+                    active={selectedCategory === category.slug}
+                    onClick={() => setSelectedCategory(category.slug)}
+                  />
                 ))}
               </div>
             </section>
