@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import StoreAside from '@/components/store/StoreAside';
 import StoreCategoriesPill from '@/components/store/StoreCategoriesPill';
@@ -8,7 +8,6 @@ import StoreCategoryCard from '@/components/store/StoreCategoryCard';
 import StoreRightPannel from '@/components/store/StoreRightPannel';
 import StoreFeaturedProductCard from '@/components/store/StoreFeaturedProductCard';
 import StoreFeaturedProductsSlide from '@/components/store/StoreFeaturedProductsSlide';
-import StoreProductCard from '@/components/store/StoreProductCard';
 import ProductModal from '@/components/shared/ProductModal';
 
 import { categories } from '@/categories';
@@ -22,6 +21,28 @@ export default function AJStorePage() {
   const [storeProducts, setStoreProducts] = useState(products);
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  // State to track if the pill should be visible
+  const [showStickyPill, setShowStickyPill] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowStickyPill(!entry.isIntersecting);
+      },
+      {
+        threshold: 0,
+        rootMargin: '-56px 0px 0px 0px' // Clearance offset for navbar (top-14)
+      }
+    );
+
+    if (triggerRef.current) {
+      observer.observe(triggerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   /**
    * FILTER PRODUCTS
@@ -111,17 +132,23 @@ export default function AJStorePage() {
         {/* MAIN */}
         <main className="relative col-span-12 lg:col-span-8">
           <div className="bg-transparent space-y-6">
-            {/* STICKY CATEGORY PILL - Now outside of the section boundary */}
-            <div className="sticky top-14 z-30 w-full overflow-hidden rounded-md bg-muted px-4 py-5 shadow-sm">
+            {/* DYNAMIC HEIGHT STICKY CONTAINER */}
+            {/* When hidden, h-0 minimizes layout footprint entirely */}
+            <div
+              className={`sticky top-14 z-50 w-full bg-muted shadow-md transition-all duration-300 ease-in-out ${
+                showStickyPill
+                  ? 'h-auto opacity-100 translate-y-0 pointer-events-auto px-4 py-5 mb-6'
+                  : 'h-0 opacity-0 -translate-y-4 pointer-events-none p-0 overflow-hidden mb-0'
+              }`}>
               <StoreCategoriesPill
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
               />
             </div>
 
-            {/* CATEGORY CARDS GRID */}
-            <section className="rounded-md bg-transparent">
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-3">
+            {/* CATEGORY CARDS GRID CONTAINER */}
+            <section ref={triggerRef} className="rounded-md bg-transparent !mt-0">
+              <div className="grid grid-cols-2 gap-2 pt-2 md:grid-cols-3 xl:grid-cols-3">
                 {categories.map(category => (
                   <StoreCategoryCard
                     key={category.id}
