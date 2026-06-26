@@ -15,6 +15,7 @@ import { categories } from '@/categories';
 import { products } from '@/data/products';
 
 import { ProductType, ProductVariantType } from '@/types';
+import StoreProductGridCard from '@/components/store/product/StoreProductGridCard';
 
 export default function AJStorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -178,14 +179,14 @@ export default function AJStorePage() {
             </section>
 
             {/* PRODUCT GRID */}
-            <section className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
+            <section className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map(product => (
-                <StoreProductCard
+                <StoreProductGridCard
                   key={product.id}
                   product={product}
                   onPreview={openPreview}
-                  onAddToCart={handleAddToCart}
                   onToggleLike={handleToggleLike}
+                  onAddToCart={handleAddToCart}
                 />
               ))}
             </section>
