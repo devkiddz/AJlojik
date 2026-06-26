@@ -19,11 +19,8 @@ import StoreProductGridCard from '@/components/store/product/StoreProductGridCar
 
 export default function AJStorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
   const [storeProducts, setStoreProducts] = useState(products);
-
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
-
   const [previewOpen, setPreviewOpen] = useState(false);
 
   /**
@@ -44,7 +41,6 @@ export default function AJStorePage() {
    */
   const [featuredProductId] = useState(() => {
     const featured = products.filter(product => product.featured);
-
     return featured.length ? featured[Math.floor(Math.random() * featured.length)].id : products[0].id;
   });
 
@@ -58,24 +54,10 @@ export default function AJStorePage() {
    */
   const handleToggleLike = (productId: string) => {
     setStoreProducts(prev =>
-      prev.map(product =>
-        product.id === productId
-          ? {
-              ...product,
-              liked: !product.liked
-            }
-          : product
-      )
+      prev.map(product => (product.id === productId ? { ...product, liked: !product.liked } : product))
     );
 
-    setSelectedProduct(prev =>
-      prev && prev.id === productId
-        ? {
-            ...prev,
-            liked: !prev.liked
-          }
-        : prev
-    );
+    setSelectedProduct(prev => (prev && prev.id === productId ? { ...prev, liked: !prev.liked } : prev));
   };
 
   /**
@@ -84,7 +66,6 @@ export default function AJStorePage() {
   const handleAddToCart = (product: ProductType, variant: ProductVariantType) => {
     console.log(product.name);
     console.log(variant.label);
-
     alert(`${product.name} added to cart`);
   };
 
@@ -105,9 +86,7 @@ export default function AJStorePage() {
 
   const handleNextProduct = () => {
     if (selectedIndex === -1) return;
-
     const nextIndex = selectedIndex + 1;
-
     if (nextIndex < filteredProducts.length) {
       setSelectedProduct(filteredProducts[nextIndex]);
     }
@@ -115,9 +94,7 @@ export default function AJStorePage() {
 
   const handlePreviousProduct = () => {
     if (selectedIndex === -1) return;
-
     const previousIndex = selectedIndex - 1;
-
     if (previousIndex >= 0) {
       setSelectedProduct(filteredProducts[previousIndex]);
     }
@@ -132,18 +109,19 @@ export default function AJStorePage() {
         </aside>
 
         {/* MAIN */}
-        <main className="col-span-12 lg:col-span-8">
-          <div className="bg-transparent">
-            {/* CATEGORY SECTION */}
-            <section className="gap-4 rounded-md bg-transparent">
-              <div className="sticky top-14 z-10 w-full overflow-hidden rounded-md bg-muted px-4 py-5">
-                <StoreCategoriesPill
-                  selectedCategory={selectedCategory}
-                  onSelectCategory={setSelectedCategory}
-                />
-              </div>
+        <main className="relative col-span-12 lg:col-span-8">
+          <div className="bg-transparent space-y-6">
+            {/* STICKY CATEGORY PILL - Now outside of the section boundary */}
+            <div className="sticky top-14 z-30 w-full overflow-hidden rounded-md bg-muted px-4 py-5 shadow-sm">
+              <StoreCategoriesPill
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-10 -mt-5 md:grid-cols-3 xl:grid-cols-3">
+            {/* CATEGORY CARDS GRID */}
+            <section className="rounded-md bg-transparent">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-3">
                 {categories.map(category => (
                   <StoreCategoryCard
                     key={category.id}
@@ -155,7 +133,7 @@ export default function AJStorePage() {
               </div>
             </section>
 
-            {/* FEATURED */}
+            {/* FEATURED PRODUCTS */}
             <section className="grid gap-6 lg:grid-cols-5">
               <div className="min-w-0 lg:col-span-2">
                 {featuredProduct && (
@@ -179,7 +157,7 @@ export default function AJStorePage() {
             </section>
 
             {/* PRODUCT GRID */}
-            <section className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+            <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map(product => (
                 <StoreProductGridCard
                   key={product.id}
