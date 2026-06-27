@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { LayoutGrid, UtensilsCrossed, Wine, PartyPopper, Landmark } from 'lucide-react';
 
-import SearchBarComponent from './SearchBarComponent';
+// import SearchBarComponent from './SearchBarComponentBackup';
 import UserActionComponent from './UserActionComponent';
 import ThemeController from './ThemeController';
 import LogoComponent from './shared/LogoComponent';
@@ -13,6 +13,7 @@ import { CartLogics } from './shared/CartLogics';
 import SidebarToggle from './shared/SidebarToggle';
 
 import { Button } from './ui/button';
+import SearchBarComponent from './SearchBarComponent';
 
 type BrandType = {
   brandName: string;
