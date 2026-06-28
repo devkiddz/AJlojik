@@ -8,6 +8,7 @@ import { X } from 'lucide-react';
 
 export default function SearchMobileOverlay() {
   const { open, setOpen } = useSearch();
+  console.log('Open:', open);
 
   if (!open) return null;
 

@@ -15,6 +15,7 @@ import SearchProvider from '@/components/providers/SearchProvider';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { cn } from '@/lib/utils';
+import SearchMobileOverlay from '@/components/search/SearchMobileOverlay';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -71,6 +72,7 @@ export default function RootLayout({
 
                   <FooterComponent brandName="AJ" brandSlug="Lojik" />
                 </main>
+                <SearchMobileOverlay />
               </SearchProvider>
             </Suspense>
           </SidebarProvider>
