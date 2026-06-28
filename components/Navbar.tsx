@@ -15,6 +15,7 @@ import SidebarToggle from './shared/SidebarToggle';
 import { Button } from './ui/button';
 import SearchBarComponent from './SearchBarComponent';
 import { MobileSearchButton } from './search';
+import StoreCategoriesPill from './store/StoreCategoriesPill';
 
 type BrandType = {
   brandName: string;
@@ -197,6 +198,14 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
       {/* MOBILE SEARCH */}
       <div className="border-t bg-background px-4 py-3 md:hidden">
         <MobileSearchButton />
+        <StoreCategoriesPill
+          selectedCategory={selectedCategory}
+          onSelectCategory={category =>
+            updateQuery({
+              category
+            })
+          }
+        />
       </div>
     </header>
   );

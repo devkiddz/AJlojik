@@ -176,7 +176,7 @@ export default function StorePageClient() {
         <main className="relative col-span-12 lg:col-span-8">
           <div className="space-y-6">
             {/* STICKY FILTER */}
-            <div
+            {/* <div
               className={`sticky top-15 z-50 w-full bg-background ${
                 showStickyPill
                   ? 'mb-6 h-auto translate-y-0 px-4 py-2 opacity-100m'
@@ -190,7 +190,7 @@ export default function StorePageClient() {
                   })
                 }
               />
-            </div>
+            </div> */}
 
             {/* CATEGORY GRID */}
             <section ref={triggerRef} className="!mt-0 rounded-md bg-transparent">
