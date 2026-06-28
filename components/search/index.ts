@@ -1,6 +1,6 @@
 export { default as SearchProvider } from './SearchProvider';
 
-// export { default as SearchBarComponent } from './SearchBarComponent';
+export { default as SearchBarComponent } from './SearchBarComponent';
 export { default as SearchBar } from './SearchBar';
 
 export { default as SearchResultsDropdown } from './SearchResultsDropdown';
