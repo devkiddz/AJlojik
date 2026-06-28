@@ -1,31 +1,28 @@
 'use client';
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
+import SearchBar from './SearchBar';
+import SearchResultsDropdown from './SearchResultsDropdown';
 
-export default function SearchOverlay({ open, onClose }: Props) {
+import { useSearch } from '@/components/providers/SearchProvider';
+
+export default function SearchOverlay() {
+  const { open } = useSearch();
+
   if (!open) return null;
 
   return (
-    <button
-      type="button"
-      aria-label="Close search"
-      onClick={onClose}
+    <div
+      onClick={e => e.stopPropagation()}
       className="
-        fixed
-        inset-0
-        z-40
-
-        bg-black/20
-
-        backdrop-blur-[2px]
-
-        animate-in
-        fade-in
-        duration-200
-      "
-    />
+                absolute
+                left-1/2
+                top-20
+                z-50
+                w-[min(1180px,96vw)]
+                -translate-x-1/2
+            ">
+      <SearchBar />
+      <SearchResultsDropdown />
+    </div>
   );
 }

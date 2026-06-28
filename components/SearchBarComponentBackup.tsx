@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 const trending = ['Hennessy', 'Jameson', 'Moët', 'Red Wine', 'Kitchen', 'Champagne'];
 
-export default function SearchBarComponent() {
+export default function SearchBarComponentBackup() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();

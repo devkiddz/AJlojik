@@ -9,7 +9,6 @@ import SearchEmptyState from './SearchEmptyState';
 import SearchShortcut from './SearchShortcut';
 import SearchKeyboard from './SearchKeyboard';
 import SearchPreview from './SearchPreview';
-
 import { useSearch } from '@/components/providers/SearchProvider';
 
 type Props = {
@@ -41,10 +40,13 @@ export default function SearchResultsDropdown({ mobile = false }: Props) {
 
   return (
     <div
+      data-search-dropdown="true"
+      onClick={e => e.stopPropagation()}
       className={
         mobile
           ? 'flex h-full flex-col overflow-hidden bg-background'
-          : 'absolute left-0 top-full mt-3 w-[min(1180px,96vw)] overflow-hidden rounded-b-3xl border border-t-0 bg-background/95 backdrop-blur-xl shadow-2xl z-50'
+          : 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(1180px,96vw)] overflow-hidden rounded-3xl border bg-background/95 backdrop-blur-xl shadow-2xl z-50'
+        // 🚀 Horizontally centered perfectly relative to the SearchBar element above it!
       }>
       {loading ? (
         <SearchLoading />
@@ -52,7 +54,7 @@ export default function SearchResultsDropdown({ mobile = false }: Props) {
         <div className={`grid ${showPreview ? 'grid-cols-12' : 'grid-cols-1'} h-[75vh] overflow-hidden`}>
           {/* LEFT PANEL */}
           <div
-            className={`relative overflow-y-auto p-6 space-y-8 ${showPreview ? 'col-span-7' : 'col-span-12'}`}>
+            className={`relative overflow-y-auto scrollbar-none p-6 space-y-8 ${showPreview ? 'col-span-7' : 'col-span-12'}`}>
             {query.trim() === '' ? (
               <>
                 <SearchHistory

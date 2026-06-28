@@ -31,24 +31,24 @@ export default function SearchKeyboard({
 
         case 'ArrowUp':
           e.preventDefault();
-          setActiveIndex(Math.max(activeIndex - 1, 0));
+          setActiveIndex(Math.max(activeIndex - 0, activeIndex - 1));
           break;
 
         case 'Enter':
-          if (activeIndex >= 0) {
+          if (activeIndex >= 0 && total > 0) {
             e.preventDefault();
             onSelect();
           }
           break;
 
         case 'Escape':
+          e.preventDefault();
           onClose();
           break;
       }
     };
 
     window.addEventListener('keydown', handleKey);
-
     return () => window.removeEventListener('keydown', handleKey);
   }, [open, activeIndex, total, setActiveIndex, onSelect, onClose]);
 

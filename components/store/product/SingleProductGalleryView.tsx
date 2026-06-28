@@ -7,6 +7,7 @@ import { Heart, ShoppingBag } from 'lucide-react';
 import { ProductType } from '@/types';
 import { categories } from '@/categories';
 import RecentlyViewedSidebar from '../modules/RecentlyViewedSidebar';
+import ProductActions from './ProductActions';
 
 type Props = {
   product: ProductType;
@@ -96,6 +97,7 @@ export default function SingleProductGalleryView({ product }: Props) {
               </button>
             </div>
           </div>
+          <ProductActions product={product} />
         </div>
 
         {/* PURCHASE CARD */}

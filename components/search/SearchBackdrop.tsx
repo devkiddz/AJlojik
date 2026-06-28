@@ -8,5 +8,5 @@ type Props = {
 export default function SearchBackdrop({ open, onClose }: Props) {
   if (!open) return null;
 
-  return <div onClick={onClose} className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" />;
+  return <div aria-hidden onClick={onClose} className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" />;
 }
