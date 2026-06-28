@@ -177,9 +177,9 @@ export default function StorePageClient() {
           <div className="space-y-6">
             {/* STICKY FILTER */}
             <div
-              className={`sticky top-15 z-55 w-full bg-background ${
+              className={`sticky top-15 z-50 w-full bg-background ${
                 showStickyPill
-                  ? 'mb-6 h-auto translate-y-0 px-4 py-2 opacity-100'
+                  ? 'mb-6 h-auto translate-y-0 px-4 py-2 opacity-100m'
                   : 'mb-0 h-0 -translate-y-4 overflow-hidden p-0 opacity-0 pointer-events-none'
               }`}>
               <StoreCategoriesPill

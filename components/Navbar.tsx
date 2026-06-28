@@ -104,7 +104,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   return (
     <header className="sticky top-0 z-50 w-full bg-background/80 shadow backdrop-blur-xl">
       {/* TOP BAR */}
-      <div className="relative mx-auto flex h-14 items-center justify-between px-4">
+      <div className="relative z-55 mx-auto flex h-14 items-center justify-between px-4">
         {/* LEFT */}
         <div className="flex items-center gap-1.5">
           <SidebarToggle />
@@ -114,7 +114,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
         {/* DESKTOP CENTER */}
         <div
           className={`
-        absolute left-1/2 top-1/2
+        absolute left-1/2 top-1/2 z-55
         hidden -translate-x-1/2 -translate-y-1/2
         items-center rounded-full
         bg-muted/70
