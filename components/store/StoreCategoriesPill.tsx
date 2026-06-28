@@ -20,9 +20,9 @@ export default function StoreCategoriesPill({ selectedCategory, onSelectCategory
               variant="ghost"
               onClick={() => onSelectCategory(category.slug)}
               className={cn(
-                'h-10 shrink-0 rounded-full px-5 text-sm font-semibold tracking-tight transition-all duration-300',
+                'h-10 shrink-0 rounded-full px-5 text-sm font-semibold tracking-tight transition-all duration-300 text-[11px]',
                 active
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary hover:text-primary-foreground scale-[1.02]'
+                  ? 'bg-secondary/15 font-extrabold text-secondary hover:bg-primary hover:text-primary-foreground scale-[1.02]'
                   : 'border border-border/60 bg-background text-muted-foreground hover:border-primary/30 hover:bg-muted/50 hover:text-foreground'
               )}>
               {category.label}
