@@ -11,32 +11,47 @@ export default function MobileSearchButton() {
     <button
       type="button"
       onClick={() => setOpen(true)}
+      aria-label="Open search"
       className="
         flex
-        h-11
+        h-12
         w-full
         items-center
-        gap-3
+        justify-between
 
-        rounded-full
+        rounded-2xl
         border
+        border-border/60
+
         bg-background
 
         px-4
 
-        text-sm
-        text-muted-foreground
-
         shadow-sm
+        transition-all
+        duration-200
 
-        transition
-        hover:bg-muted/40
+        active:scale-[0.98]
 
         lg:hidden
       ">
-      <Search className="h-4 w-4 shrink-0" />
+      <div className="flex items-center gap-3">
+        <Search className="h-5 w-5 text-muted-foreground" />
 
-      <span className="truncate">Search products...</span>
+        <span className="text-sm text-muted-foreground">Search products, wines...</span>
+      </div>
+
+      <kbd
+        className="
+          rounded-md
+          bg-muted
+          px-2
+          py-1
+          text-[10px]
+          text-muted-foreground
+        ">
+        Tap
+      </kbd>
     </button>
   );
 }

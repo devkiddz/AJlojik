@@ -102,26 +102,27 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky top-0 z-50 h-14 w-full bg-background/80 shadow backdrop-blur-xl">
-      <div className="relative mx-auto flex h-full items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full bg-background/80 shadow backdrop-blur-xl">
+      {/* TOP BAR */}
+      <div className="relative mx-auto flex h-14 items-center justify-between px-4">
         {/* LEFT */}
         <div className="flex items-center gap-1.5">
           <SidebarToggle />
           <LogoComponent brandName={brandName} brandSlug={brandSlug} />
         </div>
 
-        {/* CENTER */}
+        {/* DESKTOP CENTER */}
         <div
           className={`
-            absolute left-1/2 top-1/2
-            hidden -translate-x-1/2 -translate-y-1/2
-            items-center rounded-full
-            bg-muted/70
-            px-2 py-1 pl-4
-            transition-all duration-500 ease-in-out
-            md:flex
-            ${scrolled ? 'scale-[1.05]' : 'scale-100'}
-          `}>
+        absolute left-1/2 top-1/2
+        hidden -translate-x-1/2 -translate-y-1/2
+        items-center rounded-full
+        bg-muted/70
+        px-2 py-1 pl-4
+        transition-all duration-500 ease-in-out
+        md:flex
+        ${scrolled ? 'scale-[1.05]' : 'scale-100'}
+      `}>
           {/* BRANDS */}
           {brands.map(item => {
             const Icon = item.icon;
@@ -138,11 +139,10 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                   })
                 }
                 className={`
-        flex h-8 items-center gap-2 rounded-full px-3
-        text-xs transition-all duration-300
-
-        ${isActive ? 'bg-secondary/10 text-secondary' : 'text-muted-foreground hover:text-secondary'}
-      `}>
+              flex h-8 items-center gap-2 rounded-full px-3
+              text-xs transition-all duration-300
+              ${isActive ? 'bg-secondary/10 text-secondary' : 'text-muted-foreground hover:text-secondary'}
+            `}>
                 <Icon className="h-4 w-4" />
                 <span className="whitespace-nowrap font-medium">{item.label}</span>
               </Button>
@@ -152,37 +152,33 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           {/* STORE */}
           <Button
             variant="ghost"
-            onClick={() => {
+            onClick={() =>
               router.push(`/store?${searchParams.toString()}`, {
                 scroll: false
-              });
-            }}
+              })
+            }
             className={`
-              flex h-8 items-center gap-2 rounded-full px-3
-              text-xs transition-all duration-300
-              text-brand-navy
-              font-medium
-              ${isStorePage ? 'bg-gradient-royal text-primary hover:text-secondary' : 'text-muted-foreground hover:text-secondary'}
-            `}>
+          flex h-8 items-center gap-2 rounded-full px-3
+          text-xs font-medium transition-all duration-300
+          ${
+            isStorePage
+              ? 'bg-gradient-royal text-primary hover:text-secondary'
+              : 'text-muted-foreground hover:text-secondary'
+          }
+        `}>
             <Landmark className="h-4 w-4" />
             AJ Store
           </Button>
 
-          {/* DIVIDER */}
           <div className="mx-3 h-6 w-px bg-border" />
 
-          {/* SEARCH */}
           <div className="w-[320px] xl:w-[360px]">
             <SearchBarComponent />
           </div>
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-2 pt-2">
-          <div className="md:hidden">
-            <MobileSearchButton />
-          </div>
-
+        <div className="flex items-center gap-2">
           {isLoggedIn && (
             <>
               <CartLogics />
@@ -196,6 +192,11 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
             </>
           )}
         </div>
+      </div>
+
+      {/* MOBILE SEARCH */}
+      <div className="border-t bg-background px-4 py-3 md:hidden">
+        <MobileSearchButton />
       </div>
     </header>
   );
