@@ -1,6 +1,6 @@
-export { default as SearchProvider } from './SearchProvider';
+import { useSearch } from '@/components/providers/SearchProvider';
 
-export { default as SearchBarComponent } from './SearchBarComponent';
+export { default as SearchBarComponent } from '@/components/SearchBarComponent';
 export { default as SearchBar } from './SearchBar';
 
 export { default as SearchResultsDropdown } from './SearchResultsDropdown';
@@ -19,3 +19,4 @@ export { default as SearchEmptyState } from './SearchEmptyState';
 export { default as SearchOverlay } from './SearchOverlay';
 
 export { default as MobileSearchSheet } from './MobileSearchSheet';
+export { default as MobileSearchButton } from './MobileSearchButton';

@@ -1,20 +1,25 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
-import './globals.css';
-import NavbarComponent from '@/components/Navbar';
-import { cn } from '@/lib/utils';
-import FooterComponent from '@/components/FooterComponent';
-import ThemeProvider from '@/components/providers/ThemeProvider';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/providers/AppSideBar';
 import { Suspense } from 'react';
 
-// type BrandType = {
-//   brandName: string;
-//   brandSlug: string;
-// };
+import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+import NavbarComponent from '@/components/Navbar';
+import FooterComponent from '@/components/FooterComponent';
+
+import ThemeProvider from '@/components/providers/ThemeProvider';
+import { AppSidebar } from '@/components/providers/AppSideBar';
+
+import SearchProvider from '@/components/providers/SearchProvider';
+
+import { SidebarProvider } from '@/components/ui/sidebar';
+
+import { cn } from '@/lib/utils';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans'
+});
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -51,20 +56,23 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <SidebarProvider defaultOpen={false}>
-            <AppSidebar />
+            <Suspense fallback={null}>
+              <SearchProvider>
+                <AppSidebar />
 
-            <main className="flex flex-col w-full min-h-screen">
-              {/* SINGLE UNIFIED TOP BAR */}
-              <div className="sticky top-0 z-50">
-                <Suspense fallback={null}>
-                  <NavbarComponent brandName="AJ" brandSlug="Logiks" />
-                </Suspense>
-              </div>
+                <main className="flex min-h-screen w-full flex-col">
+                  <div className="sticky top-0 z-50">
+                    <Suspense fallback={null}>
+                      <NavbarComponent brandName="AJ" brandSlug="Logiks" />
+                    </Suspense>
+                  </div>
 
-              <div className="w-full flex flex-col flex-1">{children}</div>
+                  <div className="flex w-full flex-1 flex-col">{children}</div>
 
-              <FooterComponent brandName="AJ" brandSlug="Lojik" />
-            </main>
+                  <FooterComponent brandName="AJ" brandSlug="Lojik" />
+                </main>
+              </SearchProvider>
+            </Suspense>
           </SidebarProvider>
         </ThemeProvider>
       </body>

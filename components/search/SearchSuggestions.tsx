@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearch } from './SearchProvider';
+import { useSearch } from '@/components/providers/SearchProvider';
 import SearchResultItem from './SearchResultItem';
 
 import { ProductType } from '@/types';

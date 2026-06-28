@@ -4,8 +4,7 @@ import { X } from 'lucide-react';
 
 import SearchBar from './SearchBar';
 import SearchResultsDropdown from './SearchResultsDropdown';
-
-import { useSearch } from './SearchProvider';
+import { useSearch } from '../providers/SearchProvider';
 
 export default function MobileSearchSheet() {
   const { open, setOpen } = useSearch();

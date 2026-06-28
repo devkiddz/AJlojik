@@ -14,6 +14,7 @@ import SidebarToggle from './shared/SidebarToggle';
 
 import { Button } from './ui/button';
 import SearchBarComponent from './SearchBarComponent';
+import { MobileSearchButton } from './search';
 
 type BrandType = {
   brandName: string;
@@ -178,7 +179,9 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
         {/* RIGHT */}
         <div className="flex items-center gap-2 pt-2">
-          <ThemeController />
+          <div className="md:hidden">
+            <MobileSearchButton />
+          </div>
 
           {isLoggedIn && (
             <>

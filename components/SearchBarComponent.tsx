@@ -2,7 +2,7 @@
 
 import SearchBar from './search/SearchBar';
 import SearchMobileOverlay from './search/SearchMobileOverlay';
-import SearchProvider from './search/SearchProvider';
+import SearchProvider from './providers/SearchProvider';
 import SearchResultsDropdown from './search/SearchResultsDropdown';
 
 export default function SearchBarComponent() {

@@ -5,7 +5,7 @@ import { Search, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-import { useSearch } from './SearchProvider';
+import { useSearch } from '@/components/providers/SearchProvider';
 
 export default function SearchBar() {
   const {
