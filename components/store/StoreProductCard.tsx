@@ -18,20 +18,17 @@ type ProductCardProps = {
 
 export default function ProductCard({ product, onAddToCart, onPreview, onToggleLike }: ProductCardProps) {
   const router = useRouter();
-
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const [selectedVariantId] = useState(product.variants[0]?.id ?? '');
+  // Track the selected variant; default to the first one available
+  const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? '');
 
   const activeVariant = product.variants.find(v => v.id === selectedVariantId) ?? product.variants[0];
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = cardRef.current;
-
     if (!card) return;
-
     const rect = card.getBoundingClientRect();
-
     card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
     card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
   };
@@ -41,39 +38,12 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
-        className="
-          premium-card
-          relative
-          overflow-hidden
-          rounded-2xl
-          border
-          border-accent/10
-          transition-all
-          duration-500
-          hover:-translate-y-1
-          hover:border-accent/30
-          hover:shadow-[0_25px_60px_rgba(0,0,0,0.25)]
-        ">
-        {/* MICROSOFT FLUENT LIGHT */}
+        className="premium-card relative overflow-hidden rounded-2xl border border-accent/10 transition-all duration-500 hover:-translate-y-1 hover:border-accent/30 hover:shadow-[0_25px_60px_rgba(0,0,0,0.25)]">
+        {/* MICROSOFT FLUENT LIGHT EFFECT */}
         <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-10
-            opacity-0
-            transition-opacity
-            duration-300
-            group-hover:opacity-100
-          "
+          className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: `
-              radial-gradient(
-                350px circle at var(--mouse-x) var(--mouse-y),
-                rgba(201,162,39,.18),
-                transparent 45%
-              )
-            `
+            background: `radial-gradient(350px circle at var(--mouse-x) var(--mouse-y), rgba(201,162,39,.18), transparent 45%)`
           }}
         />
 
@@ -84,43 +54,14 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
             alt={product.name}
             fill
             sizes="(max-width:768px) 75vw, 240px"
-            className="
-              object-cover
-              transition-all
-              duration-700
-              brightness-105
-              contrast-105
-              saturate-110
-              group-hover:scale-[1.08]
-              group-hover:brightness-125
-              group-hover:contrast-120
-              group-hover:saturate-150
-            "
+            className="object-cover transition-all duration-700 brightness-105 group-hover:scale-[1.08] group-hover:brightness-125"
           />
 
-          {/* CATEGORY */}
-          <div
-            className="
-              absolute
-              inset-x-0
-              top-0
-              z-30
-              flex
-              items-center
-              justify-center
-              gap-1
-              bg-gradient-royal
-              p-2
-              text-[10px]
-              uppercase
-              tracking-wider
-              text-white
-            ">
-            <ChartColumnStacked className="h-3 w-3" />
-            {product.category}
+          {/* CATEGORY, LIKE, DISCOUNT BANNERS (Kept original logic) */}
+          <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-center gap-1 bg-gradient-royal p-2 text-[10px] uppercase tracking-wider text-white">
+            <ChartColumnStacked className="h-3 w-3" /> {product.category}
           </div>
 
-          {/* LIKE */}
           <div className="absolute left-2 top-8 z-40" onClick={e => e.stopPropagation()}>
             <LikedComponent
               productId={product.id}
@@ -129,98 +70,59 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
             />
           </div>
 
-          {/* DISCOUNT */}
           {product.discountPercentage > 0 && (
-            <div
-              className="
-                absolute
-                right-2
-                top-8
-                z-40
-                rounded-full
-                bg-secondary
-                px-2
-                py-1
-                text-[10px]
-                font-semibold
-                text-white
-              ">
+            <div className="absolute right-2 top-8 z-40 rounded-full bg-secondary px-2 py-1 text-[10px] font-semibold text-white">
               -{product.discountPercentage}% OFF
             </div>
           )}
 
-          {/* OVERLAY */}
-          <div
-            className="
-              absolute
-              inset-0
-              z-20
-              bg-gradient-to-t
-              from-black/85
-              via-black/20
-              to-transparent
-            "
-          />
+          <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
-          {/* CONTENT */}
-          <div
-            className="
-              absolute
-              inset-x-0
-              bottom-0
-              z-30
-              p-3
-              text-white
-            ">
+          {/* CONTENT AREA */}
+          <div className="absolute inset-x-0 bottom-0 z-30 p-3 text-white">
             <h3 className="line-clamp-1 text-sm font-semibold">{product.name}</h3>
 
-            <p className="line-clamp-1 text-xs text-white/80">{product.shortDescription}</p>
+            {/* VARIANT TOGGLE UI */}
+            <div className="flex gap-1.5 my-1.5" onClick={e => e.stopPropagation()}>
+              {product.variants.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setSelectedVariantId(v.id)}
+                  className={`text-[9px] px-2 py-0.5 rounded border transition-colors ${
+                    selectedVariantId === v.id
+                      ? 'bg-accent text-black border-accent'
+                      : 'bg-white/10 border-white/20'
+                  }`}>
+                  {v.label}
+                </button>
+              ))}
+            </div>
 
-            <div className="mt-2 flex items-center justify-between">
-              <span
-                className="
-                  text-sm
-                  font-bold
-                  text-accent
-                  drop-shadow-[0_0_12px_rgba(201,162,39,.35)]
-                ">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-accent drop-shadow-md">
                 ₦{activeVariant.price.toLocaleString()}
               </span>
 
               <div className="flex items-center gap-2">
                 {onPreview && (
                   <Button
-                    className="rounded-full"
+                    className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20"
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
                       onPreview?.(product);
                     }}>
-                    <Eye className="h-4 w-4 " />
+                    <Eye className="h-4 w-4" />
                   </Button>
                 )}
-
                 <Button
                   size="icon"
                   type="button"
                   onClick={e => {
-                    e.preventDefault();
                     e.stopPropagation();
-
-                    if (activeVariant) {
-                      onAddToCart?.(product, activeVariant);
-                    }
+                    onAddToCart?.(product, activeVariant);
                   }}
-                  className="
-                    h-8
-                    w-8
-                    rounded-full
-                    bg-secondary
-                    text-white
-                    transition-all
-                    hover:scale-110
-                    hover:shadow-lg
-                  ">
+                  className="h-8 w-8 rounded-full bg-secondary text-white hover:scale-110">
                   <ShoppingCartIcon className="h-4 w-4" />
                 </Button>
               </div>
