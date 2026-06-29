@@ -2,8 +2,7 @@
 
 import SearchBar from './SearchBar';
 import SearchResultsDropdown from './SearchResultsDropdown';
-
-import { useSearch } from '@/components/providers/SearchProvider';
+import { useSearch } from '../providers/SearchProvider';
 import { X } from 'lucide-react';
 
 export default function SearchMobileOverlay() {
@@ -17,20 +16,23 @@ export default function SearchMobileOverlay() {
         fixed
         inset-0
         z-[100]
-
         flex
         flex-col
-
-        bg-background
-
+        bg-background/80
+        backdrop-blur-xl
         lg:hidden
-      ">
-      <div className="border-b p-4">
+        animate-in
+        fade-in
+        duration-200
+      "
+      onClick={() => setOpen(false)}>
+      {/* Search Header Context */}
+      <div className="border-b p-4 bg-background/50 backdrop-blur-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-3">
           <button
             aria-label="close"
             onClick={() => setOpen(false)}
-            className="rounded-full p-2 hover:bg-muted">
+            className="rounded-full p-2 hover:bg-muted transition-colors active:scale-95">
             <X className="h-5 w-5" />
           </button>
 
@@ -40,7 +42,9 @@ export default function SearchMobileOverlay() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      {/* Mobile Workspace Engine Layout */}
+      <div className="flex-1 overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* 🚀 FIXED: Added the explicit 'mobile' prop so it renders inline lists safely */}
         <SearchResultsDropdown mobile />
       </div>
     </div>

@@ -26,12 +26,14 @@ export default function SearchKeyboard({
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
+          // Safely bound down to the last item in the suggestion array
           setActiveIndex(Math.min(activeIndex + 1, total - 1));
           break;
 
         case 'ArrowUp':
           e.preventDefault();
-          setActiveIndex(Math.max(activeIndex - 0, activeIndex - 1));
+          // 🚀 THE FIX: Subtract 1 from the active index, but floor it at 0
+          setActiveIndex(Math.max(0, activeIndex - 1));
           break;
 
         case 'Enter':
