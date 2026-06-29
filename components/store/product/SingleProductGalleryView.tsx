@@ -19,8 +19,8 @@ export default function SingleProductGalleryView({
 
   return (
     <div className="w-full space-y-4">
-      {/* PREVIEW CONTAINER STAGE */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted border border-border shadow-inner flex items-center justify-center">
+      {/* PREVIEW CONTAINER MONITOR BOX BLOCK */}
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black/40 border border-white/[0.05] shadow-inner flex items-center justify-center">
         {activeImage && (
           <Image
             src={activeImage}
@@ -33,7 +33,7 @@ export default function SingleProductGalleryView({
         )}
       </div>
 
-      {/* REUSABLE VARIANT CONTAINER INTERFACES */}
+      {/* CONFIGURATION SELECTOR TRACK HORIZONTAL WRAP */}
       <div className="flex flex-wrap gap-2.5 pt-1">
         {product.variants.map(variant => {
           const isSelected = selectedVariantId === variant.id;
@@ -44,11 +44,11 @@ export default function SingleProductGalleryView({
               onClick={() => setSelectedVariantId(variant.id)}
               className={`group relative flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-bold tracking-tight transition-all active:scale-[0.98] ${
                 isSelected
-                  ? 'border-accent bg-accent/10 text-foreground shadow-xs'
-                  : 'border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'border-primary bg-primary/10 text-white shadow-xs'
+                  : 'border-white/[0.08] bg-white/[0.02] text-slate-400 hover:text-white hover:bg-white/[0.05] hover:border-white/15'
               }`}>
               <span
-                className={`h-1.5 w-1.5 rounded-full transition-colors ${isSelected ? 'bg-accent animate-pulse' : 'bg-muted-foreground group-hover:bg-foreground'}`}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${isSelected ? 'bg-primary animate-pulse' : 'bg-slate-500 group-hover:bg-slate-300'}`}
               />
               {variant.label}
             </button>
