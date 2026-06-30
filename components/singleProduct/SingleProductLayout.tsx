@@ -22,16 +22,16 @@ export default function SingleProductLayout({ product }: Props) {
   const { selectedVariant, selectedVariantId, setSelectedVariantId, inStock } = useSingleProduct(product);
 
   return (
-    <main className="min-h-screen bg-background mt-20 px-6">
+    <main className="min-h-screen bg-background md:mt-20 md:px-6 overflow-y-auto scrollbar-none">
       <SingleProductHero product={product} variant={selectedVariant} />
 
-      <section className="mx-auto max-w-[90%] px-4 py-10 lg:px-2">
+      <section className="md:mx-auto md:max-w-[90%] md:px-4 md:py-10 lg:px-2">
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-12">
           {/* INCREASED TO 4 COLUMNS: 
               Giving the Gallery more space allows the images 
               and the variant selection buttons to breathe.
             */}
-          <div className="space-y-10 lg:col-span-3 md:sticky top-20 self-start">
+          <div className="space-y-10 lg:col-span-3 md:sticky top-20 md:self-start">
             <SingleProductGallery
               product={product}
               selectedVariantId={selectedVariantId}

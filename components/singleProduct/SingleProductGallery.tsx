@@ -13,9 +13,9 @@ export default function SingleProductGallery({ product, selectedVariantId, setSe
   const selected = product.variants.find(v => v.id === selectedVariantId) ?? product.variants[0];
 
   return (
-    <section className="rounded-3xl border bg-card p-6">
+    <section className="rounded-3xl border bg-card p-4 md:p-6">
       {/* Main Preview Image */}
-      <div className="relative h-[450px] w-full overflow-hidden rounded-2xl bg-muted/50">
+      <div className="relative h-[350px] md:h-[450px] w-full overflow-hidden rounded-2xl bg-muted/50">
         <Image src={selected.image} alt={product.name} fill className="object-cover overflow-hidden" />
       </div>
 

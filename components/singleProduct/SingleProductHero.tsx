@@ -35,7 +35,7 @@ export default function SingleProductHero({ product, variant }: Props) {
   }, [covers]);
 
   return (
-    <section className="fixed top-0 w-full isolate overflow-hidden min-h-[500px] flex items-center">
+    <section className="fixed top-0 w-full isolate overflow-hidden min-h-[400px] flex items-center">
       {/* Background Slider */}
       <div className="absolute inset-0 z-0">
         {covers.map((cover, index) => (
@@ -53,7 +53,7 @@ export default function SingleProductHero({ product, variant }: Props) {
       </div>
 
       {/* Content Container */}
-      <div className="flex flex-col relative z-10 mx-auto max-w-[80%] w-full py-12"></div>
+      <div className="flex flex-col relative z-10 mx-auto max-w-[80%] w-full md:py-12"></div>
     </section>
   );
 }
