@@ -29,17 +29,17 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
   };
 
   return (
-    <section className="flex flex-col gap-8 rounded-3xl border bg-card p-8 md:flex-row">
+    <section className="flex flex-col gap-4 md:gap-8 rounded-3xl border bg-card p-4 pt-8 md:p-8 md:flex-row">
       <div className="flex flex-1 flex-col justify-center">
         {/* Description Header */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">{product.name}</h2>
             <div className="flex items-center gap-1 text-sm text-primary md:text-md">
               <ChartColumnStacked className="h-3 w-3 text-rose-500 md:h-4 md:w-4" />
               {product.category}
             </div>
-            <div className="flex items-center gap-6 text-sm text-primary md:text-md">
+            <div className="flex items-center space-x-8 gap-3 md:gap-6 text-sm text-primary md:text-md">
               <RatingComponent rating={product.rating} reviews={product.reviews} />
             </div>
             <p className="text-muted-foreground">{product.longDescription}</p>
@@ -47,7 +47,7 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
 
           <div className="flex items-start gap-2">
             <span className="font-semibold">NGN</span>
-            <p className="text-foreground text-lg md:text-3xl font-bold">
+            <p className="text-foreground text-2xl md:text-4xl font-bold">
               {formatPrice(selectedProduct.price)}
             </p>
           </div>
@@ -57,7 +57,7 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
         <div className="flex gap-4 mt-6 max-w-sm">
           <button
             onClick={() => handleBuyNow(selectedProduct.id)}
-            className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-full font-semibold hover:opacity-90 transition-opacity">
+            className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full font-semibold hover:opacity-90 transition-opacity">
             <ShoppingBag className="w-5 h-5" />
             Buy Now
           </button>

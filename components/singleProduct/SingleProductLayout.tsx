@@ -31,7 +31,7 @@ export default function SingleProductLayout({ product }: Props) {
               Giving the Gallery more space allows the images 
               and the variant selection buttons to breathe.
             */}
-          <div className="space-y-10 lg:col-span-3 md:sticky top-20 md:self-start">
+          <div className="space-y-4 md:space-y-10 lg:col-span-3 md:sticky top-20 md:self-start">
             <SingleProductGallery
               product={product}
               selectedVariantId={selectedVariantId}
@@ -43,7 +43,7 @@ export default function SingleProductLayout({ product }: Props) {
             This makes the text content column more readable. 
             Lines of text that are too long (6 columns) are harder to read.
           */}
-          <div className="space-y-10 lg:col-span-6 z-5 bg-card overflow-hidden rounded-lg">
+          <div className="space-y-4 md:space-y-10 lg:col-span-6 z-5 bg-card overflow-hidden rounded-lg">
             <SingleProductOverview
               product={product}
               selectedVariantId={selectedVariantId}
