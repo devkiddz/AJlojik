@@ -71,7 +71,7 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
           </div>
 
           {product.discountPercentage > 0 && (
-            <div className="absolute right-2 top-8 z-40 rounded-full bg-secondary px-2 py-1 text-[10px] font-semibold text-white">
+            <div className="absolute right-2 top-11 z-40 rounded-full bg-secondary px-2 py-1 text-[10px] font-semibold text-white">
               -{product.discountPercentage}% OFF
             </div>
           )}
@@ -106,7 +106,7 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
               <div className="flex items-center gap-2">
                 {onPreview && (
                   <Button
-                    className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20"
+                    className="h-8 w-8 rounded-full bg-card hover:bg-card/90 text-white hover:ring transition-all cursor-pointer hover:scale-110"
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
@@ -122,7 +122,7 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
                     e.stopPropagation();
                     onAddToCart?.(product, activeVariant);
                   }}
-                  className="h-8 w-8 rounded-full bg-secondary text-white hover:scale-110">
+                  className="h-8 w-8 rounded-full bg-secondary text-white hover:ring hover:scale-110 hover:bg-secondary/90 transition-transform cursor-pointer">
                   <ShoppingCartIcon className="h-4 w-4" />
                 </Button>
               </div>

@@ -2,9 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Heart, ShoppingCart } from 'lucide-react';
+import { ChartColumnStacked, Eye, ShoppingCart } from 'lucide-react';
 
 import { ProductType, ProductVariantType } from '@/types';
+import LikedComponent from '@/components/shared/LikedComponent';
 
 type Props = {
   product: ProductType;
@@ -17,71 +18,72 @@ export default function StoreProductGridCard({ product, onPreview, onToggleLike,
   const variant = product.variants[0];
 
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className="group relative block overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-primary/20 hover:shadow-lg">
-      {/* IMAGE */}
-      <div className="relative aspect-square overflow-hidden">
-        <Image
-          src={variant.image}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+    <article className="relative group flex flex-col rounded-xl bg-gradient-brand p-4 transition-colors hover:bg-[#282828]">
+      {/* LIKE BUTTON - Placed outside the Link to prevent navigation trigger */}
+      <div className="absolute left-5 top-5 z-10">
+        <LikedComponent
+          productId={product.id}
+          liked={product.liked}
+          onToggle={() => onToggleLike?.(product.id)}
         />
+      </div>
 
-        {/* FLOATING TOOLBAR */}
-        <div className="absolute top-2 right-2 z-20">
-          <div className="flex h-auto md:h-10 flex-col items-center overflow-hidden rounded-full border border-border/20 bg-white shadow-lg transition-all duration-300 ease-out md:group-hover:h-[120px]">
-            {/* LIKE */}
-            <button
-              type="button"
-              aria-label="Like product"
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleLike?.(product.id);
-              }}
-              className="flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary md:opacity-0 md:group-hover:opacity-100">
-              <Heart
-                className={`h-4 w-4 transition-all ${product.liked ? 'fill-secondary text-secondary' : ''}`}
-              />
-            </button>
+      {product.discountPercentage > 0 && (
+        <div className="absolute right-2 top-7 z-40 rounded-full bg-secondary px-2 py-1 text-[10px] font-semibold text-white">
+          -{product.discountPercentage}% OFF
+        </div>
+      )}
 
-            {/* PREVIEW */}
-            <button
-              type="button"
-              aria-label="Preview product"
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                onPreview?.(product);
-              }}
-              className="flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary md:opacity-0 md:group-hover:opacity-100">
-              <Eye className="h-4 w-4" />
-            </button>
+      {/* WRAPPER FOR NAVIGATION - Now excludes the LikedComponent */}
+      <Link href={`/products/${product.slug}`} className="block">
+        <div className="relative mb-4 aspect-square overflow-hidden rounded-md">
+          <Image
+            src={variant.image}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </div>
 
-            {/* CART */}
-            <button
-              type="button"
-              aria-label="Add to cart"
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                onAddToCart?.(product, variant);
-              }}
-              className="flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-primary md:opacity-0 md:group-hover:opacity-100">
-              <ShoppingCart className="h-4 w-4" />
-            </button>
+        <div className="mb-4">
+          <h3 className="line-clamp-1 text-base font-semibold text-white">{product.name}</h3>
+          <div className="flex items-center gap-2 text-secondary">
+            <ChartColumnStacked className="h-3 w-3" /> {product.category}
           </div>
         </div>
-      </div>
+      </Link>
 
-      {/* CONTENT */}
-      <div className="space-y-0.5 p-2">
-        <h3 className="line-clamp-1 text-sm font-medium leading-tight">{product.name}</h3>
-        <p className="line-clamp-1 text-sm font-semibold text-primary">₦{variant.price.toLocaleString()}</p>
+      {/* ACTIONS AREA */}
+      <div className="mt-auto flex items-center justify-between">
+        <span className="text-sm font-bold text-white">₦{variant.price.toLocaleString()}</span>
+
+        <div className="flex gap-2">
+          {onPreview && (
+            <button
+              aria-label="Preview product"
+              type="button"
+              onClick={e => {
+                e.preventDefault();
+                onPreview?.(product);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-card hover:ring text-white transition-all cursor-pointer">
+              <Eye className="h-4 w-4" />
+            </button>
+          )}
+
+          <button
+            aria-label="Add to cart"
+            type="button"
+            onClick={e => {
+              e.preventDefault();
+              onAddToCart?.(product, variant);
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-card hover:ring text-white transition-all cursor-pointer">
+            <ShoppingCart className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-    </Link>
+    </article>
   );
 }
