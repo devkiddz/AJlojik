@@ -16,6 +16,8 @@ import { Button } from './ui/button';
 import SearchBarComponent from './SearchBarComponent';
 import { MobileSearchButton } from './search';
 import StoreCategoriesPill from './store/StoreCategoriesPill';
+import StoreButton from './shared/StoreButton';
+import PremiumStoreButton from './ui/premium-store-button';
 
 type BrandType = {
   brandName: string;
@@ -95,7 +97,8 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
         }
       });
 
-      router.push(`${pathname}?${params.toString()}`, {
+      // router.push(`${pathname}?${params.toString()}`, {
+      router.push(`store/?${params.toString()}`, {
         scroll: false
       });
     },
@@ -151,7 +154,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           })}
 
           {/* STORE */}
-          <Button
+          {/* <Button
             variant="ghost"
             onClick={() =>
               router.push(`/store?${searchParams.toString()}`, {
@@ -160,16 +163,21 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
             }
             className={`
           flex h-8 items-center gap-2 rounded-full px-3
-          text-xs font-medium transition-all duration-300
-          ${
-            isStorePage
-              ? 'bg-gradient-royal text-primary hover:text-secondary'
-              : 'text-muted-foreground hover:text-secondary'
-          }
+          text-xs font-medium transition-all duration-300 hover:text-white cursor-pointer
+          ${isStorePage ? 'bg-gradient-royal text-white' : 'text-muted-foreground'}
         `}>
             <Landmark className="h-4 w-4" />
             AJ Store
-          </Button>
+          </Button> */}
+
+          <PremiumStoreButton
+            active={isStorePage}
+            onClick={() =>
+              router.push(`/store?${searchParams.toString()}`, {
+                scroll: false
+              })
+            }
+          />
 
           <div className="mx-3 h-6 w-px bg-border" />
 
