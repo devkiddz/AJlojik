@@ -64,13 +64,13 @@ export default function RootLayout({
                 <main className="flex min-h-screen w-full flex-col">
                   <div className="sticky top-0 z-50">
                     <Suspense fallback={null}>
-                      <NavbarComponent brandName="AJ" brandSlug="Logiks" />
+                      <NavbarComponent brandName="AJ" brandSlug="Logik" />
                     </Suspense>
                   </div>
 
                   <div className="flex w-full flex-1 flex-col">{children}</div>
 
-                  <FooterComponent brandName="AJ" brandSlug="Lojik" />
+                  <FooterComponent brandName="AJ" brandSlug="Logik" />
                 </main>
                 <SearchMobileOverlay />
               </SearchProvider>

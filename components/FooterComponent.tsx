@@ -15,7 +15,10 @@ export default function FooterComponent({ brandName, brandSlug }: { brandName: s
                 <Aperture className="text-secondary w-2 h-2" />
               </Link>
             </div>
-            <h3 className="mb-4 text-xl font-bold">Liquors & Kitchen</h3>
+            <h3 className="mb-2 text-sm font-bold">
+              A pinch of excellenece
+              <br /> in every choice
+            </h3>
             <p className="text-sm text-muted-foreground leading-6">
               Fast delivery of premium liquors, delicious meals, grilled specials, and kitchen essentials
               right to your doorstep.
