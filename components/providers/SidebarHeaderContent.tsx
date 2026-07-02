@@ -1,12 +1,13 @@
-import { Logs, X } from 'lucide-react';
+import { Logs, PanelLeftClose, X } from 'lucide-react';
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
 
 export default function SidebarHeaderContent() {
-  const { setOpen } = useSidebar();
+  // const { setOpen } = useSidebar();
+  const { isMobile, setOpen, setOpenMobile } = useSidebar();
 
   return (
-    <div className="flex items-center justify-between px-2 py-4">
+    <div className="relative flex items-center justify-between px-2 py-4">
       <div>
         <h2 className="text-xl font-bold">AJ Store</h2>
         <p className="text-xs text-muted-foreground">Food • Drinks • Events</p>
@@ -15,17 +16,15 @@ export default function SidebarHeaderContent() {
       <Button
         type="button"
         aria-label="Close sidebar"
-        onClick={() => setOpen(false)}
-        className="
-          rounded-md
-          p-2
-          bg-muted
-          transition
-          cursor-pointer
-            hover:bg-muted
-            md:hidden
-        ">
-        <Logs className="size-4 text-white" />
+        onClick={() => {
+          if (isMobile) {
+            setOpenMobile(false);
+          } else {
+            setOpen(false);
+          }
+        }}
+        className="rounded-md bg-card/10 p-2 transition hover:bg-transparent md:hidden">
+        <PanelLeftClose className="size-5 text-primary" />
       </Button>
     </div>
   );

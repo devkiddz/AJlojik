@@ -233,7 +233,12 @@ export default function StorePageClient() {
             </section>
 
             {/* PRODUCT GRID */}
-            <section className="grid grid-cols-2 gap-3 grid-cols-3 xl:grid-cols-6">
+            <section
+              className="
+              grid
+              gap-3
+              grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
+            ">
               {filteredProducts.map(product => (
                 <StoreProductGridCard
                   key={product.id}

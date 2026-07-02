@@ -1,12 +1,5 @@
-import { collections } from '@/data/collections';
-import CollectionSection from './CollectionSection';
+import React from 'react';
 
 export default function HomeCollections() {
-  return (
-    <>
-      {collections.map(collection => (
-        <CollectionSection key={collection.id} />
-      ))}
-    </>
-  );
+  return <div></div>;
 }
