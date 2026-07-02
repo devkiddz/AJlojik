@@ -58,7 +58,7 @@ export default function HeroCarousel() {
 
   return (
     <section className="relative overflow-hidden rounded-md">
-      <div className="relative min-h-50 aspect-16/8 md:min-h-80">
+      <div className="relative aspect-16/8">
         {/* Slides */}
         <div
           className="flex h-full transition-transform duration-700 ease-in-out"

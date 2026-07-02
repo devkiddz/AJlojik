@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Crown } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { mockUser } from '@/components/providers/mock-user';
+import { useSidebar } from '@/components/ui/sidebar';
+import { X } from 'lucide-react';
 
 const user = mockUser;
 
@@ -21,6 +23,7 @@ import {
 } from '@/components/ui/sidebar';
 
 import { categories } from '@/categories';
+import SidebarHeaderContent from './SidebarHeaderContent';
 
 // 1. Extract the dynamic menu items into a sub-component
 function SidebarShopMenu() {
@@ -70,10 +73,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b">
-        <div className="px-2 py-4">
-          <h2 className="text-xl font-bold">AJ Store</h2>
-          <p className="text-xs text-muted-foreground">Food • Drinks • Events</p>
-        </div>
+        <SidebarHeaderContent />
       </SidebarHeader>
 
       <SidebarContent>

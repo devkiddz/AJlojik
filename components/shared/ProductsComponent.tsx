@@ -88,8 +88,7 @@ export default function ProductsComponent() {
     <div className="w-full">
       {/* CATEGORY STRIP */}
       <ItemsCarousel categories={categories} />
-
-      {/* FEATURED */}
+      FEATURED
       <ProductsCarousel
         title="Featured Products"
         category="featured"
@@ -97,9 +96,8 @@ export default function ProductsComponent() {
         onSelect={handleSelect}
         onToggleLike={toggleLike}
       />
-
       {/* FILTERED PRODUCTS */}
-      <ProductsCarousel
+      {/* <ProductsCarousel
         title={
           selectedCategory === 'all'
             ? 'All Products'
@@ -109,8 +107,7 @@ export default function ProductsComponent() {
         products={filteredProducts}
         onSelect={handleSelect}
         onToggleLike={toggleLike}
-      />
-
+      /> */}
       {/* MODAL */}
       <ProductModal
         product={selectedProduct}

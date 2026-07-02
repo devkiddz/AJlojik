@@ -150,7 +150,7 @@ export default function CategoriesCarousel({ categories }: Props) {
         onMouseMove={handleMouseMove}
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
-        className="flex gap-4 overflow-x-auto scroll-smooth pb-2 cursor-grab select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        className="flex gap-4 overflow-x-hidden scroll-smooth pb-2 cursor-grab select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
         {categories.map(category => (
           <CategoryCard key={category.id} category={category} />
         ))}

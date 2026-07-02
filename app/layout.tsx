@@ -56,12 +56,12 @@ export default function RootLayout({
       )}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <SidebarProvider defaultOpen={false}>
+          <SidebarProvider defaultOpen={true}>
             <Suspense fallback={null}>
               <SearchProvider>
                 <AppSidebar />
 
-                <main className="flex min-h-screen w-full flex-col">
+                <main className="flex min-h-screen min-w-0 flex-col">
                   <div className="sticky top-0 z-50">
                     <Suspense fallback={null}>
                       <NavbarComponent brandName="AJ" brandSlug="Logik" />
