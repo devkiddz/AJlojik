@@ -22,7 +22,8 @@ export default function SidebarHeaderContent() {
           bg-muted
           transition
           cursor-pointer
-          md:hidden
+            hover:bg-muted
+            md:hidden
         ">
         <Logs className="size-4 text-white" />
       </Button>
