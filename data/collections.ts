@@ -1,6 +1,6 @@
 // data/collections.ts
 
-export type BannerType = {
+export type CollectionBannerType = {
   id: string;
   image: string;
   alt: string;
@@ -16,7 +16,7 @@ export type CollectionType = {
   icon?: string;
 
   /** Campaign / merchandising banners */
-  banners?: BannerType[];
+  banners?: CollectionBannerType[];
 
   /** Featured product displayed above or beside the collection */
   featuredProductId?: string;

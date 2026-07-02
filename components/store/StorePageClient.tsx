@@ -167,13 +167,8 @@ export default function StorePageClient() {
   return (
     <div className="mx-auto -mt-5 px-4 py-4">
       <div className="grid min-h-screen grid-cols-12 gap-4">
-        {/* LEFT */}
-        <aside className="col-span-12 hidden lg:col-span-2 md:block">
-          <StoreAside />
-        </aside>
-
         {/* MAIN */}
-        <main className="relative col-span-12 lg:col-span-8">
+        <main className="relative col-span-12 lg:col-span-10">
           <div className="space-y-6">
             {/* STICKY FILTER */}
             {/* <div
@@ -193,7 +188,7 @@ export default function StorePageClient() {
             </div> */}
 
             {/* CATEGORY GRID */}
-            <section ref={triggerRef} className="!mt-0 rounded-md bg-transparent">
+            <section ref={triggerRef} className="mt-0 rounded-md bg-transparent">
               <div className="grid grid-cols-2 gap-2 pt-2 md:grid-cols-3 xl:grid-cols-3">
                 {categories.map(category => (
                   <StoreCategoryCard
@@ -211,30 +206,34 @@ export default function StorePageClient() {
             </section>
 
             {/* FEATURED */}
-            <section className="grid gap-6 lg:grid-cols-5">
-              <div className="min-w-0 lg:col-span-2">
-                {featuredProduct && (
-                  <StoreFeaturedProductCard
-                    product={featuredProduct}
-                    onPreview={openPreview}
-                    onToggleLike={handleToggleLike}
-                    onAddToCart={handleAddToCart}
-                  />
-                )}
-              </div>
+            <section className="w-full">
+              <div className="grid grid-cols-12 gap-6">
+                {/* Featured Card: 4 columns on desktop */}
+                <div className="col-span-12 lg:col-span-4">
+                  {featuredProduct && (
+                    <StoreFeaturedProductCard
+                      product={featuredProduct}
+                      onPreview={openPreview}
+                      onToggleLike={handleToggleLike}
+                      onAddToCart={handleAddToCart}
+                    />
+                  )}
+                </div>
 
-              <div className="min-w-0 lg:col-span-3">
-                <StoreFeaturedProductsSlide
-                  products={featuredProducts}
-                  onPreview={openPreview}
-                  onAddToCart={handleAddToCart}
-                  onLike={product => handleToggleLike(product.id)}
-                />
+                {/* Slider: 8 columns on desktop */}
+                <div className="col-span-12 lg:col-span-8 min-w-0">
+                  <StoreFeaturedProductsSlide
+                    products={featuredProducts}
+                    onPreview={openPreview}
+                    onAddToCart={handleAddToCart}
+                    onLike={product => handleToggleLike(product.id)}
+                  />
+                </div>
               </div>
             </section>
 
             {/* PRODUCT GRID */}
-            <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+            <section className="grid grid-cols-2 gap-3 grid-cols-3 xl:grid-cols-6">
               {filteredProducts.map(product => (
                 <StoreProductGridCard
                   key={product.id}
