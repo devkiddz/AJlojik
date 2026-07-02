@@ -5,7 +5,7 @@ export default function HomeCollections() {
   return (
     <>
       {collections.map(collection => (
-        <CollectionSection key={collection.id} collection={collection} />
+        <CollectionSection key={collection.id} />
       ))}
     </>
   );
