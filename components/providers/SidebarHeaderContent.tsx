@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Logs, X } from 'lucide-react';
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
 
@@ -19,12 +19,12 @@ export default function SidebarHeaderContent() {
         className="
           rounded-md
           p-2
-          hover:bg-muted
+          bg-muted
           transition
           cursor-pointer
           md:hidden
         ">
-        <X className="size-4 absolut top-0" />
+        <Logs className="size-4 text-white" />
       </Button>
     </div>
   );
