@@ -94,10 +94,15 @@ export default function StoreContent({
         {/* Products */}
         <section
           className="
-            grid
-            gap-3
-            grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
-          ">
+          grid
+          gap-3
+          grid-cols-2
+          md:grid-cols-3
+          lg:grid-cols-4
+          xl:grid-cols-5
+          2xl:grid-cols-6
+          3xl:grid-cols-7
+        ">
           {filteredProducts.map(product => (
             <StoreProductGridCard
               key={product.id}
