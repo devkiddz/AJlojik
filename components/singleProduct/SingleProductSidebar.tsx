@@ -1,4 +1,4 @@
-import { ProductType, ProductVariant } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
 
 import SingleProductPurchaseCard from './SingleProductPurchaseCard';
 import SingleProductWishlist from './SingleProductWishlist';
@@ -7,7 +7,7 @@ import SingleProductRecentlyViewed from './SingleProductRecentlyViewed';
 
 type Props = {
   product: ProductType;
-  selectedVariant: ProductVariant;
+  selectedVariant: ProductVariantType;
   inStock: boolean;
 };
 

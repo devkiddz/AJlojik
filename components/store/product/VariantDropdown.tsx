@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductVariant } from '@/types';
+import { ProductVariantType } from '@/types';
 import { ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
-  variants: ProductVariant[];
+  variants: ProductVariantType[];
   selectedId: string;
   onSelect: (id: string) => void;
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import { ProductVariant } from '@/types';
+import { ProductVariantType } from '@/types';
 
 type Props = {
-  variant: ProductVariant;
+  variant: ProductVariantType;
   inStock: boolean;
 };
 

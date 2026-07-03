@@ -1,5 +1,9 @@
-import React from 'react';
+import { ProductType } from '@/types';
 
-export default function FeaturedProductCard() {
-  return <div></div>;
+type Props = {
+  product: ProductType;
+};
+
+export default function FeaturedProductCard({ product }: Props) {
+  return <div>{product.name}</div>;
 }

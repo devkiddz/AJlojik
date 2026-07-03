@@ -11,8 +11,9 @@ type Props = {
   title: string;
   category: string;
   products: ProductType[];
-  onSelect: (id: string) => void;
-  onToggleLike: (id: string) => void;
+
+  onSelect: (product: ProductType) => void;
+  onToggleLike: (productId: string) => void;
 };
 
 export default function ProductsCarousel({ title, category, products, onSelect, onToggleLike }: Props) {
@@ -155,7 +156,7 @@ export default function ProductsCarousel({ title, category, products, onSelect, 
           <div key={product.id} className="w-40 shrink-0 md:w-65">
             <ProductCard
               product={product}
-              onSelect={() => onSelect(product.id)}
+              onSelect={() => onSelect(product)}
               onToggleLike={() => onToggleLike(product.id)}
             />
           </div>

@@ -3,19 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import StoreAside from '@/components/store/StoreAside';
-import StoreCategoriesPill from '@/components/store/StoreCategoriesPill';
-import StoreCategoryCard from '@/components/store/StoreCategoryCard';
 import StoreRightPannel from '@/components/store/StoreRightPannel';
-import StoreFeaturedProductCard from '@/components/store/StoreFeaturedProductCard';
-import StoreFeaturedProductsSlide from '@/components/store/StoreFeaturedProductsSlide';
-import StoreProductGridCard from '@/components/store/product/StoreProductGridCard';
 import ProductModal from '@/components/shared/ProductModal';
-
+import { collections } from '@/data/collections';
 import { categories } from '@/categories';
 import { products } from '@/data/products';
 
 import { ProductType, ProductVariantType } from '@/types';
+import StoreContent from '../discovery/DiscoveryFeedsEngine';
 
 export default function StorePageClient() {
   const router = useRouter();
@@ -27,7 +22,6 @@ export default function StorePageClient() {
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showStickyPill, setShowStickyPill] = useState(false);
-
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const updateQuery = useCallback(
@@ -137,6 +131,23 @@ export default function StorePageClient() {
     setPreviewOpen(true);
   };
 
+  /** Receive
+   * Colections
+   * **/
+
+  const resolvedCollections = collections
+    .filter(collection => collection.active)
+    .sort((a, b) => a.priority - b.priority)
+    .map(collection => ({
+      collection,
+      products: collection.productIds
+        .map(id => storeProducts.find(product => product.id === id))
+        .filter((product): product is ProductType => Boolean(product)),
+      featuredProduct: collection.featuredProductId
+        ? storeProducts.find(product => product.id === collection.featuredProductId)
+        : undefined
+    }));
+
   /**
    * MODAL NAVIGATION
    */
@@ -167,90 +178,20 @@ export default function StorePageClient() {
   return (
     <div className="mx-auto -mt-5 px-4 py-4">
       <div className="grid min-h-screen grid-cols-12 gap-4">
-        {/* MAIN */}
-        <main className="relative col-span-12 lg:col-span-10">
-          <div className="space-y-6">
-            {/* STICKY FILTER */}
-            {/* <div
-              className={`sticky top-15 z-50 w-full bg-background ${
-                showStickyPill
-                  ? 'mb-6 h-auto translate-y-0 px-4 py-2 opacity-100m'
-                  : 'mb-0 h-0 -translate-y-4 overflow-hidden p-0 opacity-0 pointer-events-none'
-              }`}>
-              <StoreCategoriesPill
-                selectedCategory={selectedCategory}
-                onSelectCategory={category =>
-                  updateQuery({
-                    category
-                  })
-                }
-              />
-            </div> */}
-
-            {/* CATEGORY GRID */}
-            <section ref={triggerRef} className="mt-0 rounded-md bg-transparent">
-              <div className="grid grid-cols-2 gap-2 pt-2 md:grid-cols-3 xl:grid-cols-3">
-                {categories.map(category => (
-                  <StoreCategoryCard
-                    key={category.id}
-                    category={category}
-                    active={selectedCategory === category.slug}
-                    onClick={() =>
-                      updateQuery({
-                        category: category.slug
-                      })
-                    }
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* FEATURED */}
-            <section className="w-full">
-              <div className="grid grid-cols-12 gap-6">
-                {/* Featured Card: 4 columns on desktop */}
-                <div className="col-span-12 lg:col-span-4">
-                  {featuredProduct && (
-                    <StoreFeaturedProductCard
-                      product={featuredProduct}
-                      onPreview={openPreview}
-                      onToggleLike={handleToggleLike}
-                      onAddToCart={handleAddToCart}
-                    />
-                  )}
-                </div>
-
-                {/* Slider: 8 columns on desktop */}
-                <div className="col-span-12 lg:col-span-8 min-w-0">
-                  <StoreFeaturedProductsSlide
-                    products={featuredProducts}
-                    onPreview={openPreview}
-                    onAddToCart={handleAddToCart}
-                    onLike={product => handleToggleLike(product.id)}
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* PRODUCT GRID */}
-            <section
-              className="
-              grid
-              gap-3
-              grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
-            ">
-              {filteredProducts.map(product => (
-                <StoreProductGridCard
-                  key={product.id}
-                  product={product}
-                  onPreview={openPreview}
-                  onToggleLike={handleToggleLike}
-                  onAddToCart={handleAddToCart}
-                />
-              ))}
-            </section>
-          </div>
-        </main>
+        {/* THE MAIN STORE CONTENTS ENGINE COMPONENT */}
+        <StoreContent
+          triggerRef={triggerRef}
+          categories={categories}
+          collections={resolvedCollections}
+          selectedCategory={selectedCategory}
+          featuredProduct={featuredProduct}
+          featuredProducts={featuredProducts}
+          filteredProducts={filteredProducts}
+          onCategoryChange={updateQuery}
+          onPreview={openPreview}
+          onToggleLike={handleToggleLike}
+          onAddToCart={handleAddToCart}
+        />
 
         {/* RIGHT */}
         <aside className="col-span-12 lg:col-span-2">

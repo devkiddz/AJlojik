@@ -13,13 +13,19 @@ import {
   SingleProductSidebar,
   SingleProductRecommendations
 } from '@/components/singleProduct';
+import { useState } from 'react';
 
 type Props = {
   product: ProductType;
 };
 
 export default function SingleProductLayout({ product }: Props) {
-  const { selectedVariant, selectedVariantId, setSelectedVariantId, inStock } = useSingleProduct(product);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(String(product.variants[0]?.id ?? ''));
+
+  const selectedVariant =
+    product.variants.find(variant => String(variant.id) === selectedVariantId) ?? product.variants[0];
+
+  const inStock = selectedVariant?.stockLeft > 0;
 
   return (
     <main className="min-h-screen bg-background md:mt-20 md:px-6 overflow-y-auto scrollbar-none">

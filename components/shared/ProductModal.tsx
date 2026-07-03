@@ -39,10 +39,10 @@ function ProductContent({
 }: Omit<ProductModalProps, 'open' | 'onClose'> & {
   product: ProductType;
 }) {
-  const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? '');
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(String(product.variants[0]?.id ?? ''));
 
   const activeVariant =
-    product.variants.find(variant => variant.id === selectedVariantId) ?? product.variants[0];
+    product.variants.find(variant => String(variant.id) === selectedVariantId) ?? product.variants[0];
 
   return (
     <motion.div
@@ -128,20 +128,14 @@ function ProductContent({
             </div>
 
             <div className="flex items-center justify-between gap-8">
-              <Select
-                value={selectedVariantId}
-                onValueChange={value => {
-                  if (value) {
-                    setSelectedVariantId(value);
-                  }
-                }}>
+              <Select value={selectedVariantId} onValueChange={value => setSelectedVariantId(value ?? '')}>
                 <SelectTrigger className="h-8 w-[150px]">
                   <SelectValue placeholder="Select Size" />
                 </SelectTrigger>
 
                 <SelectContent>
                   {product.variants.map(variant => (
-                    <SelectItem key={variant.id} value={variant.id}>
+                    <SelectItem key={variant.id} value={String(variant.id)}>
                       {variant.label}
                     </SelectItem>
                   ))}

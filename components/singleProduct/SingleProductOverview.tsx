@@ -56,13 +56,13 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
         {/* Action Buttons: Now connected to selectedProduct.id */}
         <div className="flex gap-4 mt-6 max-w-sm">
           <button
-            onClick={() => handleBuyNow(selectedProduct.id)}
+            onClick={() => handleBuyNow(String(selectedProduct.id))}
             className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full font-semibold hover:opacity-90 transition-opacity">
             <ShoppingBag className="w-5 h-5" />
             Buy Now
           </button>
           <button
-            onClick={() => handleToggleWishlist(selectedProduct.id)}
+            onClick={() => handleToggleWishlist(String(selectedProduct.id))}
             className="flex items-center justify-center gap-2 border border-secondary hover:bg-secondary/80 text-secondary hover:text-primary-foreground py-3 px-6 rounded-full font-semibold transition-colors">
             <Heart className="w-5 h-5" />
             Wishlist
@@ -92,7 +92,7 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
                 <button
                   key={variant.id}
                   type="button"
-                  onClick={() => setSelectedVariantId(variant.id)}
+                  onClick={() => setSelectedVariantId(String(variant.id))}
                   className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium transition-colors border ${
                     isSelected
                       ? 'bg-primary text-primary-foreground border-primary'

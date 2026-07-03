@@ -6,13 +6,13 @@ import { LucideIcon } from 'lucide-react';
 /**
  * Actual sellable product variation
  */
-export type ProductVariant = {
-  id: string;
-  label: string;
-  image: string;
-  price: number;
-  stockLeft: number;
-};
+// export type ProductVariantType = {
+//   id: string;
+//   label: string;
+//   image: string;
+//   price: number;
+//   stockLeft: number;
+// };
 
 /**
  * Subcategory structure
@@ -82,7 +82,7 @@ export type ProductType = {
 
   tags: string[];
 
-  variants: ProductVariant[];
+  variants: ProductVariantType[];
 
   rating: number;
   reviews: number;
@@ -132,9 +132,11 @@ export type UserType = {
 };
 
 export type ProductVariantType = {
-  id: string | number;
-  label: string;       // e.g., "750ml", "1 Litre", "Box of 6"
-  price: number;       // Base price for this specific variant option
+  id: string;  
+  label: string;
+  image: string;
+  price: number;
+  stockLeft: number;
 };
 
 

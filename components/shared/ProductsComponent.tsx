@@ -9,6 +9,7 @@ import { categories } from '@/categories';
 import ItemsCarousel from './ItemsCarousel';
 import ProductsCarousel from '../ProductsCarousel';
 import ProductModal from '@/components/shared/ProductModal';
+import { ProductType } from '@/types';
 
 export default function ProductsComponent() {
   const searchParams = useSearchParams();
@@ -74,8 +75,8 @@ export default function ProductsComponent() {
   /**
    * MODAL
    */
-  const handleSelect = (productId: string) => {
-    setSelectedId(productId);
+  const handleSelect = (product: ProductType) => {
+    setSelectedId(product.id);
     setOpen(true);
   };
 

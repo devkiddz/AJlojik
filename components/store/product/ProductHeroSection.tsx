@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ProductType, ProductVariant } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
 import { categories } from '@/categories';
 import { categoryType } from '@/types';
 
@@ -9,7 +9,7 @@ const FALLBACK_COVER = '/images/brand-backdrop.jpg';
 
 type Props = {
   product: ProductType;
-  activeVariant: ProductVariant | null;
+  activeVariant: ProductVariantType | null;
 };
 
 export default function ProductHeroSection({ product, activeVariant }: Props) {

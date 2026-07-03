@@ -4,19 +4,19 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ChartColumnStacked, Star } from 'lucide-react';
 import { categories } from '@/categories';
-import { ProductType, ProductVariant } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
 import RatingComponent from '../shared/RatingComponent';
 
 type Props = {
   product: ProductType;
-  variant: ProductVariant;
+  variant: ProductVariantType;
 };
 
 const FALLBACK_BANNER =
   'https://images.unsplash.com/photo-1556740749-887f6717d7e4?q=80&w=1600&auto=format&fit=crop';
 
 export default function SingleProductHero({ product, variant }: Props) {
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(variant);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariantType>(variant);
 
   const category = useMemo(
     () => categories.find(c => c.slug === product.category) ?? categories[0],

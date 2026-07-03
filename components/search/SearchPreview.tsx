@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ArrowUpRight, ShoppingCart, Tag, Sparkles, ChevronDown, Check, Heart } from 'lucide-react';
-import { ProductType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
 import { categories } from '@/categories';
 import { useSearch } from '@/components/providers/SearchProvider';
 import LikedComponent from '@/components/shared/LikedComponent';
@@ -24,7 +24,7 @@ export default function SearchPreview({ product }: Props) {
     console.log('Wishlist Mutation Fired For:', id);
   };
 
-  const [selectedVariantId, setSelectedVariantId] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState<ProductVariantType['id'] | ''>('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
