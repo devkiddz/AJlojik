@@ -19,7 +19,7 @@ export default function LikedComponent({ liked, onToggle }: LikedComponentProps)
         console.log('liked:', liked);
       }}
       className="absolute left-1 top-3 z-10 cursor-pointer">
-      <Heart className={liked ? 'w-5 h-5 fill-secondary text-secondary' : 'text-primary w-5 h-5'} />
+      <Heart className={liked ? 'w-5 h-5 fill-secondary text-secondary' : 'text-secondary w-5 h-5'} />
     </button>
   );
 }

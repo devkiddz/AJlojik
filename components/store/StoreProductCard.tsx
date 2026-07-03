@@ -106,13 +106,13 @@ export default function ProductCard({ product, onAddToCart, onPreview, onToggleL
               <div className="flex items-center gap-2">
                 {onPreview && (
                   <Button
-                    className="h-8 w-8 rounded-full bg-card hover:bg-card/90 text-white hover:ring transition-all cursor-pointer hover:scale-110"
+                    className="h-8 w-8 rounded-full text-base hover:ring transition-all cursor-pointer hover:scale-110"
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
                       onPreview?.(product);
                     }}>
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-base" />
                   </Button>
                 )}
                 <Button

@@ -22,7 +22,7 @@ export default function StorePageClient() {
   const [storeProducts, setStoreProducts] = useState(products);
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [showStickyPill, setShowStickyPill] = useState(false);
+  // const [showStickyPill, setShowStickyPill] = useState(false);
 
   // --- Query Handling ---
   const updateQuery = useCallback(
@@ -38,15 +38,15 @@ export default function StorePageClient() {
   );
 
   // --- Effects ---
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => setShowStickyPill(!entry.isIntersecting), {
-      threshold: 0,
-      rootMargin: '-56px 0px 0px 0px'
-    });
+  // useEffect(() => {
+  //   const observer = new IntersectionObserver(([entry]) => setShowStickyPill(!entry.isIntersecting), {
+  //     threshold: 0,
+  //     rootMargin: '-56px 0px 0px 0px'
+  //   });
 
-    if (triggerRef.current) observer.observe(triggerRef.current);
-    return () => observer.disconnect();
-  }, []);
+  //   if (triggerRef.current) observer.observe(triggerRef.current);
+  //   return () => observer.disconnect();
+  // }, []);
 
   // --- Computed Data ---
   const filteredProducts = useMemo(
