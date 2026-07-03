@@ -11,6 +11,7 @@ import { products } from '@/data/products';
 
 import { ProductType, ProductVariantType } from '@/types';
 import StoreContent from '../discovery/DiscoveryFeedsEngine';
+import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
 
 export default function StorePageClient() {
   const router = useRouter();
@@ -179,7 +180,7 @@ export default function StorePageClient() {
     <div className="mx-auto -mt-5 px-4 py-4">
       <div className="grid min-h-screen grid-cols-12 gap-4">
         {/* THE MAIN STORE CONTENTS ENGINE COMPONENT */}
-        <StoreContent
+        <DiscoveryFeedsEngine
           triggerRef={triggerRef}
           categories={categories}
           collections={resolvedCollections}

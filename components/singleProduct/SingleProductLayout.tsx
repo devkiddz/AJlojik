@@ -1,9 +1,6 @@
 'use client';
 
 import { ProductType } from '@/types';
-
-import { useSingleProduct } from '@/hooks/useSingleProduct';
-
 import {
   SingleProductHero,
   SingleProductGallery,
@@ -37,7 +34,7 @@ export default function SingleProductLayout({ product }: Props) {
               Giving the Gallery more space allows the images 
               and the variant selection buttons to breathe.
             */}
-          <div className="space-y-4 md:space-y-10 lg:col-span-3 md:sticky top-20 md:self-start">
+          <div className="space-y-4 md:sticky md:top-20 md:self-start md:space-y-10 lg:col-span-3">
             <SingleProductGallery
               product={product}
               selectedVariantId={selectedVariantId}
@@ -49,7 +46,7 @@ export default function SingleProductLayout({ product }: Props) {
             This makes the text content column more readable. 
             Lines of text that are too long (6 columns) are harder to read.
           */}
-          <div className="space-y-4 md:space-y-10 lg:col-span-6 z-5 bg-card overflow-hidden rounded-lg">
+          <div className="z-5 space-y-4 overflow-hidden rounded-lg bg-card md:space-y-10 lg:col-span-6">
             <SingleProductOverview
               product={product}
               selectedVariantId={selectedVariantId}

@@ -32,7 +32,7 @@ type Props = {
   onAddToCart: (product: ProductType, variant: ProductVariantType) => void;
 };
 
-export default function StoreContent({
+export default function DiscoveryFeedsEngine({
   triggerRef,
   categories,
   collections,
@@ -96,12 +96,16 @@ export default function StoreContent({
           className="
           grid
           gap-5
+          p-4
           grid-cols-2
           md:grid-cols-3
           lg:grid-cols-4
           xl:grid-cols-5
           2xl:grid-cols-6
           3xl:grid-cols-7
+          bg-background
+          rounded-xl
+          shadow-md
         ">
           {filteredProducts.map(product => (
             <StoreProductGridCard

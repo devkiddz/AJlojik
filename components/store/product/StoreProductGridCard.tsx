@@ -17,7 +17,7 @@ export default function StoreProductGridCard({ product, onPreview, onAddToCart }
   const variant = product.variants[0];
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-card bg-card drop-shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-card hover:border-accent/30">
+    <article className="group overflow-hidden rounded-xl border border-card bg-card shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-card hover:border-accent/30">
       <Link href={`/products/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-lg">
           <Image
