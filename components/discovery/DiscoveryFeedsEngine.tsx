@@ -1,45 +1,29 @@
 'use client';
 
 import CollectionSection from '@/components/collections/CollectionSection';
-import { CollectionType } from '@/data/collections';
-import { CategoriesType, ProductType, ProductVariantType } from '@/types';
 
 import StoreCategoryCard from '../store/StoreCategoryCard';
 import StoreFeaturedProductCard from '../store/StoreFeaturedProductCard';
 import StoreFeaturedProductsSlide from '../store/StoreFeaturedProductsSlide';
 import StoreProductGridCard from '../store/product/StoreProductGridCard';
 
-type Props = {
-  triggerRef: React.RefObject<HTMLDivElement | null>;
-  categories: CategoriesType;
-  collections: {
-    collection: CollectionType;
-    products: ProductType[];
-    featuredProduct?: ProductType;
-  }[];
-  selectedCategory: string;
-  featuredProduct?: ProductType;
-  featuredProducts: ProductType[];
-  filteredProducts: ProductType[];
-  onCategoryChange: (updates: Record<string, string | null>) => void;
-  onPreview: (product: ProductType) => void;
-  onToggleLike: (productId: string) => void;
-  onAddToCart: (product: ProductType, variant: ProductVariantType) => void;
-};
+import { useDiscovery } from './DiscoveryProvider';
 
-export default function DiscoveryFeedsEngine({
-  triggerRef,
-  categories,
-  collections,
-  selectedCategory,
-  featuredProduct,
-  featuredProducts,
-  filteredProducts,
-  onCategoryChange,
-  onPreview,
-  onToggleLike,
-  onAddToCart
-}: Props) {
+export default function DiscoveryFeedsEngine() {
+  const {
+    triggerRef,
+    categories,
+    collections,
+    selectedCategory,
+    featuredProduct,
+    featuredProducts,
+    filteredProducts,
+    onCategoryChange,
+    onPreview,
+    onToggleLike,
+    onAddToCart
+  } = useDiscovery();
+
   return (
     <main className="relative col-span-12 lg:col-span-10">
       <div className="space-y-8">
@@ -59,6 +43,23 @@ export default function DiscoveryFeedsEngine({
               />
             ))}
           </div>
+        </section>
+
+        {/* Collections */}
+        <section className="space-y-10 pt-6">
+          {collections.map(({ collection, products, featuredProduct }) => (
+            <CollectionSection
+              key={collection.id}
+              collection={collection}
+              products={products}
+              featuredProduct={featuredProduct}
+              onSelect={id => {
+                const product = filteredProducts.find(p => p.id === id);
+                if (product) onPreview(product);
+              }}
+              onToggleLike={onToggleLike}
+            />
+          ))}
         </section>
 
         {/* Featured */}
@@ -84,23 +85,6 @@ export default function DiscoveryFeedsEngine({
               />
             </div>
           </div>
-        </section>
-
-        {/* Collections */}
-        <section className="space-y-10 pt-6">
-          {collections.map(({ collection, products, featuredProduct }) => (
-            <CollectionSection
-              key={collection.id}
-              collection={collection}
-              products={products}
-              featuredProduct={featuredProduct}
-              onSelect={id => {
-                const product = filteredProducts.find(p => p.id === id);
-                if (product) onPreview(product);
-              }}
-              onToggleLike={onToggleLike}
-            />
-          ))}
         </section>
 
         {/* Grid Products */}

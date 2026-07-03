@@ -11,6 +11,7 @@ import { collections } from '@/data/collections';
 import { categories } from '@/categories';
 import { products } from '@/data/products';
 import { ProductType, ProductVariantType } from '@/types';
+import { DiscoveryProvider } from '../discovery/DiscoveryProvider';
 
 export default function StorePageClient() {
   const router = useRouter();
@@ -36,17 +37,6 @@ export default function StorePageClient() {
     },
     [router, searchParams]
   );
-
-  // --- Effects ---
-  // useEffect(() => {
-  //   const observer = new IntersectionObserver(([entry]) => setShowStickyPill(!entry.isIntersecting), {
-  //     threshold: 0,
-  //     rootMargin: '-56px 0px 0px 0px'
-  //   });
-
-  //   if (triggerRef.current) observer.observe(triggerRef.current);
-  //   return () => observer.disconnect();
-  // }, []);
 
   // --- Computed Data ---
   const filteredProducts = useMemo(
@@ -102,7 +92,7 @@ export default function StorePageClient() {
   return (
     <div className="mx-auto -mt-5 px-4 py-4">
       <div className="grid min-h-screen grid-cols-12 gap-4">
-        <DiscoveryFeedsEngine
+        <DiscoveryProvider
           triggerRef={triggerRef}
           categories={categories}
           collections={resolvedCollections}
@@ -113,8 +103,9 @@ export default function StorePageClient() {
           onCategoryChange={updateQuery}
           onPreview={openPreview}
           onToggleLike={handleToggleLike}
-          onAddToCart={handleAddToCart}
-        />
+          onAddToCart={handleAddToCart}>
+          <DiscoveryFeedsEngine />
+        </DiscoveryProvider>
 
         <aside className="col-span-12 lg:col-span-2">
           <StoreRightPannel />

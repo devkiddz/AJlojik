@@ -1,25 +1,34 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ProductType } from '@/types';
 
 export function useProductPage(product: ProductType) {
-  const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? '');
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(
+    String(product.variants[0]?.id ?? '')
+  );
+
   const [isWishlisted, setIsWishlisted] = useState(product.liked ?? false);
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
   const selectedVariant = useMemo(
-    () => product.variants.find((v) => v.id === selectedVariantId) ?? product.variants[0],
+    () =>
+      product.variants.find(variant => String(variant.id) === selectedVariantId) ??
+      product.variants[0],
     [selectedVariantId, product.variants]
   );
 
   const handleAddToCart = () => {
     setIsAdding(true);
+
     setTimeout(() => {
       setIsAdding(false);
       setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+
+      setTimeout(() => {
+        setAdded(false);
+      }, 2000);
     }, 800);
   };
 
@@ -31,6 +40,6 @@ export function useProductPage(product: ProductType) {
     setIsWishlisted,
     isAdding,
     added,
-    handleAddToCart,
+    handleAddToCart
   };
 }

@@ -28,6 +28,7 @@ export default function CollectionSection({
 
   return (
     <section className="space-y-6">
+      <h1> {collection.title} </h1>
       {/* Campaign Banner */}
       {collection.banners?.length ? <CollectionBanner banners={collection.banners} /> : null}
 
