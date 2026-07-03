@@ -95,7 +95,7 @@ export default function StoreContent({
         <section
           className="
           grid
-          gap-3
+          gap-5
           grid-cols-2
           md:grid-cols-3
           lg:grid-cols-4
