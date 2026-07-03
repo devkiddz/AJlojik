@@ -1,185 +1,107 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import StoreRightPannel from '@/components/store/StoreRightPannel';
 import ProductModal from '@/components/shared/ProductModal';
+import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
+
 import { collections } from '@/data/collections';
 import { categories } from '@/categories';
 import { products } from '@/data/products';
-
 import { ProductType, ProductVariantType } from '@/types';
-import StoreContent from '../discovery/DiscoveryFeedsEngine';
-import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
 
 export default function StorePageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const selectedCategory = searchParams.get('category') ?? 'all';
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   const [storeProducts, setStoreProducts] = useState(products);
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showStickyPill, setShowStickyPill] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
 
+  // --- Query Handling ---
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
-
       Object.entries(updates).forEach(([key, value]) => {
-        if (!value || value === 'all') {
-          params.delete(key);
-        } else {
-          params.set(key, value);
-        }
+        if (!value || value === 'all') params.delete(key);
+        else params.set(key, value);
       });
-
-      router.push(`/store?${params.toString()}`, {
-        scroll: false
-      });
+      router.push(`/store?${params.toString()}`, { scroll: false });
     },
     [router, searchParams]
   );
 
+  // --- Effects ---
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowStickyPill(!entry.isIntersecting);
-      },
-      {
-        threshold: 0,
-        rootMargin: '-56px 0px 0px 0px'
-      }
-    );
+    const observer = new IntersectionObserver(([entry]) => setShowStickyPill(!entry.isIntersecting), {
+      threshold: 0,
+      rootMargin: '-56px 0px 0px 0px'
+    });
 
-    if (triggerRef.current) {
-      observer.observe(triggerRef.current);
-    }
-
+    if (triggerRef.current) observer.observe(triggerRef.current);
     return () => observer.disconnect();
   }, []);
 
-  /**
-   * FILTER PRODUCTS
-   */
-  const filteredProducts =
-    selectedCategory === 'all'
-      ? storeProducts
-      : storeProducts.filter(product => product.category === selectedCategory);
+  // --- Computed Data ---
+  const filteredProducts = useMemo(
+    () =>
+      selectedCategory === 'all' ? storeProducts : storeProducts.filter(p => p.category === selectedCategory),
+    [storeProducts, selectedCategory]
+  );
 
-  /**
-   * FEATURED PRODUCTS
-   */
-  const featuredProducts = filteredProducts.filter(product => product.featured);
+  const featuredProducts = useMemo(() => filteredProducts.filter(p => p.featured), [filteredProducts]);
 
-  /**
-   * KEEP RANDOM FEATURED PRODUCT STABLE
-   */
-  const [featuredProductId] = useState(() => {
-    const featured = products.filter(product => product.featured);
+  const featuredProduct = useMemo(() => {
+    const randomId = products.filter(p => p.featured)[0]?.id ?? products[0].id;
+    return featuredProducts.find(p => p.id === randomId) ?? featuredProducts[0] ?? filteredProducts[0];
+  }, [featuredProducts, filteredProducts]);
 
-    return featured.length ? featured[Math.floor(Math.random() * featured.length)].id : products[0].id;
-  });
+  const resolvedCollections = useMemo(
+    () =>
+      collections
+        .filter(c => c.active)
+        .sort((a, b) => a.priority - b.priority)
+        .map(c => ({
+          collection: c,
+          products: c.productIds
+            .map(id => storeProducts.find(p => p.id === id))
+            .filter((p): p is ProductType => !!p),
+          featuredProduct: storeProducts.find(p => p.id === c.featuredProductId)
+        })),
+    [storeProducts]
+  );
 
-  const featuredProduct =
-    featuredProducts.find(product => product.id === featuredProductId) ??
-    featuredProducts[0] ??
-    filteredProducts[0];
-
-  /**
-   * LIKE
-   */
+  // --- Handlers ---
   const handleToggleLike = (productId: string) => {
-    setStoreProducts(prev =>
-      prev.map(product =>
-        product.id === productId
-          ? {
-              ...product,
-              liked: !product.liked
-            }
-          : product
-      )
-    );
-
-    setSelectedProduct(prev =>
-      prev && prev.id === productId
-        ? {
-            ...prev,
-            liked: !prev.liked
-          }
-        : prev
-    );
+    setStoreProducts(prev => prev.map(p => (p.id === productId ? { ...p, liked: !p.liked } : p)));
+    setSelectedProduct(prev => (prev?.id === productId ? { ...prev, liked: !prev.liked } : prev));
   };
 
-  /**
-   * CART
-   */
   const handleAddToCart = (product: ProductType, variant: ProductVariantType) => {
-    console.log(product.name);
-    console.log(variant.label);
-
-    alert(`${product.name} added to cart`);
+    alert(`${product.name} (${variant.label}) added to cart`);
   };
 
-  /**
-   * PREVIEW
-   */
   const openPreview = (product: ProductType) => {
     setSelectedProduct(product);
     setPreviewOpen(true);
   };
 
-  /** Receive
-   * Colections
-   * **/
+  // --- Modal Navigation ---
+  const selectedIndex = selectedProduct ? filteredProducts.findIndex(p => p.id === selectedProduct.id) : -1;
 
-  const resolvedCollections = collections
-    .filter(collection => collection.active)
-    .sort((a, b) => a.priority - b.priority)
-    .map(collection => ({
-      collection,
-      products: collection.productIds
-        .map(id => storeProducts.find(product => product.id === id))
-        .filter((product): product is ProductType => Boolean(product)),
-      featuredProduct: collection.featuredProductId
-        ? storeProducts.find(product => product.id === collection.featuredProductId)
-        : undefined
-    }));
-
-  /**
-   * MODAL NAVIGATION
-   */
-  const selectedIndex = selectedProduct
-    ? filteredProducts.findIndex(product => product.id === selectedProduct.id)
-    : -1;
-
-  const handleNextProduct = () => {
-    if (selectedIndex === -1) return;
-
-    const next = selectedIndex + 1;
-
-    if (next < filteredProducts.length) {
-      setSelectedProduct(filteredProducts[next]);
-    }
-  };
-
-  const handlePreviousProduct = () => {
-    if (selectedIndex === -1) return;
-
-    const previous = selectedIndex - 1;
-
-    if (previous >= 0) {
-      setSelectedProduct(filteredProducts[previous]);
-    }
-  };
+  const handleNext = () =>
+    selectedIndex < filteredProducts.length - 1 && setSelectedProduct(filteredProducts[selectedIndex + 1]);
+  const handlePrev = () => selectedIndex > 0 && setSelectedProduct(filteredProducts[selectedIndex - 1]);
 
   return (
     <div className="mx-auto -mt-5 px-4 py-4">
       <div className="grid min-h-screen grid-cols-12 gap-4">
-        {/* THE MAIN STORE CONTENTS ENGINE COMPONENT */}
         <DiscoveryFeedsEngine
           triggerRef={triggerRef}
           categories={categories}
@@ -194,13 +116,11 @@ export default function StorePageClient() {
           onAddToCart={handleAddToCart}
         />
 
-        {/* RIGHT */}
         <aside className="col-span-12 lg:col-span-2">
           <StoreRightPannel />
         </aside>
       </div>
 
-      {/* PRODUCT MODAL */}
       <ProductModal
         product={selectedProduct}
         open={previewOpen}
@@ -208,13 +128,9 @@ export default function StorePageClient() {
           setPreviewOpen(false);
           setSelectedProduct(null);
         }}
-        onToggleLike={() => {
-          if (selectedProduct) {
-            handleToggleLike(selectedProduct.id);
-          }
-        }}
-        onNext={handleNextProduct}
-        onPrevious={handlePreviousProduct}
+        onToggleLike={() => selectedProduct && handleToggleLike(selectedProduct.id)}
+        onNext={handleNext}
+        onPrevious={handlePrev}
         hasNext={selectedIndex > -1 && selectedIndex < filteredProducts.length - 1}
         hasPrevious={selectedIndex > 0}
         currentIndex={selectedIndex}

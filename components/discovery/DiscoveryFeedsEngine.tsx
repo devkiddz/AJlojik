@@ -1,32 +1,27 @@
 'use client';
 
+import CollectionSection from '@/components/collections/CollectionSection';
+import { CollectionType } from '@/data/collections';
+import { CategoriesType, ProductType, ProductVariantType } from '@/types';
+
 import StoreCategoryCard from '../store/StoreCategoryCard';
 import StoreFeaturedProductCard from '../store/StoreFeaturedProductCard';
 import StoreFeaturedProductsSlide from '../store/StoreFeaturedProductsSlide';
 import StoreProductGridCard from '../store/product/StoreProductGridCard';
 
-import { CollectionType } from '@/data/collections';
-import { CategoriesType, ProductType, ProductVariantType } from '@/types';
-import CollectionSection from '@/components/collections/CollectionSection';
-
 type Props = {
   triggerRef: React.RefObject<HTMLDivElement | null>;
-
   categories: CategoriesType;
   collections: {
     collection: CollectionType;
     products: ProductType[];
     featuredProduct?: ProductType;
   }[];
-
   selectedCategory: string;
-
   featuredProduct?: ProductType;
   featuredProducts: ProductType[];
   filteredProducts: ProductType[];
-
   onCategoryChange: (updates: Record<string, string | null>) => void;
-
   onPreview: (product: ProductType) => void;
   onToggleLike: (productId: string) => void;
   onAddToCart: (product: ProductType, variant: ProductVariantType) => void;
@@ -91,33 +86,6 @@ export default function DiscoveryFeedsEngine({
           </div>
         </section>
 
-        {/* Products */}
-        <section
-          className="
-          grid
-          gap-5
-          p-4
-          grid-cols-2
-          md:grid-cols-3
-          lg:grid-cols-4
-          xl:grid-cols-5
-          2xl:grid-cols-6
-          3xl:grid-cols-7
-          bg-background
-          rounded-xl
-          shadow-md
-        ">
-          {filteredProducts.map(product => (
-            <StoreProductGridCard
-              key={product.id}
-              product={product}
-              onPreview={onPreview}
-              onToggleLike={onToggleLike}
-              onAddToCart={onAddToCart}
-            />
-          ))}
-        </section>
-
         {/* Collections */}
         <section className="space-y-10 pt-6">
           {collections.map(({ collection, products, featuredProduct }) => (
@@ -131,6 +99,19 @@ export default function DiscoveryFeedsEngine({
                 if (product) onPreview(product);
               }}
               onToggleLike={onToggleLike}
+            />
+          ))}
+        </section>
+
+        {/* Grid Products */}
+        <section className="grid grid-cols-2 gap-3 rounded-xl bg-background p-2 shadow-md md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7">
+          {filteredProducts.map(product => (
+            <StoreProductGridCard
+              key={product.id}
+              product={product}
+              onPreview={onPreview}
+              onToggleLike={onToggleLike}
+              onAddToCart={onAddToCart}
             />
           ))}
         </section>
