@@ -1,5 +1,5 @@
 import { Button } from '../ui/button';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import { cn } from '@/lib/utils';
 
 type Props = {

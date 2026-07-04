@@ -8,7 +8,7 @@ import ProductModal from '@/components/shared/ProductModal';
 import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
 
 import { collections } from '@/data/collections';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import { products } from '@/data/products';
 import { ProductType, ProductVariantType } from '@/types';
 import { DiscoveryProvider } from '../discovery/DiscoveryProvider';

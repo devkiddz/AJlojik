@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ChartColumnStacked, Star } from 'lucide-react';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import { ProductType, ProductVariantType } from '@/types';
 import RatingComponent from '../shared/RatingComponent';
 

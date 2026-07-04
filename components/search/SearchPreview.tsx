@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ArrowUpRight, ShoppingCart, Tag, Sparkles, ChevronDown, Check, Heart } from 'lucide-react';
 import { ProductType, ProductVariantType } from '@/types';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import { useSearch } from '@/components/providers/SearchProvider';
 import LikedComponent from '@/components/shared/LikedComponent';
 import { Button } from '@/components/ui/button';

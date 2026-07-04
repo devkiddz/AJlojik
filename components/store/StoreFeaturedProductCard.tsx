@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ChartColumnStacked, Eye, Form, ShoppingCart } from 'lucide-react';
 import { ProductType, ProductVariantType } from '@/types';
 import { useRouter } from 'next/navigation';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import LikedComponent from '@/components/shared/LikedComponent';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

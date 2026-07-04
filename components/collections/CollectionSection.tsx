@@ -2,16 +2,13 @@ import { CollectionType } from '@/data/collections';
 import { ProductType } from '@/types';
 
 import CollectionBanner from './CollectionBanner';
-import FeaturedProductCard from '../shared/FeaturedProductCard';
-import ProductsCarousel from '../ProductsCarousel';
-
+import FeaturedCollection from './layouts/FeaturedCollection';
 type Props = {
   collection: CollectionType;
   products: ProductType[];
   featuredProduct?: ProductType;
-
-  onSelect: (id: string) => void;
-  onToggleLike: (id: string) => void;
+  onSelect?: (id: string) => void;
+  onToggleLike?: (id: string) => void;
 };
 
 export default function CollectionSection({
@@ -21,21 +18,21 @@ export default function CollectionSection({
   onSelect,
   onToggleLike
 }: Props) {
-  // Don't render inactive or empty collections
   if (!collection.active || products.length === 0) {
     return null;
   }
 
   return (
-    <section className="space-y-6">
-      <h1> {collection.title} </h1>
-      {/* Campaign Banner */}
-      {collection.banners?.length ? <CollectionBanner banners={collection.banners} /> : null}
+    <section className="space-y-5">
+      {collection.banner ? <CollectionBanner banner={collection.banner} /> : null}
 
-      {/* Featured Product */}
-      {featuredProduct ? <FeaturedProductCard product={featuredProduct} /> : null}
-
-      {/* Product Carousel */}
+      <FeaturedCollection
+        collection={collection}
+        products={products}
+        featuredProduct={featuredProduct}
+        onSelect={onSelect}
+        onToggleLike={onToggleLike}
+      />
     </section>
   );
 }

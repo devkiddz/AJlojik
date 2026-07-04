@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { products as initialProducts } from '@/data/products';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 
 import ItemsCarousel from './ItemsCarousel';
 import ProductsCarousel from '../ProductsCarousel';

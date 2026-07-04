@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { ProductType, ProductVariantType } from '@/types';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import { categoryType } from '@/types';
 
 const FALLBACK_COVER = '/images/brand-backdrop.jpg';

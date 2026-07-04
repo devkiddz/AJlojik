@@ -22,7 +22,7 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar';
 
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 import SidebarHeaderContent from './SidebarHeaderContent';
 
 // 1. Extract the dynamic menu items into a sub-component

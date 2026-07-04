@@ -1,7 +1,7 @@
 'use client';
 
 import { UtensilsCrossed, Wine, PartyPopper, ArrowRight } from 'lucide-react';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 
 type Props = {
   onSelect: (category: string) => void;

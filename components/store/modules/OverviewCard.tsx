@@ -1,5 +1,5 @@
 import { ProductType } from '@/types';
-import { categories } from '@/categories';
+import { categories } from '@/data/categories';
 
 type Props = {
   product: ProductType;
