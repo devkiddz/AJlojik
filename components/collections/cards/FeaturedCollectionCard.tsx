@@ -1,83 +1,100 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Eye, ShoppingCart, Package2, ChevronDown } from 'lucide-react';
+import { Eye, ShoppingCart, ChartColumnStacked } from 'lucide-react';
 
 import { ProductType } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type ProductVariant = ProductType['variants'][number];
 
 type Props = {
   product: ProductType;
   onSelect?: (id: string) => void;
+  onAddToCart?: (product: ProductType, variant: ProductVariant) => void;
 };
 
-export default function FeaturedCollectionCard({ product, onSelect }: Props) {
-  const variant = product.variants[0];
+export default function FeaturedCollectionCard({ product, onSelect, onAddToCart }: Props) {
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(product.variants[0]?.id ?? null);
+
+  const activeVariant = useMemo(() => {
+    return product.variants.find(variant => variant.id === selectedVariantId) ?? product.variants[0];
+  }, [product.variants, selectedVariantId]);
+
+  if (!activeVariant) return null;
 
   return (
-    <article className="group h-[285px] overflow-hidden py-5 rounded-md border border-white/10 bg-card shadow-xl transition-all duration-500 hover:border-accent/30 hover:shadow-2xl">
-      <div className="grid h-full grid-cols-[42%_58%]">
+    <article className="group flex w-full flex-col overflow-hidden rounded-md border border-muted bg-card shadow-md transition-all hover:shadow-xl">
+      <div className="grid grid-cols-5 bg-card/50">
         {/* IMAGE */}
-        <button
-          aria-label="variant"
-          type="button"
+        <div
+          role="button"
           onClick={() => onSelect?.(product.id)}
-          className="relative overflow-hidden bg-black text-left">
+          className="relative col-span-2 h-full h-55 md:h-69 overflow-hidden cursor-pointer">
           <Image
-            src={variant.image}
+            src={activeVariant.image}
             alt={product.name}
             fill
-            sizes="320px"
-            className="object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-110"
+            sizes="(max-width:768px) 40vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
-
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/25" />
-        </button>
+        </div>
 
         {/* CONTENT */}
-        <div className="flex h-full flex-col justify-between bg-[#0b1324] p-5">
-          <div>
-            <h3 className="line-clamp-1 text-2xl font-black leading-tight text-white">{product.name}</h3>
+        <div className="col-span-3 flex flex-col justify-between p-3 md:p-4">
+          <div className="space-y-1">
+            <h3 className="line-clamp-1 pr-2 text-xs font-semibold md:text-2xl">{product.name}</h3>
+            <p className="line-clamp-2 text-[10px] text-muted-foreground md:text-sm">
+              {product.shortDescription}
+            </p>
 
-            <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/65">{product.shortDescription}</p>
-
-            <div className="mt-4 flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
-                <Package2 className="h-4 w-4 text-secondary" />
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="flex items-center gap-1 text-[10px] text-primary md:text-sm">
+                <ChartColumnStacked className="h-3 w-3 text-rose-500" />
                 {product.category}
               </span>
-
               <Button
-                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => onSelect?.(product.id)}
-                className="h-8 rounded-full border-white/15 bg-white/5 px-4 text-white hover:bg-white/10">
-                Preview
-                <Eye className="ml-1.5 h-4 w-4" />
+                className="h-6 gap-1 rounded-full px-2 text-[10px] md:h-8">
+                Preview <Eye className="h-3 w-3" />
               </Button>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              <span className="text-white/80">In Stock</span>
-              <span className="text-white/60">{variant.stockLeft} left</span>
             </div>
           </div>
 
-          <div className="flex items-end justify-between gap-3">
-            <div className="flex h-10 w-36 items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-semibold text-white">
-              <span>{variant.label}</span>
-              <ChevronDown className="h-4 w-4 text-white/55" />
+          <div className="mt-4 space-y-3">
+            {/* STOCK + PRICE */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{activeVariant.stockLeft} in stock</span>
+              <span className="font-bold text-rose-500 md:text-sm">
+                ₦{activeVariant.price.toLocaleString()}
+              </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <p className="text-lg font-black text-secondary">₦{variant.price.toLocaleString()}</p>
+            {/* VARIANT SELECT + CART */}
+            <div className="flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
+              <Select value={selectedVariantId || ''} onValueChange={setSelectedVariantId}>
+                <SelectTrigger className="h-8 w-[120px] text-xs">
+                  <SelectValue placeholder="Option" />
+                </SelectTrigger>
+                <SelectContent>
+                  {product.variants.map(v => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
-                type="button"
                 size="icon"
                 variant="outline"
-                className="h-10 w-10 rounded-full border-white/10 bg-white/5 text-white hover:bg-secondary hover:text-white">
+                className="h-8 w-8 rounded-full border-muted-foreground/20"
+                onClick={() => onAddToCart?.(product, activeVariant)}>
                 <ShoppingCart className="h-4 w-4" />
               </Button>
             </div>

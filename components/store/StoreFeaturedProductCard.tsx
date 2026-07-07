@@ -34,18 +34,18 @@ export default function ProductCard({ product, onPreview, onToggleLike, onAddToC
   };
 
   return (
-    <article className="group mt-5 flex w-full flex-col gap-2 ">
+    <article className="group pt-8 mt-3 flex w-full flex-col gap-2 shadow-md hover:shadow-xl ring-1-muted-foreground transition-all rounded-md bg-card overflow-hidden">
       {/* HEADER */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pl-2">
         <Form className="h-4 w-4 md:h-5 md:w-5" />
         <h2 className="text-md md:text-2xl">Picked for you</h2>
       </div>
 
       {/* CARD */}
-      <div className="py-7 rounded-md bg-card mt-2 transition-all overflow-hidden">
-        <div className="grid grid-cols-5 overflow-hidden bg-card/50 transition-colors ">
+      <div className=" rounded-md bg-card mt-2 transition-all overflow-hidden">
+        <div className="grid grid-cols-5 overflow-hidden bg-card transition-colors ">
           {/* IMAGE */}
-          <div className="relative col-span-2 min-h-[150px] overflow-hidden" onClick={goToProduct}>
+          <div className="relative col-span-2 h-55 lg:h-67 overflow-hidden" onClick={goToProduct}>
             <Image
               src={activeVariant.image}
               alt={product.name}

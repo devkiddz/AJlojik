@@ -1,4 +1,5 @@
 import tonightBanner from '@/public/assets/collections/tonights-pour-banner.png';
+import { Wine, Martini, Candy } from 'lucide-react';
 
 export type CollectionLayout =
   | 'featured'
@@ -20,6 +21,8 @@ export type CollectionTheme = {
   gradient?: string;
 };
 
+export type CollectionBannerStyle = 'hero' | 'compact' | 'none';
+
 export type CollectionType = {
   id: string;
   slug: string;
@@ -27,12 +30,14 @@ export type CollectionType = {
   title: string;
   subtitle?: string;
 
+  icon?: string; // optional icon for the collection, can be a URL or an icon name
+
   layout: CollectionLayout;
+  bannerStyle?: CollectionBannerStyle;
 
   banner?: CollectionBanner;
 
   featuredProductId?: string;
-
   productIds: string[];
 
   active: boolean;
@@ -45,12 +50,13 @@ export const collections: CollectionType[] = [
   {
     id: 'collection_1',
     slug: 'tonights-pour',
+    
 
     title: "Tonight's Pour",
     subtitle: 'Handpicked champagnes for unforgettable nights.',
 
     layout: 'featured',
-
+    bannerStyle: 'hero',
     banner: {
       eyebrow: "Tonight's Pour",
       title: 'Raise a Glass to Unforgettable Nights',
@@ -88,16 +94,19 @@ export const collections: CollectionType[] = [
     subtitle: 'Relax, unwind and celebrate the weekend.',
 
     layout: 'featured',
+    bannerStyle: 'none',
+    banner: undefined,
+    // bannerStyle: 'hero',
 
-    banner: {
-      eyebrow: 'Weekend Indulgence',
-      title: 'Sip, Savor & Unwind',
-      description:
-        'Premium wines and spirits carefully selected for relaxing evenings and unforgettable weekends.',
-      image: '/assets/collections/weekend-indulgence-banner.png',
-      ctaLabel: 'Explore Collection',
-      href: '/collections/weekend-indulgence'
-    },
+    // banner: {
+    //   eyebrow: 'Weekend Indulgence',
+    //   title: 'Sip, Savor & Unwind',
+    //   description:
+    //     'Premium wines and spirits carefully selected for relaxing evenings and unforgettable weekends.',
+    //   image: '/assets/collections/weekend-indulgence-banner.png',
+    //   ctaLabel: 'Explore Collection',
+    //   href: '/collections/weekend-indulgence'
+    // },
 
     featuredProductId: 'prod_8',
 
@@ -126,16 +135,18 @@ export const collections: CollectionType[] = [
     subtitle: 'Luxury chocolates & confectioneries.',
 
     layout: 'featured',
-
-    banner: {
-      eyebrow: 'Sweet Moments',
-      title: 'Life is Sweeter with Every Bite',
-      description:
-        'Premium chocolates, gourmet treats and elegant gift boxes for birthdays, celebrations and thoughtful gifting.',
-      image: '/assets/collections/sweet-moments-banner.png',
-      ctaLabel: 'Discover Treats',
-      href: '/collections/sweet-moments'
-    },
+       bannerStyle: 'none',
+    banner: undefined,
+    // bannerStyle: 'hero',
+    // banner: {
+    //   eyebrow: 'Sweet Moments',
+    //   title: 'Life is Sweeter with Every Bite',
+    //   description:
+    //     'Premium chocolates, gourmet treats and elegant gift boxes for birthdays, celebrations and thoughtful gifting.',
+    //   image: '/assets/collections/sweet-moments-banner.png',
+    //   ctaLabel: 'Discover Treats',
+    //   href: '/collections/sweet-moments'
+    // },
 
     featuredProductId: 'prod_15',
 

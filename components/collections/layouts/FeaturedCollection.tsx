@@ -28,21 +28,7 @@ export default function FeaturedCollection({
   const displayProducts = carouselProducts.length > 0 ? carouselProducts : products;
 
   return (
-    <section className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold tracking-tight">{collection.title}</h2>
-
-          <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-bold text-destructive">
-            {displayProducts.length}
-          </span>
-        </div>
-
-        {/* Optional View All */}
-        {/* <Button variant="ghost">View all</Button> */}
-      </div>
-
+    <section className="bg-card">
       {/* Content */}
       <div className="grid items-stretch gap-6 xl:grid-cols-[470px_minmax(0,1fr)]">
         {/* Featured Hero */}
@@ -58,7 +44,7 @@ export default function FeaturedCollection({
           {/* Right Fade */}
           <div className="pointer-events-none absolute right-0 top-0 z-20 h-full w-10 bg-gradient-to-l from-background to-transparent" />
 
-          <div className="flex h-full gap-5 overflow-x-auto pb-3 scrollbar-hide scroll-smooth">
+          <div className="flex h-full gap-2 overflow-x-auto pb-3 scrollbar-hide scroll-smooth">
             {displayProducts.map(product => (
               <div key={product.id} className="w-[245px] shrink-0">
                 <CollectionProductCard product={product} onSelect={onSelect} onToggleLike={onToggleLike} />
