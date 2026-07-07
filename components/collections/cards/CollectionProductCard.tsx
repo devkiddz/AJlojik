@@ -17,8 +17,8 @@ export default function CollectionProductCard({ product, onSelect, onToggleLike 
   return (
     <article
       onClick={() => onSelect?.(product.id)}
-      className="group shrink-0 cursor-pointer rounded-md text-left">
-      <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
+      className="group shrink-0 cursor-pointer rounded-lg text-left">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
         <Image
           src={variant.image}
           alt={product.name}
@@ -34,7 +34,7 @@ export default function CollectionProductCard({ product, onSelect, onToggleLike 
             e.stopPropagation();
             onToggleLike?.(product.id);
           }}
-          className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md">
+          className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md cursor-pointer">
           <Heart className="h-4 w-4" />
         </button>
 
