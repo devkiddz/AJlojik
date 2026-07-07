@@ -31,7 +31,7 @@ export default function CollectionSection({
   const Icon = getCollectionIcon(collection.icon?.value);
 
   return (
-    <section className="relative max-w-full rounded-3xl bg-card">
+    <section className="relative max-w-full rounded-3xl bg-card border border-border/50 shadow-lg">
       <div className="relative overflow-hidden rounded-2xl">
         {collection.banner?.image ? (
           <CollectionBanner
@@ -40,7 +40,7 @@ export default function CollectionSection({
             count={displayProducts.length}
           />
         ) : (
-          <div className="flex items-center justify-between rounded-2xl border border-border/50 bg-card px-4 py-5 md:px-6">
+          <div className="flex items-center justify-between rounded-2xl  bg-card px-4 py-5 md:px-6">
             {/* Left */}
             <div className="flex items-center md:items-start gap-4">
               <div

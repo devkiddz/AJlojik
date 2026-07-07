@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-
+import PromoModal from '@/components/promos/PromoModal';
+import { promos, Promo } from '@/data/promos';
 import StoreRightPannel from '@/components/store/StoreRightPannel';
 import ProductModal from '@/components/shared/ProductModal';
 import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
@@ -23,6 +24,31 @@ export default function StorePageClient() {
   const [storeProducts, setStoreProducts] = useState(products);
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
+  const [promoOpen, setPromoOpen] = useState(false);
+
+  const openPromoPreview = (promoId: string) => {
+    const promo = promos.find(promo => promo.id === promoId);
+
+    if (!promo) return;
+
+    setSelectedPromo(promo);
+    setPromoOpen(true);
+  };
+
+  const closePromoPreview = () => {
+    setPromoOpen(false);
+    setSelectedPromo(null);
+  };
+
+  const selectedPromoProducts = useMemo(() => {
+    if (!selectedPromo) return [];
+
+    return selectedPromo.productIds
+      .map(id => storeProducts.find(product => product.id === id))
+      .filter((product): product is ProductType => Boolean(product));
+  }, [selectedPromo, storeProducts]);
   // const [showStickyPill, setShowStickyPill] = useState(false);
 
   // --- Query Handling ---
@@ -103,7 +129,8 @@ export default function StorePageClient() {
           onCategoryChange={updateQuery}
           onPreview={openPreview}
           onToggleLike={handleToggleLike}
-          onAddToCart={handleAddToCart}>
+          onAddToCart={handleAddToCart}
+          onPromoPreview={openPromoPreview}>
           <DiscoveryFeedsEngine />
         </DiscoveryProvider>
 
@@ -126,6 +153,21 @@ export default function StorePageClient() {
         hasPrevious={selectedIndex > 0}
         currentIndex={selectedIndex}
         totalProducts={filteredProducts.length}
+      />
+
+      <PromoModal
+        promo={selectedPromo}
+        products={selectedPromoProducts}
+        open={promoOpen}
+        onClose={closePromoPreview}
+        onSelectProduct={id => {
+          const product = storeProducts.find(product => product.id === id);
+
+          if (!product) return;
+
+          closePromoPreview();
+          openPreview(product);
+        }}
       />
     </div>
   );

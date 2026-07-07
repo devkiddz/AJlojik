@@ -57,7 +57,7 @@ export default function FeaturedCollection({ products, featuredProduct, onSelect
             type="button"
             aria-label="Scroll right"
             onClick={() => scrollShelf('right')}
-            className="absolute right-2 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 opacity-0 shadow-md backdrop-blur-md transition-all hover:scale-105 group-hover/shelf:opacity-100 md:flex">
+            className="absolute right-2 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 opacity-0 shadow-md backdrop-blur-md transition-all hover:scale-105 group-hover/shelf:opacity-100 md:flex cursor-pointer ">
             <ChevronRight className="h-5 w-5" />
           </button>
 

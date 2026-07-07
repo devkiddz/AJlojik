@@ -27,6 +27,7 @@ type DiscoveryContextType = {
   onPreview: (product: ProductType) => void;
   onToggleLike: (productId: string) => void;
   onAddToCart: (product: ProductType, variant: ProductVariantType) => void;
+  onPromoPreview?: (promoId: string) => void;
 };
 
 const DiscoveryContext = createContext<DiscoveryContextType | null>(null);
@@ -47,12 +48,14 @@ export function DiscoveryProvider({
   onCategoryChange,
   onPreview,
   onToggleLike,
-  onAddToCart
+  onAddToCart,
+  onPromoPreview
 }: DiscoveryProviderProps) {
   return (
     <DiscoveryContext.Provider
       value={{
         triggerRef,
+        onPromoPreview,
         categories,
         collections,
         selectedCategory,
