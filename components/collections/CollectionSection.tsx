@@ -1,5 +1,6 @@
 import { CollectionType } from '@/data/collections';
 import { ProductType } from '@/types';
+import { getCollectionIcon } from '@/lib/collection-icons';
 
 import CollectionBanner from './CollectionBanner';
 import FeaturedCollection from './layouts/FeaturedCollection';
@@ -27,6 +28,7 @@ export default function CollectionSection({
   if (!featuredProduct) return null;
   const carouselProducts = products.filter(product => product.id !== featuredProduct.id);
   const displayProducts = carouselProducts.length > 0 ? carouselProducts : products;
+  const Icon = getCollectionIcon(collection.icon?.value);
 
   return (
     <section className="relative max-w-full rounded-3xl bg-card">
@@ -40,16 +42,16 @@ export default function CollectionSection({
         ) : (
           <div className="flex items-center justify-between rounded-2xl border border-border/50 bg-card px-4 py-5 md:px-6">
             {/* Left */}
-            <div className="flex items-start gap-4">
+            <div className="flex items-center md:items-start gap-4">
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-xl"
+                className="flex h-6 w-6 lg:h-12 lg:w-12 items-center justify-center rounded-xl"
                 style={{ backgroundColor: `${collection.theme?.accent}20` }}>
-                <PartyPopper className="h-6 w-6" color={collection.theme?.accent} />
+                <Icon className="h-4 w-4 lg:h-6 lg:w-6" color={collection.theme?.accent} />
               </div>
 
-              <div>
+              <div className="flex flex-col gap-1 items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold tracking-tight md:text-2xl">{collection.title}</h2>
+                  <h2 className="text-sm font-bold tracking-tight lg:text-lg">{collection.title}</h2>
 
                   <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive">
                     {displayProducts.length}
@@ -57,13 +59,15 @@ export default function CollectionSection({
                 </div>
 
                 {collection.subtitle && (
-                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{collection.subtitle}</p>
+                  <p className="hidden lg:inline-block max-w-2xl text-sm text-muted-foreground">
+                    {collection.subtitle}
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Right */}
-            <Button variant="outline" className="gap-2 rounded-full">
+            <Button variant="outline" className="gap-2 rounded-full text-xs lg:text-sm cursor-pointer">
               View Collection
               <ArrowRight className="h-4 w-4" />
             </Button>

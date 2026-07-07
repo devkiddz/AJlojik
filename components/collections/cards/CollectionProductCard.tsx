@@ -17,72 +17,59 @@ export default function CollectionProductCard({ product, onSelect, onToggleLike 
   return (
     <article
       onClick={() => onSelect?.(product.id)}
-      className="group relative h-70 shrink-0 cursor-pointer overflow-hidden rounded-md border border-muted-background bg-card text-left shadow-md transition-all hover:shadow-lg">
-      <Image
-        src={variant.image}
-        alt={product.name}
-        fill
-        sizes="240px"
-        className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
-      />
+      className="group shrink-0 cursor-pointer rounded-md text-left">
+      <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
+        <Image
+          src={variant.image}
+          alt={product.name}
+          fill
+          sizes="170px"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
 
-      <div className="absolute inset-x-0 top-0 z-20 bg-gradient-royal px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-white">
-        {product.category}
-      </div>
+        <button
+          aria-label="Like product"
+          type="button"
+          onClick={e => {
+            e.stopPropagation();
+            onToggleLike?.(product.id);
+          }}
+          className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md">
+          <Heart className="h-4 w-4" />
+        </button>
 
-      <button
-        aria-label="Like product"
-        type="button"
-        onClick={e => {
-          e.stopPropagation();
-          onToggleLike?.(product.id);
-        }}
-        className="absolute left-3 top-12 z-30 text-secondary">
-        <Heart className="h-5 w-5" />
-      </button>
+        <div className="absolute bottom-2 right-2 z-20 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <button
+            aria-label="Preview Product"
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              onSelect?.(product.id);
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-md">
+            <Eye className="h-4 w-4" />
+          </button>
 
-      <div className="absolute inset-x-0 bottom-0 z-30 p-4">
-        <h3 className="line-clamp-1 text-sm font-bold text-white">{product.name}</h3>
-
-        <div className="mt-2 flex gap-1">
-          {product.variants.slice(0, 3).map(item => (
-            <span
-              key={item.id}
-              className="rounded-md bg-accent px-2 py-1 text-[9px] font-medium text-accent-foreground">
-              {item.label}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-base font-extrabold text-accent">₦{variant.price.toLocaleString()}</p>
-
-          <div className="flex gap-2">
-            <button
-              aria-label="Preview Product"
-              type="button"
-              onClick={e => {
-                e.stopPropagation();
-                onSelect?.(product.id);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <Eye className="h-4 w-4" />
-            </button>
-
-            <button
-              aria-label="Add to cart"
-              type="button"
-              onClick={e => {
-                e.stopPropagation();
-                console.log('Add to cart:', product.id, variant.id);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-white">
-              <ShoppingCart className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            aria-label="Add to cart"
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              console.log('Add to cart:', product.id, variant.id);
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-white shadow-md">
+            <ShoppingCart className="h-4 w-4" />
+          </button>
         </div>
       </div>
-      <div className="w-full overflow-hidden absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+      <div className="mt-2">
+        <h3 className="line-clamp-1 text-sm font-semibold">{product.name}</h3>
+
+        {/* <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{product.shortDescription}</p> */}
+
+        <p className=" text-sm font-bold text-secondary">₦{variant.price.toLocaleString()}</p>
+      </div>
     </article>
   );
 }

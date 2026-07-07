@@ -32,7 +32,7 @@ export default function FeaturedCollectionCard({ product, onSelect, onAddToCart 
         <div
           role="button"
           onClick={() => onSelect?.(product.id)}
-          className="relative col-span-2 h-full h-55 md:h-69 overflow-hidden cursor-pointer">
+          className="relative col-span-2 h-55 lg:h-69 overflow-hidden cursor-pointer">
           <Image
             src={activeVariant.image}
             alt={product.name}
