@@ -93,7 +93,7 @@ export const collections: CollectionType[] = [
     layout: 'featured',
 
     featuredProductId: 'prod_8',
-    productIds: ['prod_8', 'prod_9', 'prod_10', 'prod_11', 'prod_12'],
+    productIds: ['prod_8', 'prod_9', 'prod_10', 'prod_11', 'prod_12', 'prod_13', 'prod_14'],
 
     active: true,
     priority: 2,
