@@ -160,14 +160,14 @@ export default function StorePageClient() {
         products={selectedPromoProducts}
         open={promoOpen}
         onClose={closePromoPreview}
-        onSelectProduct={id => {
-          const product = storeProducts.find(product => product.id === id);
+        // onSelectProduct={id => {
+        //   const product = storeProducts.find(product => product.id === id);
 
-          if (!product) return;
+        //   if (!product) return;
 
-          closePromoPreview();
-          openPreview(product);
-        }}
+        //   closePromoPreview();
+        //   openPreview(product);
+        // }}
       />
     </div>
   );
