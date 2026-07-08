@@ -14,7 +14,7 @@ export function CartLogics() {
         <ShoppingCart className="h-4 w-4" />
 
         {/* Badge: Positioned cleanly */}
-        <span className="absolute animate-pulse -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-white">
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-white">
           1
         </span>
       </DropdownMenuTrigger>
