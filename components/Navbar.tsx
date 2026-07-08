@@ -117,6 +117,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
           {/* MOBILE TRIGGER (Top Right) */}
           <button
+            title="Nav Trigger"
             onClick={() => setMobileToolsOpen(!mobileToolsOpen)}
             className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-muted hover:bg-muted/80">
             <ChevronDown className={`h-4 w-4 transition-transform ${mobileToolsOpen ? 'rotate-180' : ''}`} />
