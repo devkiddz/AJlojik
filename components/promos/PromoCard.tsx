@@ -4,6 +4,7 @@ import { ArrowRight, Flame, Tag, TrendingUp } from 'lucide-react';
 import { Promo } from '@/data/promos';
 import { ProductType } from '@/types';
 import { Button } from '@/components/ui/button';
+import PromoCountdown from './PromoCountdown';
 
 type Props = {
   promo: Promo;
@@ -57,7 +58,7 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
 
             {promo.subtitle && <p className="mt-1 line-clamp-2 text-sm text-white/80">{promo.subtitle}</p>}
 
-            <div className="mt-4 flex items-center gap-3 text-xs text-white/75">
+            <div className="mt-4 mb-4 flex items-center gap-3 text-xs text-white/75">
               <span className="flex items-center gap-1">
                 <Tag className="h-3 w-3" />
                 {products.length} products
@@ -70,10 +71,12 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
             </div>
           </div>
 
+          <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} />
+
           <Button
             type="button"
             variant="secondary"
-            className="promo-button mt-5 w-full gap-2 rounded-full cursor-pointer"
+            className="promo-button mt-5 w-full gap-2 rounded-full cursor-pointer shadow-none"
             onClick={e => {
               e.stopPropagation();
               onSelect?.(promo.id);

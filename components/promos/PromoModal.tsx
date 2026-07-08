@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { X, Flame, Tag, TrendingUp, ArrowRight } from 'lucide-react';
@@ -15,138 +15,122 @@ type Props = {
   products: ProductType[];
   open: boolean;
   onClose: () => void;
-  //   onSelectProduct?: (id: string) => void;
 };
 
 export default function PromoModal({ promo, products, open, onClose }: Props) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Handle Escape Key and Body Scroll Lock
   useEffect(() => {
     if (!open) return;
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+
     document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open]);
+  }, [open, onClose]);
+
+  // Handle Click Outside
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
 
   if (!open || !promo) return null;
 
   const image = promo.image ?? products[0]?.variants[0]?.image;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-md">
-      <div className="mx-auto my-6 w-full max-w-6xl rounded-3xl bg-background shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all"
+      onClick={handleOverlayClick}>
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl bg-background shadow-2xl border border-white/10">
+        {/* CLOSE BUTTON */}
+        <button
+          title="Close modal"
+          type="button"
+          onClick={onClose}
+          className="absolute right-6 top-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70 transition">
+          <X className="h-5 w-5" />
+        </button>
+
         {/* HERO */}
         <div className="relative aspect-23/10 overflow-hidden">
-          {image ? (
+          {image && (
             <Image
               src={image}
               alt={promo.title}
               fill
-              sizes="100vw"
-              className="object-cover object-top-center"
+              sizes="(max-width: 1280px) 100vw, 1152px"
+              className="object-cover"
             />
-          ) : null}
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
-          <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/70 via-black/25 to-transparent" />
-
-          <button
-            title="close modal"
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md">
-            <X className="h-5 w-5" />
-          </button>
-
-          <div className="absolute bottom-0 left-0 right-0 z-10 p-6 md:p-8">
+          <div className="absolute bottom-0 left-0 right-0 p-8">
             <div
               className="mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md"
-              style={{
-                backgroundColor: `${promo.theme?.accent}35`,
-                color: promo.theme?.accent
-              }}>
+              style={{ backgroundColor: `${promo.theme?.accent}35`, color: promo.theme?.accent }}>
               <Flame className="h-3 w-3" />
               {promo.badge}
             </div>
-
-            <h2 className="max-w-2xl text-3xl font-black text-white md:text-4xl">{promo.title}</h2>
-
-            {promo.subtitle ? (
-              <p className="mt-2 max-w-2xl text-sm text-white/80 md:text-base">{promo.subtitle}</p>
-            ) : null}
+            <h2 className="text-3xl md:text-5xl font-black text-white">{promo.title}</h2>
           </div>
         </div>
 
-        {/* BODY */}
-        <div className=" p-5 md:p-8  scrollbar-none">
-          <div className="space-y-7">
-            {promo.description ? (
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
-                {promo.description}
-              </p>
-            ) : null}
+        {/* CONTENT */}
+        <div className="p-8 space-y-8">
+          {promo.description && (
+            <p className="max-w-3xl text-muted-foreground leading-relaxed">{promo.description}</p>
+          )}
 
-            {/* STATS */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border bg-card p-4">
-                <Tag className="mb-2 h-5 w-5 text-secondary" />
-                <p className="text-sm font-bold">{products.length} Products</p>
-                <p className="text-xs text-muted-foreground">Included in promo</p>
+          {/* STATS */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { icon: Tag, label: `${products.length} Products`, sub: 'Included' },
+              { icon: TrendingUp, label: promo.type, sub: 'Category' },
+              { icon: Flame, label: promo.badge, sub: 'Current Offer' }
+            ].map((stat, i) => (
+              <div key={i} className="rounded-2xl border bg-card p-4">
+                <stat.icon className="mb-2 h-5 w-5 text-secondary" />
+                <p className="font-bold">{stat.label}</p>
+                <p className="text-xs text-muted-foreground">{stat.sub}</p>
               </div>
-
-              <div className="rounded-2xl border bg-card p-4">
-                <TrendingUp className="mb-2 h-5 w-5 text-secondary" />
-                <p className="text-sm font-bold capitalize">{promo.type}</p>
-                <p className="text-xs text-muted-foreground">Promo category</p>
-              </div>
-
-              <div className="rounded-2xl border bg-card p-4">
-                <Flame className="mb-2 h-5 w-5 text-secondary" />
-                <p className="text-sm font-bold">{promo.badge}</p>
-                <p className="text-xs text-muted-foreground">Current offer</p>
-              </div>
-            </div>
-
-            {/* PRODUCTS */}
-            <div>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-bold">Promo Products</h3>
-                  <p className="text-sm text-muted-foreground">Products attached to this campaign.</p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map(product => (
-                  <PromoProductCard key={product.id} promo={promo} product={product} />
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* TERMS */}
-          <div className="rounded-2xl border bg-card p-5">
-            <h3 className="text-sm font-bold">Promo Terms</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Promo availability may depend on stock, selected variants and active campaign duration.
-            </p>
-          </div>
+          {/* PRODUCTS */}
+          <section>
+            <h3 className="text-xl font-bold mb-4">Promo Products</h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map(product => (
+                <PromoProductCard key={product.id} promo={promo} product={product} />
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* FOOTER */}
-        <div className="flex items-center gap-3 border-t bg-background/95 p-5 backdrop-blur-md sm:flex-row sm:justify-end">
+        <footer className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-background/90 p-6 backdrop-blur-md">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-
-          <Link href={`/promos/${promo.slug}`} className="inline-flex">
+          <Link href={`/promos/${promo.slug}`}>
             <Button className="gap-2">
-              View Promo Page
-              <ArrowRight className="h-4 w-4" />
+              View Promo Page <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
-        </div>
+        </footer>
       </div>
     </div>
   );

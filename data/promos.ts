@@ -5,6 +5,7 @@ export type PromoType = 'discount' | 'sale' | 'hot' | 'best-selling';
 export type PromoLayout = 'banner' | 'card' | 'shelf';
 
 export type Promo = {
+  
   id: string;
   slug: string;
   title: string;
@@ -35,6 +36,7 @@ export type Promo = {
   };
 };
 
+
 export const promos: Promo[] = [
   {
     id: 'promo_1',
@@ -61,7 +63,15 @@ export const promos: Promo[] = [
     theme: {
       accent: '#D4AF37',
       gradient: 'bg-gradient-brand'
-    }
+    },
+
+    startsAt: '2026-07-01T00:00:00',
+    endsAt: '2026-07-31T23:59:59',
+    terms: [
+      'Valid while stock lasts.',
+      'Discount applies to selected products only.',
+      'Promo may end earlier without notice.'
+    ]
   },
 
   {
@@ -87,7 +97,15 @@ export const promos: Promo[] = [
     theme: {
       accent: '#E11D48',
       gradient: 'bg-gradient-wine'
-    }
+    },
+
+    startsAt: '2026-07-01T00:00:00',
+    endsAt: '2026-07-31T23:59:59',
+    terms: [
+    'Valid while stock lasts.',
+    'Discount applies to selected products only.',
+    'Promo may end earlier without notice.'
+    ]
   },
 
   {
@@ -113,7 +131,15 @@ export const promos: Promo[] = [
     theme: {
       accent: '#F97316',
       gradient: 'bg-gradient-premium'
-    }
+    },
+
+    startsAt: '2026-07-01T00:00:00',
+    endsAt: '2026-07-31T23:59:59',
+    terms: [
+      'Valid while stock lasts.',
+      'Discount applies to selected products only.',
+      'Promo may end earlier without notice.'
+]
   },
 
   {
@@ -139,6 +165,14 @@ export const promos: Promo[] = [
     theme: {
       accent: '#22C55E',
       gradient: 'bg-gradient-brand'
-    }
+    },
+
+    startsAt: '2026-07-01T00:00:00',
+    endsAt: '2026-07-31T23:59:59',
+    terms: [
+      'Valid while stock lasts.',
+      'Best-selling products may vary by demand.',
+      'Promo may end earlier without notice.'
+    ]
   }
 ];

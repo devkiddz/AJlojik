@@ -1,11 +1,10 @@
-// components/promos/PromoSection.tsx
+'use client';
 
+import { useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, ArrowRightCircle } from 'lucide-react';
 import { Promo } from '@/data/promos';
 import { ProductType } from '@/types';
-
 import PromoCard from './PromoCard';
-import { ArrowRight } from 'lucide';
-import { ArrowRightCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 
@@ -16,37 +15,81 @@ type Props = {
 };
 
 export default function PromoSection({ promos, products, onSelect }: Props) {
-  const activePromos = promos.filter(promo => promo.active).sort((a, b) => a.priority - b.priority);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const activePromos = promos.filter(p => p.active).sort((a, b) => a.priority - b.priority);
 
   if (activePromos.length === 0) return null;
 
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 320;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="w-1/2 md:w-full">
-          <h2 className="text-lg font-bold tracking-tight md:text-2xl">Promos & Deals</h2>
-
-          <p className="text-sm text-muted-foreground">
-            Discounts, hot picks, sales and best-selling products.
-          </p>
-        </div>
-
         <div>
-          <Link href="/promos">
-            <Button variant="outline" className="gap-2 rounded-full cursor-pointer">
-              All
-              <ArrowRightCircle className="h-4 w-4" />
-            </Button>
-          </Link>
+          <h2 className="text-xl font-bold tracking-tight">Promos & Deals</h2>
+          <p className="text-sm text-muted-foreground">Hot picks and exclusive offers.</p>
         </div>
+        <Link href="/promos" className="hidden md:block">
+          <Button variant="outline" className="gap-2 rounded-full">
+            All <ArrowRightCircle className="h-4 w-4" />
+          </Button>
+        </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {activePromos.map(promo => {
-          const promoProducts = products.filter(product => promo.productIds.includes(product.id));
+      {/* Relative container to hold buttons and scrollable area */}
+      <div
+        className="group relative"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}>
+        {/* Navigation Buttons (Overlay) */}
+        <div
+          className={`absolute inset-y-0 left-0 z-70 flex items-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="rounded-full shadow-lg ml-2  cursor-pointer"
+            onClick={() => scroll('left')}>
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+        </div>
 
-          return <PromoCard key={promo.id} promo={promo} products={promoProducts} onSelect={onSelect} />;
-        })}
+        <div
+          className={`absolute inset-y-0 right-0 z-70 flex items-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="rounded-full shadow-lg mr-2  cursor-pointer"
+            onClick={() => scroll('right')}>
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </div>
+
+        {/* Scrollable Container */}
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {activePromos.map(promo => (
+            <div key={promo.id} className="min-w-[280px] sm:min-w-[320px] lg:min-w-[350px] snap-start">
+              <PromoCard
+                promo={promo}
+                products={products.filter(p => promo.productIds.includes(p.id))}
+                onSelect={onSelect}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

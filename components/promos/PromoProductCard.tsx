@@ -5,6 +5,7 @@ import { ArrowRight, Flame, Package, Tag, Timer, TrendingUp } from 'lucide-react
 import { Promo } from '@/data/promos';
 import { ProductType } from '@/types';
 import { Button } from '@/components/ui/button';
+import PromoCountdown from './PromoCountdown';
 
 type Props = {
   promo: Promo;
@@ -38,12 +39,9 @@ export default function PromoProductCard({ promo, product }: Props) {
             </span>
           ) : null}
 
-          {promo.endsAt ? (
-            <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white backdrop-blur-md">
-              <Timer className="h-3 w-3" />
-              Ends {new Date(promo.endsAt).toLocaleDateString()}
-            </span>
-          ) : null}
+          <div className="absolute bottom-3 left-3 overflow-hidden rounded-3xl border border-white/20 bg-white/5 p-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] backdrop-blur-2xl">
+            <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} compact />
+          </div>
         </div>
       </Link>
 
