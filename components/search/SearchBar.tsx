@@ -61,7 +61,7 @@ export default function SearchBar() {
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <div className="flex h-11 items-center rounded-full border bg-background shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+      <div className="flex h-11 items-center rounded-full bg-background shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
         <Search className="ml-4 h-4 w-4 text-muted-foreground" />
 
         <input
@@ -73,7 +73,7 @@ export default function SearchBar() {
           }}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search products, wines, kitchen..."
-          className="flex-1 bg-transparent px-3 text-sm outline-none"
+          className="flex-1 bg-transparent px-3 text-sm outline-none border-0"
         />
 
         {loading && (

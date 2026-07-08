@@ -60,7 +60,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/90 shadow-sm backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full bg-background shadow-sm backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
 
       {/* MAIN HEADER */}
@@ -109,7 +109,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
           <div className="mx-2 h-6 w-px bg-border" />
 
-          <div className="w-56 xl:w-72">
+          <div className="w-56 lg:w-80">
             <SearchBarComponent />
           </div>
         </div>

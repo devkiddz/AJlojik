@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PromoModal from '@/components/promos/PromoModal';
 import { promos, Promo } from '@/data/promos';
-import StoreRightPannel from '@/components/store/StoreRightPannel';
+import DiscoverySidebarRenderer from '@/components/discovery-sidebar/DiscoverySidebarRenderer';
 import ProductModal from '@/components/shared/ProductModal';
 import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
 
@@ -117,7 +117,7 @@ export default function StorePageClient() {
 
   return (
     <div className="mx-auto -mt-5 px-4 py-4">
-      <div className="grid min-h-screen grid-cols-12 gap-4">
+      <main className="grid min-h-screen grid-cols-12 items-start gap-4">
         <DiscoveryProvider
           triggerRef={triggerRef}
           categories={categories}
@@ -132,12 +132,11 @@ export default function StorePageClient() {
           onAddToCart={handleAddToCart}
           onPromoPreview={openPromoPreview}>
           <DiscoveryFeedsEngine />
+          <aside className="col-span-12 hidden self-start lg:col-span-4 lg:block mt-2">
+            <DiscoverySidebarRenderer />
+          </aside>
         </DiscoveryProvider>
-
-        <aside className="col-span-12 lg:col-span-2">
-          <StoreRightPannel />
-        </aside>
-      </div>
+      </main>
 
       <ProductModal
         product={selectedProduct}
