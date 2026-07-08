@@ -9,6 +9,7 @@ import { Promo } from '@/data/promos';
 import { ProductType } from '@/types';
 import { Button } from '@/components/ui/button';
 import PromoProductCard from './PromoProductCard';
+import PromoCountdown from './PromoCountdown';
 
 type Props = {
   promo: Promo | null;
@@ -65,7 +66,7 @@ export default function PromoModal({ promo, products, open, onClose }: Props) {
         </button>
 
         {/* HERO */}
-        <div className="relative aspect-23/10 overflow-hidden">
+        <div className="relative aspect-10/7 md:aspect-23/10 overflow-hidden">
           {image && (
             <Image
               src={image}
@@ -75,16 +76,23 @@ export default function PromoModal({ promo, products, open, onClose }: Props) {
               className="object-cover"
             />
           )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          <div className="absolute bottom-0 left-0 right-0 p-8">
-            <div
-              className="mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md"
-              style={{ backgroundColor: `${promo.theme?.accent}35`, color: promo.theme?.accent }}>
-              <Flame className="h-3 w-3" />
-              {promo.badge}
+          <div className="absolute bottom-0 left-0 right-0 p-8 space-y-3 md:flex items-center justify-between">
+            <div>
+              <div
+                className="mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md"
+                style={{ backgroundColor: `${promo.theme?.accent}35`, color: promo.theme?.accent }}>
+                <Flame className="h-3 w-3" />
+                {promo.badge}
+              </div>
+              <h2 className="text-3xl md:text-5xl font-black text-white">{promo.title}</h2>
             </div>
-            <h2 className="text-3xl md:text-5xl font-black text-white">{promo.title}</h2>
+
+            <div>
+              <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} />
+            </div>
           </div>
         </div>
 
