@@ -48,8 +48,8 @@ export default function SearchSuggestions({ products, query, activeIndex, onSele
               key={product.id}
               onClick={() => onSelect(product)}
               className={cn(
-                'flex items-center justify-between gap-4 rounded-xl p-2.5 transition-all duration-200 cursor-pointer select-none group active:scale-[0.99]',
-                isActive ? 'bg-secondary text-secondary-foreground shadow-xs' : 'hover:bg-muted/50'
+                'flex items-center justify-between gap-4 rounded-xl p-2.5 transition-all duration-200 cursor-pointer select-none group active:scale-[1]',
+                isActive ? 'bg-card text-accent text-xl shadow-xs' : 'hover:bg-muted/50'
               )}>
               {/* Left Column: Image + Info */}
               <div className="flex items-center gap-3.5 min-w-0">

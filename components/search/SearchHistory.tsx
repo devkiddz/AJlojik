@@ -57,7 +57,7 @@ export default function SearchHistory({ history, onSelect, onRemove, onClear }: 
                 e.stopPropagation(); // 🚀 Crucial! Stops the chip click from bubbling out and closing the search modal
                 onRemove(item);
               }}
-              className="rounded-full p-0.5 opacity-50 transition hover:bg-destructive/10 hover:text-destructive hover:opacity-100">
+              className="rounded-full p-0.5 opacity-50 transition hover:bg-card/10 hover:text-card hover:opacity-100">
               <X className="h-3 w-3" />
             </button>
           </div>
