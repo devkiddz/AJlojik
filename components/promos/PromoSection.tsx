@@ -54,7 +54,7 @@ export default function PromoSection({ promos, products, onSelect }: Props) {
         onMouseLeave={() => setIsHovered(false)}>
         {/* Navigation Buttons (Overlay) */}
         <div
-          className={`absolute inset-y-0 left-0 z-70 flex items-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          className={`absolute inset-y-0 left-0 z-10 flex items-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <Button
             variant="secondary"
             size="icon"
@@ -65,7 +65,7 @@ export default function PromoSection({ promos, products, onSelect }: Props) {
         </div>
 
         <div
-          className={`absolute inset-y-0 right-0 z-70 flex items-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          className={`absolute inset-y-0 right-0 z-10 flex items-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <Button
             variant="secondary"
             size="icon"

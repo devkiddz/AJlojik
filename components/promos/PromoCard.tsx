@@ -37,7 +37,7 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
         <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
         <div className="absolute inset-y-0 left-0 w-3/4 bg-gradient-to-r from-black/80 via-black/35 to-transparent" />
 
-        <div className="relative z-10 flex w-full flex-col justify-between">
+        <div className="relative z-5 flex w-full flex-col justify-between">
           {/* TOP */}
           <div className="max-w-sm">
             <div className="mb-4 flex flex-wrap items-center gap-2">
