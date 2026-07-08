@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { LayoutGrid, UtensilsCrossed, Wine, PartyPopper, ChevronDown } from 'lucide-react';
+import { LayoutGrid, UtensilsCrossed, Wine, PartyPopper, TextSearch } from 'lucide-react';
 
 import UserActionComponent from './UserActionComponent';
 import LogoComponent from './shared/LogoComponent';
@@ -100,9 +100,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           ))}
           <PremiumStoreButton active={isStorePage} onClick={() => router.push(`/store`)} />
           <div className="mx-2 h-4 w-px bg-border" />
-          <div className="w-48 xl:w-64">
-            <SearchBarComponent />
-          </div>
+          <SearchBarComponent />
         </div>
 
         {/* RIGHT ACTIONS + MOBILE TRIGGER */}
@@ -120,7 +118,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
             title="Nav Trigger"
             onClick={() => setMobileToolsOpen(!mobileToolsOpen)}
             className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-muted hover:bg-muted/80">
-            <ChevronDown className={`h-4 w-4 transition-transform ${mobileToolsOpen ? 'rotate-180' : ''}`} />
+            <TextSearch className={`h-4 w-4 transition-transform ${mobileToolsOpen ? 'rotate-90' : ''}`} />
           </button>
         </div>
       </div>

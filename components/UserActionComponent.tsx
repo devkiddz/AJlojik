@@ -27,7 +27,7 @@ export default function UserActionComponent({ isLoggedIn, user, onLogin, onLogou
     <Sheet>
       {/* Trigger */}
       <SheetTrigger>
-        <Avatar className="w-7 h-7 cursor-pointer">
+        <Avatar className="w-6 h-6 cursor-pointer">
           <AvatarImage src={user?.image || 'https://github.com/shadcn.png'} />
           <AvatarFallback>{isLoggedIn ? user?.name?.slice(0, 2).toUpperCase() : 'G'}</AvatarFallback>
         </Avatar>

@@ -19,7 +19,7 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
   return (
     <article
       onClick={() => onSelect?.(promo.id)}
-      className="promo-border group relative min-h-64 cursor-pointer overflow-hidden rounded-2xl bg-card p-px transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40">
+      className="promo-border group relative min-h-74 cursor-pointer overflow-hidden rounded-2xl bg-card p-px transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40">
       <div className="relative min-h-64 overflow-hidden rounded-2xl p-4">
         {image ? (
           <Image
