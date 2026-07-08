@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { ArrowRight, Flame, Tag, TrendingUp } from 'lucide-react';
+import { ArrowRight, Flame, Package, TrendingUp } from 'lucide-react';
 
 import { Promo } from '@/data/promos';
 import { ProductType } from '@/types';
@@ -18,9 +18,9 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
 
   return (
     <article
-      className="promo-border group relative min-h-56 cursor-pointer overflow-hidden rounded-2xl bg-card p-px"
-      onClick={() => onSelect?.(promo.id)}>
-      <div className="relative min-h-56 overflow-hidden rounded-2xl p-4">
+      onClick={() => onSelect?.(promo.id)}
+      className="promo-border group relative min-h-64 cursor-pointer overflow-hidden rounded-2xl bg-card p-px transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40">
+      <div className="relative min-h-64 overflow-hidden rounded-2xl p-4">
         {image ? (
           <Image
             src={image}
@@ -30,53 +30,65 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
             className="object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-110 group-hover:contrast-105 group-hover:saturate-110"
           />
         ) : null}
-        <div className="promo-spotlight absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-        {/* Readability overlay */}
-        {/* Ambient Tint */}
-        <div className="absolute inset-0 bg-black/20" />
+        <div className="promo-spotlight absolute inset-0 scale-110 opacity-0 transition-all duration-700 group-hover:scale-100 group-hover:opacity-100" />
 
-        {/* Bottom readability */}
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+        <div className="absolute inset-0 bg-black/25 transition-all duration-500 group-hover:bg-black/15" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
+        <div className="absolute inset-y-0 left-0 w-3/4 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
 
-        {/* Left readability */}
-        <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />
-
-        <div className="relative z-10 flex min-h-48 flex-col justify-between">
+        <div className="relative z-10 flex min-h-56 flex-col justify-between">
           <div>
-            <div
-              className="mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md"
-              style={{
-                backgroundColor: `${promo.theme?.accent}30`,
-                color: promo.theme?.accent
-              }}>
-              <Flame className="h-3 w-3" />
-              {promo.badge}
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span
+                className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md"
+                style={{
+                  backgroundColor: `${promo.theme?.accent}35`,
+                  color: promo.theme?.accent
+                }}>
+                <Flame className="h-3 w-3" />
+                {promo.badge}
+              </span>
             </div>
 
-            <h3 className="line-clamp-1 text-lg font-bold text-white">{promo.title}</h3>
+            <h3 className="line-clamp-1 text-xl font-black text-white">{promo.title}</h3>
 
-            {promo.subtitle && <p className="mt-1 line-clamp-2 text-sm text-white/80">{promo.subtitle}</p>}
+            {promo.subtitle ? (
+              <p className="mt-2 line-clamp-2 text-sm text-white/85">{promo.subtitle}</p>
+            ) : null}
 
-            <div className="mt-4 mb-4 flex items-center gap-3 text-xs text-white/75">
-              <span className="flex items-center gap-1">
-                <Tag className="h-3 w-3" />
-                {products.length} products
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white/85">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 backdrop-blur-md">
+                <Package className="h-3 w-3" />
+                {products.length} Products
               </span>
 
-              <span className="flex items-center gap-1 capitalize">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 capitalize backdrop-blur-md">
                 <TrendingUp className="h-3 w-3" />
                 {promo.type}
               </span>
+
+              {promo.discountPercent ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 backdrop-blur-md">
+                  Save {promo.discountPercent}%
+                </span>
+              ) : null}
             </div>
           </div>
 
-          <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} />
-
+          <div className="relative lg:max-w-2/3 top-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 shadow-lg backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/20">
+            <div className="h-2.5 w-2.5 rounded-full bg-secondary animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">
+              <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} compact />
+            </span>
+          </div>
+          <div className="relative inline-flex top-5 left-0 p-2 rounded-full bg-secondary/10 backdrop-blur-3xl">
+            {' '}
+          </div>
           <Button
             type="button"
             variant="secondary"
-            className="promo-button mt-5 w-full gap-2 rounded-full cursor-pointer shadow-none"
+            className="promo-button outline-0 border-0 mt-5 w-full gap-2 rounded-full opacity-100 shadow-none transition-all duration-500 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
             onClick={e => {
               e.stopPropagation();
               onSelect?.(promo.id);

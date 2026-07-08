@@ -62,7 +62,7 @@ export default function RootLayout({
                 <AppSidebar />
 
                 <main className="flex min-h-screen min-w-0 flex-col">
-                  <div className="sticky top-0 z-999">
+                  <div className="sticky top-0 z-50">
                     <Suspense fallback={null}>
                       <NavbarComponent brandName="AJ" brandSlug="Logik" />
                     </Suspense>

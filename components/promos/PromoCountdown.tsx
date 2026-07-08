@@ -113,7 +113,7 @@ export default function PromoCountdown({ startsAt, endsAt, compact = false }: Pr
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-muted p-3 text-center">
             <p className="text-xl font-black md:text-2xl">{String(value).padStart(2, '0')}</p>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+            <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
           </div>
         ))}
       </div>
