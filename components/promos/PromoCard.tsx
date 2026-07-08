@@ -19,8 +19,8 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
   return (
     <article
       onClick={() => onSelect?.(promo.id)}
-      className="promo-border group relative min-h-74 cursor-pointer overflow-hidden rounded-2xl bg-card p-px transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40">
-      <div className="relative min-h-64 overflow-hidden rounded-2xl p-4">
+      className="promo-border group relative min-h-80 cursor-pointer overflow-hidden rounded-2xl bg-card p-px transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40">
+      <div className="relative flex min-h-80 overflow-hidden rounded-2xl p-4">
         {image ? (
           <Image
             src={image}
@@ -33,12 +33,13 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
 
         <div className="promo-spotlight absolute inset-0 scale-110 opacity-0 transition-all duration-700 group-hover:scale-100 group-hover:opacity-100" />
 
-        <div className="absolute inset-0 bg-black/25 transition-all duration-500 group-hover:bg-black/15" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
-        <div className="absolute inset-y-0 left-0 w-3/4 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-black/30 transition-all duration-500 group-hover:bg-black/20" />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
+        <div className="absolute inset-y-0 left-0 w-3/4 bg-gradient-to-r from-black/80 via-black/35 to-transparent" />
 
-        <div className="relative z-10 flex min-h-56 flex-col justify-between">
-          <div>
+        <div className="relative z-10 flex w-full flex-col justify-between">
+          {/* TOP */}
+          <div className="max-w-sm">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span
                 className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md"
@@ -76,26 +77,26 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
             </div>
           </div>
 
-          <div className="relative lg:max-w-2/3 top-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 shadow-lg backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/20">
-            <div className="h-2.5 w-2.5 rounded-full bg-secondary animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">
+          {/* BOTTOM */}
+          <div className="flex w-full flex-col gap-3">
+            <div className="inline-flex w-fit max-w-full items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-md">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-secondary animate-pulse" />
+
               <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} compact />
-            </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="promo-button w-full gap-2 rounded-full transition-all duration-500 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
+              onClick={e => {
+                e.stopPropagation();
+                onSelect?.(promo.id);
+              }}>
+              View Promo
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="relative inline-flex top-5 left-0 p-2 rounded-full bg-secondary/10 backdrop-blur-3xl">
-            {' '}
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            className="promo-button outline-0 border-0 mt-5 w-full gap-2 rounded-full opacity-100 shadow-none transition-all duration-500 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
-            onClick={e => {
-              e.stopPropagation();
-              onSelect?.(promo.id);
-            }}>
-            View Promo
-            <ArrowRight className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </article>

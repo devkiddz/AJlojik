@@ -6,13 +6,10 @@ import './globals.css';
 
 import NavbarComponent from '@/components/Navbar';
 import FooterComponent from '@/components/FooterComponent';
-
 import ThemeProvider from '@/components/providers/ThemeProvider';
 import { AppSidebar } from '@/components/providers/AppSideBar';
-
 import SearchProvider from '@/components/providers/SearchProvider';
-
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 import { cn } from '@/lib/utils';
 import SearchMobileOverlay from '@/components/search/SearchMobileOverlay';
@@ -57,24 +54,28 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <SidebarProvider defaultOpen={true}>
-            <Suspense fallback={null}>
-              <SearchProvider>
-                <AppSidebar />
+            {/* 1. Sidebar is a direct child of Provider */}
+            <AppSidebar />
 
-                <main className="flex min-h-screen min-w-0 flex-col">
-                  <div className="sticky top-0 z-50">
-                    <Suspense fallback={null}>
-                      <NavbarComponent brandName="AJ" brandSlug="Logik" />
-                    </Suspense>
-                  </div>
+            {/* 2. Wrap your main content in SidebarInset */}
+            <SidebarInset>
+              <Suspense fallback={null}>
+                <SearchProvider>
+                  <main className="flex min-h-screen min-w-0 flex-col">
+                    <div className="sticky top-0 z-50">
+                      <Suspense fallback={null}>
+                        <NavbarComponent brandName="AJ" brandSlug="Logik" />
+                      </Suspense>
+                    </div>
 
-                  <div className="flex w-full flex-1 flex-col">{children}</div>
+                    <div className="flex w-full flex-1 flex-col">{children}</div>
 
-                  <FooterComponent brandName="AJ" brandSlug="Logik" />
-                </main>
-                <SearchMobileOverlay />
-              </SearchProvider>
-            </Suspense>
+                    <FooterComponent brandName="AJ" brandSlug="Logik" />
+                  </main>
+                  <SearchMobileOverlay />
+                </SearchProvider>
+              </Suspense>
+            </SidebarInset>
           </SidebarProvider>
         </ThemeProvider>
       </body>
