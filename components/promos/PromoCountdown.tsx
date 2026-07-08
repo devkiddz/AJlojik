@@ -76,7 +76,7 @@ export default function PromoCountdown({ startsAt, endsAt, compact = false }: Pr
 
   if (compact) {
     return (
-      <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-white backdrop-blur-md">
+      <div className="text-sm countdown-glow inline-flex w-fit max-w-full items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-md">
         <Timer className="h-3 w-3" />
 
         {timeLeft.expired ? (

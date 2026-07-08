@@ -528,3 +528,47 @@
     transparent 45%
   );
 }
+
+.countdown-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.countdown-glow::before {
+  content: '';
+
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+
+  pointer-events: none;
+
+  border: 1px solid color-mix(in oklab, var(--accent) 55%, white);
+
+  box-shadow:
+    0 0 12px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 0 28px color-mix(in oklab, var(--accent) 10%, transparent);
+
+  animation: countdown-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes countdown-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+
+    box-shadow:
+      0 0 10px color-mix(in oklab, var(--accent) 18%, transparent),
+      0 0 24px color-mix(in oklab, var(--accent) 8%, transparent);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+
+    box-shadow:
+      0 0 18px color-mix(in oklab, var(--accent) 35%, transparent),
+      0 0 40px color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+}
