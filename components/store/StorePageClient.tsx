@@ -132,7 +132,7 @@ export default function StorePageClient() {
           onAddToCart={handleAddToCart}
           onPromoPreview={openPromoPreview}>
           <DiscoveryFeedsEngine />
-          <aside className="col-span-12 hidden self-start lg:col-span-4 lg:block mt-2">
+          <aside className="sticky top-16  col-span-12 hidden self-start lg:col-span-4 lg:block mt-2">
             <DiscoverySidebarRenderer />
           </aside>
         </DiscoveryProvider>

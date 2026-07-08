@@ -36,7 +36,7 @@ export default function FeaturedCategoriesGrid() {
   const cards = featuredCategories.filter(item => item.size === 'small');
 
   return (
-    <section className="w-full px-1 pt-2">
+    <section className="w-full px-1">
       <div className="flex flex-col space-y-3 ">
         {/* HERO */}
         {hero && (

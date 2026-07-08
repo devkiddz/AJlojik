@@ -60,11 +60,14 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background shadow-sm backdrop-blur-xl">
+    <header className="sticky isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl overflow-hidden">
+      {/* Header Background breathing lights effect */}
+      <div className="header-ambient-light" />
+      {/* Header Background breathing lights effect */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
 
       {/* MAIN HEADER */}
-      <div className="relative mx-auto flex h-16 items-center justify-between px-4">
+      <div className="relative mx-auto flex h-16 items-center justify-between px-4 isolate">
         {/* LEFT */}
         <div className="flex min-w-0 items-center gap-2">
           <SidebarToggle />

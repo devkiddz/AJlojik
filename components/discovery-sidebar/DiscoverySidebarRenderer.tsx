@@ -8,7 +8,7 @@ import DiscoverySidebarPromo from './widgets/DiscoverySidebarPromo';
 
 export default function DiscoverySidebarRenderer() {
   return (
-    <div className="sticky top-16 max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto scrollbar-hide">
+    <div className="max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto scrollbar-hide">
       <DiscoverySidebarAdvert />
       <DiscoverySidebarTrending />
       <DiscoverySidebarPromo />

@@ -86,29 +86,21 @@ export default function ProductsComponent() {
   };
 
   return (
-    <div className="w-full">
-      {/* CATEGORY STRIP */}
-      <ItemsCarousel categories={categories} />
-      FEATURED
-      <ProductsCarousel
-        title="Featured Products"
-        category="featured"
-        products={featuredProducts}
-        onSelect={handleSelect}
-        onToggleLike={toggleLike}
-      />
-      {/* FILTERED PRODUCTS */}
-      {/* <ProductsCarousel
-        title={
-          selectedCategory === 'all'
-            ? 'All Products'
-            : (categories.find(c => c.slug === selectedCategory)?.label ?? 'Products')
-        }
-        category={selectedCategory}
-        products={filteredProducts}
-        onSelect={handleSelect}
-        onToggleLike={toggleLike}
-      /> */}
+    <div className="flex flex-col w-full space-y-5">
+      <div>
+        {/* CATEGORY STRIP */}
+        <ItemsCarousel categories={categories} />
+      </div>
+
+      <div>
+        <ProductsCarousel
+          title="Featured Products"
+          category="featured"
+          products={featuredProducts}
+          onSelect={handleSelect}
+          onToggleLike={toggleLike}
+        />
+      </div>
       {/* MODAL */}
       <ProductModal
         product={selectedProduct}
