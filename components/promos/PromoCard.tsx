@@ -79,7 +79,7 @@ export default function PromoCard({ promo, products, onSelect }: Props) {
 
           {/* BOTTOM */}
           <div className="flex w-full flex-col gap-3">
-            <div className="inline-flex w-fit max-w-full items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-md">
+            <div className="inline-flex w-fit max-w-full items-center gap-3 rounded-full border border-white/30 px-4 py-2 shadow-lg">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-secondary animate-pulse" />
 
               <PromoCountdown startsAt={promo.startsAt} endsAt={promo.endsAt} compact />
