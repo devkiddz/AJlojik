@@ -31,7 +31,7 @@ export default function CollectionSection({
   const Icon = getCollectionIcon(collection.icon?.value);
 
   return (
-    <section className="relative max-w-full rounded-3xl bg-card border border-border/50 shadow-lg">
+    <section className="relative max-w-full rounded-3xl bg-card border border-border/50 shadow-lg py-4">
       <div className="relative overflow-hidden rounded-2xl">
         {collection.banner?.image ? (
           <CollectionBanner
@@ -40,20 +40,22 @@ export default function CollectionSection({
             count={displayProducts.length}
           />
         ) : (
-          <div className="flex items-center justify-between rounded-2xl  bg-card px-4 py-5 md:px-6">
+          <div className="flex items-center justify-between rounded-2xl  bg-card px-3 py-2 md:py-5 md:px-6">
             {/* Left */}
-            <div className="flex items-center md:items-start gap-4">
+            <div className="flex items-center md:items-star gap-2t md:gap-4">
               <div
                 className="flex h-6 w-6 lg:h-12 lg:w-12 items-center justify-center rounded-xl"
                 style={{ backgroundColor: `${collection.theme?.accent}20` }}>
                 <Icon className="h-4 w-4 lg:h-6 lg:w-6" color={collection.theme?.accent} />
               </div>
 
-              <div className="flex flex-col gap-1 items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold tracking-tight lg:text-lg">{collection.title}</h2>
+              <div className="flex flex-col gap-1.5 items-start justify-between">
+                <div className="flex items-center gap-0.5 md:gap-2">
+                  <h2 className="text-[12px] md:text-sm font-bold tracking-tight lg:text-lg">
+                    {collection.title}
+                  </h2>
 
-                  <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive">
+                  <span className="rounded-full bg-destructive/10 px-1.5 py-1 text-[10px] font-bold text-destructive">
                     {displayProducts.length}
                   </span>
                 </div>
@@ -67,7 +69,7 @@ export default function CollectionSection({
             </div>
 
             {/* Right */}
-            <Button variant="outline" className="gap-2 rounded-full text-xs lg:text-sm cursor-pointer">
+            <Button variant="outline" className="gap-2 rounded-full text-[10px] lg:text-sm cursor-pointer">
               View Collection
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -75,7 +77,7 @@ export default function CollectionSection({
         )}
       </div>
 
-      <div className="p-4 md:p-6 lg:p-8">
+      <div className="p-2 md:p-4 lg:p-6">
         <FeaturedCollection
           collection={collection}
           products={products}

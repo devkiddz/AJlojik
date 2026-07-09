@@ -7,7 +7,7 @@ export default function DiscoveryCollectionsFeed() {
   const { collections, filteredProducts, onPreview, onToggleLike } = useDiscovery();
 
   return (
-    <section className="space-y-10 pt-6">
+    <section className="space-y-5 pt-4">
       {collections.map(({ collection, products, featuredProduct }) => (
         <CollectionRenderer
           key={collection.id}

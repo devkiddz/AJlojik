@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PromoModal from '@/components/promos/PromoModal';
 import { promos, Promo } from '@/data/promos';
-import DiscoverySidebarRenderer from '@/components/discovery-sidebar/DiscoverySidebarRenderer';
+import DiscoverySidebarRenderer from '@/components/discovery-hub-panel/DiscoverySidebarRenderer';
 import ProductModal from '@/components/shared/ProductModal';
 import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
 
