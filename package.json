@@ -38,5 +38,12 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "typescript": "^6"
+  },
+
+  "overrides": {
+    "eslint-plugin-import": {
+      "eslint": "$eslint"
+    }
   }
 }
+
