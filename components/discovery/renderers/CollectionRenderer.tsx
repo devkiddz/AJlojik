@@ -1,7 +1,7 @@
 'use client';
 
-import CollectionSection from '@/components/collections/CollectionSection';
 import { CollectionType } from '@/data/collections';
+import CollectionSection from '@/features/collection/CollectionSection';
 import { ProductType } from '@/types';
 
 type Props = {

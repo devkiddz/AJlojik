@@ -1,4 +1,4 @@
-import { useSearch } from '@/components/providers/SearchProvider';
+// import { useSearch } from '@/components/providers/SearchProvider';
 
 export { default as SearchBarComponent } from '@/components/SearchBarComponent';
 export { default as SearchBar } from './SearchBar';

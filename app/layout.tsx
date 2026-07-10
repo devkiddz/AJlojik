@@ -15,7 +15,7 @@ import SearchProvider from '@/components/providers/SearchProvider';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { cn } from '@/lib/utils';
-import SearchMobileOverlay from '@/components/search/SearchMobileOverlay';
+import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
 
 const inter = Inter({
   subsets: ['latin'],

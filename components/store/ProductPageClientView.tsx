@@ -3,10 +3,10 @@
 import { ProductType } from '@/types';
 import { useProductPage } from '@/hooks/useProductPage';
 
-import ProductHeroSection from '@/components/store/product/ProductHeroSection';
-import SingleProductGalleryView from '@/components/store/product/SingleProductGalleryView';
-import ProductDetailsPanel from '@/components/store/product/ProductDetailsPanel';
-import SingleProductAside from '@/components/store/product/SingleProductAside';
+import ProductHeroSection from '@/features/product/ProductHeroSection';
+import SingleProductGalleryView from '@/features/product/SingleProductGalleryView';
+import ProductDetailsPanel from '@/features/product/ProductDetailsPanel';
+import SingleProductAside from '@/features/product/SingleProductAside';
 
 export default function ProductPageClientView({ product }: { product: ProductType }) {
   const { selectedVariant, ...actions } = useProductPage(product);

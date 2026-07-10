@@ -1,7 +1,7 @@
 'use client';
 
-import SearchBar from './search/SearchBar';
-import SearchResultsDropdown from './search/SearchResultsDropdown';
+import SearchBar from '@/features/search/SearchBar';
+import SearchResultsDropdown from '@/features/search/SearchResultsDropdown';
 
 export default function SearchBarComponent() {
   return (
@@ -9,7 +9,7 @@ export default function SearchBarComponent() {
       {' '}
       {/* Added relative wrapper to align the dropdown context */}
       <SearchBar />
-      <div className="hidden lg:block">
+      <div className="hidden lg:flex">
         <SearchResultsDropdown />
       </div>
     </div>

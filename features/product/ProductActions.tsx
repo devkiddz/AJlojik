@@ -3,12 +3,12 @@
 import { Star, Truck, Package, ShieldCheck } from 'lucide-react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import OverviewCard from '../modules/OverviewCard';
-import DetailsCard from '../modules/DetailsCard';
+import OverviewCard from '@/components/store/modules/OverviewCard';
+import DetailsCard from '@/components/store/modules/DetailsCard';
 
 import { ProductType } from '@/types';
-import ReviewsCard from '../modules/ReviewsCard';
-import ShippingCard from '../modules/ShippingCard';
+import ReviewsCard from '@/components/store/modules/ReviewsCard';
+import ShippingCard from '@/components/store/modules/ShippingCard';
 
 type Props = {
   product: ProductType;

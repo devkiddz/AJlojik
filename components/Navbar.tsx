@@ -10,7 +10,7 @@ import { CartLogics } from './shared/CartLogics';
 import SidebarToggle from './shared/SidebarToggle';
 import { Button } from './ui/button';
 import SearchBarComponent from './SearchBarComponent';
-import { MobileSearchButton } from './search';
+import { MobileSearchButton } from '@/features/search';
 import StoreCategoriesPill from './store/StoreCategoriesPill';
 import PremiumStoreButton from './ui/premium-store-button';
 
@@ -60,7 +60,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky md:py-3 isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl overflow-hidden">
+    <header className="sticky md:py-3 isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl">
       {/* Header Background breathing lights effect */}
       <div className="header-ambient-light" />
       {/* Header Background breathing lights effect */}
@@ -112,7 +112,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
           <div className="mx-2 h-6 w-px bg-border" />
 
-          <div className="w-56 lg:w-80">
+          <div className="w-56 lg:w-90">
             <SearchBarComponent />
           </div>
         </div>

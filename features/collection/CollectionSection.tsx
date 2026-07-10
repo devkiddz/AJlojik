@@ -4,7 +4,7 @@ import { getCollectionIcon } from '@/lib/collection-icons';
 
 import CollectionBanner from './CollectionBanner';
 import FeaturedCollection from './layouts/FeaturedCollection';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { ArrowRight, PartyPopper } from 'lucide-react';
 type Props = {
   collection: CollectionType;
