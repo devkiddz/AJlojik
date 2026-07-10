@@ -17,7 +17,6 @@
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.40.0",
-    "lucide": "^1.21.0",
     "lucide-react": "^1.21.0",
     "mapbox-gl": "^3.26.0",
     "next": "16.2.9",
@@ -39,11 +38,9 @@
     "tailwindcss": "^4",
     "typescript": "^6"
   },
-
   "overrides": {
     "eslint-plugin-import": {
       "eslint": "$eslint"
     }
   }
 }
-
