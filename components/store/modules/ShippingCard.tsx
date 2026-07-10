@@ -1,4 +1,3 @@
-import { ShieldCheck } from 'lucide';
 import { Package, ShieldCheckIcon, Truck } from 'lucide-react';
 
 export default function ShippingCard() {
