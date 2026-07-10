@@ -21,7 +21,7 @@ export default function SearchSuggestions({ products, query, activeIndex, onSele
       <span>
         {parts.map((part, i) =>
           regex.test(part) ? (
-            <mark key={i} className="bg-primary/10 text-primary font-semibold rounded-xs px-0.5">
+            <mark key={i} className="bg-background/10 text-primary font-semibold rounded-xs px-0.5">
               {part}
             </mark>
           ) : (

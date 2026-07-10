@@ -3,9 +3,9 @@
 import { Heart } from 'lucide-react';
 
 import { useDiscovery } from '@/components/discovery/DiscoveryProvider';
-import SidebarProductCard from '../cards/SidebarProductCard';
+import HubProductCard from '../cards/HubProductCard';
 
-export default function DiscoverySidebarWishlist() {
+export default function HubWishlistWidget() {
   const { filteredProducts, onPreview } = useDiscovery();
 
   const wishlistProducts = filteredProducts.filter(product => product.liked).slice(0, 4);
@@ -23,7 +23,7 @@ export default function DiscoverySidebarWishlist() {
 
       <div className="space-y-1">
         {wishlistProducts.map(product => (
-          <SidebarProductCard key={product.id} product={product} onSelect={onPreview} />
+          <HubProductCard key={product.id} product={product} onSelect={onPreview} />
         ))}
       </div>
     </section>

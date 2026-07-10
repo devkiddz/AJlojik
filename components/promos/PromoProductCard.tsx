@@ -84,7 +84,7 @@ export default function PromoProductCard({ promo, product }: Props) {
 
         <div className="flex flex-wrap gap-2">
           {product.featured ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            <span className="inline-flex items-center gap-1 rounded-full bg-background/10 px-3 py-1 text-xs font-bold text-primary">
               <Flame className="h-3 w-3" />
               Featured
             </span>

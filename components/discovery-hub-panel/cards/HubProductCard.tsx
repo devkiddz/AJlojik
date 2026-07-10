@@ -10,7 +10,7 @@ type Props = {
   onSelect?: (product: ProductType) => void;
 };
 
-export default function SidebarProductCard({ product, index, showRank = false, onSelect }: Props) {
+export default function HubProductCard({ product, index, showRank = false, onSelect }: Props) {
   const variant = product.variants[0];
 
   return (

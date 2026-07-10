@@ -43,7 +43,7 @@ export default function categorySidebar({ open, onClose }: categorySidebarProps)
           <button
             onClick={onClose}
             aria-label="Open categories menu"
-            className="flex items-center gap-2 rounded-full bg-primary-foreground/50 px-3 py-2 shadow-sm hover:bg-primary-foreground/70 transition">
+            className="flex items-center gap-2 rounded-full bg-background-foreground/50 px-3 py-2 shadow-sm hover:bg-background-foreground/70 transition">
             <Menu size={18} />
             <span className="text-sm font-medium">Categories</span>
           </button>

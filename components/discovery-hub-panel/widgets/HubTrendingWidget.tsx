@@ -3,9 +3,9 @@
 import { Flame } from 'lucide-react';
 
 import { useDiscovery } from '@/components/discovery/DiscoveryProvider';
-import SidebarProductCard from '../cards/SidebarProductCard';
+import HubProductCard from '../cards/HubProductCard';
 
-export default function DiscoverySidebarTrending() {
+export default function HubTrendingWidget() {
   const { filteredProducts, onPreview } = useDiscovery();
 
   const trendingProducts = filteredProducts
@@ -30,7 +30,7 @@ export default function DiscoverySidebarTrending() {
 
       <div className="space-y-1">
         {trendingProducts.map((product, index) => (
-          <SidebarProductCard
+          <HubProductCard
             key={product.id}
             product={product}
             index={index + 1}

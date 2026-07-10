@@ -67,7 +67,7 @@ export default function SingleProductAside({
           <Button
             onClick={handleAddToCart}
             disabled={isAdding || added}
-            className="col-span-2 h-12 bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-all">
+            className="col-span-2 h-12 bg-background text-primary-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-all">
             {added ? (
               <>
                 <Check className="mr-2 h-4 w-4" /> Added!

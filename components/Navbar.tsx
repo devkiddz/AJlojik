@@ -60,7 +60,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl overflow-hidden">
+    <header className="sticky md:py-3 isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl overflow-hidden">
       {/* Header Background breathing lights effect */}
       <div className="header-ambient-light" />
       {/* Header Background breathing lights effect */}
@@ -118,23 +118,31 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
         </div>
 
         {/* RIGHT */}
-        <div className="flex shrink-0 items-center gap-2">
-          <CartLogics />
+        <div className="flex shrink-0 items-center gap-2 md:gap-4">
+          {/* SEARCH BAR & CATEGORIES TUGGLER */}
+          <div className="SearchBarTuggler">
+            <button
+              title="Toggle discovery tools"
+              type="button"
+              onClick={() => setMobileToolsOpen(prev => !prev)}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-accent hover:text-accent-foreground md:hidden">
+              {mobileToolsOpen ? <ChevronUp className="h-5 w-5" /> : <TextSearch className="h-5 w-5" />}
+            </button>
+          </div>
 
-          <UserActionComponent
-            isLoggedIn={isLoggedIn}
-            user={isLoggedIn ? user : undefined}
-            onLogin={() => router.push('/login')}
-            onLogout={() => console.log('logout')}
-          />
-
-          <button
-            title="Toggle discovery tools"
-            type="button"
-            onClick={() => setMobileToolsOpen(prev => !prev)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-accent hover:text-accent-foreground md:hidden">
-            {mobileToolsOpen ? <ChevronUp className="h-5 w-5" /> : <TextSearch className="h-5 w-5" />}
-          </button>
+          {/* CART LOGICS */}
+          <div className="CartLogics">
+            <CartLogics />
+          </div>
+          {/* USER ACTION */}
+          <div className="UserAction">
+            <UserActionComponent
+              isLoggedIn={isLoggedIn}
+              user={isLoggedIn ? user : undefined}
+              onLogin={() => router.push('/login')}
+              onLogout={() => console.log('logout')}
+            />
+          </div>
         </div>
       </div>
 

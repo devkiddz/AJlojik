@@ -57,7 +57,7 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
         <div className="flex gap-4 mt-6 max-w-sm">
           <button
             onClick={() => handleBuyNow(String(selectedProduct.id))}
-            className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full font-semibold hover:opacity-90 transition-opacity">
+            className="flex-1 flex items-center justify-center gap-2 bg-background text-primary-foreground rounded-full font-semibold hover:opacity-90 transition-opacity">
             <ShoppingBag className="w-5 h-5" />
             Buy Now
           </button>
@@ -95,7 +95,7 @@ export default function SingleProductOverview({ product, selectedVariantId, setS
                   onClick={() => setSelectedVariantId(String(variant.id))}
                   className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium transition-colors border ${
                     isSelected
-                      ? 'bg-primary text-primary-foreground border-primary'
+                      ? 'bg-background text-primary-foreground border-primary'
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border-border'
                   }`}>
                   {variant.label}

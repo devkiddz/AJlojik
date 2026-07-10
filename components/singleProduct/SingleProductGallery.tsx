@@ -30,7 +30,7 @@ export default function SingleProductGallery({ product, selectedVariantId, setSe
               onClick={() => setSelectedVariantId(variant.id)}
               className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium transition-colors ${
                 isSelected
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'bg-background text-primary-foreground'
                   : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border'
               }`}>
               {variant.label}

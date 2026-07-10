@@ -4,7 +4,9 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PromoModal from '@/components/promos/PromoModal';
 import { promos, Promo } from '@/data/promos';
-import DiscoverySidebarRenderer from '@/components/discovery-hub-panel/DiscoverySidebarRenderer';
+import DiscoveryHubPanel from '@/components/discovery-hub-panel/DiscoveryHubPanel';
+import { DiscoveryHubProvider } from '@/components/discovery-hub-panel/DiscoveryHubProvider';
+import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import ProductModal from '@/components/shared/ProductModal';
 import DiscoveryFeedsEngine from '../discovery/DiscoveryFeedsEngine';
 
@@ -116,7 +118,7 @@ export default function StorePageClient() {
   const handlePrev = () => selectedIndex > 0 && setSelectedProduct(filteredProducts[selectedIndex - 1]);
 
   return (
-    <div className="mx-auto -mt-5 px-4 py-4">
+    <div className="h-screen overflow-hidden px-4 py-4 scrollbar-none self-start">
       <main className="grid min-h-screen grid-cols-12 items-start gap-4">
         <DiscoveryProvider
           triggerRef={triggerRef}
@@ -131,9 +133,13 @@ export default function StorePageClient() {
           onToggleLike={handleToggleLike}
           onAddToCart={handleAddToCart}
           onPromoPreview={openPromoPreview}>
-          <DiscoveryFeedsEngine />
-          <aside className="sticky top-16  col-span-12 hidden self-start lg:col-span-4 lg:block mt-2">
-            <DiscoverySidebarRenderer />
+          <main className="sticky top-26 self-start max-h-screen overflow-y-scroll col-span-12 lg:col-span-8 scroll-smooth transition-all scrollbar-none rounded-3xl bg-card/50 md:p-4">
+            <DiscoveryFeedsEngine />
+          </main>
+          <aside className="sticky top-0 col-span-12 hidden max-h-[calc(100vh-5rem)] self-start overflow-hidden lg:col-span-4 lg:block scrollbar-none bg-card">
+            <DiscoveryHubProvider groups={hubGroups} widgets={hubWidgets}>
+              <DiscoveryHubPanel />
+            </DiscoveryHubProvider>
           </aside>
         </DiscoveryProvider>
       </main>

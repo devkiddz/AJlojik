@@ -97,7 +97,7 @@ export default function SearchPreview({ product }: Props) {
 
       {/* METADATA BRIEF */}
       <div className="mt-4 flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary bg-background/5 px-2 py-0.5 rounded-full">
           <Tag className="h-2.5 w-2.5" />
           {categoryLabel}
         </span>
@@ -174,7 +174,7 @@ export default function SearchPreview({ product }: Props) {
                           className={cn(
                             'flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors select-none',
                             isSelected
-                              ? 'bg-primary text-primary-foreground font-semibold'
+                              ? 'bg-background text-primary-foreground font-semibold'
                               : 'text-foreground hover:bg-muted/80'
                           )}>
                           <span className="truncate">{v.label}</span>
@@ -193,7 +193,7 @@ export default function SearchPreview({ product }: Props) {
         <div className="flex gap-2">
           <Button
             onClick={() => selectProduct(product)}
-            className="flex-1 h-10 gap-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground shadow-sm transition-all active:scale-[0.98]">
+            className="flex-1 h-10 gap-1.5 rounded-xl text-xs font-semibold bg-background text-primary-foreground shadow-sm transition-all active:scale-[0.98]">
             View Product
             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Button>

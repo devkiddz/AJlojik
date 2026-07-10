@@ -16,7 +16,7 @@ export default function SingleProductPurchaseCard({ variant, inStock }: Props) {
 
       <button
         disabled={!inStock}
-        className="mt-6 w-full rounded-xl bg-primary py-3 text-primary-foreground disabled:opacity-50">
+        className="mt-6 w-full rounded-xl bg-background py-3 text-primary-foreground disabled:opacity-50">
         Add to Cart
       </button>
     </div>

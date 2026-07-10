@@ -17,7 +17,7 @@ export default function StoreCategoryCard({ category, active = false, onClick }:
       className={cn(
         'group relative h-12 md:h-30 w-full cursor-pointer overflow-hidden rounded-md border transition-all duration-300 hover:scale-[1.02]',
         active
-          ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+          ? 'border-primary bg-background/5 ring-1 ring-primary/30'
           : 'border-primary/10 hover:border-primary/30'
       )}>
       <div className="flex h-full items-center gap-4 p-1 md:p-4">

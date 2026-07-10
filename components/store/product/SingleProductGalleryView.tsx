@@ -44,11 +44,11 @@ export default function SingleProductGalleryView({
               onClick={() => setSelectedVariantId(variant.id)}
               className={`group relative flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-bold tracking-tight transition-all active:scale-[0.98] ${
                 isSelected
-                  ? 'border-primary bg-primary/10 text-white shadow-xs'
+                  ? 'border-primary bg-background/10 text-white shadow-xs'
                   : 'border-white/[0.08] bg-white/[0.02] text-slate-400 hover:text-white hover:bg-white/[0.05] hover:border-white/15'
               }`}>
               <span
-                className={`h-1.5 w-1.5 rounded-full transition-colors ${isSelected ? 'bg-primary animate-pulse' : 'bg-slate-500 group-hover:bg-slate-300'}`}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${isSelected ? 'bg-background animate-pulse' : 'bg-slate-500 group-hover:bg-slate-300'}`}
               />
               {variant.label}
             </button>

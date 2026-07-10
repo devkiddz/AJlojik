@@ -11,7 +11,7 @@ export default function DiscoveryFeedsEngine() {
   const { filteredProducts, onPromoPreview } = useDiscovery();
 
   return (
-    <main className="relative top-3 col-span-12 lg:col-span-8 rounded-3xl bg-card/50 md:p-4">
+    <main className="">
       <div className="space-y-4 md:space-y-8">
         <DiscoveryCategoryRail />
 

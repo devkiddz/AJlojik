@@ -41,7 +41,7 @@ export default function PreviewPanel({ product }: PreviewPanelProps) {
 
           {/* ACTIONS */}
           <div className="flex gap-2 pt-2">
-            <button className="flex-1 px-3 py-2 rounded-full bg-primary text-primary-foreground text-sm">
+            <button className="flex-1 px-3 py-2 rounded-full bg-background text-primary-foreground text-sm">
               View Details
             </button>
 
