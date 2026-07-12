@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react";
 import type { ExperienceTarget } from "@/features/feed-experience";
 
 export type HubWidgetLayout = "hero" | "slider" | "grid" | "minimal-grid" | "tracking" | "summary" | "membership";
@@ -16,6 +15,21 @@ export type HubTimelineItem = { id: string; label: string; description?: string;
 export type HubCondition = { label: string; value: string };
 export type HubLocation = { title: string; subtitle?: string; mapImage?: string; coordinates?: { lat: number; lng: number } };
 export type HubWidget = { id: HubWidgetId; groupId: HubGroupId; title: string; description?: string; order: number; enabled: boolean; size?: HubWidgetSize; status?: HubWidgetStatus; badge?: string | number; meta?: string; image?: string; visual?: HubVisual; accent?: string; stats?: HubStat[]; slides?: HubSlideItem[]; autoSlide?: boolean; progress?: HubProgress; timeline?: HubTimelineItem[]; conditions?: HubCondition[]; location?: HubLocation; insight?: string; action?: HubAction; actions?: HubAction[]; layout?: HubWidgetLayout };
-export type HubGroup = { id: HubGroupId; label: string; icon: LucideIcon; description?: string; order: number; indicator?: "dot" | "new" | "live" | "spark" };
+export type HubGroupIcon =
+  | 'home'
+  | 'shopping'
+  | 'orders'
+  | 'rewards'
+  | 'ai'
+  | 'settings';
+
+export type HubGroup = {
+  id: HubGroupId;
+  label: string;
+  icon: HubGroupIcon;
+  description?: string;
+  order: number;
+  indicator?: 'dot' | 'new' | 'live' | 'spark';
+};
 export type HubPreview = { widgetId: HubWidgetId; title: string; description?: string; mode: HubPreviewMode; image?: string; action?: HubAction };
 export type HubContextValue = { groups: HubGroup[]; widgets: HubWidget[]; activeGroupId: HubGroupId; activePreview: HubPreview | null; setActiveGroupId: (groupId: HubGroupId) => void; openPreview: (preview: HubPreview) => void; closePreview: () => void };

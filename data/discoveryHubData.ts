@@ -1,11 +1,4 @@
-import {
-  Award,
-  House,
-  Package,
-  Settings,
-  ShoppingBag,
-  Sparkles,
-} from "lucide-react";
+
 
 import type {
   HubGroup,
@@ -14,12 +7,48 @@ import type {
 } from "@/components/discovery-hub-panel/discoveryHubTypes";
 
 export const hubGroups: HubGroup[] = [
-  { id: "home", label: "Home", icon: House, description: "Overview of your experience", order: 1 },
-  { id: "shopping", label: "Shopping", icon: ShoppingBag, description: "Cart, wishlist and product activity", order: 2 },
-  { id: "orders", label: "Orders", icon: Package, description: "Deliveries and order activity", order: 3 },
-  { id: "rewards", label: "Rewards", icon: Award, description: "Points, coupons and membership benefits", order: 4 },
-  { id: "ai", label: "AI", icon: Sparkles, description: "Smart suggestions and personal guidance", order: 5 },
-  { id: "settings", label: "Settings", icon: Settings, description: "Control your hub preferences", order: 6 },
+  {
+    id: 'home',
+    label: 'Home',
+    icon: 'home',
+    description: 'Overview of your experience',
+    order: 1
+  },
+  {
+    id: 'shopping',
+    label: 'Shopping',
+    icon: 'shopping',
+    description: 'Cart, wishlist and product activity',
+    order: 2
+  },
+  {
+    id: 'orders',
+    label: 'Orders',
+    icon: 'orders',
+    description: 'Deliveries and order activity',
+    order: 3
+  },
+  {
+    id: 'rewards',
+    label: 'Rewards',
+    icon: 'rewards',
+    description: 'Points, coupons and membership benefits',
+    order: 4
+  },
+  {
+    id: 'ai',
+    label: 'AI',
+    icon: 'ai',
+    description: 'Smart suggestions and personal guidance',
+    order: 5
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: 'settings',
+    description: 'Control your hub preferences',
+    order: 6
+  }
 ];
 
 

@@ -16,6 +16,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { cn } from '@/lib/utils';
 import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
+import MobileBottomNavigation from '@/components/navigation/MobileBottomNavigation';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -69,7 +70,7 @@ export default function RootLayout({
                   </div>
 
                   <div className="flex w-full flex-1 flex-col">{children}</div>
-
+                  <MobileBottomNavigation />
                   <FooterComponent brandName="AJ" brandSlug="Logik" />
                 </main>
                 <SearchMobileOverlay />

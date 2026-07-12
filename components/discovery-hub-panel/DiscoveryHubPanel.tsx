@@ -5,6 +5,9 @@ import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
 import { useDiscoveryHub } from './DiscoveryHubProvider';
+import { Award, House, Package, Settings, ShoppingBag, Sparkles } from 'lucide-react';
+
+import type { HubGroupIcon } from './discoveryHubTypes';
 // import {discoveryHubTypes} from './discoveryHubTypes'
 
 export default function DiscoveryHubPanel() {
@@ -19,8 +22,17 @@ export default function DiscoveryHubPanel() {
     });
   };
 
+  const hubGroupIcons = {
+    home: House,
+    shopping: ShoppingBag,
+    orders: Package,
+    rewards: Award,
+    ai: Sparkles,
+    settings: Settings
+  } satisfies Record<HubGroupIcon, typeof House>;
+
   return (
-    <main className="flex max-h-[calc(100vh-5rem)] flex-col overflow-hidden rounded-3xl border border-primary/10 bg-background/90 scrollbar-none">
+    <main className="flex h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-3xl border border-primary/10 bg-background/90 scrollbar-none lg:max-h-[calc(100vh-5rem)]">
       {/* Header */}
       <div className="border-b border-primary/10 p-5">
         <h2 className="text-lg font-semibold text-primary">Discovery Hub</h2>
@@ -40,7 +52,7 @@ export default function DiscoveryHubPanel() {
 
           <div ref={tabsRef} className="flex flex-1 gap-2 overflow-x-auto scroll-smooth scrollbar-none">
             {groups.map(group => {
-              const Icon = group.icon;
+              const Icon = hubGroupIcons[group.icon];
 
               return (
                 <button
@@ -69,7 +81,7 @@ export default function DiscoveryHubPanel() {
       </div>
 
       {/* Widgets */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-6 md:p-4">
         <DiscoveryHubRenderer />
       </div>
     </main>

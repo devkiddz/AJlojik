@@ -7,6 +7,7 @@ import DiscoveryHubPanel from '@/components/discovery-hub-panel/DiscoveryHubPane
 import { DiscoveryHubProvider } from '@/components/discovery-hub-panel/DiscoveryHubProvider';
 import ProductModal from '@/components/shared/ProductModal';
 import PromoModal from '@/components/promos/PromoModal';
+import { cn } from '@/lib/utils';
 
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { categories } from '@/data/categories';
@@ -271,7 +272,7 @@ export default function FeedExperienceWorkspace() {
               CENTRAL FEED EXPERIENCE
           ==================================================== */}
 
-          <main className="sticky top-26 col-span-12 max-h-screen self-start overflow-y-scroll scroll-smooth rounded-3xl bg-card/50 transition-all scrollbar-none md:p-4 lg:col-span-8">
+          <main className="col-span-12 min-w-0 pb-6 lg:sticky lg:top-26 lg:max-h-screen lg:self-start lg:overflow-y-scroll lg:rounded-3xl lg:bg-card/50 lg:p-4 lg:scroll-smooth lg:scrollbar-none lg:col-span-8">
             <MockExperienceSwitcher
               profiles={mockExperienceProfiles}
               activeProfileId={activeProfileId}
@@ -285,7 +286,10 @@ export default function FeedExperienceWorkspace() {
               DISCOVERY HUB / EXPERIENCE RAIL
           ==================================================== */}
 
-          <aside className="sticky top-0 col-span-12 hidden max-h-[calc(100vh-5rem)] self-start overflow-hidden bg-card scrollbar-none lg:col-span-4 lg:block">
+          <aside
+            className={cn(
+              'col-span-12 max-h-[calc(100vh-7rem)] self-start overflow-hidden bg-card pb-24 scrollbar-none lg:sticky lg:top-0 lg:col-span-4 lg:block lg:max-h-[calc(100vh-5rem)] lg:pb-0'
+            )}>
             <DiscoveryHubProvider groups={hubGroups} widgets={hubWidgets}>
               <DiscoveryHubPanel />
             </DiscoveryHubProvider>
