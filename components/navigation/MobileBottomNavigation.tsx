@@ -63,7 +63,7 @@ export default function MobileBottomNavigation() {
   return (
     <nav
       aria-label="Main mobile navigation"
-      className="fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-border/70 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
+      className="fixed inset-x-3 bottom-0 z-50 w-full bg-background/50 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
       <div className="grid grid-cols-5 gap-1">
         {navigationItems.map(item => {
           const Icon = item.icon;
@@ -75,12 +75,10 @@ export default function MobileBottomNavigation() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-medium transition',
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                'relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-full px-1 text-[10px] font-medium transition',
+                active ? 'font-bold' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}>
-              <Icon className="size-4" />
+              <Icon className="size-6" />
 
               <span>{item.label}</span>
 

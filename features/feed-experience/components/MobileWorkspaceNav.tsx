@@ -62,7 +62,7 @@ export function MobileWorkspaceNav({ activeWorkspace, onWorkspaceChange }: Mobil
   return (
     <nav
       aria-label="Mobile workspace navigation"
-      className="fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-border/70 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
+      className="fixed inset-x-3 bottom-0 z-50 rounded-2xl border border-border/70 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
       <div className="grid grid-cols-5 gap-1">
         {navigationItems.map(item => {
           const Icon = item.icon;
@@ -80,7 +80,7 @@ export function MobileWorkspaceNav({ activeWorkspace, onWorkspaceChange }: Mobil
               type="button"
               onClick={item.action}
               className={cn(
-                'flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-medium transition',
+                'flex min-h-14 flex-col items-center justify-center gap-1 rounded-full px-1 text-[10px] font-medium transition',
                 active
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
