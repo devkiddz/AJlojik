@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight } from 'lucide-react';
 

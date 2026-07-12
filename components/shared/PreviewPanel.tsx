@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import Image from 'next/image';
 import RatingComponent from './RatingComponent';
 

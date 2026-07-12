@@ -2,7 +2,7 @@
 
 import StoreFeaturedProductCard from '../store/StoreFeaturedProductCard';
 import StoreFeaturedProductsSlide from '../store/StoreFeaturedProductsSlide';
-import { useDiscovery } from './DiscoveryProvider';
+import { useDiscovery } from '../../providers/DiscoveryProvider';
 
 export default function DiscoveryFeaturedSection() {
   const { featuredProduct, featuredProducts, onPreview, onToggleLike, onAddToCart } = useDiscovery();

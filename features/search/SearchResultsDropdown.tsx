@@ -9,7 +9,7 @@ import SearchEmptyState from './SearchEmptyState';
 import SearchShortcut from './SearchShortcut';
 import SearchKeyboard from './SearchKeyboard';
 import SearchPreview from './SearchPreview';
-import { useSearch } from '@/components/providers/SearchProvider';
+import { useSearch } from '@/providers/SearchProvider';
 
 type Props = {
   mobile?: boolean;

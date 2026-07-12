@@ -2,7 +2,7 @@
 
 import { CollectionType } from '@/data/collections';
 import CollectionSection from '@/features/collection/CollectionSection';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 type Props = {
   collection: CollectionType;

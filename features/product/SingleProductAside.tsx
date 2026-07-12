@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react'; // Removed useState for variantId, it's now a prop
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { Heart, ShoppingBag, Star, Tag, MessageCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import VariantDropdown from './VariantDropdown';

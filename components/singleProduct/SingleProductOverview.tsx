@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { ChartColumnStacked, Heart, ShoppingBag } from 'lucide-react';
 import RatingComponent from '../shared/RatingComponent';
 

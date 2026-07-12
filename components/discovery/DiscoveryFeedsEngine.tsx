@@ -1,7 +1,7 @@
 'use client';
 
 import PromoRenderer from '@/components/promos/PromoRenderer';
-import { useDiscovery } from './DiscoveryProvider';
+import { useDiscovery } from '@/providers/DiscoveryProvider';
 import DiscoveryCategoryRail from './DiscoveryCategoryRail';
 import DiscoveryCollectionsFeed from './DiscoveryCollectionsFeed';
 import DiscoveryFeaturedSection from './DiscoveryFeaturedSection';

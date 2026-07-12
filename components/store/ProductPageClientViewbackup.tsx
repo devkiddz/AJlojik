@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ChartColumnStacked, Heart, ShoppingBag } from 'lucide-react';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 import SingleProductSidebar from './SingleProductSidebar';
 

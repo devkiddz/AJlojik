@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChartColumnStacked, Eye, Form, ShoppingCart } from 'lucide-react';
-import { ProductType, ProductVariantType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types/types';
 import { useRouter } from 'next/navigation';
 import { categories } from '@/data/categories';
 import LikedComponent from '@/components/shared/LikedComponent';

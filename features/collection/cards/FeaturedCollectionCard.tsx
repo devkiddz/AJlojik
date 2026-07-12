@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Eye, ShoppingCart, ChartColumnStacked } from 'lucide-react';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

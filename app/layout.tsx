@@ -7,10 +7,10 @@ import './globals.css';
 import NavbarComponent from '@/components/Navbar';
 import FooterComponent from '@/components/FooterComponent';
 
-import ThemeProvider from '@/components/providers/ThemeProvider';
-import { AppSidebar } from '@/components/providers/AppSideBar';
+import ThemeProvider from '@/providers/ThemeProvider';
+import { AppSidebar } from '@/providers/AppSideBar';
 
-import SearchProvider from '@/components/providers/SearchProvider';
+import SearchProvider from '@/providers/SearchProvider';
 
 import { SidebarProvider } from '@/components/ui/sidebar';
 

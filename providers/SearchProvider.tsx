@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { products } from '@/data/products';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { SearchBar, SearchResultsDropdown } from '@/features/search';
 
 type SearchContextType = {

@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRightCircle } from 'lucide-react';
 import { Promo } from '@/data/promos';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import PromoCard from './PromoCard';
 import { Button } from '../ui/button';
 import Link from 'next/link';

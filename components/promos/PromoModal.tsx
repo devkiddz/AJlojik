@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowRight, Flame, ShieldCheck, Tag, TrendingUp, X } from 'lucide-react';
 
 import { Promo } from '@/data/promos';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import PromoProductCard from './PromoProductCard';
 import PromoCountdown from './PromoCountdown';

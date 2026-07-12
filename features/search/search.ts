@@ -1,4 +1,4 @@
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 export type SearchResult = ProductType & {
   score: number;

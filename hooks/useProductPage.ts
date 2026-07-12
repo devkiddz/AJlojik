@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 export function useProductPage(product: ProductType) {
   const [selectedVariantId, setSelectedVariantId] = useState<string>(

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OverviewCard from '@/components/store/modules/OverviewCard';
 import DetailsCard from '@/components/store/modules/DetailsCard';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import ReviewsCard from '@/components/store/modules/ReviewsCard';
 import ShippingCard from '@/components/store/modules/ShippingCard';
 

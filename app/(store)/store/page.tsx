@@ -1,11 +1,11 @@
-import StorePageClient from '@/components/store/StorePageClient';
+import FeedExperienceWorkspace from '@/features/feed-experience/layout/FeedExperienceWorkspace';
 import { Suspense } from 'react';
-// import StorePageClient from './StorePageClien';
+// import FeedExperienceWorkspace from './StorePageClien';
 
 export default function AJStorePage() {
   return (
     <Suspense fallback={null}>
-      <StorePageClient />
+      <FeedExperienceWorkspace />
     </Suspense>
   );
 }

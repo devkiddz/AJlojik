@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ProductType, ProductVariantType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types/types';
 import StoreProductCard from '@/components/store/StoreProductCard';
 
 type Props = {

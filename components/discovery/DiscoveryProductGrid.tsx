@@ -1,7 +1,7 @@
 'use client';
 
 import StoreProductGridCard from '@/features/product/StoreProductGridCard';
-import { useDiscovery } from './DiscoveryProvider';
+import { useDiscovery } from '../../providers/DiscoveryProvider';
 
 export default function DiscoveryProductGrid() {
   const { filteredProducts, onPreview, onToggleLike, onAddToCart } = useDiscovery();

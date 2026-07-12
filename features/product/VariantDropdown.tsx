@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductVariantType } from '@/types';
+import { ProductVariantType } from '@/types/types';
 import { ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

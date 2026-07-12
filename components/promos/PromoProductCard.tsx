@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, Flame, Package, Tag, Timer, TrendingUp } from 'lucide-react';
 
 import { Promo } from '@/data/promos';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import PromoCountdown from './PromoCountdown';
 

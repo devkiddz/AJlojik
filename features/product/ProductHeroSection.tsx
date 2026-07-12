@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { ProductType, ProductVariantType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types/types';
 import { categories } from '@/data/categories';
-import { categoryType } from '@/types';
+import { categoryType } from '@/types/types';
 
 const FALLBACK_COVER = '/images/brand-backdrop.jpg';
 

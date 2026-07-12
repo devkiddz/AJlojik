@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 export default function SingleProductCard({ product }: { product: ProductType }) {
   const [activeVariantId, setActiveVariantId] = useState(product.variants[0].id);

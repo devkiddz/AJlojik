@@ -1,4 +1,4 @@
-import { ProductType, ProductVariantType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types/types';
 
 import SingleProductPurchaseCard from './SingleProductPurchaseCard';
 import SingleProductWishlist from './SingleProductWishlist';

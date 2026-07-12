@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { categoryType } from '@/types';
+import { categoryType } from '@/types/types';
 import { cn } from '@/lib/utils';
 
 type Props = {

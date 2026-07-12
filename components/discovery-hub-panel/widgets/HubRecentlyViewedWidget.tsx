@@ -2,7 +2,7 @@
 
 import { Clock3 } from 'lucide-react';
 
-import { useDiscovery } from '@/components/discovery/DiscoveryProvider';
+import { useDiscovery } from '@/providers/DiscoveryProvider';
 import HubProductCard from '../cards/HubProductCard';
 
 export default function DiscoverySidebarRecentlyViewed() {

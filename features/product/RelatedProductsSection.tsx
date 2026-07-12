@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import ProductCard from '@/components/store/StoreProductCard';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 type Props = {
   product: ProductType;

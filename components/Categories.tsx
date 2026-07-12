@@ -1,7 +1,7 @@
 'use client';
 
 import CategoryCard from './shared/CategoryCard';
-import { categoryType } from '@/types';
+import { categoryType } from '@/types/types';
 
 type Props = {
   categories: categoryType[];

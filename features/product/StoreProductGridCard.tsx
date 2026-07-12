@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, ShoppingCart } from 'lucide-react';
 
-import { ProductType, ProductVariantType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types/types';
 
 type Props = {
   product: ProductType;

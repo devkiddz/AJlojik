@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { Sparkles, Package, Info } from 'lucide-react';
 
 export default function ProductDetailsPanel({ product }: { product: ProductType }) {

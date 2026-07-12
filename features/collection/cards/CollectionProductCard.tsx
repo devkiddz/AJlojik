@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import { Eye, Heart, ShoppingCart } from 'lucide-react';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
+import LikedComponent from '@/components/shared/LikedComponent';
 
 type Props = {
   product: ProductType;
@@ -34,7 +35,7 @@ export default function CollectionProductCard({ product, onSelect, onToggleLike 
             e.stopPropagation();
             onToggleLike?.(product.id);
           }}
-          className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md cursor-pointer">
+          className="absolute left-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md cursor-pointer hover:text-secondary">
           <Heart className="h-4 w-4" />
         </button>
 

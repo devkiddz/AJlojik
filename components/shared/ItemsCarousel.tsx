@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import CategoryCard from './CategoryCard';
-import { categoryType } from '@/types';
+import { categoryType } from '@/types/types';
 
 type Props = {
   categories: categoryType[];

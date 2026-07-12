@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { CollectionType } from '@/data/collections';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 import CollectionProductCard from '../cards/CollectionProductCard';
 import FeaturedCollectionCard from '../cards/FeaturedCollectionCard';

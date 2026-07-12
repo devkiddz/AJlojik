@@ -9,7 +9,7 @@ import { categories } from '@/data/categories';
 import ItemsCarousel from './ItemsCarousel';
 import ProductsCarousel from '../ProductsCarousel';
 import ProductModal from '@/components/shared/ProductModal';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 export default function ProductsComponent() {
   const searchParams = useSearchParams();

@@ -1,7 +1,7 @@
 'use client';
 
 import { Search } from 'lucide-react';
-import { useSearch } from '@/components/providers/SearchProvider';
+import { useSearch } from '@/providers/SearchProvider';
 
 export default function MobileSearchButton() {
   const { setOpen } = useSearch();

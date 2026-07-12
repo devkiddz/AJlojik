@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import ProductCard from './shared/ProductsCards';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 type Props = {
   title: string;

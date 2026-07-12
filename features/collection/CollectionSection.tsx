@@ -1,5 +1,5 @@
 import { CollectionType } from '@/data/collections';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { getCollectionIcon } from '@/lib/collection-icons';
 
 import CollectionBanner from './CollectionBanner';

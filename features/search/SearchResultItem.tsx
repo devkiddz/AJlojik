@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { ArrowUpRight, Package } from 'lucide-react';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { cn } from '@/lib/utils';
 
 type Props = {

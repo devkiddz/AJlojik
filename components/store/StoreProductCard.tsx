@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChartColumnStacked, ShoppingCartIcon, Eye } from 'lucide-react';
 
-import { ProductType, ProductVariantType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types/types';
 import LikedComponent from '@/components/shared/LikedComponent';
 import { Button } from '../ui/button';
 

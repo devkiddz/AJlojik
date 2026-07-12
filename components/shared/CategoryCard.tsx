@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { categoryType } from '@/types';
+import { categoryType } from '@/types/types';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 

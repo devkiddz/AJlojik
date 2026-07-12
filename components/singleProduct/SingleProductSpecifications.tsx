@@ -1,4 +1,4 @@
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 type Props = {
   product: ProductType;

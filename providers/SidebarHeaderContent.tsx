@@ -1,6 +1,6 @@
 import { Logs, PanelLeftClose, X } from 'lucide-react';
-import { useSidebar } from '../ui/sidebar';
-import { Button } from '../ui/button';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 
 export default function SidebarHeaderContent() {
   // const { setOpen } = useSidebar();

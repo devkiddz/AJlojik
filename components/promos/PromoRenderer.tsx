@@ -1,7 +1,7 @@
 // components/promos/PromoRenderer.tsx
 
 import { promos } from '@/data/promos';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 import PromoSection from './PromoSection';
 

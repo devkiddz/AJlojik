@@ -1,4 +1,4 @@
-import { ProductsType } from "@/types";
+import { ProductsType } from "@/types/types";
 import moetchandonimperiallg from '@/public/products/moet-chandon-imperial_lg.jpg'
 import moetchandonimperial_md from '@/public/products/moet-chandon-imperial_md.jpg'
 import moetchandonimperial_sm from '@/public/products/moet-chandon-imperial_sm.jpg'

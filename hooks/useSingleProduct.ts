@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { products } from '@/data/products';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 export function useSingleProduct(product: ProductType) {
   const [selectedVariantId, setSelectedVariantId] = useState(

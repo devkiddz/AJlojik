@@ -1,7 +1,7 @@
 'use client';
 
 import StoreCategoryCard from '../store/StoreCategoryCard';
-import { useDiscovery } from './DiscoveryProvider';
+import { useDiscovery } from '../../providers/DiscoveryProvider';
 
 export default function DiscoveryCategoryRail() {
   const { triggerRef, categories, selectedCategory, onCategoryChange } = useDiscovery();

@@ -1,7 +1,7 @@
 'use client';
 
 import CollectionRenderer from './renderers/CollectionRenderer';
-import { useDiscovery } from './DiscoveryProvider';
+import { useDiscovery } from '../../providers/DiscoveryProvider';
 
 export default function DiscoveryCollectionsFeed() {
   const { collections, filteredProducts, onPreview, onToggleLike } = useDiscovery();

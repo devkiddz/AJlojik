@@ -2,7 +2,7 @@
 
 import SearchBar from './SearchBar';
 import SearchResultsDropdown from './SearchResultsDropdown';
-import { useSearch } from '@/components/providers/SearchProvider';
+import { useSearch } from '@/providers/SearchProvider';
 import { X } from 'lucide-react';
 
 export default function SearchMobileOverlay() {

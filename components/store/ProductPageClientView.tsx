@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import { useProductPage } from '@/hooks/useProductPage';
 
 import ProductHeroSection from '@/features/product/ProductHeroSection';

@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductVariantType } from '@/types';
+import { ProductVariantType } from '@/types/types';
 
 type Props = {
   variant: ProductVariantType;

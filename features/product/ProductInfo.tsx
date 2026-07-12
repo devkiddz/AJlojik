@@ -1,5 +1,5 @@
 import { Star } from 'lucide-react';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 
 export default function ProductInfo({ product }: { product: ProductType }) {
   return (

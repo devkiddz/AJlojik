@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSearch } from '@/components/providers/SearchProvider';
+import { useSearch } from '@/providers/SearchProvider';
 
 export default function SearchBar() {
   const { query, setQuery, setActiveIndex, open, setOpen, loading } = useSearch();

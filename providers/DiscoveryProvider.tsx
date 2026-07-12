@@ -3,7 +3,7 @@
 import { createContext, useContext, ReactNode, RefObject } from 'react';
 
 import { CollectionType } from '@/data/collections';
-import { CategoriesType, ProductType, ProductVariantType } from '@/types';
+import { CategoriesType, ProductType, ProductVariantType } from '@/types/types';
 
 export type ResolvedCollectionType = {
   collection: CollectionType;

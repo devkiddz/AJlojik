@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Crown, Heart, LogOut, ShoppingCart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { mockUser } from '@/components/providers/mock-user';
+import { mockUser } from '@/providers/mock-user';
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 
 import { categories } from '@/data/categories';
-import SidebarHeaderContent from './SidebarHeaderContent';
+import SidebarHeaderContent from '@/providers/SidebarHeaderContent';
 
 const user = mockUser;
 

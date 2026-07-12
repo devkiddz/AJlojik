@@ -5,7 +5,7 @@ import { Flame } from 'lucide-react';
 import { promos } from '@/data/promos';
 import PromoCountdown from '@/components/promos/PromoCountdown';
 import { Button } from '@/components/ui/button';
-import { useDiscovery } from '@/components/discovery/DiscoveryProvider';
+import { useDiscovery } from '@/providers/DiscoveryProvider';
 
 export default function DiscoverySidebarPromo() {
   const { onPromoPreview } = useDiscovery();

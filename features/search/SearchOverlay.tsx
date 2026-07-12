@@ -3,7 +3,7 @@
 import SearchBar from './SearchBar';
 import SearchResultsDropdown from './SearchResultsDropdown';
 
-import { useSearch } from '@/components/providers/SearchProvider';
+import { useSearch } from '@/providers/SearchProvider';
 
 export default function SearchOverlay() {
   const { open } = useSearch();

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChartColumnStacked, Eye } from 'lucide-react';
-import { ProductType } from '@/types';
+import { ProductType } from '@/types/types';
 import LikedComponent from './LikedComponent';
 
 type ProductCardProps = {
