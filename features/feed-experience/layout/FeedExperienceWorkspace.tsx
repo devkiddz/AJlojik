@@ -1,14 +1,11 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-
-import DiscoveryHubPanel from '@/components/discovery-hub-panel/DiscoveryHubPanel';
-import { DiscoveryHubProvider } from '@/components/discovery-hub-panel/DiscoveryHubProvider';
 import ProductModal from '@/components/shared/ProductModal';
 import PromoModal from '@/components/promos/PromoModal';
 import { cn } from '@/lib/utils';
-
+import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { categories } from '@/data/categories';
 import { collections } from '@/data/collections';
@@ -264,15 +261,46 @@ export default function FeedExperienceWorkspace() {
   // WORKSPACE
   // ============================================================
 
+  const [hubCollapsed, setHubCollapsed] = useState(false);
+  const [hubPreferenceLoaded, setHubPreferenceLoaded] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('aj_discovery_hub_collapsed');
+
+    if (saved !== null) {
+      setHubCollapsed(saved === 'true');
+    }
+
+    setHubPreferenceLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hubPreferenceLoaded) return;
+
+    localStorage.setItem('aj_discovery_hub_collapsed', String(hubCollapsed));
+  }, [hubCollapsed, hubPreferenceLoaded]);
+
   return (
     <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      <div className="h-screen overflow-hidden px-4 py-4 scrollbar-none self-start">
-        <main className="grid min-h-screen grid-cols-12 items-start gap-4">
+      <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-screen lg:overflow-hidden">
+        <main className="grid min-h-full grid-cols-12 items-start gap-4">
           {/* ====================================================
-              CENTRAL FEED EXPERIENCE
-          ==================================================== */}
+        CENTRAL FEED EXPERIENCE
+    ==================================================== */}
 
-          <main className="col-span-12 min-w-0 pb-6 lg:sticky lg:top-26 lg:max-h-screen lg:self-start lg:overflow-y-scroll lg:rounded-3xl lg:bg-card/50 lg:p-4 lg:scroll-smooth lg:scrollbar-none lg:col-span-8">
+          <main
+            className={cn(
+              'col-span-12 min-w-0 pb-6 transition-all duration-300',
+
+              // Desktop workspace behaviour
+              'lg:sticky lg:top-26 lg:max-h-[calc(100vh-6.5rem)]',
+              'lg:self-start lg:overflow-y-auto',
+              'lg:rounded-3xl lg:bg-card/50 lg:p-4',
+              'lg:scroll-smooth lg:scrollbar-none',
+
+              // Feed expands when the Hub becomes compact
+              hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
+            )}>
             <MockExperienceSwitcher
               profiles={mockExperienceProfiles}
               activeProfileId={activeProfileId}
@@ -283,22 +311,21 @@ export default function FeedExperienceWorkspace() {
           </main>
 
           {/* ====================================================
-              DISCOVERY HUB / EXPERIENCE RAIL
-          ==================================================== */}
+        DESKTOP DISCOVERY RAIL
+        The rail owns its expanded and compact interfaces.
+    ==================================================== */}
 
-          <aside
-            className={cn(
-              'col-span-12 max-h-[calc(100vh-7rem)] self-start overflow-hidden bg-card pb-24 scrollbar-none lg:sticky lg:top-0 lg:col-span-4 lg:block lg:max-h-[calc(100vh-5rem)] lg:pb-0'
-            )}>
-            <DiscoveryHubProvider groups={hubGroups} widgets={hubWidgets}>
-              <DiscoveryHubPanel />
-            </DiscoveryHubProvider>
-          </aside>
+          <DesktopDiscoveryRail
+            groups={hubGroups}
+            widgets={hubWidgets}
+            collapsed={hubCollapsed}
+            onCollapsedChange={setHubCollapsed}
+          />
         </main>
 
         {/* ======================================================
-            PRODUCT QUICK PREVIEW
-        ====================================================== */}
+      PRODUCT QUICK PREVIEW
+  ====================================================== */}
 
         <ProductModal
           product={selectedProduct}
@@ -318,8 +345,8 @@ export default function FeedExperienceWorkspace() {
         />
 
         {/* ======================================================
-            PROMOTION QUICK PREVIEW
-        ====================================================== */}
+      PROMOTION QUICK PREVIEW
+  ====================================================== */}
 
         <PromoModal
           promo={selectedPromo}
