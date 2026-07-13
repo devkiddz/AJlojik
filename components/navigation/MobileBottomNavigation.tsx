@@ -73,7 +73,7 @@ export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottom
   return (
     <nav
       aria-label="Main mobile navigation"
-      className="fixed w-full inset-x-3 bottom-0 z-[60] pb-4 pt-2 lg:hidden bg-background/50 backdrop-blur-xl border border-white/[0.08] dark:border-white/[0.04] shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] saturate-[180%] backdrop-saturate-[180%]">
+      className="fixed w-full inset-x-3 bottom-0 z-[60] pb-4 pt-2 lg:hidden bg-background/80 backdrop-blur-xl border border-white/[0.08] dark:border-white/[0.04] shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] saturate-[180%] backdrop-saturate-[180%]">
       <div className="grid grid-cols-5 gap-1">
         {navigationItems.map(item => {
           const Icon = item.icon;

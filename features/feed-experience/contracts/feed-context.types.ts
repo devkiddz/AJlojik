@@ -38,4 +38,30 @@ export type FeedContext = {
   user: FeedUserContext;
   activity: FeedActivityContext;
   environment: FeedEnvironmentContext;
+
+  experience?: FeedExperienceData;
+};
+
+import type {
+  MockActiveDelivery,
+  MockCouponFeed,
+  MockExperienceOrder,
+  MockIntelligenceFeed,
+  MockPromotionFeed,
+  MockRewardsFeed
+} from '../mocks/mockExperienceProfiles';
+
+export type FeedExperienceData = {
+  orders: {
+    recent: MockExperienceOrder[];
+    activeDelivery?: MockActiveDelivery;
+  };
+
+  rewards: MockRewardsFeed;
+
+  coupons: MockCouponFeed[];
+
+  intelligence: MockIntelligenceFeed;
+
+  promotions: MockPromotionFeed;
 };

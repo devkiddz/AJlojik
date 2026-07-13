@@ -182,6 +182,14 @@ export default function FeedExperienceWorkspace() {
 
       activity: activeProfile.activity,
 
+      experience: {
+        orders: activeProfile.orders,
+        rewards: activeProfile.rewards,
+        coupons: activeProfile.coupons,
+        intelligence: activeProfile.intelligence,
+        promotions: activeProfile.promotions
+      },
+
       environment: {
         locale: 'en-NG',
         currency: 'NGN',

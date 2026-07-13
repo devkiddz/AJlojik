@@ -6,3 +6,4 @@ export * from './selectRecentlyViewedProducts';
 export * from './selectProductsByIds';
 export * from './selectRecommendedProducts';
 export * from './selectCompactDiscoveryItems';
+export * from './selectDiscoveryHubWidgets';
