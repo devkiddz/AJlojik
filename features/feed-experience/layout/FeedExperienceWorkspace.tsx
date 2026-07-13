@@ -301,7 +301,7 @@ export default function FeedExperienceWorkspace() {
               'col-span-12 min-w-0 pb-6 transition-all duration-300',
 
               // Desktop workspace behaviour
-              'lg:sticky lg:top-26 lg:max-h-[calc(100vh-6.5rem)]',
+              'lg:sticky top-0 lg:max-h-[calc(100vh-6.5rem)]',
               'lg:self-start lg:overflow-y-auto',
               'lg:rounded-3xl lg:bg-card/50 lg:p-4',
               'lg:scroll-smooth lg:scrollbar-none',

@@ -1,12 +1,13 @@
-export * from "./contracts";
-export * from "./selectors";
-export * from "./builders";
-export * from "./registry";
-export * from "./fallbacks";
-export * from "./engine";
-export * from "./providers";
-export * from "./hooks";
-export * from "./renderers";
-export * from "./layout";
-
-// export * from "./modules";
+export * from './contracts';
+export * from './selectors';
+export * from './builders';
+export * from './composer';
+export * from './registry';
+export * from './fallbacks';
+export * from './engine';
+export * from './providers';
+export * from './hooks';
+export * from './renderers';
+export * from './layout';
+export * from './composer';
+export * from './priorities';
