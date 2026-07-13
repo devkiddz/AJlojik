@@ -60,7 +60,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   );
 
   return (
-    <header className="sticky md:py-3 isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl">
+    <header className="sticky md:py-3 isolate top-0 z-50 w-full bg-card/90 shadow-sm backdrop-blur-3xl dark:border-white/[0.04] shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] saturate-[180%] backdrop-saturate-[180%]">
       {/* Header Background breathing lights effect */}
       <div className="header-ambient-light" />
       {/* Header Background breathing lights effect */}

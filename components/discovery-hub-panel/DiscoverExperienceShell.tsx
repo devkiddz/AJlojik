@@ -21,10 +21,6 @@ import { DiscoveryHubProvider } from './DiscoveryHubProvider';
 export default function DiscoverExperienceShell() {
   const router = useRouter();
 
-  // ------------------------------------------------------------
-  // Starting experience for the standalone Discovery workspace
-  // ------------------------------------------------------------
-
   const initialIntent = useMemo<FeedIntent>(
     () => ({
       id: 'mobile-discovery',
@@ -35,11 +31,6 @@ export default function DiscoverExperienceShell() {
     }),
     []
   );
-
-  // ------------------------------------------------------------
-  // Temporary mock context
-  // Later this will come from the authenticated application layer.
-  // ------------------------------------------------------------
 
   const context = useMemo<FeedContext>(
     () => ({
@@ -54,7 +45,6 @@ export default function DiscoverExperienceShell() {
         sessionId: 'mobile-discovery-session',
         authenticated: false,
         tier: 'guest',
-
         wishlistProductIds: [],
         cartProductIds: [],
         recentProductIds: []
@@ -77,10 +67,6 @@ export default function DiscoverExperienceShell() {
     []
   );
 
-  // ------------------------------------------------------------
-  // Temporary application actions
-  // ------------------------------------------------------------
-
   const changeCategory = useCallback(
     (updates: Record<string, string | null>) => {
       const category = updates.category;
@@ -97,13 +83,9 @@ export default function DiscoverExperienceShell() {
     [router]
   );
 
-  const toggleLike = useCallback((_productId: string) => {
-    // Temporary until wishlist state becomes global.
-  }, []);
+  const toggleLike = useCallback((_productId: string) => {}, []);
 
-  const addToCart = useCallback((_product: ProductType, _variant: ProductVariantType) => {
-    // Temporary until cart state becomes global.
-  }, []);
+  const addToCart = useCallback((_product: ProductType, _variant: ProductVariantType) => {}, []);
 
   const previewPromotion = useCallback(
     (promoId: string) => {

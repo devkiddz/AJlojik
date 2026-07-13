@@ -1,73 +1,100 @@
 'use client';
 
-import { Compass, House, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
+import { Compass, House, ShoppingBag, ShoppingCart, UserRound, type LucideIcon } from 'lucide-react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
-type MobileNavigationItem = {
+type RouteNavigationItem = {
+  type: 'route';
   id: string;
   label: string;
   href: string;
-  icon: typeof House;
-  match: (pathname: string) => boolean;
+  icon: LucideIcon;
 };
 
-const navigationItems: MobileNavigationItem[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    href: '/',
-    icon: House,
-    match: pathname => pathname === '/'
-  },
+type ActionNavigationItem = {
+  type: 'action';
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+};
 
-  {
-    id: 'store',
-    label: 'Store',
-    href: '/store',
-    icon: ShoppingBag,
-    match: pathname => pathname === '/store' || pathname.startsWith('/store/')
-  },
+type MobileNavigationItem = RouteNavigationItem | ActionNavigationItem;
 
-  {
-    id: 'discover',
-    label: 'Discover',
-    href: '/discover',
-    icon: Compass,
-    match: pathname => pathname === '/discover' || pathname.startsWith('/discover/')
-  },
+type MobileBottomNavigationProps = {
+  onOpenDiscovery: () => void;
+};
 
-  {
-    id: 'cart',
-    label: 'Cart',
-    href: '/cart',
-    icon: ShoppingCart,
-    match: pathname => pathname === '/cart' || pathname.startsWith('/cart/')
-  },
-
-  {
-    id: 'account',
-    label: 'Account',
-    href: '/account',
-    icon: UserRound,
-    match: pathname => pathname === '/account' || pathname.startsWith('/account/')
-  }
-];
-
-export default function MobileBottomNavigation() {
+export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottomNavigationProps) {
   const pathname = usePathname();
+
+  const navigationItems: MobileNavigationItem[] = [
+    {
+      type: 'route',
+      id: 'home',
+      label: 'Home',
+      href: '/',
+      icon: House
+    },
+    {
+      type: 'route',
+      id: 'store',
+      label: 'Store',
+      href: '/store',
+      icon: ShoppingBag
+    },
+    {
+      type: 'action',
+      id: 'discover',
+      label: 'Discover',
+      icon: Compass,
+      onClick: onOpenDiscovery
+    },
+    {
+      type: 'route',
+      id: 'cart',
+      label: 'Cart',
+      href: '/cart',
+      icon: ShoppingCart
+    },
+    {
+      type: 'route',
+      id: 'account',
+      label: 'Account',
+      href: '/account',
+      icon: UserRound
+    }
+  ];
 
   return (
     <nav
       aria-label="Main mobile navigation"
-      className="fixed inset-x-3 bottom-0 z-50 w-full bg-background/50 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
+      className="fixed w-full inset-x-3 bottom-0 z-[60] lg:hidden bg-background/30 dark:bg-black/[0.15] backdrop-blur-xl border border-white/[0.08] dark:border-white/[0.04] shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] saturate-[180%] backdrop-saturate-[180%]">
       <div className="grid grid-cols-5 gap-1">
         {navigationItems.map(item => {
           const Icon = item.icon;
-          const active = item.match(pathname);
+
+          if (item.type === 'action') {
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={item.onClick}
+                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition hover:text-foreground">
+                <Icon className="size-5" />
+                <span className="text-[10px]">{item.label}</span>
+              </button>
+            );
+          }
+
+          const active =
+            item.href === '/'
+              ? pathname === '/'
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
@@ -75,16 +102,12 @@ export default function MobileBottomNavigation() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-full px-1 text-[10px] font-medium transition',
-                active ? 'font-bold' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                'flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition',
+                active && 'font-bold text-primary'
               )}>
-              <Icon className="size-6" />
+              <Icon className={cn('size-5 transition-all', active && 'size-6 stroke-[2.5]')} />
 
-              <span>{item.label}</span>
-
-              {active ? (
-                <span className="absolute bottom-1 h-0.5 w-4 rounded-full bg-current opacity-70" />
-              ) : null}
+              <span className={cn('text-[10px]', active && 'font-bold')}>{item.label}</span>
             </Link>
           );
         })}
