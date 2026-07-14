@@ -26,10 +26,14 @@ type ActionNavigationItem = {
 type MobileNavigationItem = RouteNavigationItem | ActionNavigationItem;
 
 type MobileBottomNavigationProps = {
-  onOpenDiscovery: () => void;
+  discoveryOpen: boolean;
+  onToggleDiscovery: () => void;
 };
 
-export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottomNavigationProps) {
+export default function MobileBottomNavigation({
+  discoveryOpen,
+  onToggleDiscovery
+}: MobileBottomNavigationProps) {
   const pathname = usePathname();
 
   const navigationItems: MobileNavigationItem[] = [
@@ -52,7 +56,7 @@ export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottom
       id: 'discover',
       label: 'Discover',
       icon: Compass,
-      onClick: onOpenDiscovery
+      onClick: onToggleDiscovery
     },
     {
       type: 'route',
@@ -73,7 +77,23 @@ export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottom
   return (
     <nav
       aria-label="Main mobile navigation"
-      className="fixed w-full inset-x-3 bottom-0 z-[60] pb-4 pt-2 lg:hidden bg-background/80 backdrop-blur-xl border border-white/[0.08] dark:border-white/[0.04] shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] saturate-[180%] backdrop-saturate-[180%]">
+      className="
+        fixed
+        inset-x-3
+        bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]
+        z-[90]
+        rounded-2xl
+        border
+        border-white/[0.08]
+        bg-background/85
+        px-2
+        py-2
+        shadow-[0_8px_32px_rgba(0,0,0,0.18)]
+        backdrop-blur-xl
+        backdrop-saturate-[180%]
+        dark:border-white/[0.04]
+        lg:hidden
+      ">
       <div className="grid grid-cols-5 gap-1">
         {navigationItems.map(item => {
           const Icon = item.icon;
@@ -84,9 +104,16 @@ export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottom
                 key={item.id}
                 type="button"
                 onClick={item.onClick}
-                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition hover:text-foreground">
-                <Icon className="size-5" />
-                <span className="text-[10px]">{item.label}</span>
+                aria-label={discoveryOpen ? 'Close Discovery Hub' : 'Open Discovery Hub'}
+                aria-pressed={discoveryOpen}
+                className={cn(
+                  'flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition',
+                  'hover:bg-card/60 hover:text-foreground',
+                  discoveryOpen && 'bg-card font-bold text-primary'
+                )}>
+                <Icon className={cn('size-5 transition-all', discoveryOpen && 'size-6 stroke-[2.5]')} />
+
+                <span className={cn('text-[10px]', discoveryOpen && 'font-bold')}>{item.label}</span>
               </button>
             );
           }
@@ -103,7 +130,8 @@ export default function MobileBottomNavigation({ onOpenDiscovery }: MobileBottom
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition',
-                active && 'font-bold text-primary'
+                'hover:bg-card/60 hover:text-foreground',
+                active && 'bg-card font-bold text-primary'
               )}>
               <Icon className={cn('size-5 transition-all', active && 'size-6 stroke-[2.5]')} />
 

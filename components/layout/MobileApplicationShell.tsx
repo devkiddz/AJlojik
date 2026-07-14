@@ -18,7 +18,12 @@ export default function MobileApplicationShell({ children }: MobileApplicationSh
 
       <MobileDiscoverySheet open={discoveryOpen} onOpenChange={setDiscoveryOpen} />
 
-      <MobileBottomNavigation onOpenDiscovery={() => setDiscoveryOpen(true)} />
+      <MobileBottomNavigation
+        discoveryOpen={discoveryOpen}
+        onToggleDiscovery={() => {
+          setDiscoveryOpen(current => !current);
+        }}
+      />
     </>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-
 import DiscoverExperienceShell from './DiscoverExperienceShell';
 
 type MobileDiscoverySheetProps = {
@@ -14,22 +15,26 @@ export default function MobileDiscoverySheet({ open, onOpenChange }: MobileDisco
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="
-          !fixed
-          !inset-y-0
-          !right-0
-          !h-dvh
-          !w-screen
-          !max-w-none
-          overflow-hidden
-          border-0
-          bg-background
-          p-0
-          lg:hidden
-        ">
+        className={cn(
+          '!fixed !inset-y-0 !right-0 !h-dvh !w-screen !max-w-none',
+          'overflow-hidden border-0 bg-background p-0 lg:hidden',
+          '[&_[data-slot=sheet-close]]:hidden'
+        )}>
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          aria-label="Close Discovery Hub"
+          className={cn(
+            'fixed right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[100]',
+            'grid size-10 place-items-center rounded-full border border-border/70',
+            'bg-background/90 text-foreground shadow-lg backdrop-blur-xl',
+            'transition hover:bg-card'
+          )}>
+          <X className="size-5" />
+        </button>
+
         <SheetHeader className="sr-only">
           <SheetTitle>Discovery Hub</SheetTitle>
-
           <SheetDescription>Explore your personalized AJ Logik workspace.</SheetDescription>
         </SheetHeader>
 
