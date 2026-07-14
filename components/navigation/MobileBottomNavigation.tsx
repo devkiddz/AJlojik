@@ -80,14 +80,14 @@ export default function MobileBottomNavigation({
       className="
         fixed
         inset-x-3
-        bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]
+        bottom-0
         z-[90]
-        rounded-2xl
         border
         border-white/[0.08]
         bg-background/85
         px-2
-        py-2
+        pt-2
+        pb-4
         shadow-[0_8px_32px_rgba(0,0,0,0.18)]
         backdrop-blur-xl
         backdrop-saturate-[180%]
