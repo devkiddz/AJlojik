@@ -24,6 +24,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  experienceProfile ExperienceProfile?
+
   @@unique([email])
   @@map("user")
 }
@@ -74,4 +76,34 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+
+model ExperienceProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  persona String @default("new-member")
+
+  preferredCategorySlugs String[] @default([])
+  preferredBrandSlugs    String[] @default([])
+
+  recentlyViewedProductIds String[] @default([])
+  searchedTerms             String[] @default([])
+  clickedCollectionIds      String[] @default([])
+
+  recommendationScore Int @default(0)
+  engagementScore     Int @default(0)
+  commerceScore       Int @default(0)
+
+  onboardingCompleted Boolean @default(false)
+  personalizationEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("experience_profile")
 }

@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import SignOutButton from '@/components/auth/SignOutButton';
+import { getOrCreateExperienceProfile } from '@/features/feed-experience/services';
 import { auth } from '@/lib/auth';
 
 export default async function AccountPage() {
@@ -12,6 +13,8 @@ export default async function AccountPage() {
   if (!session) {
     redirect('/sign-in');
   }
+
+  const experienceProfile = await getOrCreateExperienceProfile(session.user.id);
 
   const tier = typeof session.user.tier === 'string' ? session.user.tier : 'member';
 
@@ -48,9 +51,13 @@ export default async function AccountPage() {
           </article>
 
           <article className="rounded-3xl border border-border/70 bg-card/60 p-5">
-            <p className="text-sm text-muted-foreground">Experience</p>
+            <p className="text-sm text-muted-foreground">Experience profile</p>
 
-            <p className="mt-2 text-xl font-bold">Personalization ready</p>
+            <p className="mt-2 text-xl font-bold capitalize">{experienceProfile.persona.replace('-', ' ')}</p>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              {experienceProfile.personalizationEnabled ? 'Personalization active' : 'Personalization paused'}
+            </p>
           </article>
         </div>
 
