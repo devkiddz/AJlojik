@@ -16,6 +16,7 @@ import type { ProductType, ProductVariantType } from '@/types/types';
 
 import DiscoveryHubPanel from './DiscoveryHubPanel';
 import { DiscoveryHubProvider } from './DiscoveryHubProvider';
+import { cn } from '@/lib/utils';
 
 export default function DiscoverExperienceShell() {
   const router = useRouter();
@@ -117,32 +118,37 @@ export default function DiscoverExperienceShell() {
   return (
     <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
       <DiscoveryHubProvider groups={hubGroups} widgets={hubWidgets}>
-        {/* Responsive Desktop Wrapper layout frame */}
-        <div className="relative flex min-h-screen w-full transition-all duration-300 ease-in-out">
-          {/* Glassmorphic Sidebar Frame with clean width transitions */}
+        <div className="relative flex h-full min-h-0 w-full overflow-hidden">
+          {/* Desktop Discovery Rail */}
           <aside
             className={`
-              relative hidden lg:flex flex-col border-r border-border/40 bg-background/60 backdrop-blur-md transition-all duration-300 ease-in-out
-              ${isCollapsed ? 'w-16' : 'w-80'}
-            `}>
-            {/* Smooth visibility control layer toggle button */}
+            relative hidden min-h-0 shrink-0 flex-col overflow-hidden
+            border-r border-border/40 bg-background/60 backdrop-blur-md
+            transition-all duration-300 ease-in-out
+            lg:flex lg:h-[calc(100dvh-5rem)] lg:max-h-[calc(100dvh-5rem)]
+            ${isCollapsed ? 'w-16' : 'w-80'}
+          `}>
             <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute -right-3 top-6 z-50 flex size-6 items-center justify-center rounded-full border bg-background text-foreground shadow-sm hover:bg-accent transition"
+              type="button"
+              onClick={() => setIsCollapsed(current => !current)}
+              className="absolute -right-3 top-6 z-50 flex size-6 items-center justify-center rounded-full border bg-background text-foreground shadow-sm transition hover:bg-accent"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
               {isCollapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
             </button>
 
-            {/* Inner Content Controller wrapping the original discovery panel */}
             <div
-              className={`w-full h-full transition-opacity duration-200 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-              <DiscoveryHubPanel />
+              className={`
+              h-full min-h-0 w-full overflow-hidden
+              transition-opacity duration-200
+              ${isCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'}
+            `}>
+              <DiscoveryHubPanel className="h-full" />
             </div>
           </aside>
 
-          {/* Fallback configuration rendering fallback state content views for mobile channels */}
-          <div className="flex-1 lg:hidden">
-            <DiscoveryHubPanel />
+          {/* Mobile full-screen Discovery */}
+          <div className="h-full min-h-0 w-full flex-1 overflow-hidden lg:hidden">
+            <DiscoveryHubPanel className="h-full" />
           </div>
         </div>
       </DiscoveryHubProvider>

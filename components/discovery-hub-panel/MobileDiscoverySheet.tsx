@@ -13,21 +13,27 @@ export default function MobileDiscoverySheet({ open, onOpenChange }: MobileDisco
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="bottom"
-        className="h-[92dvh] overflow-hidden rounded-t-3xl border-x border-t p-0 lg:hidden">
+        side="right"
+        className="
+          !fixed
+          !inset-y-0
+          !right-0
+          !h-dvh
+          !w-screen
+          !max-w-none
+          overflow-hidden
+          border-0
+          bg-background
+          p-0
+          lg:hidden
+        ">
         <SheetHeader className="sr-only">
           <SheetTitle>Discovery Hub</SheetTitle>
 
-          <SheetDescription>Your personalized AJ Logik workspace.</SheetDescription>
+          <SheetDescription>Explore your personalized AJ Logik workspace.</SheetDescription>
         </SheetHeader>
 
-        {/* Sheet handle */}
-        <div className="flex h-7 shrink-0 items-center justify-center">
-          <span className="h-1 w-12 rounded-full bg-muted-foreground/25" />
-        </div>
-
-        {/* Discovery Hub */}
-        <div className="h-[calc(92dvh-1.75rem)] overflow-hidden px-3 pb-5">
+        <div className="h-full min-h-0 w-full overflow-hidden">
           <DiscoverExperienceShell />
         </div>
       </SheetContent>

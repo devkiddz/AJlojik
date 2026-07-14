@@ -13,6 +13,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
+import IdentityProvider from '@/providers/IdentityProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -53,30 +54,32 @@ export default function RootLayout({
       )}>
       <body className="h-full bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <SidebarProvider defaultOpen={true}>
-            <Suspense fallback={null}>
-              <SearchProvider>
-                <AppSidebar />
+          <IdentityProvider>
+            <SidebarProvider defaultOpen={true}>
+              <Suspense fallback={null}>
+                <SearchProvider>
+                  <AppSidebar />
 
-                <main className="flex min-h-screen min-w-0 flex-col">
-                  <div className="sticky top-0 z-50">
-                    <Suspense fallback={null}>
-                      <NavbarComponent brandName="AJ" brandSlug="Logik" />
-                    </Suspense>
-                  </div>
+                  <main className="flex min-h-screen min-w-0 flex-col">
+                    <div className="sticky top-0 z-50">
+                      <Suspense fallback={null}>
+                        <NavbarComponent brandName="AJ" brandSlug="Logik" />
+                      </Suspense>
+                    </div>
 
-                  {/* Clean wrap of page views with mobile interface controllers */}
-                  <div className="flex w-full flex-1 flex-col">
-                    <MobileApplicationShell>{children}</MobileApplicationShell>
-                  </div>
+                    {/* Clean wrap of page views with mobile interface controllers */}
+                    <div className="flex w-full flex-1 flex-col">
+                      <MobileApplicationShell>{children}</MobileApplicationShell>
+                    </div>
 
-                  <FooterComponent brandName="AJ" brandSlug="Logik" />
-                </main>
+                    <FooterComponent brandName="AJ" brandSlug="Logik" />
+                  </main>
 
-                <SearchMobileOverlay />
-              </SearchProvider>
-            </Suspense>
-          </SidebarProvider>
+                  <SearchMobileOverlay />
+                </SearchProvider>
+              </Suspense>
+            </SidebarProvider>
+          </IdentityProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -16,13 +16,42 @@ const statusStyles = {
   success: 'bg-emerald-500/15 text-emerald-300'
 };
 
+const layoutStyles: Record<NonNullable<HubWidget['layout']>, string> = {
+  summary: 'p-5',
+  membership: 'p-5',
+  tracking: 'p-5',
+
+  hero: 'min-h-[32rem] p-5 md:min-h-[36rem]',
+
+  grid: 'min-h-[35rem] p-5',
+
+  'minimal-grid': 'min-h-[22rem] p-5',
+
+  slider: 'min-h-[15rem] p-5'
+};
+
 export default function HubCard({ widget }: HubCardProps) {
   const layout = widget.layout ?? 'summary';
+  if (layout === 'hero') {
+    return (
+      <article
+        className={cn(
+          'overflow-hidden rounded-3xl border border-primary/12 bg-card/40 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_20px_60px_rgba(0,0,0,0.25)]',
+          widget.accent && `bg-gradient-to-br ${widget.accent}`
+        )}>
+        {widget.slides?.length ? (
+          <HubSlider items={widget.slides} autoSlide={widget.autoSlide} variant="hero" />
+        ) : null}
+      </article>
+    );
+  }
 
   return (
     <article
+      data-layout={layout}
       className={cn(
-        'overflow-hidden rounded-2xl border border-primary/12 bg-card/40 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_20px_60px_rgba(0,0,0,0.25)] transition hover:border-primary/20 hover:bg-card/60',
+        'overflow-hidden rounded-3xl border border-primary/12 bg-card/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_20px_60px_rgba(0,0,0,0.25)] transition duration-300 hover:border-primary/20 hover:bg-card/60',
+        layoutStyles[layout],
         widget.accent && `bg-gradient-to-br ${widget.accent}`
       )}>
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -41,9 +70,9 @@ export default function HubCard({ widget }: HubCardProps) {
         )}
       </div>
 
-      <h3 className="text-sm font-semibold text-primary">{widget.title}</h3>
+      <h3 className="text-sm font-semibold tracking-tight text-primary">{widget.title}</h3>
 
-      {widget.description && <p className="mt-1 text-sm leading-5 text-primary/55">{widget.description}</p>}
+      {widget.description && <p className="mt-2 text-sm leading-5 text-primary/55">{widget.description}</p>}
 
       {layout === 'membership' && (
         <div className="mt-4 rounded-2xl border border-amber-300/15 bg-background/45 p-4">
@@ -151,15 +180,7 @@ export default function HubCard({ widget }: HubCardProps) {
         <HubSlider
           items={widget.slides}
           autoSlide={widget.autoSlide}
-          variant={
-            layout === 'hero'
-              ? 'hero'
-              : layout === 'grid'
-                ? 'grid'
-                : layout === 'minimal-grid'
-                  ? 'minimal-grid'
-                  : 'strip'
-          }
+          variant={layout === 'grid' ? 'grid' : layout === 'minimal-grid' ? 'minimal-grid' : 'strip'}
         />
       ) : null}
 

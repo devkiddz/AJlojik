@@ -5,7 +5,7 @@ import { ChevronUp, LayoutGrid, PartyPopper, TextSearch, UtensilsCrossed, Wine }
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import AuthIdentityMenu from '@/components/auth/AuthIdentityMenu';
+import UserActionComponent from '@/components/UserActionComponent';
 import SearchBarComponent from '@/components/SearchBarComponent';
 import LogoComponent from '@/components/shared/LogoComponent';
 import SidebarToggle from '@/components/shared/SidebarToggle';
@@ -145,7 +145,6 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
         {/* Right actions */}
         <div className="flex shrink-0 items-center gap-2">
-          {/* Mobile discovery tools toggle */}
           <button
             type="button"
             title="Toggle discovery tools"
@@ -156,11 +155,9 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
             {mobileToolsOpen ? <ChevronUp className="size-5" /> : <TextSearch className="size-5" />}
           </button>
 
-          {/* Commerce status */}
           <CartLogics />
 
-          {/* Real Better Auth identity */}
-          <AuthIdentityMenu />
+          <UserActionComponent />
         </div>
       </div>
 
