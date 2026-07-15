@@ -1,36 +1,38 @@
 import { ProductsType } from "@/types/types";
-import moetchandonimperiallg from '@/public/products/moet-chandon-imperial_lg.jpg'
-import moetchandonimperial_md from '@/public/products/moet-chandon-imperial_md.jpg'
-import moetchandonimperial_sm from '@/public/products/moet-chandon-imperial_sm.jpg'
-import hennessy_lg from '@/public/products/hennessy_lg.jpg'
-import jackdaniels_lg from '@/public/products/jackdaniels_lg.jpg'
-import hennessyXO_lg from '@/public/products/hennessyXO_lg.jpg'
-import DomPérignon_lg from '@/public/products/DomPérignon_lg.jpg'
-import moetchandonnectar_lg from '@/public/products/moetchandonnectar_lg.jpg'
-import martellblue_lg from '@/public/products/martellblue_lg.jpg'
-import remymartin_lg from '@/public/products/remymartin_lg.jpg'
-import patronsilvertequila_aj from '@/public/products/patronsilvertequila_aj.jpg'
-import Nespresso_Vertuo_Coffee_Machine from '@/public/products/Nespresso_Vertuo_Coffee_Machine.jpg'
-import KitchenAid_Artisan_Stand_Mixer from '@/public/products/KitchenAid_Artisan_Stand_Mixer.jpg'
-import Birthday_Party_Package from '@/public/products/Birthday_Party_Package.jpg'
-import Premium_Backyard_BBQ_Package from '@/public/products/Premium_Backyard_BBQ_Package.jpg'
-import red_velvet_celebration_cake from '@/public/products/red_velvet_celebration_cake.jpg'
-import Chocolate_Fudge_Cake from '@/public/products/Chocolate_Fudge_Cake.jpg'
-import Digital_Air_Fryer from '@/public/products/Digital_Air_Fryer.jpg'
-import JohnnieWalkerBlueLabel from '@/public/products/JohnnieWalkerBlueLabel.jpg'
-import Johnnie_Walker_Black_Label from '@/public/products/Johnnie_Walker_Black_Label.jpg'
-import Glenfiddich_12_Year_Old from '@/public/products/Glenfiddich_12_Year_Old.jpg'
-import Jameson_Irish_Whiskey from '@/public/products/Jameson_Irish_Whiskey.jpg'
-import Don_Julio_1942_Añejo_Tequila from '@/public/products/Don_Julio_1942_Añejo_Tequila.jpg'
-import Belvedere_Vodka from '@/public/products/Belvedere_Vodka.jpg'
-import The_Macallan_12_Year_Double_Cask from '@/public/products/The_Macallan_12_Year_Double_Cask.jpg'
-import Tanqueray_London_Dry_Gin from '@/public/products/Tanqueray_London_Dry_Gin.jpg'
-import Bombay_Sapphire_Distilled_Gin from '@/public/products/Bombay_Sapphire_Distilled_Gin.jpg'
-import Glenmorangie_The_Original_10Y from '@/public/products/Glenmorangie_The_Original_10Y.jpg'
-import The_Glenlivet_12_Year_Old from '@/public/products/The_Glenlivet_12_Year_Old.jpg'
-import Baileys_Original_Irish_Cream from '@/public/products/Baileys_Original_Irish_Cream.jpg'
-import Jägermeister_Herbal_Liqueur from '@/public/products/Jägermeister_Herbal_Liqueur.jpg'
 
+import {
+  Baileys_Original_Irish_Cream,
+  Belvedere_Vodka,
+  Birthday_Party_Package,
+  Bombay_Sapphire_Distilled_Gin,
+  Chocolate_Fudge_Cake,
+  Digital_Air_Fryer,
+  DomPérignon_lg,
+  Don_Julio_1942_Añejo_Tequila,
+  Glenfiddich_12_Year_Old,
+  Glenmorangie_The_Original_10Y,
+  hennessy_lg,
+  hennessyXO_lg,
+  jackdaniels_lg,
+  Jameson_Irish_Whiskey,
+  Jägermeister_Herbal_Liqueur,
+  JohnnieWalkerBlueLabel,
+  Johnnie_Walker_Black_Label,
+  KitchenAid_Artisan_Stand_Mixer,
+  martellblue_lg,
+  moetchandonimperial_md,
+  moetchandonimperial_sm,
+  moetchandonimperiallg,
+  moetchandonnectar_lg,
+  Nespresso_Vertuo_Coffee_Machine,
+  patronsilvertequila_aj,
+  Premium_Backyard_BBQ_Package,
+  red_velvet_celebration_cake,
+  remymartin_lg,
+  Tanqueray_London_Dry_Gin,
+  The_Glenlivet_12_Year_Old,
+  The_Macallan_12_Year_Double_Cask
+} from './assets/productImages';
 export const products: ProductsType = [
   // --- INCLUDED BASE PRODUCTS (1 to 11) ---
   {
@@ -61,7 +63,7 @@ export const products: ProductsType = [
     name: "Hennessy VS Cognac",
     shortDescription: "Smooth and bold cognac perfect for parties and nightlife events.",
     longDescription: "Hennessy VS Cognac offers a balanced blend of strength and elegance. Known for its rich oak notes and warm finish, it is a popular choice for club events, celebrations, VIP gatherings, and private parties.",
-    category: "vines",
+    category: "wines",
     tags: ["Express Delivery", "Popular", "Party Favorite"],
     variants: [
       { id: "Sm", label: "Small", image: hennessy_lg.src, price: 55000, stockLeft: 10 },
@@ -83,7 +85,7 @@ export const products: ProductsType = [
     name: "Jack Daniel's Old No. 7",
     shortDescription: "Iconic Tennessee whiskey with a smooth charcoal-mellowed finish.",
     longDescription: "Jack Daniel's Old No. 7 is crafted using a unique charcoal mellowing process that gives it a smooth and distinctive flavor.",
-    category: "vines",
+    category: "wines",
     tags: ["Bulk Order", "Best Seller", "Premium"],
     variants: [
       { id: "Sm", label: "Small", image: jackdaniels_lg.src, price: 40000, stockLeft: 0 },
@@ -148,7 +150,7 @@ export const products: ProductsType = [
     name: "Hennessy XO Cognac",
     shortDescription: "The original extra-old cognac, deep, complex, and intensely powerful.",
     longDescription: "Hennessy X.O is the original emblematic icon of the Hennessy House. Deep and powerful, the eaux-de-vie of this Cognac are aged in young oak barrels, characterized by their power and energy.",
-    category: "vines",
+    category: "wines",
     tags: ["Luxury", "Premium", "VIP Favorite"],
     variants: [
       { id: "md", label: "70cl", image: hennessyXO_lg.src, price: 245000, stockLeft: 4 },
@@ -190,7 +192,7 @@ export const products: ProductsType = [
     name: "Martell Blue Swift",
     shortDescription: "Premium cognac finished in bourbon casks.",
     longDescription: "Martell Blue Swift combines French cognac tradition with American oak finishing for a smooth and rich experience.",
-    category: "vines",
+    category: "wines",
     tags: ["Premium", "Popular"],
     variants: [
       { id: "sm", label: "70cl", image: martellblue_lg.src, price: 78000, stockLeft: 11 },
@@ -298,7 +300,7 @@ export const products: ProductsType = [
     name: "Glenfiddich 12 Year Old",
     shortDescription: "The world's most awarded single malt Scotch whisky.",
     longDescription: "Carefully matured in the finest American oak and European oak sherry casks for at least 12 years, giving it distinct fresh pear and oak flavors.",
-    category: "vines",
+    category: "wines",
     tags: ["Single Malt", "Best Seller", "Express Delivery"],
     variants: [
       { id: "md", label: "70cl", image: Glenfiddich_12_Year_Old.src, price: 68000, stockLeft: 22 },
@@ -319,7 +321,7 @@ export const products: ProductsType = [
     name: "Rémy Martin VSOP Cognac",
     shortDescription: "The iconic Cognac Fine Champagne with perfectly balanced character.",
     longDescription: "Rémy Martin VSOP embodies the perfect harmony of powerful and elegant aromas. It reveals notes of vanilla, ripe apricot, and baked apple.",
-    category: "vines",
+    category: "wines",
     tags: ["Premium", "Express Delivery"],
     variants: [
       { id: "sm", label: "70cl", image: remymartin_lg.src, price: 74000, stockLeft: 16 }
@@ -339,7 +341,7 @@ export const products: ProductsType = [
     name: "Johnnie Walker Black Label",
     shortDescription: "A true icon, recognized as the benchmark for all other luxury blends.",
     longDescription: "Created using only whiskies aged for a minimum of 12 years from the four corners of Scotland, Johnnie Walker Black Label has an unmistakably smooth, deep, complex character.",
-    category: "vines",
+    category: "wines",
     tags: ["Best Seller", "Express Delivery", "Party Favorite"],
     variants: [
       { id: "sm", label: "70cl", image: Johnnie_Walker_Black_Label.src, price: 42000, stockLeft: 45 },
@@ -360,7 +362,7 @@ export const products: ProductsType = [
     name: "Johnnie Walker Blue Label",
     shortDescription: "An exquisite blend made from some of Scotland’s rarest whiskies.",
     longDescription: "Only one in every ten thousand casks has the elusive quality and character to deliver the remarkably smooth signature taste of Johnnie Walker Blue Label.",
-    category: "vines",
+    category: "wines",
     tags: ["Luxury", "Ultra Premium", "VIP Favorite"],
     variants: [
       { id: "lg", label: "750ml", image: JohnnieWalkerBlueLabel.src, price: 295000, stockLeft: 5 }
@@ -380,7 +382,7 @@ export const products: ProductsType = [
     name: "Patrón Silver Tequila",
     shortDescription: "The perfect ultra-premium white spirit crafted from 100% Weber Blue Agave.",
     longDescription: "Handcrafted in small batches, Patrón Silver is smooth, sweet, and easily mixable, making it a favorite for signature luxury cocktails and top-tier parties.",
-    category: "vines",
+    category: "wines",
     tags: ["Tequila", "Premium", "Express Delivery"],
     variants: [
       { id: "md", label: "750ml", image: patronsilvertequila_aj.src, price: 72000, stockLeft: 18 }
@@ -441,7 +443,7 @@ export const products: ProductsType = [
     name: "Jameson Irish Whiskey",
     shortDescription: "Triple-distilled Irish whiskey, remarkably smooth and versatile.",
     longDescription: "Jameson is a blended Irish whiskey made from the finest pot still and grain whiskies, triple distilled to achieve signature smoothness and aged in oak casks for a minimum of 4 years.",
-    category: "vines",
+    category: "wines",
     tags: ["Express Delivery", "Best Seller", "Bar Classic"],
     variants: [
       { id: "sm", label: "70cl", image: Jameson_Irish_Whiskey.src, price: 32000, stockLeft: 40 },
@@ -462,7 +464,7 @@ export const products: ProductsType = [
     name: "Don Julio 1942 Añejo Tequila",
     shortDescription: "An exceptional luxury tequila celebrated in exclusive cocktail lounges worldwide.",
     longDescription: "Produced in small batches and aged for a minimum of two and a half years, Don Julio 1942 Añejo Tequila is handcrafted in tribute to the year that Don Julio González began his tequila-making journey.",
-    category: "vines",
+    category: "wines",
     tags: ["Luxury", "Tequila", "VIP Elite"],
     variants: [
       { id: "md", label: "750ml", image: Don_Julio_1942_Añejo_Tequila.src, price: 310000, stockLeft: 3 }
@@ -482,7 +484,7 @@ export const products: ProductsType = [
     name: "Belvedere Vodka",
     shortDescription: "The definition of luxury vodka, crafted from Polish rye and purified water.",
     longDescription: "Belvedere Vodka is completely free of additives, gluten-free, and structured with a complex character profile containing notes of vanilla and white pepper.",
-    category: "vines",
+    category: "wines",
     tags: ["Vodka", "Premium", "Express Delivery"],
     variants: [
       { id: "sm", label: "70cl", image: Belvedere_Vodka.src, price: 48000, stockLeft: 19 },
@@ -646,7 +648,7 @@ export const products: ProductsType = [
     name: "The Macallan 12 Year Double Cask",
     shortDescription: "A perfectly balanced single malt defined by American and European oak aging.",
     longDescription: "The Double Cask 12 Years Old forms part of Macallan's central range, highlighting a flawless synchronization of honey, citrus, and sweet ginger profiles.",
-    category: "vines",
+    category: "wines",
     tags: ["Luxury", "Single Malt", "Best Seller"],
     variants: [
       { id: "70cl", label: "70cl", image: The_Macallan_12_Year_Double_Cask.src, price: 115000, stockLeft: 9 }
@@ -666,7 +668,7 @@ export const products: ProductsType = [
     name: "Tanqueray London Dry Gin",
     shortDescription: "An exceptionally balanced botanic dry gin curated for premium gin and tonics.",
     longDescription: "Tanqueray London Dry Gin is distilled four times to ensure absolute smoothness, locking in the core profiles of juniper, coriander, angelica root, and liquorice.",
-    category: "vines",
+    category: "wines",
     tags: ["Gin", "Express Delivery", "Bar Classic"],
     variants: [
       { id: "md", label: "750ml", image: Tanqueray_London_Dry_Gin.src, price: 29000, stockLeft: 24 },
@@ -687,7 +689,7 @@ export const products: ProductsType = [
     name: "Bombay Sapphire Distilled Gin",
     shortDescription: "World-famous gin housed in its iconic, translucent blue glass bottle.",
     longDescription: "Crafted using 10 vapor-infused, exotic botanicals sustainably sourced from around the globe, creating a uniquely bright, fresh, and complex aromatic flavor profile.",
-    category: "vines",
+    category: "wines",
     tags: ["Gin", "Express Delivery", "Popular"],
     variants: [
       { id: "sm", label: "70cl", image: Bombay_Sapphire_Distilled_Gin.src, price: 31000, stockLeft: 33 }
@@ -707,7 +709,7 @@ export const products: ProductsType = [
     name: "Glenmorangie The Original 10Y",
     shortDescription: "The backbone signature single malt Scotch whisky from Highland distillery.",
     longDescription: "Distilled in Scotland's tallest copper stills and matured for ten long years in premium bourbon oak casks to express notes of vanilla, citrus fruits, and peach.",
-    category: "vines",
+    category: "wines",
     tags: ["Single Malt", "Express Delivery", "Premium"],
     variants: [
       { id: "md", label: "70cl", image: Glenmorangie_The_Original_10Y.src, price: 74000, stockLeft: 12 }
@@ -727,7 +729,7 @@ export const products: ProductsType = [
     name: "The Glenlivet 12 Year Old",
     shortDescription: "Classic Speyside single malt whisky with complex tropical fruit profiles.",
     longDescription: "Representing The Glenlivet's signature style, this classic malt is matured primarily in traditional European oak before finishing in American oak barrels.",
-    category: "vines",
+    category: "wines",
     tags: ["Single Malt", "Express Delivery"],
     variants: [
       { id: "sm", label: "70cl", image: The_Glenlivet_12_Year_Old.src, price: 71000, stockLeft: 15 }
@@ -747,7 +749,7 @@ export const products: ProductsType = [
     name: "Baileys Original Irish Cream",
     shortDescription: "The ultimate sweet indulgence, combining fine Irish whiskey and real cream.",
     longDescription: "A sweet mix of dairy cream, Irish whiskey, and chocolate flavors. Best served over cubed ice, mixed into coffee, or used as a dessert topping.",
-    category: "vines",
+    category: "wines",
     tags: ["Express Delivery", "Liqueur", "Best Seller", "Sweet Wine"],
     variants: [
       { id: "sm", label: "70cl", image: Baileys_Original_Irish_Cream.src, price: 24000, stockLeft: 60 },
@@ -768,7 +770,7 @@ export const products: ProductsType = [
     name: "Jägermeister Herbal Liqueur",
     shortDescription: "An iconic German herbal liqueur crafted from 56 secret botanicals.",
     longDescription: "Best kept frozen in the icebox and served ice cold as a party shot. Features deep herbal notes, spice, and natural fruit extracts.",
-    category: "vines",
+    category: "wines",
     tags: ["Express Delivery", "Party Favorite", "Best Seller"],
     variants: [
       { id: "sm", label: "70cl", image: Jägermeister_Herbal_Liqueur.src, price: 22000, stockLeft: 25 },

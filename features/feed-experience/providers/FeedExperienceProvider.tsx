@@ -1,23 +1,10 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
-import type {
-  ExperienceTarget,
-  FeedActions,
-  FeedContext,
-  FeedExperience,
-  FeedIntent,
-} from "../contracts";
-import { feedExperienceEngine } from "../engine";
+import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIntent } from '../contracts';
+
+import { feedExperienceEngine } from '../engine';
 
 type FeedExperienceContextValue = {
   intent: FeedIntent;
@@ -26,14 +13,14 @@ type FeedExperienceContextValue = {
   actions: FeedActions;
 };
 
-const FeedExperienceContext =
-  createContext<FeedExperienceContextValue | null>(null);
+const FeedExperienceContext = createContext<FeedExperienceContextValue | null>(null);
 
-type Props = {
+type FeedExperienceProviderProps = {
   children: ReactNode;
   initialIntent: FeedIntent;
   context: FeedContext;
-  baseActions: Omit<FeedActions, "openExperience" | "resetExperience">;
+
+  baseActions: Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>;
 };
 
 function createIntent(target: ExperienceTarget): FeedIntent {
@@ -41,55 +28,66 @@ function createIntent(target: ExperienceTarget): FeedIntent {
   const nonce = Date.now();
 
   switch (target.type) {
-    case "home":
-      return { id: `home:${nonce}`, type: "home", source: "user-action", createdAt };
-    case "store-discovery":
+    case 'home':
       return {
-        id: `store-discovery:${target.categorySlug ?? "all"}:${nonce}`,
-        type: "store-discovery",
-        source: "user-action",
-        categorySlug: target.categorySlug ?? "all",
-        createdAt,
+        id: `home:${nonce}`,
+        type: 'home',
+        source: 'user-action',
+        createdAt
       };
-    case "category":
+
+    case 'store-discovery':
+      return {
+        id: `store-discovery:${target.categorySlug ?? 'all'}:${nonce}`,
+        type: 'store-discovery',
+        source: 'user-action',
+        categorySlug: target.categorySlug ?? 'all',
+        createdAt
+      };
+
+    case 'category':
       return {
         id: `category:${target.categorySlug}:${nonce}`,
-        type: "category",
-        source: "user-action",
+        type: 'category',
+        source: 'user-action',
         categorySlug: target.categorySlug,
-        createdAt,
+        createdAt
       };
-    case "product":
+
+    case 'product':
       return {
         id: `product:${target.productId}:${nonce}`,
-        type: "product",
-        source: "hub-card",
+        type: 'product',
+        source: 'hub-card',
         targetId: target.productId,
-        createdAt,
+        createdAt
       };
-    case "collection":
+
+    case 'collection':
       return {
         id: `collection:${target.collectionId}:${nonce}`,
-        type: "collection",
-        source: "user-action",
+        type: 'collection',
+        source: 'user-action',
         targetId: target.collectionId,
-        createdAt,
+        createdAt
       };
-    case "promotion":
+
+    case 'promotion':
       return {
         id: `promotion:${target.promotionId}:${nonce}`,
-        type: "promotion",
-        source: "user-action",
+        type: 'promotion',
+        source: 'user-action',
         targetId: target.promotionId,
-        createdAt,
+        createdAt
       };
-    case "search":
+
+    case 'search':
       return {
         id: `search:${target.query}:${nonce}`,
-        type: "search",
-        source: "search",
+        type: 'search',
+        source: 'search',
         query: target.query,
-        createdAt,
+        createdAt
       };
   }
 }
@@ -98,22 +96,16 @@ export function FeedExperienceProvider({
   children,
   initialIntent,
   context,
-  baseActions,
-}: Props) {
-  const [intent, setIntent] = useState(initialIntent);
-
-  useEffect(() => {
-    if (
-      intent.type === "store-discovery" ||
-      intent.type === "home" ||
-      intent.type === "category"
-    ) {
-      setIntent(initialIntent);
-    }
-  }, [initialIntent]);
+  baseActions
+}: FeedExperienceProviderProps) {
+  const [intent, setIntent] = useState<FeedIntent>(initialIntent);
 
   const openExperience = useCallback((target: ExperienceTarget) => {
     setIntent(createIntent(target));
+  }, []);
+
+  const restoreExperience = useCallback((restoredIntent: FeedIntent) => {
+    setIntent(restoredIntent);
   }, []);
 
   const resetExperience = useCallback(() => {
@@ -121,31 +113,43 @@ export function FeedExperienceProvider({
   }, [initialIntent]);
 
   const actions = useMemo<FeedActions>(
-    () => ({ ...baseActions, openExperience, resetExperience }),
-    [baseActions, openExperience, resetExperience],
+    () => ({
+      ...baseActions,
+      openExperience,
+      restoreExperience,
+      resetExperience
+    }),
+    [baseActions, openExperience, restoreExperience, resetExperience]
   );
 
   const experience = useMemo(
-    () => feedExperienceEngine.resolve({ intent, context }),
-    [intent, context],
+    () =>
+      feedExperienceEngine.resolve({
+        intent,
+        context
+      }),
+    [intent, context]
   );
 
-  const value = useMemo(
-    () => ({ intent, context, experience, actions }),
-    [intent, context, experience, actions],
+  const value = useMemo<FeedExperienceContextValue>(
+    () => ({
+      intent,
+      context,
+      experience,
+      actions
+    }),
+    [intent, context, experience, actions]
   );
 
-  return (
-    <FeedExperienceContext.Provider value={value}>
-      {children}
-    </FeedExperienceContext.Provider>
-  );
+  return <FeedExperienceContext.Provider value={value}>{children}</FeedExperienceContext.Provider>;
 }
 
 export function useFeedExperienceContext() {
   const value = useContext(FeedExperienceContext);
+
   if (!value) {
-    throw new Error("useFeedExperienceContext must be used inside FeedExperienceProvider.");
+    throw new Error('useFeedExperienceContext must be used inside FeedExperienceProvider.');
   }
+
   return value;
 }

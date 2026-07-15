@@ -5,6 +5,7 @@ import {
   Wine,
   UtensilsCrossed,
   PartyPopper,
+  CakeSlice,
 } from 'lucide-react';
 
 export const categories = [
@@ -148,6 +149,35 @@ export const categories = [
       { label: 'Salads', slug: 'salads' },
     ],
   },
+
+  {
+  id: 'confectioneries',
+  slug: 'confectioneries',
+  label: 'Confectioneries',
+  icon: CakeSlice,
+  accentColor: '#e11d48',
+
+  image:
+    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200&auto=format&fit=crop',
+
+  coverImages: [
+    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?q=80&w=1600&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=1600&auto=format&fit=crop',
+  ],
+
+  shortDescription:
+    'Fresh cakes, desserts and celebration treats.',
+
+  description:
+    'Discover premium cakes, cupcakes, pastries and desserts prepared for birthdays, gatherings and everyday indulgence.',
+
+  subcategories: [
+    { label: 'Cakes', slug: 'cakes' },
+    { label: 'Cupcakes', slug: 'cupcakes' },
+    { label: 'Desserts', slug: 'desserts' },
+  ],
+},
 
   {
     id: 'party-plans',

@@ -31,6 +31,7 @@ import {
 import ThemeController from './ThemeController';
 
 import { useIdentity } from '@/providers/IdentityProvider';
+import { WorkspaceSwitcher } from '@/features/workspace';
 
 type MenuItemProps = {
   icon: React.ReactNode;
@@ -172,7 +173,6 @@ export default function UserActionComponent() {
 
                 <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
-
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{user.name}</p>
 
@@ -196,6 +196,9 @@ export default function UserActionComponent() {
               </button>
             </div>
           )}
+          <div className="mt-3">
+            <WorkspaceSwitcher variant="account-sheet" />
+          </div>
         </SheetHeader>
 
         <div className="space-y-1 px-3 py-4">

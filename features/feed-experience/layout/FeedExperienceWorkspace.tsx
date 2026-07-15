@@ -1,28 +1,36 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
-import ProductModal from '@/components/shared/ProductModal';
-import PromoModal from '@/components/promos/PromoModal';
-import { cn } from '@/lib/utils';
+import { LoaderCircle } from 'lucide-react';
 import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
+import PromoModal from '@/components/promos/PromoModal';
+import ProductModal from '@/components/shared/ProductModal';
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { categories } from '@/data/categories';
 import { collections } from '@/data/collections';
 import { products as initialProducts } from '@/data/products';
 import { promos, type Promo } from '@/data/promos';
 
+import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
+import { useWorkspace } from '@/features/workspace';
+import { cn } from '@/lib/utils';
+
 import type { ProductType, ProductVariantType } from '@/types/types';
-
-import type { FeedActions, FeedContext, FeedIntent } from '../contracts';
-import { FeedExperienceProvider } from '../providers';
-import { FeedRenderer } from '../renderers';
-
-import { mockExperienceProfiles, type MockExperienceProfileId } from '../mocks';
 
 import { MockExperienceSwitcher } from '../components/MockExperienceSwitcher';
 
-export default function FeedExperienceWorkspace() {
+import type { FeedActions, FeedContext, FeedIntent } from '../contracts';
+
+import { mockExperienceProfiles, type MockExperienceProfileId } from '../mocks';
+
+import { FeedExperienceProvider } from '../providers';
+import { FeedRenderer } from '../renderers';
+
+function FeedExperienceWorkspaceContent() {
+  const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
+
   // ============================================================
   // ROUTING
   // ============================================================
@@ -32,42 +40,6 @@ export default function FeedExperienceWorkspace() {
 
   const selectedCategory = searchParams.get('category') ?? 'all';
 
-  // ============================================================
-  // MOCK EXPERIENCE PROFILE
-  // ============================================================
-
-  const [activeProfileId, setActiveProfileId] = useState<MockExperienceProfileId>('guest');
-
-  const activeProfile =
-    mockExperienceProfiles.find(profile => profile.id === activeProfileId) ?? mockExperienceProfiles[0];
-
-  // ============================================================
-  // PRODUCT STATE
-  // Temporary local state until ProductsProvider/database wiring
-  // ============================================================
-
-  const [storeProducts, setStoreProducts] = useState<ProductType[]>(initialProducts);
-
-  // ============================================================
-  // PRODUCT PREVIEW STATE
-  // ============================================================
-
-  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
-
-  const [previewOpen, setPreviewOpen] = useState(false);
-
-  // ============================================================
-  // PROMOTION PREVIEW STATE
-  // ============================================================
-
-  const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
-
-  const [promoOpen, setPromoOpen] = useState(false);
-
-  // ============================================================
-  // ROUTE ACTIONS
-  // ============================================================
-
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -75,9 +47,10 @@ export default function FeedExperienceWorkspace() {
       Object.entries(updates).forEach(([key, value]) => {
         if (!value || value === 'all') {
           params.delete(key);
-        } else {
-          params.set(key, value);
+          return;
         }
+
+        params.set(key, value);
       });
 
       const query = params.toString();
@@ -90,8 +63,23 @@ export default function FeedExperienceWorkspace() {
   );
 
   // ============================================================
-  // PRODUCT ACTIONS
+  // MOCK EXPERIENCE PROFILE
   // ============================================================
+
+  const [activeProfileId, setActiveProfileId] = useState<MockExperienceProfileId>('guest');
+
+  const activeProfile =
+    mockExperienceProfiles.find(profile => profile.id === activeProfileId) ?? mockExperienceProfiles[0];
+
+  // ============================================================
+  // PRODUCT STATE
+  // ============================================================
+
+  const [storeProducts, setStoreProducts] = useState<ProductType[]>(initialProducts);
+
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
+
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const openPreview = useCallback((product: ProductType) => {
     setSelectedProduct(product);
@@ -130,8 +118,12 @@ export default function FeedExperienceWorkspace() {
   }, []);
 
   // ============================================================
-  // PROMOTION ACTIONS
+  // PROMOTION STATE
   // ============================================================
+
+  const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
+
+  const [promoOpen, setPromoOpen] = useState(false);
 
   const previewPromotion = useCallback((promoId: string) => {
     const promotion = promos.find(item => item.id === promoId);
@@ -148,9 +140,7 @@ export default function FeedExperienceWorkspace() {
   }, []);
 
   // ============================================================
-  // ROUTE-BASED INITIAL INTENT
-  // This is the starting intent given to the provider.
-  // The provider can later replace it through openExperience().
+  // INITIAL FEED INTENT
   // ============================================================
 
   const initialIntent = useMemo<FeedIntent>(
@@ -165,8 +155,7 @@ export default function FeedExperienceWorkspace() {
   );
 
   // ============================================================
-  // SHARED FEED CONTEXT
-  // This is the unified reality consumed by the engine.
+  // FEED CONTEXT
   // ============================================================
 
   const context = useMemo<FeedContext>(
@@ -201,12 +190,14 @@ export default function FeedExperienceWorkspace() {
   );
 
   // ============================================================
-  // BASE APPLICATION ACTIONS
-  // openExperience() and resetExperience() are added internally
-  // by FeedExperienceProvider.
+  // BASE ACTIONS
+  // FeedExperienceProvider supplies:
+  // openExperience()
+  // restoreExperience()
+  // resetExperience()
   // ============================================================
 
-  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'resetExperience'>>(
+  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
     () => ({
       changeCategory: updateQuery,
       previewProduct: openPreview,
@@ -218,8 +209,7 @@ export default function FeedExperienceWorkspace() {
   );
 
   // ============================================================
-  // DERIVED PROMOTION PRODUCTS
-  // Used by PromoModal.
+  // DERIVED PRODUCTS
   // ============================================================
 
   const selectedPromoProducts = useMemo(() => {
@@ -229,11 +219,6 @@ export default function FeedExperienceWorkspace() {
       .map(productId => storeProducts.find(product => product.id === productId))
       .filter((product): product is ProductType => Boolean(product));
   }, [selectedPromo, storeProducts]);
-
-  // ============================================================
-  // DERIVED CATEGORY PRODUCTS
-  // Used by ProductModal navigation.
-  // ============================================================
 
   const filteredProducts = useMemo(
     () =>
@@ -246,10 +231,6 @@ export default function FeedExperienceWorkspace() {
   const selectedIndex = selectedProduct
     ? filteredProducts.findIndex(product => product.id === selectedProduct.id)
     : -1;
-
-  // ============================================================
-  // PRODUCT MODAL NAVIGATION
-  // ============================================================
 
   const handleNextProduct = useCallback(() => {
     if (selectedIndex < 0 || selectedIndex >= filteredProducts.length - 1) {
@@ -266,10 +247,11 @@ export default function FeedExperienceWorkspace() {
   }, [filteredProducts, selectedIndex]);
 
   // ============================================================
-  // WORKSPACE
+  // DISCOVERY HUB PREFERENCE
   // ============================================================
 
   const [hubCollapsed, setHubCollapsed] = useState(false);
+
   const [hubPreferenceLoaded, setHubPreferenceLoaded] = useState(false);
 
   useEffect(() => {
@@ -288,37 +270,122 @@ export default function FeedExperienceWorkspace() {
     localStorage.setItem('aj_discovery_hub_collapsed', String(hubCollapsed));
   }, [hubCollapsed, hubPreferenceLoaded]);
 
+  // ============================================================
+  // WORKSPACE STATES
+  // ============================================================
+
+  if (workspaceLoading) {
+    return (
+      <div className="grid min-h-[50vh] place-items-center">
+        <div className="flex flex-col items-center gap-3">
+          <LoaderCircle className="size-6 animate-spin text-primary" />
+
+          <p className="text-sm font-medium text-muted-foreground">Loading AJ Logik</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (workspaceError) {
+    return (
+      <div className="grid min-h-[50vh] place-items-center px-6 text-center">
+        <div>
+          <p className="font-semibold">AJ Logik is temporarily unavailable</p>
+
+          <p className="mt-2 text-sm text-muted-foreground">{workspaceError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeWorkspace) {
+    return (
+      <div className="grid min-h-[50vh] place-items-center px-6 text-center">
+        <p className="text-sm text-muted-foreground">AJ Logik could not prepare your shopping experience.</p>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
-        <div className="grid h-full min-h-0 grid-cols-12 items-stretch gap-4">
-          <section
-            className={cn(
-              'col-span-12 min-w-0 pb-6 transition-all duration-300',
-              'lg:h-full lg:min-h-0 lg:overflow-y-auto',
-              'lg:rounded-3xl lg:bg-card/50 lg:p-4',
-              'lg:scroll-smooth lg:scrollbar-none',
-              hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
-            )}>
-            <MockExperienceSwitcher
-              profiles={mockExperienceProfiles}
-              activeProfileId={activeProfileId}
-              onChange={setActiveProfileId}
+      <ExperienceStackProvider key={activeWorkspace.id} workspaceId={activeWorkspace.id}>
+        <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
+          <div className="grid h-full min-h-0 grid-cols-12 items-stretch gap-4">
+            <section
+              className={cn(
+                'col-span-12 min-w-0 pb-6 transition-all duration-300',
+                'lg:h-full lg:min-h-0 lg:overflow-y-auto',
+                'lg:rounded-3xl lg:bg-card/50 lg:p-4',
+                'lg:scroll-smooth lg:scrollbar-none',
+                hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
+              )}>
+              <section
+                className={cn(
+                  'col-span-12 min-w-0 pb-6 transition-all duration-300',
+                  'lg:h-full lg:min-h-0 lg:overflow-y-auto',
+                  'lg:rounded-3xl lg:bg-card/50 lg:p-4',
+                  'lg:scroll-smooth lg:scrollbar-none',
+                  hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
+                )}>
+                <MockExperienceSwitcher
+                  profiles={mockExperienceProfiles}
+                  activeProfileId={activeProfileId}
+                  onChange={setActiveProfileId}
+                />
+
+                <FeedRenderer />
+              </section>
+
+              <MockExperienceSwitcher
+                profiles={mockExperienceProfiles}
+                activeProfileId={activeProfileId}
+                onChange={setActiveProfileId}
+              />
+
+              <FeedRenderer />
+            </section>
+
+            <DesktopDiscoveryRail
+              groups={hubGroups}
+              widgets={hubWidgets}
+              collapsed={hubCollapsed}
+              onCollapsedChange={setHubCollapsed}
             />
+          </div>
 
-            <FeedRenderer />
-          </section>
+          <ProductModal
+            product={selectedProduct}
+            open={previewOpen}
+            onClose={closePreview}
+            onToggleLike={() => {
+              if (selectedProduct) {
+                toggleLike(selectedProduct.id);
+              }
+            }}
+            onNext={handleNextProduct}
+            onPrevious={handlePreviousProduct}
+            hasNext={selectedIndex > -1 && selectedIndex < filteredProducts.length - 1}
+            hasPrevious={selectedIndex > 0}
+            currentIndex={selectedIndex}
+            totalProducts={filteredProducts.length}
+          />
 
-          <DesktopDiscoveryRail
-            groups={hubGroups}
-            widgets={hubWidgets}
-            collapsed={hubCollapsed}
-            onCollapsedChange={setHubCollapsed}
+          <PromoModal
+            promo={selectedPromo}
+            products={selectedPromoProducts}
+            open={promoOpen}
+            onClose={closePromoPreview}
           />
         </div>
-
-        {/* Modals remain here */}
-      </div>
+      </ExperienceStackProvider>
     </FeedExperienceProvider>
   );
+}
+
+export default function FeedExperienceWorkspace() {
+  return <FeedExperienceWorkspaceContent />;
 }

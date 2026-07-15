@@ -104,7 +104,7 @@ export default function DiscoverExperienceShell() {
     [router]
   );
 
-  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'resetExperience'>>(
+  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
     () => ({
       changeCategory,
       previewProduct,

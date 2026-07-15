@@ -29,13 +29,18 @@ model User {
 
   experienceProfile ExperienceProfile?
 
-  cart      Cart?
-  wishlist  Wishlist?
+  carts     Cart[]
+  wishlists Wishlist[]
   orders    Order[]
   addresses Address[]
   reviews   Review[]
 
-  recentlyViewed RecentlyViewed[]
+  recentlyViewed            RecentlyViewed[]
+  workspaceMemberships      WorkspaceMembership[]
+  demoWallets               DemoWallet[]
+  experienceEvents          ExperienceEvent[]
+  experienceHistoryEntries  ExperienceHistoryEntry[]
+  experienceHistorySettings ExperienceHistorySettings[]
 
   @@unique([email])
   @@map("user")
@@ -298,7 +303,10 @@ model ProductImage {
 model Cart {
   id String @id @default(cuid())
 
-  userId String @unique
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   items CartItem[]
@@ -306,6 +314,9 @@ model Cart {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
   @@map("cart")
 }
 
@@ -340,7 +351,10 @@ model CartItem {
 model Wishlist {
   id String @id @default(cuid())
 
-  userId String @unique
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   items WishlistItem[]
@@ -348,6 +362,9 @@ model Wishlist {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
   @@map("wishlist")
 }
 
@@ -366,6 +383,24 @@ model WishlistItem {
   @@index([wishlistId])
   @@index([productId])
   @@map("wishlist_item")
+}
+
+model StockMovement {
+  id String @id @default(cuid())
+
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  type      StockMovementType
+  quantity  Int
+  reason    String?
+  reference String?
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryId])
+  @@index([type])
+  @@map("stock_movement")
 }
 
 // ============================================================
@@ -388,24 +423,6 @@ model Inventory {
   updatedAt DateTime @updatedAt
 
   @@map("inventory")
-}
-
-model StockMovement {
-  id String @id @default(cuid())
-
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
-  type      StockMovementType
-  quantity  Int
-  reason    String?
-  reference String?
-
-  createdAt DateTime @default(now())
-
-  @@index([inventoryId])
-  @@index([type])
-  @@map("stock_movement")
 }
 
 enum StockMovementType {
@@ -445,9 +462,17 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  mode       WorkspaceMode @default(LIVE)
+  dataSource DataSource    @default(REAL)
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([workspaceId])
+  @@index([workspaceId, status])
   @@map("order")
 }
 
@@ -521,6 +546,103 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum WorkspaceMode {
+  LIVE
+  DEMO
+  PRACTICE
+  SANDBOX
+}
+
+enum WorkspaceRole {
+  MEMBER
+  PREMIUM_MEMBER
+  SUPPORT
+  MODERATOR
+  MANAGER
+  ADMIN
+  OWNER
+  SUPER_ADMIN
+}
+
+enum DataSource {
+  REAL
+  DEMO
+  PRACTICE
+  SYNTHETIC
+  IMPORTED
+}
+
+enum DemoScenarioType {
+  EMPTY
+  RETAIL
+  SUPERMARKET
+  FASHION
+  HOSPITALITY
+  EVENTS
+  CUSTOM
+}
+
+enum DemoProvisionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  RESETTING
+}
+
+enum ExperienceEventType {
+  PAGE_VIEW
+  PRODUCT_VIEW
+  CATEGORY_VIEW
+  SEARCH
+  COLLECTION_CLICK
+  CAMPAIGN_VIEW
+  CAMPAIGN_CLICK
+  ADD_TO_CART
+  REMOVE_FROM_CART
+  UPDATE_CART_QUANTITY
+  ADD_TO_WISHLIST
+  REMOVE_FROM_WISHLIST
+  COUPON_APPLIED
+  COUPON_REJECTED
+  CHECKOUT_STARTED
+  PAYMENT_STARTED
+  PAYMENT_COMPLETED
+  PAYMENT_FAILED
+  ORDER_COMPLETED
+  DELIVERY_VIEWED
+  DELIVERY_STARTED
+  DELIVERY_COMPLETED
+  REVIEW_CREATED
+  REVIEW_APPROVED
+  REVIEW_REJECTED
+  PRODUCT_CREATED
+  PRODUCT_UPDATED
+  STOCK_ADJUSTED
+  DEMO_STARTED
+  DEMO_RESET
+  WORKSPACE_SWITCHED
+}
+
+enum ExperienceHistoryRetention {
+  SESSION
+  ONE_DAY
+  SEVEN_DAYS
+  THIRTY_DAYS
+  FOREVER
+}
+
+enum ExperienceHistorySource {
+  CATEGORY
+  DISCOVERY_HUB
+  SMART_PICK
+  CAMPAIGN
+  SEARCH
+  COLLECTION
+  PRODUCT
+  SYSTEM
+}
+
 // ============================================================
 // CUSTOMER
 // ============================================================
@@ -591,4 +713,217 @@ model RecentlyViewed {
   @@index([userId, viewedAt])
   @@index([productId])
   @@map("recently_viewed")
+}
+
+// ============================================================
+// RCENTZ WORKSPACE RUNTIME
+// ============================================================
+
+model Workspace {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  mode WorkspaceMode @default(LIVE)
+
+  active     Boolean   @default(true)
+  resettable Boolean   @default(false)
+  expiresAt  DateTime?
+
+  memberships               WorkspaceMembership[]
+  demoWallets               DemoWallet[]
+  events                    ExperienceEvent[]
+  experienceHistoryEntries  ExperienceHistoryEntry[]
+  experienceHistorySettings ExperienceHistorySettings[]
+  provisions                DemoProvision[]
+
+  carts     Cart[]
+  wishlists Wishlist[]
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mode, active])
+  @@map("workspace")
+}
+
+model WorkspaceMembership {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role   WorkspaceRole @default(MEMBER)
+  active Boolean       @default(true)
+
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId, role])
+  @@map("workspace_membership")
+}
+
+model DemoWallet {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currency String  @default("NGN")
+  balance  Decimal @default(500000) @db.Decimal(14, 2)
+  active   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("demo_wallet")
+}
+
+model ExperienceEvent {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  sessionId String?
+
+  type       ExperienceEventType
+  source     String?
+  dataSource DataSource          @default(REAL)
+
+  productId    String?
+  categorySlug String?
+  collectionId String?
+  campaignId   String?
+  searchTerm   String?
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, type, createdAt])
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("experience_event")
+}
+
+model DemoScenario {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  type DemoScenarioType
+
+  description   String?
+  configuration Json?
+  active        Boolean @default(true)
+
+  provisions DemoProvision[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("demo_scenario")
+}
+
+model DemoProvision {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  scenarioId String
+  scenario   DemoScenario @relation(fields: [scenarioId], references: [id])
+
+  status DemoProvisionStatus @default(PENDING)
+
+  seededRecords Int       @default(0)
+  metadata      Json?
+  completedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([scenarioId])
+  @@index([status])
+  @@map("demo_provision")
+}
+
+// ============================================================
+// EXPERIENCE STACK
+// ============================================================
+
+model ExperienceHistorySettings {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enabled    Boolean                    @default(true)
+  retention  ExperienceHistoryRetention @default(SEVEN_DAYS)
+  maxEntries Int                        @default(20)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("experience_history_settings")
+}
+
+model ExperienceHistoryEntry {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label    String
+  subtitle String?
+
+  categorySlug String
+
+  source ExperienceHistorySource
+
+  experienceId String?
+  campaignId   String?
+  collectionId String?
+  productId    String?
+
+  intentSnapshot  Json
+  contextSnapshot Json?
+
+  fingerprint String
+
+  visitedAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId, fingerprint])
+  @@index([workspaceId, userId, visitedAt])
+  @@index([userId, visitedAt])
+  @@index([expiresAt])
+  @@map("experience_history_entry")
 }
