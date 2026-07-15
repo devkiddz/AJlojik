@@ -1,9 +1,13 @@
 'use client';
 
 import { Check, ChevronDown, FlaskConical, LoaderCircle, Radio, WalletCards, X } from 'lucide-react';
+
 import { useEffect, useRef, useState } from 'react';
+
 import { cn } from '@/lib/utils';
+
 import { useWorkspace } from '../WorkspaceProvider';
+
 import type { Workspace, WorkspaceMode } from '../workspaceTypes';
 
 type WorkspaceSwitcherVariant = 'compact' | 'account-sheet' | 'sidebar';
@@ -24,6 +28,7 @@ function WorkspaceModeIcon({ mode }: { mode: WorkspaceMode }) {
   switch (mode) {
     case 'LIVE':
       return <Radio className="size-4" />;
+
     case 'DEMO':
     case 'PRACTICE':
     case 'SANDBOX':
@@ -43,7 +48,9 @@ function formatWallet(workspace: Workspace) {
 
 export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceSwitcherProps) {
   const { activeWorkspace, availableWorkspaces, switchingWorkspace, switchWorkspace } = useWorkspace();
+
   const [open, setOpen] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,30 +80,32 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
     }
 
     await switchWorkspace(workspaceId);
+
     setOpen(false);
   };
 
   const triggerClassName = cn(
-    'flex items-center border transition',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    'group flex items-center border text-left',
+    'transition duration-200 ease-out',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
     'disabled:cursor-not-allowed disabled:opacity-60',
 
     variant === 'compact' && [
       'h-10 gap-2 rounded-full',
-      'bg-background/80 px-3 shadow-sm backdrop-blur-xl',
-      'hover:bg-primary/10 transition-all'
+      'bg-background/80 px-2 shadow-sm backdrop-blur-xl',
+      'hover:border-primary/20 hover:bg-primary/5'
     ],
 
     variant === 'account-sheet' && [
-      'w-full gap-3 rounded-2xl',
-      'bg-muted/30 p-3 text-left',
-      'hover:bg-muted/60'
+      'w-full gap-3 rounded-2xl p-3',
+      'border-border/70 bg-gradient-to-br from-card via-card to-muted/40',
+      'shadow-sm hover:border-primary/20 hover:shadow-md'
     ],
 
     variant === 'sidebar' && [
-      'w-full gap-3 rounded-xl',
-      'bg-sidebar-primary/10 transition-all/40 p-2.5 text-left',
-      'hover:bg-sidebar-primary/10 transition-all'
+      'w-full gap-3 rounded-xl p-2.5',
+      'border-sidebar-border/70 bg-sidebar-accent/40',
+      'hover:border-primary/20 hover:bg-sidebar-accent'
     ]
   );
 
@@ -109,54 +118,74 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
         disabled={switchingWorkspace}
         onClick={() => setOpen(current => !current)}
         className={triggerClassName}>
-        {/* Emerald Animated Icon Container */}
+        {/* Experience icon */}
         <span
           className={cn(
-            'grid shrink-0 place-items-center rounded-xl border animate-pulse',
-            variant === 'compact' ? 'size-7' : 'size-10',
-            'border-emerald-500/20 bg-emerald-500/10 text-emerald-500'
+            'relative grid shrink-0 place-items-center rounded-xl border',
+            'border-emerald-500/20 bg-emerald-500/10 text-emerald-500',
+            'shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
+
+            variant === 'compact' ? 'size-7' : 'size-10'
           )}>
+          <span className="absolute inset-0 rounded-xl bg-emerald-400/5 opacity-0 transition-opacity group-hover:opacity-100" />
+
           {switchingWorkspace ? (
-            <LoaderCircle className="size-4 animate-spin" />
+            <LoaderCircle className="relative size-4 animate-spin" />
           ) : (
-            <WorkspaceModeIcon mode={activeWorkspace.mode} />
+            <span className="relative">
+              <WorkspaceModeIcon mode={activeWorkspace.mode} />
+            </span>
           )}
         </span>
 
-        <div className="flex flex-col gap-4">
-          {/* Clean text without the pulse dot */}
-          <span className="block truncate text-sm font-semibold pb-2 border-b border-primary">
+        {/* Experience details */}
+        <span className="min-w-0 flex-1">
+          {variant !== 'compact' && (
+            <span className="block text-[0.68rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Current experience
+            </span>
+          )}
+
+          <span
+            className={cn(
+              'block truncate font-semibold',
+              variant === 'compact' ? 'text-xs tracking-wide' : 'mt-0.5 text-sm'
+            )}>
             {activeWorkspace.mode}
           </span>
-          <span className={cn('min-w-0 flex-1', variant === 'compact' && 'flex items-center gap-2')}>
-            {variant !== 'compact' && (
-              <span className="block text-[0.68rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                Current experience
-              </span>
-            )}
 
-            {variant !== 'compact' && (
-              <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                {wallet ?? workspaceDescriptions[activeWorkspace.mode]}
-              </span>
-            )}
+          {variant !== 'compact' && (
+            <span className="mt-1 block truncate text-xs text-muted-foreground">
+              {wallet ?? workspaceDescriptions[activeWorkspace.mode]}
+            </span>
+          )}
 
-            {variant === 'compact' && wallet && (
-              <span className="hidden text-xs text-muted-foreground sm:inline">{wallet}</span>
-            )}
-          </span>
-        </div>
+          {variant === 'compact' && wallet && (
+            <span className="hidden text-xs text-muted-foreground sm:inline">{wallet}</span>
+          )}
+        </span>
 
-        <ChevronDown
-          className={cn('size-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')}
-        />
+        {/* Caret control box */}
+        <span
+          className={cn(
+            'grid shrink-0 place-items-center border',
+            'bg-background/60 text-muted-foreground shadow-sm',
+            'transition duration-200',
+            'group-hover:border-primary/20 group-hover:bg-primary/5 group-hover:text-foreground',
+
+            variant === 'compact' ? 'size-7 rounded-lg' : 'size-9 rounded-xl'
+          )}>
+          <ChevronDown className={cn('size-4 transition-transform duration-200', open && 'rotate-180')} />
+        </span>
       </button>
 
       {open && (
         <div
           role="menu"
           className={cn(
-            'absolute mt-2 overflow-hidden rounded-2xl border bg-popover shadow-xl',
+            'absolute mt-2 overflow-hidden rounded-2xl border',
+            'border-border/70 bg-popover/95 shadow-2xl backdrop-blur-xl',
+            'animate-in fade-in-0 zoom-in-95 duration-150',
 
             variant === 'compact' && ['right-0', 'w-[min(22rem,calc(100vw-1.5rem))]'],
 
@@ -167,7 +196,8 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
               'w-[min(21rem,calc(100vw-1.5rem))]'
             ]
           )}>
-          <div className="flex items-start justify-between border-b px-4 py-3">
+          {/* Menu header */}
+          <div className="flex items-start justify-between border-b border-border/60 px-4 py-3">
             <div>
               <p className="text-sm font-semibold">Choose experience</p>
 
@@ -178,14 +208,20 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
               type="button"
               aria-label="Close experience switcher"
               onClick={() => setOpen(false)}
-              className="rounded-full p-1.5 text-muted-foreground transition hover:bg-card/80 hover:text-foreground">
+              className={cn(
+                'grid size-8 place-items-center rounded-xl border',
+                'bg-background/50 text-muted-foreground',
+                'transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground'
+              )}>
               <X className="size-4" />
             </button>
           </div>
 
-          <div className="space-y-1 p-2">
+          {/* Workspace options */}
+          <div className="space-y-1.5 p-2">
             {availableWorkspaces.map(workspace => {
               const selected = workspace.id === activeWorkspace.id;
+
               const workspaceWallet = formatWallet(workspace);
 
               return (
@@ -196,23 +232,37 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
                   disabled={switchingWorkspace || !workspace.active}
                   onClick={() => void handleSwitch(workspace.id)}
                   className={cn(
-                    'flex w-full items-start gap-3 rounded-xl p-3 text-left transition',
-                    'hover:bg-primary/10 transition-all disabled:cursor-not-allowed disabled:opacity-50',
-                    selected && 'bg-primary/10 transition-all'
+                    'group/item flex w-full items-start gap-3 rounded-xl border border-transparent p-3 text-left',
+                    'transition duration-200',
+                    'hover:border-primary/10 hover:bg-primary/5',
+                    'disabled:cursor-not-allowed disabled:opacity-50',
+
+                    selected && [
+                      'border-primary/15 bg-primary/10',
+                      'shadow-[inset_3px_0_0_hsl(var(--primary))]'
+                    ]
                   )}>
                   <span
                     className={cn(
                       'mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl border',
-                      selected && 'border-primary/10 transition-all bg-primary/10 text-primary'
+                      'bg-background/60 text-muted-foreground transition',
+
+                      selected
+                        ? 'border-primary/20 bg-primary/10 text-primary'
+                        : 'border-border/70 group-hover/item:border-primary/15 group-hover/item:text-foreground'
                     )}>
                     <WorkspaceModeIcon mode={workspace.mode} />
                   </span>
 
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center justify-between gap-2">
                       <span className="text-sm font-semibold">{workspace.mode}</span>
 
-                      {selected && <Check className="size-4 text-primary" />}
+                      {selected && (
+                        <span className="grid size-5 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="size-3" />
+                        </span>
+                      )}
                     </span>
 
                     <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
@@ -220,8 +270,9 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
                     </span>
 
                     {workspaceWallet && (
-                      <span className="mt-2 flex items-center gap-1.5 text-xs font-medium">
-                        <WalletCards className="size-3.5" />
+                      <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2 py-1 text-xs font-medium">
+                        <WalletCards className="size-3.5 text-primary" />
+
                         {workspaceWallet}
                       </span>
                     )}
