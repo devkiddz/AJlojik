@@ -81,7 +81,7 @@ export default function MobileBottomNavigation({
         fixed
         inset-x-3
         bottom-0
-        z-[90]
+        z-30
         border
         border-white/[0.08]
         bg-background/85

@@ -130,6 +130,8 @@ export function ExperienceStackProvider({
 
   const [error, setError] = useState<string | null>(null);
 
+  const isGuestWorkspace = workspaceId === 'guest-live';
+
   // ==========================================================
   // INTERNAL STATE SYNCHRONIZATION
   // ==========================================================
@@ -172,6 +174,11 @@ export function ExperienceStackProvider({
   // ==========================================================
 
   const refreshHistory = useCallback(async () => {
+    if (isGuestWorkspace) {
+      applyStackState(defaultState);
+      return;
+    }
+
     await runOperation(async () => {
       const params = new URLSearchParams({
         workspaceId
@@ -186,7 +193,7 @@ export function ExperienceStackProvider({
 
       applyStackState(state);
     });
-  }, [applyStackState, runOperation, workspaceId]);
+  }, [applyStackState, isGuestWorkspace, runOperation, workspaceId]);
 
   useEffect(() => {
     void refreshHistory();
