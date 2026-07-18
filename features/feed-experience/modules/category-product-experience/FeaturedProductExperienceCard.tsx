@@ -2,15 +2,19 @@
 
 import Image from 'next/image';
 
-import { useMemo } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 
-import { ArrowUpRight, Eye, Heart, ShoppingCart, Sparkles, Star } from 'lucide-react';
+import { Eye, Heart, ShoppingBag, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import type { FeedActions } from '@/features/feed-experience/contracts';
+
+import { PremiumCardSurface, ProductStatusBadges } from '@/features/products/cards';
+
+import { useProductCartQuantity } from '@/features/products/cards/useProductCartQuantity';
 
 import { useProductVariant } from '@/features/products/cards/useProductVariant';
 
@@ -37,6 +41,8 @@ export default function FeaturedProductExperienceCard({
 }: FeaturedProductExperienceCardProps) {
   const { selectedVariant, selectedVariantId, setSelectedVariantId } = useProductVariant(product);
 
+  const { quantity, cartMutating } = useProductCartQuantity(product.id);
+
   const priceFormatter = useMemo(() => {
     try {
       return new Intl.NumberFormat(locale, {
@@ -59,6 +65,8 @@ export default function FeaturedProductExperienceCard({
 
   const outOfStock = selectedVariant.stockLeft <= 0;
 
+  const displayTitle = title ?? product.name;
+
   const openProductExperience = (): void => {
     actions.openExperience({
       type: 'product',
@@ -66,155 +74,209 @@ export default function FeaturedProductExperienceCard({
     });
   };
 
-  const handleAddToCart = (): void => {
-    if (outOfStock) {
+  const handleAddToCart = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (outOfStock || cartMutating) {
       return;
     }
 
     actions.addToCart(product, selectedVariant);
   };
 
+  const handlePreview = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    actions.previewProduct(product);
+  };
+
+  const handleWishlist = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    actions.toggleLike(product.id);
+  };
+
   return (
-    <article className="group relative isolate h-full min-h-96 overflow-hidden rounded-2xl border border-white/10 bg-[#07101e] text-white shadow-xl">
-      <Image
-        src={selectedVariant.image}
-        alt={product.name}
-        fill
-        priority
-        sizes="(max-width: 1024px) 100vw, 36vw"
-        className="object-cover transition duration-700 group-hover:scale-105"
-      />
+    <PremiumCardSurface
+      glowSize={460}
+      className={cn('group h-full min-h-[26rem] rounded-3xl', 'border border-border/60 bg-card shadow-lg')}>
+      <div
+        className={cn('grid h-full min-h-[26rem]', 'md:grid-cols-[minmax(0,1.05fr)_minmax(19rem,0.95fr)]')}>
+        {/* IMAGE — LEFT */}
 
-      <button
-        type="button"
-        onClick={openProductExperience}
-        aria-label={`Open ${product.name} experience`}
-        className="absolute inset-0 z-10"
-      />
-
-      <div className="pointer-events-none absolute inset-0 bg-black/20" />
-
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/5" />
-
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent" />
-
-      <div className="pointer-events-none absolute -left-20 -top-20 size-64 rounded-full bg-secondary/25 blur-3xl" />
-
-      <div className="pointer-events-none relative z-20 flex min-h-96 flex-col justify-between p-4 sm:p-5">
-        {/* Header */}
-
-        <div className="flex items-start justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.15em] backdrop-blur-xl">
-            <Sparkles className="size-3" />
-            Featured experience
-          </span>
-
-          <Button
+        <div className="relative min-h-72 overflow-hidden bg-muted md:min-h-full">
+          <button
             type="button"
-            size="icon"
-            variant="ghost"
-            aria-label={product.liked ? 'Remove from wishlist' : 'Add to wishlist'}
-            aria-pressed={product.liked}
-            onClick={() => actions.toggleLike(product.id)}
-            className="pointer-events-auto size-9 rounded-full border border-white/15 bg-black/30 text-white backdrop-blur-xl hover:bg-black/50 hover:text-white">
-            <Heart className={cn('size-4', product.liked && 'fill-current text-rose-300')} />
-          </Button>
+            onClick={openProductExperience}
+            aria-label={`Open ${product.name} experience`}
+            className={cn(
+              'absolute inset-0 z-10',
+              'cursor-pointer',
+              'focus-visible:outline-none',
+              'focus-visible:ring-2',
+              'focus-visible:ring-inset',
+              'focus-visible:ring-ring'
+            )}>
+            <span className="sr-only">Open {product.name} experience</span>
+          </button>
+
+          <Image
+            src={selectedVariant.image}
+            alt={product.name}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 36vw"
+            className={cn('object-cover', 'transition duration-700', 'group-hover:scale-[1.025]')}
+          />
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+
+          <ProductStatusBadges product={product} />
         </div>
 
-        {/* Content */}
+        {/* DETAILS — RIGHT */}
 
-        <div>
-          <div className="flex flex-wrap items-center gap-2 text-[10px] text-white/65">
-            <span className="capitalize">{product.category}</span>
+        <div className="flex min-w-0 flex-col bg-card/95 p-5 lg:p-6">
+          <button
+            type="button"
+            onClick={openProductExperience}
+            className={cn(
+              'w-full text-left',
+              'focus-visible:outline-none',
+              'focus-visible:ring-2',
+              'focus-visible:ring-ring'
+            )}>
+            <div className="flex flex-wrap items-center gap-2 text-[0.7rem] text-muted-foreground">
+              <span className="font-semibold uppercase tracking-[0.16em] text-primary/60">
+                {product.category}
+              </span>
 
-            <span className="size-1 rounded-full bg-white/30" />
+              <span className="size-1 rounded-full bg-border" />
 
-            <span className="inline-flex items-center gap-1">
-              <Star className="size-3 fill-amber-300 text-amber-300" />
+              <span className="inline-flex items-center gap-1">
+                <Star className="size-3 fill-amber-400 text-amber-400" />
 
-              {product.rating.toFixed(1)}
-            </span>
+                {product.rating.toFixed(1)}
+              </span>
 
-            <span className="size-1 rounded-full bg-white/30" />
+              <span className="size-1 rounded-full bg-border" />
 
-            <span>{product.soldCount.toLocaleString()} sold</span>
-          </div>
-
-          <h3 className="mt-2 line-clamp-2 text-2xl font-bold leading-tight tracking-tight">
-            {title ?? product.name}
-          </h3>
-
-          <p className="mt-2 line-clamp-3 text-xs leading-5 text-white/70">
-            {product.longDescription || product.shortDescription}
-          </p>
-
-          <div className="pointer-events-auto mt-4">
-            <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
-              <SelectTrigger className="h-9 w-full border-white/15 bg-black/30 text-xs text-white backdrop-blur-xl">
-                <SelectValue placeholder="Select option" />
-              </SelectTrigger>
-
-              <SelectContent>
-                {product.variants.map(variant => (
-                  <SelectItem key={variant.id} value={String(variant.id)}>
-                    {variant.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/50">
-                Selected price
-              </p>
-
-              <p className="mt-1 text-xl font-bold">{priceFormatter.format(Number(selectedVariant.price))}</p>
-
-              <p className={cn('mt-1 text-[10px]', outOfStock ? 'text-red-300' : 'text-emerald-300')}>
-                {outOfStock ? 'Currently unavailable' : `${selectedVariant.stockLeft} available`}
-              </p>
+              <span>{product.soldCount.toLocaleString()} sold</span>
             </div>
 
-            <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9px] font-medium text-white/70 backdrop-blur-xl">
-              {selectedVariant.label}
-            </span>
-          </div>
+            <h3 className="mt-4 line-clamp-2 text-2xl font-bold leading-tight tracking-tight text-card-foreground">
+              {displayTitle}
+            </h3>
 
-          <div className="pointer-events-auto mt-4 grid grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] gap-2">
-            <Button
-              type="button"
-              disabled={outOfStock}
-              onClick={handleAddToCart}
-              className="h-10 min-w-0 rounded-full bg-white px-4 text-xs font-semibold text-black hover:bg-white/90">
-              <ShoppingCart className="size-4" />
+            <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
+              {product.shortDescription || product.longDescription}
+            </p>
+          </button>
 
-              <span className="truncate">Add to cart</span>
-            </Button>
+          <div className="mt-auto pt-6">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+              <div className="min-w-0">
+                <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Product option
+                </p>
 
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() => actions.previewProduct(product)}
-              aria-label={`Preview ${product.name}`}
-              className="size-10 rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl hover:bg-white/15 hover:text-white">
-              <Eye className="size-4" />
-            </Button>
+                <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
+                  <SelectTrigger className="h-9 w-full rounded-xl">
+                    <SelectValue placeholder="Select option" />
+                  </SelectTrigger>
 
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={openProductExperience}
-              aria-label={`Open full ${product.name} experience`}
-              className="size-10 rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl hover:bg-white/15 hover:text-white">
-              <ArrowUpRight className="size-4" />
-            </Button>
+                  <SelectContent>
+                    {product.variants.map(variant => (
+                      <SelectItem key={variant.id} value={String(variant.id)}>
+                        {variant.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Price
+                </p>
+
+                <p className="mt-1 whitespace-nowrap text-xl font-bold tracking-tight text-card-foreground">
+                  {priceFormatter.format(Number(selectedVariant.price))}
+                </p>
+
+                <p
+                  className={cn(
+                    'mt-1 whitespace-nowrap text-[0.68rem]',
+
+                    outOfStock ? 'text-destructive' : 'text-emerald-600'
+                  )}>
+                  {outOfStock ? 'Unavailable' : `${selectedVariant.stockLeft} available`}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] gap-2">
+              <Button
+                type="button"
+                disabled={outOfStock || cartMutating}
+                onClick={handleAddToCart}
+                className={cn(
+                  'relative h-10 min-w-0 gap-2 rounded-full px-4',
+                  'bg-foreground text-background',
+                  'hover:bg-foreground/90'
+                )}>
+                <ShoppingBag className="size-4 shrink-0" />
+
+                <span className="truncate">{outOfStock ? 'Out of stock' : 'Add to cart'}</span>
+
+                {quantity > 0 ? (
+                  <span className="shrink-0 rounded-full bg-background/15 px-1.5 py-0.5 text-[0.62rem] font-black">
+                    +{quantity}
+                  </span>
+                ) : null}
+              </Button>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                onClick={handlePreview}
+                aria-label={`Preview ${product.name}`}
+                title="Quick preview"
+                className="size-10 rounded-full">
+                <Eye className="size-4" />
+              </Button>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-pressed={product.liked}
+                aria-label={
+                  product.liked ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`
+                }
+                title="Wishlist"
+                onClick={handleWishlist}
+                className={cn(
+                  'size-10 rounded-full border border-border/60',
+
+                  product.liked && 'border-rose-500/30 text-rose-500'
+                )}>
+                <Heart
+                  className={cn(
+                    'size-4',
+
+                    product.liked && 'fill-current'
+                  )}
+                />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </article>
+    </PremiumCardSurface>
   );
 }

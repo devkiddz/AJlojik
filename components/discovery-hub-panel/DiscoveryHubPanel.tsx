@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
-import { useDiscoveryHub } from './DiscoveryHubProvider';
+import { useDiscoveryHub } from '@/providers/DiscoveryHubProvider';
 
 import type { HubGroupIcon, HubGroupId } from './discoveryHubTypes';
 

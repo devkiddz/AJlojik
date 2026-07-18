@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import HubCard from './components/HubCard';
-import { useDiscoveryHub } from './DiscoveryHubProvider';
+import { useDiscoveryHub } from '@/providers/DiscoveryHubProvider';
 import { discoveryHubRegistry } from './discoveryHubRegistry';
 
 export function DiscoveryHubRenderer() {

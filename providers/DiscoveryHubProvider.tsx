@@ -2,7 +2,13 @@
 
 import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
 
-import type { HubContextValue, HubGroup, HubGroupId, HubPreview, HubWidget } from './discoveryHubTypes';
+import type {
+  HubContextValue,
+  HubGroup,
+  HubGroupId,
+  HubPreview,
+  HubWidget
+} from '../components/discovery-hub-panel/discoveryHubTypes';
 
 const DiscoveryHubContext = createContext<HubContextValue | null>(null);
 

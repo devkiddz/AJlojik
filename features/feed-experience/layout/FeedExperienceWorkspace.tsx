@@ -35,9 +35,8 @@ function FeedExperienceWorkspaceContent() {
   const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
   const { items: cartItems, addToCart: addCartItem } = useCart();
 
-  const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
   const handleAddToCart = useCallback(
-    (product: ProductType, variant: ProductVariantType): void => {
+    (product: ProductType, variant: ProductVariantType) => {
       void addCartItem({
         product,
         variant,
@@ -46,6 +45,7 @@ function FeedExperienceWorkspaceContent() {
     },
     [addCartItem]
   );
+  const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
 
   const {
     products: catalogProducts,
@@ -184,10 +184,8 @@ function FeedExperienceWorkspaceContent() {
         products: catalogProducts,
         categories,
         collections,
-        promotions: promos,
-        cartProductIds
+        promotions: promos
       },
-
       user: {
         ...activeProfile.user,
         cartProductIds
@@ -219,13 +217,18 @@ function FeedExperienceWorkspaceContent() {
   const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
     () => ({
       changeCategory: updateQuery,
+
       previewProduct: openPreview,
+
       toggleLike,
+
       addToCart: handleAddToCart,
+
       previewPromotion
     }),
     [updateQuery, openPreview, toggleLike, handleAddToCart, previewPromotion]
   );
+
   // ============================================================
   // DERIVED PRODUCTS
   // ============================================================

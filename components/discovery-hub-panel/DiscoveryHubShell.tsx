@@ -1,7 +1,7 @@
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 
 import DiscoveryHubPanel from './DiscoveryHubPanel';
-import { DiscoveryHubProvider } from './DiscoveryHubProvider';
+import { DiscoveryHubProvider } from '../../providers/DiscoveryHubProvider';
 
 export default async function DiscoveryHubShell() {
   // Later:

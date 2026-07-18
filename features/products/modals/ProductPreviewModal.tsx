@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { WishlistButton } from '@/features/wishlist';
 
 import {
   ArrowRight,
@@ -13,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Heart,
   PackageCheck,
   ShieldCheck,
   ShoppingBag,
@@ -63,7 +63,6 @@ function PreviewContent({
   mode,
   badge,
   accent,
-  onToggleLike,
   onAddToCart,
   onPrevious,
   onNext,
@@ -157,13 +156,12 @@ function PreviewContent({
           )}
         </div>
 
-        <button
-          type="button"
-          aria-label="Save product"
-          onClick={() => onToggleLike?.(product.id)}
-          className="absolute right-4 top-4 grid size-11 place-items-center rounded-full border border-white/15 bg-black/35 text-white backdrop-blur-md transition hover:bg-black/60">
-          <Heart className={cn('size-5', product.liked && 'fill-secondary text-secondary')} />
-        </button>
+        <WishlistButton
+          productId={product.id}
+          productName={product.name}
+          appearance="dark-overlay"
+          className="absolute right-4 top-4"
+        />
 
         {(onPrevious || onNext) && (
           <>
@@ -232,8 +230,7 @@ function PreviewContent({
                         variantId: value
                       });
                     }
-                  }}
-                >
+                  }}>
                   <SelectTrigger className="w-full rounded-xl">
                     <SelectValue />
                   </SelectTrigger>

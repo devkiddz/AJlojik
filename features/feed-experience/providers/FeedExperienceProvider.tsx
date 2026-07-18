@@ -11,10 +11,6 @@ import {
   type ReactNode
 } from 'react';
 
-import { usePathname, useRouter } from 'next/navigation';
-
-import { useIdentity } from '@/providers/IdentityProvider';
-
 import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIntent } from '../contracts';
 
 import { feedExperienceEngine } from '../engine';
@@ -25,8 +21,11 @@ import { feedExperienceEngine } from '../engine';
 
 type FeedExperienceContextValue = {
   intent: FeedIntent;
+
   context: FeedContext;
+
   experience: FeedExperience;
+
   actions: FeedActions;
 
   /**
@@ -42,7 +41,7 @@ type FeedExperienceContextValue = {
    * Describes the incoming experience while the current
    * experience is still mounted.
    *
-   * This allows the loader to distinguish between:
+   * This allows the loader to distinguish between
    * product, collection, promotion, search, etc.
    */
   pendingIntent: FeedIntent | null;
@@ -65,38 +64,6 @@ type FeedExperienceProviderProps = {
 };
 
 // ============================================================
-// AUTHENTICATION
-// ============================================================
-
-const EXPERIENCE_AUTH_ROUTE = '/sign-in';
-
-function targetRequiresAccount(target: ExperienceTarget): boolean {
-  switch (target.type) {
-    case 'product':
-    case 'collection':
-    case 'promotion':
-    case 'search':
-      return true;
-
-    default:
-      return false;
-  }
-}
-
-function intentRequiresAccount(intent: FeedIntent): boolean {
-  switch (intent.type) {
-    case 'product':
-    case 'collection':
-    case 'promotion':
-    case 'search':
-      return true;
-
-    default:
-      return false;
-  }
-}
-
-// ============================================================
 // INTENT FACTORY
 // ============================================================
 
@@ -109,8 +76,11 @@ function createIntent(target: ExperienceTarget): FeedIntent {
     case 'home':
       return {
         id: `home:${nonce}`,
+
         type: 'home',
+
         source: 'user-action',
+
         createdAt
       };
 
@@ -146,7 +116,7 @@ function createIntent(target: ExperienceTarget): FeedIntent {
 
         type: 'product',
 
-        source: 'hub-card',
+        source: 'user-action',
 
         targetId: target.productId,
 
@@ -204,15 +174,19 @@ export function FeedExperienceProvider({
   context,
   baseActions
 }: FeedExperienceProviderProps) {
-  const router = useRouter();
-
-  const pathname = usePathname();
-
-  const { isAuthenticated, isPending } = useIdentity();
-
   const [intent, setIntent] = useState<FeedIntent>(initialIntent);
 
   const [pendingIntent, setPendingIntent] = useState<FeedIntent | null>(null);
+
+  /**
+   * Tracks the route-provided intent separately from the
+   * active Feed intent.
+   *
+   * This is important because product, collection and other
+   * internal experiences must not immediately bounce back to
+   * the route's initial Store Discovery intent.
+   */
+  const lastInitialIntentIdRef = useRef(initialIntent.id);
 
   /**
    * First frame:
@@ -244,12 +218,6 @@ export function FeedExperienceProvider({
     }
   }, []);
 
-  const requestAuthentication = useCallback(() => {
-    const returnTo = encodeURIComponent(pathname || '/');
-
-    router.push(`${EXPERIENCE_AUTH_ROUTE}?returnTo=${returnTo}`);
-  }, [pathname, router]);
-
   /**
    * Queues an intent instead of replacing the current
    * experience immediately.
@@ -268,6 +236,7 @@ export function FeedExperienceProvider({
        */
       if (nextIntent.id === intent.id) {
         setPendingIntent(null);
+
         return;
       }
 
@@ -283,47 +252,57 @@ export function FeedExperienceProvider({
   );
 
   // ==========================================================
+  // ROUTE INTENT SYNCHRONISATION
+  // ==========================================================
+
+  /**
+   * initialIntent changes when the Store route changes:
+   *
+   * /store
+   * /store?category=wines
+   * /store?category=kitchen
+   *
+   * We respond only when the route-provided intent ID changes.
+   *
+   * We must not synchronize merely because the active internal
+   * intent changed; otherwise opening a Product Experience would
+   * immediately return the user to Store Discovery.
+   */
+  useEffect(() => {
+    if (lastInitialIntentIdRef.current === initialIntent.id) {
+      return;
+    }
+
+    lastInitialIntentIdRef.current = initialIntent.id;
+
+    beginResolution(initialIntent);
+  }, [beginResolution, initialIntent]);
+
+  // ==========================================================
   // EXPERIENCE ACTIONS
   // ==========================================================
 
+  /**
+   * Product, collection, promotion and search experiences are
+   * discovery actions.
+   *
+   * They remain available to guests.
+   *
+   * Authentication is enforced by protected persistence actions
+   * such as Cart, Wishlist, Checkout and Experience History.
+   */
   const openExperience = useCallback(
     (target: ExperienceTarget) => {
-      if (targetRequiresAccount(target)) {
-        /**
-         * Better Auth is still checking the session.
-         * Do not incorrectly classify the user as a guest.
-         */
-        if (isPending) {
-          return;
-        }
-
-        if (!isAuthenticated) {
-          requestAuthentication();
-          return;
-        }
-      }
-
       beginResolution(createIntent(target));
     },
-    [beginResolution, isAuthenticated, isPending, requestAuthentication]
+    [beginResolution]
   );
 
   const restoreExperience = useCallback(
     (restoredIntent: FeedIntent) => {
-      if (intentRequiresAccount(restoredIntent)) {
-        if (isPending) {
-          return;
-        }
-
-        if (!isAuthenticated) {
-          requestAuthentication();
-          return;
-        }
-      }
-
       beginResolution(restoredIntent);
     },
-    [beginResolution, isAuthenticated, isPending, requestAuthentication]
+    [beginResolution]
   );
 
   const resetExperience = useCallback(() => {
@@ -335,7 +314,9 @@ export function FeedExperienceProvider({
       ...baseActions,
 
       openExperience,
+
       restoreExperience,
+
       resetExperience
     }),
     [baseActions, openExperience, restoreExperience, resetExperience]
@@ -398,11 +379,15 @@ export function FeedExperienceProvider({
   const value = useMemo<FeedExperienceContextValue>(
     () => ({
       intent,
+
       context,
+
       experience,
+
       actions,
 
       isResolving,
+
       pendingIntent
     }),
     [intent, context, experience, actions, isResolving, pendingIntent]

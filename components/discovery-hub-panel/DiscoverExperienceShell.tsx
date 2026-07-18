@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, type UIEvent } from 'react';
 
 import { PanelRightOpen } from 'lucide-react';
 
+import ActiveProductWidget from '@/components/ActiveProductWidget';
+
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 
 import { useFeedExperience } from '@/features/feed-experience';
@@ -12,9 +14,10 @@ import { selectDiscoveryHubWidgets } from '@/features/feed-experience/selectors'
 
 import { cn } from '@/lib/utils';
 
-import ActiveProductWidget from '@/components/ActiveProductWidget';
 import DiscoveryHubPanel from './DiscoveryHubPanel';
-import { DiscoveryHubProvider } from './DiscoveryHubProvider';
+
+import { DiscoveryHubProvider } from '../../providers/DiscoveryHubProvider';
+
 import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
 
 import type { HubGroupId } from './discoveryHubTypes';
@@ -54,10 +57,6 @@ export default function DiscoverExperienceShell() {
     [context]
   );
 
-  /*
-   * Restore the original Discovery Hub position
-   * whenever the user continues their Discovery.
-   */
   useEffect(() => {
     if (activeView !== 'discovery') {
       return;
@@ -83,7 +82,11 @@ export default function DiscoverExperienceShell() {
 
     setViewPreference(
       activeProductId
-        ? { productId: activeProductId, view: 'discovery' }
+        ? {
+            productId: activeProductId,
+
+            view: 'discovery'
+          }
         : null
     );
   };
@@ -91,7 +94,11 @@ export default function DiscoverExperienceShell() {
   const handleContinueDiscovery = () => {
     setViewPreference(
       activeProductId
-        ? { productId: activeProductId, view: 'discovery' }
+        ? {
+            productId: activeProductId,
+
+            view: 'discovery'
+          }
         : null
     );
   };
@@ -103,6 +110,7 @@ export default function DiscoverExperienceShell() {
 
     setViewPreference({
       productId: activeProductId,
+
       view: 'product'
     });
   };
@@ -144,8 +152,6 @@ export default function DiscoverExperienceShell() {
             ) : null}
           </div>
         </DiscoveryHubPanel>
-
-        {/* Reopen the active product after continuing Discovery */}
 
         {activeProductId && !showProduct ? (
           <button

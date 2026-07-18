@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
 
 export default function SignUpForm() {
@@ -43,7 +44,7 @@ export default function SignUpForm() {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
-        callbackURL: '/account'
+        callbackURL: readAuthReturnTo('/account')
       });
 
       if (result.error) {

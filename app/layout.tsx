@@ -23,6 +23,8 @@ import { AppSidebar } from '@/providers/AppSideBar';
 import IdentityProvider from '@/providers/IdentityProvider';
 import SearchProvider from '@/providers/SearchProvider';
 import ThemeProvider from '@/providers/ThemeProvider';
+import { ActionFeedbackProvider } from '@/features/action-feedback';
+import { WishlistProvider } from '@/features/wishlist';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -63,35 +65,39 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="min-h-svh bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <IdentityProvider>
-            <WorkspaceProvider>
-              <CatalogProvider>
-                <CartProvider>
-                  <SearchProvider>
-                    <SidebarProvider defaultOpen>
-                      <AppSidebar />
+            <ActionFeedbackProvider>
+              <WorkspaceProvider>
+                <CatalogProvider>
+                  <WishlistProvider>
+                    <CartProvider>
+                      <SearchProvider>
+                        <SidebarProvider defaultOpen>
+                          <AppSidebar />
 
-                      <SidebarInset className="min-w-0 overflow-x-hidden">
-                        <div className="flex min-h-svh min-w-0 flex-col">
-                          <header className="sticky top-0 z-50 shrink-0">
-                            <Suspense fallback={null}>
-                              <NavbarComponent brandName="AJ" brandSlug="Logik" />
-                            </Suspense>
-                          </header>
+                          <SidebarInset className="min-w-0 overflow-x-hidden">
+                            <div className="flex min-h-svh min-w-0 flex-col">
+                              <header className="sticky top-0 z-50 shrink-0">
+                                <Suspense fallback={null}>
+                                  <NavbarComponent brandName="AJ" brandSlug="Logik" />
+                                </Suspense>
+                              </header>
 
-                          <main className="flex min-w-0 flex-1 flex-col">
-                            <MobileApplicationShell>{children}</MobileApplicationShell>
-                          </main>
+                              <main className="flex min-w-0 flex-1 flex-col">
+                                <MobileApplicationShell>{children}</MobileApplicationShell>
+                              </main>
 
-                          <FooterComponent brandName="AJ" brandSlug="Logik" />
-                        </div>
-                      </SidebarInset>
+                              <FooterComponent brandName="AJ" brandSlug="Logik" />
+                            </div>
+                          </SidebarInset>
 
-                      <SearchMobileOverlay />
-                    </SidebarProvider>
-                  </SearchProvider>
-                </CartProvider>
-              </CatalogProvider>
-            </WorkspaceProvider>
+                          <SearchMobileOverlay />
+                        </SidebarProvider>
+                      </SearchProvider>
+                    </CartProvider>
+                  </WishlistProvider>
+                </CatalogProvider>
+              </WorkspaceProvider>
+            </ActionFeedbackProvider>
           </IdentityProvider>
         </ThemeProvider>
       </body>

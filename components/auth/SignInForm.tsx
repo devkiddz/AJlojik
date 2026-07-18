@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-
+import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
 
 export default function SignInForm() {
@@ -23,10 +23,10 @@ export default function SignInForm() {
 
     try {
       const { error } = await authClient.signIn.email({
-        email: email.trim().toLowerCase(),
+        email,
         password,
         rememberMe,
-        callbackURL: '/account'
+        callbackURL: readAuthReturnTo('/account')
       });
 
       if (error) {

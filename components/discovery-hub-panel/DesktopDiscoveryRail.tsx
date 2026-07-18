@@ -14,7 +14,7 @@ import ActiveProductWidget from '@/components/ActiveProductWidget';
 import CompactDiscoveryRail from './components/CompactDiscoveryRail';
 import DiscoveryHubPanel from './DiscoveryHubPanel';
 import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
-import { DiscoveryHubProvider } from './DiscoveryHubProvider';
+import { DiscoveryHubProvider } from '../../providers/DiscoveryHubProvider';
 
 import type { CompactDiscoveryItem, HubGroup, HubGroupId, HubWidget } from './discoveryHubTypes';
 
@@ -121,11 +121,7 @@ export default function DesktopDiscoveryRail({
   const handleNavigatorGroupSelect = (groupId: HubGroupId) => {
     setActiveHubGroupId(groupId);
 
-    setViewPreference(
-      activeProductId
-        ? { productId: activeProductId, view: 'discovery' }
-        : null
-    );
+    setViewPreference(activeProductId ? { productId: activeProductId, view: 'discovery' } : null);
   };
 
   const handleSelectItem = (item: CompactDiscoveryItem) => {
@@ -133,11 +129,7 @@ export default function DesktopDiscoveryRail({
       setActiveHubGroupId(item.groupId);
     }
 
-    setViewPreference(
-      activeProductId
-        ? { productId: activeProductId, view: 'discovery' }
-        : null
-    );
+    setViewPreference(activeProductId ? { productId: activeProductId, view: 'discovery' } : null);
 
     onCollapsedChange(false);
   };
@@ -149,11 +141,7 @@ export default function DesktopDiscoveryRail({
    * selected group and scroll position remain available.
    */
   const handleBackToDiscovery = () => {
-    setViewPreference(
-      activeProductId
-        ? { productId: activeProductId, view: 'discovery' }
-        : null
-    );
+    setViewPreference(activeProductId ? { productId: activeProductId, view: 'discovery' } : null);
   };
 
   const handleShowProductDetails = () => {

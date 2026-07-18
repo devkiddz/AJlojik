@@ -1,17 +1,21 @@
 'use client';
 
-import { CollectionType } from '@/data/collections';
+import type { CollectionType } from '@/data/collections';
+
 import CollectionSection from '@/features/collection/CollectionSection';
+
 import type { ProductType, ProductVariantType } from '@/types/types';
 
 export type CollectionRendererProps = {
   collection: CollectionType;
+
   products: ProductType[];
+
   featuredProduct?: ProductType;
 
-  onPreview: (product: ProductType) => void;
+  onPreview?: (product: ProductType) => void;
 
-  onToggleLike: (productId: string) => void;
+  onOpenExperience?: (product: ProductType) => void;
 
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
@@ -21,7 +25,7 @@ export default function CollectionRenderer({
   products,
   featuredProduct,
   onPreview,
-  onToggleLike,
+  onOpenExperience,
   onAddToCart
 }: CollectionRendererProps) {
   if (!collection.active || products.length === 0) {
@@ -34,7 +38,7 @@ export default function CollectionRenderer({
       products={products}
       featuredProduct={featuredProduct}
       onPreview={onPreview}
-      onToggleLike={onToggleLike}
+      onOpenExperience={onOpenExperience}
       onAddToCart={onAddToCart}
     />
   );

@@ -1,19 +1,23 @@
-import { Button } from '@/components/ui/button';
-import type { CollectionType } from '@/data/collections';
-import { getCollectionIcon } from '@/lib/collection-icons';
-import type { ProductType, ProductVariantType } from '@/types/types';
-import CollectionBanner from './CollectionBanner';
-import FeaturedCollection from './layouts/FeaturedCollection';
 import { ArrowRight, PartyPopper, type LucideIcon } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
+
+import type { CollectionType } from '@/data/collections';
+
+import { getCollectionIcon } from '@/lib/collection-icons';
+
+import type { ProductType, ProductVariantType } from '@/types/types';
+
+import CollectionBanner from './CollectionBanner';
+
+import FeaturedCollection from './layouts/FeaturedCollection';
+
 type CollectionIconProps = {
-  // Allow LucideIcon, null, or undefined so it plays nicely with return values
   icon?: LucideIcon | null;
   accent?: string;
 };
 
 function CollectionIconDisplay({ icon: Icon = PartyPopper, accent }: CollectionIconProps) {
-  // If the passed icon is null, default back to PartyPopper
   const ActiveIcon = Icon ?? PartyPopper;
 
   return (
@@ -28,10 +32,15 @@ function CollectionIconDisplay({ icon: Icon = PartyPopper, accent }: CollectionI
 
 type CollectionSectionProps = {
   collection: CollectionType;
+
   products: ProductType[];
+
   featuredProduct?: ProductType;
+
   onPreview?: (product: ProductType) => void;
-  onToggleLike?: (productId: string) => void;
+
+  onOpenExperience?: (product: ProductType) => void;
+
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
 
@@ -40,26 +49,24 @@ export default function CollectionSection({
   products,
   featuredProduct,
   onPreview,
-  onToggleLike,
+  onOpenExperience,
   onAddToCart
 }: CollectionSectionProps) {
-  if (!collection.active || !products.length || !featuredProduct) {
+  if (!collection.active || products.length === 0 || !featuredProduct) {
     return null;
   }
 
   const collectionIcon = getCollectionIcon(collection.icon?.value);
+
   const supportingProducts = products.filter(product => product.id !== featuredProduct.id);
-  const displayProducts = supportingProducts.length > 0 ? supportingProducts : products;
+
+  const productCount = supportingProducts.length;
 
   return (
     <section className="relative max-w-full overflow-hidden rounded-3xl border border-border/60 bg-card shadow-lg">
       <div className="relative overflow-hidden">
         {collection.banner?.image ? (
-          <CollectionBanner
-            banner={collection.banner}
-            title={collection.title}
-            count={displayProducts.length}
-          />
+          <CollectionBanner banner={collection.banner} title={collection.title} count={productCount} />
         ) : (
           <header className="flex items-center justify-between gap-4 px-4 py-4 md:px-6 md:py-5">
             <div className="flex min-w-0 items-center gap-3 md:gap-4">
@@ -76,7 +83,7 @@ export default function CollectionSection({
                   <h2 className="truncate text-sm font-bold tracking-tight md:text-lg">{collection.title}</h2>
 
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-bold text-primary">
-                    {displayProducts.length}
+                    {products.length}
                   </span>
                 </div>
 
@@ -90,6 +97,7 @@ export default function CollectionSection({
 
             <Button type="button" variant="outline" className="shrink-0 gap-2 rounded-full">
               <span className="hidden sm:inline">View collection</span>
+
               <ArrowRight className="size-4" />
             </Button>
           </header>
@@ -102,7 +110,7 @@ export default function CollectionSection({
           products={products}
           featuredProduct={featuredProduct}
           onPreview={onPreview}
-          onToggleLike={onToggleLike}
+          onOpenExperience={onOpenExperience}
           onAddToCart={onAddToCart}
         />
       </div>
