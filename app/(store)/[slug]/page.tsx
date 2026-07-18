@@ -1,31 +1,32 @@
 import { notFound } from 'next/navigation';
 
-export const categories = [
+const shopCategories = [
   { slug: 'kitchen', label: 'Kitchen' },
   { slug: 'wines', label: 'Wines' },
   { slug: 'party-plans', label: 'Party Plans' }
-];
+] as const;
 
-export default function ShopPage({ params }: { params?: { slug?: string } }) {
-  const slug = params?.slug;
+type ShopPageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
 
-  if (!slug) {
-    return notFound();
-  }
-
+export default async function ShopPage({ params }: ShopPageProps) {
+  const { slug } = await params;
   const normalizedSlug = slug.toLowerCase().trim();
 
-  const category = categories.find(c => c.slug === normalizedSlug);
+  const category = shopCategories.find(item => item.slug === normalizedSlug);
 
   if (!category) {
-    return notFound();
+    notFound();
   }
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold">{category.label}</h1>
 
-      <p className="text-muted-foreground mt-2">Showing products for {category.slug}</p>
+      <p className="mt-2 text-muted-foreground">Showing products for {category.slug}</p>
     </div>
   );
 }

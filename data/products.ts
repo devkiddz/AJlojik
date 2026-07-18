@@ -283,7 +283,7 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "Luxury", "Popular"],
     variants: [
-      { id: "sm", label: "750ml", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 82000, stockLeft: 14 }
+      { id: "sm", label: "750ml", image: "/products/moet-chandon-imperial_lg.jpg", price: 82000, stockLeft: 14 }
     ],
     rating: 4.8,
     reviews: 165,
@@ -405,7 +405,7 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "New Trend", "Brunch Classic"],
     variants: [
-      { id: "sm", label: "750ml", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 38000, stockLeft: 20 }
+      { id: "sm", label: "750ml", image: "/products/moet-chandon-imperial_lg.jpg", price: 38000, stockLeft: 20 }
     ],
     rating: 4.5,
     reviews: 53,
@@ -425,8 +425,8 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "Budget Friendly", "Sweet Wine"],
     variants: [
-      { id: "md", label: "750ml", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 12000, stockLeft: 50 },
-      { id: "lg", label: "1.5L", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 21000, stockLeft: 35 }
+      { id: "md", label: "750ml", image: "/products/moet-chandon-imperial_lg.jpg", price: 12000, stockLeft: 50 },
+      { id: "lg", label: "1.5L", image: "/products/moet-chandon-imperial_lg.jpg", price: 21000, stockLeft: 35 }
     ],
     rating: 4.4,
     reviews: 420,
@@ -508,8 +508,8 @@ export const products: ProductsType = [
     category: "confectioneries",
     tags: ["Freshly Baked", "Dessert Classic"],
     variants: [
-      { id: "md", label: "Medium", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 16500, stockLeft: 5 },
-      { id: "lg", label: "Large", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 24000, stockLeft: 3 }
+      { id: "md", label: "Medium", image: "/products/Chocolate_Fudge_Cake.jpg", price: 16500, stockLeft: 5 },
+      { id: "lg", label: "Large", image: "/products/Chocolate_Fudge_Cake.jpg", price: 24000, stockLeft: 3 }
     ],
     rating: 4.6,
     reviews: 74,
@@ -529,7 +529,7 @@ export const products: ProductsType = [
     category: "confectioneries",
     tags: ["Express Delivery", "Freshly Baked", "Party Fingerfood"],
     variants: [
-      { id: "12pack", label: "Box of 12", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 14000, stockLeft: 20 }
+      { id: "12pack", label: "Box of 12", image: "/products/Chocolate_Fudge_Cake.jpg", price: 14000, stockLeft: 20 }
     ],
     rating: 4.7,
     reviews: 115,
@@ -611,7 +611,7 @@ export const products: ProductsType = [
     category: "kitchen",
     tags: ["Kitchen", "Best Seller"],
     variants: [
-      { id: "std", label: "9-Piece Set", image: "https://images.unsplash.com/photo-1578643463396-0997cb5328c1?auto=format&fit=crop&w=600&q=80", price: 95000, stockLeft: 15 }
+      { id: "std", label: "9-Piece Set", image: "/products/KitchenAid_Artisan_Stand_Mixer.jpg", price: 95000, stockLeft: 15 }
     ],
     rating: 4.6,
     reviews: 194,
@@ -631,7 +631,7 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "Red Wine", "Dinner Choice"],
     variants: [
-      { id: "sm", label: "750ml", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 34000, stockLeft: 18 }
+      { id: "sm", label: "750ml", image: "/products/moet-chandon-imperial_lg.jpg", price: 34000, stockLeft: 18 }
     ],
     rating: 4.5,
     reviews: 67,
@@ -816,8 +816,8 @@ export const products: ProductsType = [
     category: "confectioneries",
     tags: ["Freshly Baked", "Dessert Classic"],
     variants: [
-      { id: "6pack", label: "Box of 6", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 7500, stockLeft: 15 },
-      { id: "12pack", label: "Box of 12", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 14000, stockLeft: 10 }
+      { id: "6pack", label: "Box of 6", image: "/products/Chocolate_Fudge_Cake.jpg", price: 7500, stockLeft: 15 },
+      { id: "12pack", label: "Box of 12", image: "/products/Chocolate_Fudge_Cake.jpg", price: 14000, stockLeft: 10 }
     ],
     rating: 4.8,
     reviews: 63,
@@ -837,7 +837,7 @@ export const products: ProductsType = [
     category: "party-plans",
     tags: ["Party Plan", "Premium Service", "Corporate"],
     variants: [
-      { id: "vip", label: "Up to 80 Guests", image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80", price: 650000, stockLeft: 2 }
+      { id: "vip", label: "Up to 80 Guests", image: "/products/Premium_Backyard_BBQ_Package.jpg", price: 650000, stockLeft: 2 }
     ],
     rating: 4.9,
     reviews: 24,
@@ -857,7 +857,7 @@ export const products: ProductsType = [
     category: "kitchen",
     tags: ["Kitchen", "New Tech"],
     variants: [
-      { id: "wifi", label: "Pro Wi-Fi", image: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=80", price: 95000, stockLeft: 8 }
+      { id: "wifi", label: "Pro Wi-Fi", image: "/products/Digital_Air_Fryer.jpg", price: 95000, stockLeft: 8 }
     ],
     rating: 4.7,
     reviews: 41,
@@ -877,7 +877,7 @@ export const products: ProductsType = [
     category: "wines",
     tags: ["Express Delivery", "Luxury", "Popular"],
     variants: [
-      { id: "std", label: "750ml", image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80", price: 110000, stockLeft: 7 }
+      { id: "std", label: "750ml", image: "/products/moet-chandon-imperial_lg.jpg", price: 110000, stockLeft: 7 }
     ],
     rating: 4.8,
     reviews: 92,
@@ -897,7 +897,7 @@ export const products: ProductsType = [
     category: "confectioneries",
     tags: ["Freshly Baked", "Dessert Classic"],
     variants: [
-      { id: "lg", label: "Large 10-Inch", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", price: 28000, stockLeft: 6 }
+      { id: "lg", label: "Large 10-Inch", image: "/products/Chocolate_Fudge_Cake.jpg", price: 28000, stockLeft: 6 }
     ],
     rating: 4.7,
     reviews: 58,

@@ -9,7 +9,7 @@ const featuredCategories = [
     slug: 'kitchen',
     name: 'Kitchen Logik',
     desc: 'Professional-grade culinary appliances and kitchen essentials.',
-    image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=800&q=80',
+    image: '/products/KitchenAid_Artisan_Stand_Mixer.jpg',
     size: 'large'
   },
   {
@@ -17,7 +17,7 @@ const featuredCategories = [
     slug: 'wines',
     name: 'AJ Vinez',
     desc: 'Premium wines & luxury champagnes.',
-    image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80',
+    image: '/products/moet-chandon-imperial_lg.jpg',
     size: 'small'
   },
   {
@@ -25,7 +25,7 @@ const featuredCategories = [
     slug: 'party-plans',
     name: 'Party Plans',
     desc: 'Live catering & complete event hosting setup.',
-    image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80',
+    image: '/products/Birthday_Party_Package.jpg',
     size: 'small'
   }
 ];

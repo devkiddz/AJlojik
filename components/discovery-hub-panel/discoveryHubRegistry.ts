@@ -1,10 +1,14 @@
-import { ComponentType } from "react";
+import type { ComponentType } from 'react';
 
-import { HubWidgetId } from "./discoveryHubTypes";
+import CartSummaryWidget from './widgets/CartSummaryWidget';
+
+import type { HubWidgetId } from './discoveryHubTypes';
 
 export type HubWidgetComponent = ComponentType;
 
 export const discoveryHubRegistry = new Map<
   HubWidgetId,
   HubWidgetComponent
->();
+>([
+  ['cart-summary', CartSummaryWidget]
+]);

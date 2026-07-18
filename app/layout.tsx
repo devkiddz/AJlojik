@@ -1,34 +1,42 @@
 import type { Metadata } from 'next';
+
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
-import { Suspense } from 'react';
+
+import { Suspense, type ReactNode } from 'react';
 
 import './globals.css';
 
-import NavbarComponent from '@/components/Navbar';
 import FooterComponent from '@/components/FooterComponent';
-import ThemeProvider from '@/providers/ThemeProvider';
-import { AppSidebar } from '@/providers/AppSideBar';
-import SearchProvider from '@/providers/SearchProvider';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
-import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
+import NavbarComponent from '@/components/Navbar';
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
-import IdentityProvider from '@/providers/IdentityProvider';
+
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+
+import { CartProvider } from '@/features/cart';
+import { CatalogProvider } from '@/features/catalog';
+import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
 import { WorkspaceProvider } from '@/features/workspace';
+
+import { cn } from '@/lib/utils';
+
+import { AppSidebar } from '@/providers/AppSideBar';
+import IdentityProvider from '@/providers/IdentityProvider';
+import SearchProvider from '@/providers/SearchProvider';
+import ThemeProvider from '@/providers/ThemeProvider';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans'
+  variable: '--font-inter'
 });
 
 const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin']
+  subsets: ['latin'],
+  variable: '--font-geist-sans'
 });
 
 const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin']
+  subsets: ['latin'],
+  variable: '--font-geist-mono'
 });
 
 export const metadata: Metadata = {
@@ -36,51 +44,53 @@ export const metadata: Metadata = {
   description: 'Your personalized modular shopping workspace.'
 };
 
-export default function RootLayout({
-  children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+type RootLayoutProps = Readonly<{
+  children: ReactNode;
+}>;
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
       className={cn(
         'h-full',
-        'antialiased',
+        'font-sans antialiased',
+        inter.variable,
         geistSans.variable,
-        geistMono.variable,
-        'font-sans',
-        inter.variable
+        geistMono.variable
       )}>
-      <body className="h-full bg-background text-foreground">
+      <body className="min-h-svh bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <IdentityProvider>
             <WorkspaceProvider>
-              <SidebarProvider defaultOpen={true}>
-                <Suspense fallback={null}>
+              <CatalogProvider>
+                <CartProvider>
                   <SearchProvider>
-                    <AppSidebar />
+                    <SidebarProvider defaultOpen>
+                      <AppSidebar />
 
-                    <main className="flex min-h-screen min-w-0 flex-col">
-                      <div className="sticky top-0 z-50">
-                        <Suspense fallback={null}>
-                          <NavbarComponent brandName="AJ" brandSlug="Logik" />
-                        </Suspense>
-                      </div>
+                      <SidebarInset className="min-w-0 overflow-x-hidden">
+                        <div className="flex min-h-svh min-w-0 flex-col">
+                          <header className="sticky top-0 z-50 shrink-0">
+                            <Suspense fallback={null}>
+                              <NavbarComponent brandName="AJ" brandSlug="Logik" />
+                            </Suspense>
+                          </header>
 
-                      {/* Clean wrap of page views with mobile interface controllers */}
-                      <div className="flex w-full flex-1 flex-col">
-                        <MobileApplicationShell>{children}</MobileApplicationShell>
-                      </div>
+                          <main className="flex min-w-0 flex-1 flex-col">
+                            <MobileApplicationShell>{children}</MobileApplicationShell>
+                          </main>
 
-                      <FooterComponent brandName="AJ" brandSlug="Logik" />
-                    </main>
+                          <FooterComponent brandName="AJ" brandSlug="Logik" />
+                        </div>
+                      </SidebarInset>
 
-                    <SearchMobileOverlay />
+                      <SearchMobileOverlay />
+                    </SidebarProvider>
                   </SearchProvider>
-                </Suspense>
-              </SidebarProvider>
+                </CartProvider>
+              </CatalogProvider>
             </WorkspaceProvider>
           </IdentityProvider>
         </ThemeProvider>

@@ -1,4 +1,4 @@
-import { Logs, PanelLeftClose, X } from 'lucide-react';
+import { PanelLeftClose } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 

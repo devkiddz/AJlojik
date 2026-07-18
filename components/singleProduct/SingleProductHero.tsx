@@ -2,28 +2,27 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ChartColumnStacked, Star } from 'lucide-react';
 import { categories } from '@/data/categories';
-import { ProductType, ProductVariantType } from '@/types/types';
-import RatingComponent from '../shared/RatingComponent';
+import { ProductType } from '@/types/types';
 
 type Props = {
   product: ProductType;
-  variant: ProductVariantType;
 };
 
 const FALLBACK_BANNER =
-  'https://images.unsplash.com/photo-1556740749-887f6717d7e4?q=80&w=1600&auto=format&fit=crop';
+  '/assets/Image-2.png';
 
-export default function SingleProductHero({ product, variant }: Props) {
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariantType>(variant);
+export default function SingleProductHero({ product }: Props) {
 
   const category = useMemo(
     () => categories.find(c => c.slug === product.category) ?? categories[0],
     [product.category]
   );
 
-  const covers = category.coverImages?.length > 0 ? category.coverImages : [FALLBACK_BANNER];
+  const covers = useMemo(
+    () => (category.coverImages?.length > 0 ? category.coverImages : [FALLBACK_BANNER]),
+    [category.coverImages]
+  );
   const [currentCover, setCurrentCover] = useState(0);
 
   useEffect(() => {

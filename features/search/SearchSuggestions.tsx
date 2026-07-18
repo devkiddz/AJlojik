@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { ProductType } from '@/types/types';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight } from 'lucide-react';
@@ -55,9 +57,11 @@ export default function SearchSuggestions({ products, query, activeIndex, onSele
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center shrink-0 overflow-hidden border border-muted-foreground/10 shadow-2xs">
                   {firstVariant?.image ? (
-                    <img
+                    <Image
                       src={firstVariant.image}
                       alt={product.name}
+                      width={48}
+                      height={48}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (

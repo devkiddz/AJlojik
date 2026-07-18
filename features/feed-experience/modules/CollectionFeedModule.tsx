@@ -1,10 +1,34 @@
-"use client";
+'use client';
 
-import CollectionRenderer from "@/components/discovery/renderers/CollectionRenderer";
-import type { CollectionFeedModule as CollectionFeedModuleType, FeedActions } from "../contracts";
+import CollectionRenderer from '@/components/discovery/renderers/CollectionRenderer';
 
-type Props = { module: CollectionFeedModuleType; actions: FeedActions };
-export function CollectionFeedModule({ module, actions }: Props) {
-  const { collections, fallbackProducts } = module.data;
-  return <section className="space-y-5 pt-4">{collections.map(({ collection, products, featuredProduct }) => <CollectionRenderer key={collection.id} collection={collection} products={products} featuredProduct={featuredProduct} onSelect={(id) => { const product = products.find((item) => item.id === id) ?? fallbackProducts.find((item) => item.id === id); if (product) actions.previewProduct(product); }} onToggleLike={actions.toggleLike} />)}</section>;
+import type { CollectionFeedModule as CollectionFeedModuleType, FeedActions } from '../contracts';
+
+type CollectionFeedModuleProps = {
+  module: CollectionFeedModuleType;
+  actions: FeedActions;
+};
+
+export function CollectionFeedModule({ module, actions }: CollectionFeedModuleProps) {
+  const { collections } = module.data;
+
+  if (!collections.length) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-6 pt-4">
+      {collections.map(({ collection, products, featuredProduct }) => (
+        <CollectionRenderer
+          key={collection.id}
+          collection={collection}
+          products={products}
+          featuredProduct={featuredProduct}
+          onPreview={actions.previewProduct}
+          onToggleLike={actions.toggleLike}
+          onAddToCart={actions.addToCart}
+        />
+      ))}
+    </section>
+  );
 }

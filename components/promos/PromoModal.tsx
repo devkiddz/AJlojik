@@ -8,7 +8,7 @@ import { ArrowRight, Flame, ShieldCheck, Tag, TrendingUp, X } from 'lucide-react
 import { Promo } from '@/data/promos';
 import { ProductType } from '@/types/types';
 import { Button } from '@/components/ui/button';
-import PromoProductCard from './PromoProductCard';
+import { PromoProductCard } from '@/features/products/cards';
 import PromoCountdown from './PromoCountdown';
 
 type Props = {
@@ -154,7 +154,13 @@ export default function PromoModal({ promo, products, open, onClose }: Props) {
 
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {products.map(product => (
-                <PromoProductCard key={product.id} promo={promo} product={product} />
+                <PromoProductCard
+                  key={product.id}
+                  product={product}
+                  badge={promo.badge}
+                  accent={promo.theme?.accent}
+                  endsAt={promo.endsAt}
+                />
               ))}
             </div>
           </section>

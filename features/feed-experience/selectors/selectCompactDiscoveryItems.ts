@@ -1,9 +1,11 @@
-import type { FeedContext } from '@/features/feed-experience/contracts';
-
 import type {
   CompactDiscoveryItem,
   CompactDiscoveryItemTone
-} from '@/components/discovery-hub-panel/discoveryHubTypes'
+} from '@/components/discovery-hub-panel/discoveryHubTypes';
+
+import type {
+  FeedContext
+} from '@/features/feed-experience/contracts';
 
 function getMembershipTone(
   tier: FeedContext['user']['tier']
@@ -44,66 +46,85 @@ function formatMembershipTier(
 export function selectCompactDiscoveryItems(
   context: FeedContext
 ): CompactDiscoveryItem[] {
-  const items: CompactDiscoveryItem[] = [];
+  const { user, activity } = context;
 
-  const {
-    user,
-    activity
-  } = context;
+  const cartProductCount = new Set(
+    user.cartProductIds
+  ).size;
 
-  const cartCount = user.cartProductIds.length;
-  const wishlistCount =
-    user.wishlistProductIds.length;
-  const recentCount =
-    user.recentProductIds.length;
+  const wishlistCount = new Set(
+    user.wishlistProductIds
+  ).size;
+
+  const recentCount = new Set(
+    user.recentProductIds
+  ).size;
 
   const preferredCategory =
     activity.viewedCategorySlugs.at(-1);
 
-  /*
-   * Cart has the highest priority because it represents
-   * the closest activity to purchase.
-   */
-  if (cartCount > 0) {
-    items.push({
+  const items: CompactDiscoveryItem[] = [
+    /*
+     * Cart remains visible even when empty so the collapsed
+     * Discovery Rail always provides access to commerce.
+     *
+     * This count represents distinct products, not total units.
+     */
+    {
       id: 'compact-cart',
       label: 'Cart',
-      value: `${cartCount} ${
-        cartCount === 1 ? 'item' : 'items'
-      }`,
-      description: 'Continue your order',
-      icon: 'cart',
-      tone: 'primary',
-      priority: 100,
-      groupId: 'shopping',
-      active: true
-    });
-  }
+      value:
+        cartProductCount > 0
+          ? `${cartProductCount} ${
+              cartProductCount === 1
+                ? 'selection'
+                : 'selections'
+            }`
+          : 'Empty',
 
-  /*
-   * Wishlist represents saved customer interest.
-   */
+      description:
+        cartProductCount > 0
+          ? 'Continue your order'
+          : 'Start adding products',
+
+      icon: 'cart',
+      tone:
+        cartProductCount > 0
+          ? 'primary'
+          : 'default',
+
+      priority: 100,
+
+      /*
+       * cart-summary belongs to the Home Hub group.
+       */
+      groupId: 'home',
+
+      active: cartProductCount > 0
+    }
+  ];
+
   if (wishlistCount > 0) {
     items.push({
       id: 'compact-wishlist',
       label: 'Saved',
+
       value: `${wishlistCount} ${
         wishlistCount === 1
           ? 'product'
           : 'products'
       }`,
+
       description: 'Ready to revisit',
+
       icon: 'wishlist',
       tone: 'rose',
       priority: 90,
-      groupId: 'shopping'
+      groupId: 'shopping',
+      active: true
     });
   }
 
-  /*
-   * Recently viewed items prove that the customer
-   * already has an active discovery journey.
-   */
   if (recentCount > 0) {
     items.push({
       id: 'compact-recent',
@@ -117,10 +138,6 @@ export function selectCompactDiscoveryItems(
     });
   }
 
-  /*
-   * Category activity becomes a lightweight
-   * recommendation signal.
-   */
   if (preferredCategory) {
     items.push({
       id: 'compact-recommendation',
@@ -134,27 +151,22 @@ export function selectCompactDiscoveryItems(
     });
   }
 
-  /*
-   * Membership is always useful, including for guests.
-   */
   items.push({
     id: 'compact-membership',
     label: 'Status',
     value: formatMembershipTier(user.tier),
+
     description:
       user.tier === 'guest'
         ? 'Join AJ Rewards'
         : 'Benefits are active',
+
     icon: 'membership',
     tone: getMembershipTone(user.tier),
     priority: 60,
     groupId: 'rewards'
   });
 
-  /*
-   * AI becomes active only when enough user signals exist.
-   * This is still deterministic mock intelligence.
-   */
   const activitySignalCount =
     activity.viewedProductIds.length +
     activity.searchedTerms.length +

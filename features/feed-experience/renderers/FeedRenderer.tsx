@@ -1,24 +1,23 @@
 'use client';
 
-import { useFeedExperience } from '../hooks';
+import FeedExperienceLoader from '../providers/FeedExperienceLoader';
+import { useFeedExperienceContext } from '../providers/FeedExperienceProvider';
+
 import { FeedModuleRenderer } from './FeedModuleRenderer';
 
 export function FeedRenderer() {
-  const { experience, actions, context } = useFeedExperience();
+  const { experience, actions, isResolving, pendingIntent } = useFeedExperienceContext();
 
-  console.table(
-    experience.modules.map(module => ({
-      id: module.id,
-      type: module.type,
-      priority: module.priority
-    }))
-  );
-
-  console.log('Active user:', context.user);
-  console.log('Active activity:', context.activity);
+  if (isResolving) {
+    return (
+      <main aria-busy="true" aria-live="polite">
+        <FeedExperienceLoader intentType={pendingIntent?.type} />
+      </main>
+    );
+  }
 
   return (
-    <main>
+    <main aria-busy="false" data-experience-key={experience.key} data-experience-status={experience.status}>
       <div className="space-y-4 md:space-y-8">
         {experience.modules.map(module => (
           <FeedModuleRenderer key={module.id} module={module} actions={actions} />

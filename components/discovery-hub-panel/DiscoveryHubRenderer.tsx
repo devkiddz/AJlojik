@@ -9,13 +9,14 @@ import { discoveryHubRegistry } from './discoveryHubRegistry';
 export function DiscoveryHubRenderer() {
   const { widgets, activeGroupId } = useDiscoveryHub();
 
-  const activeWidgets = useMemo(() => {
-    return widgets.filter(widget => widget.groupId === activeGroupId);
-  }, [widgets, activeGroupId]);
+  const activeWidgets = useMemo(
+    () => widgets.filter(widget => widget.groupId === activeGroupId),
+    [widgets, activeGroupId]
+  );
 
   if (!activeWidgets.length) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-background/[0.03] p-4 text-sm text-primary/60">
+      <div className="rounded-2xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         No widgets available for this section yet.
       </div>
     );

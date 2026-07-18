@@ -6,10 +6,9 @@ import { ProductType } from '@/types/types';
 type Props = {
   product: ProductType;
   selectedVariantId: string;
-  setSelectedVariantId: (id: string) => void;
 };
 
-export default function SingleProductGallery({ product, selectedVariantId, setSelectedVariantId }: Props) {
+export default function SingleProductGallery({ product, selectedVariantId }: Props) {
   const selected = product.variants.find(v => v.id === selectedVariantId) ?? product.variants[0];
 
   return (

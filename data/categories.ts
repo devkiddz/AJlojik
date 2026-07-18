@@ -17,12 +17,12 @@ export const categories = [
     accentColor: '#64748b', // slate
 
     image:
-      'https://images.unsplash.com/photo-1577538928305-3807c3993047?q=80&w=1170&auto=format&fit=crop',
+      '/assets/Image-1.png',
 
     coverImages: [
-      'https://images.unsplash.com/photo-1556740749-887f6717d7e4?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1600&auto=format&fit=crop',
+      '/assets/Image-2.png',
+      '/assets/Image-3.png',
+      '/assets/Image-4.jpg',
     ],
 
     shortDescription: 'Everything you need in one place.',
@@ -45,12 +45,12 @@ export const categories = [
     accentColor: '#f59e0b', // amber
 
     image:
-      'https://images.unsplash.com/photo-1660627254751-792e5dcf3e1c?q=80&w=1170&auto=format&fit=crop',
+      '/assets/image-6.jpg',
 
     coverImages: [
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1600&auto=format&fit=crop',
+      '/assets/image-8.jpg',
+      '/assets/image-9.jpg',
+      '/assets/image-10.jpg',
     ],
 
     shortDescription: 'Handpicked products worth discovering.',
@@ -73,12 +73,12 @@ export const categories = [
     accentColor: '#ef4444', // red
 
     image:
-      'https://plus.unsplash.com/premium_photo-1684923611429-11861669297f?q=80&w=1170&auto=format&fit=crop',
+      '/assets/promos/weekend-discount.png',
 
     coverImages: [
-      'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1600&auto=format&fit=crop',
+      '/assets/promos/on-sale-now.png',
+      '/assets/promos/hot-picks.png',
+      '/assets/promos/best-sellers.png',
     ],
 
     shortDescription: 'Save more on everyday purchases.',
@@ -101,12 +101,12 @@ export const categories = [
     accentColor: '#7c3aed', // purple
 
     image:
-      'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop',
+      '/assets/collections/tonights-pour-banner.png',
 
     coverImages: [
-      'https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1568213816046-0ee1c42bd559?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1474722883778-792e7990302f?q=80&w=1600&auto=format&fit=crop',
+      '/products/moet-chandon-imperial_lg.jpg',
+      '/products/hennessy_lg.jpg',
+      '/products/martellblue_lg.jpg',
     ],
 
     shortDescription: 'Premium wines, spirits and celebratory drinks.',
@@ -130,12 +130,12 @@ export const categories = [
     accentColor: '#22c55e', // green
 
     image:
-      'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=1200&auto=format&fit=crop',
+      '/products/Digital_Air_Fryer.jpg',
 
     coverImages: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=1600&auto=format&fit=crop',
+      '/products/KitchenAid_Artisan_Stand_Mixer.jpg',
+      '/products/Nespresso_Vertuo_Coffee_Machine.jpg',
+      '/assets/collections/weekend-indulgence-banner.png',
     ],
 
     shortDescription: 'Freshly prepared meals and kitchen delights.',
@@ -158,12 +158,12 @@ export const categories = [
   accentColor: '#e11d48',
 
   image:
-    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200&auto=format&fit=crop',
+    '/products/Chocolate_Fudge_Cake.jpg',
 
   coverImages: [
-    'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=1600&auto=format&fit=crop',
+    '/products/Chocolate_Fudge_Cake.jpg',
+    '/products/red_velvet_celebration_cake.jpg',
+    '/assets/collections/sweet-moments-banner.png',
   ],
 
   shortDescription:
@@ -187,12 +187,12 @@ export const categories = [
     accentColor: '#ec4899', // pink
 
     image:
-      'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=1200&auto=format&fit=crop',
+      '/products/Birthday_Party_Package.jpg',
 
     coverImages: [
-      'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1464349153735-7db50ed83c84?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1600&auto=format&fit=crop',
+      '/products/Birthday_Party_Package.jpg',
+      '/products/Premium_Backyard_BBQ_Package.jpg',
+      '/assets/collections/weekend-indulgence-banner.png',
     ],
 
     shortDescription:

@@ -1,157 +1,162 @@
 'use client';
 
-import { useCallback, useMemo, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react'; // Imports premium toggle arrows
+import { useEffect, useMemo, useRef, useState, type UIEvent } from 'react';
 
-import { categories } from '@/data/categories';
-import { collections } from '@/data/collections';
+import { PanelRightOpen } from 'lucide-react';
+
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
-import { products } from '@/data/products';
-import { promos } from '@/data/promos';
 
-import type { FeedActions, FeedContext, FeedIntent } from '@/features/feed-experience/contracts';
-import { FeedExperienceProvider } from '@/features/feed-experience/providers';
-import type { ProductType, ProductVariantType } from '@/types/types';
+import { useFeedExperience } from '@/features/feed-experience';
 
-import DiscoveryHubPanel from './DiscoveryHubPanel';
-import { DiscoveryHubProvider } from './DiscoveryHubProvider';
+import { selectDiscoveryHubWidgets } from '@/features/feed-experience/selectors';
+
 import { cn } from '@/lib/utils';
 
+import ActiveProductWidget from '@/components/ActiveProductWidget';
+import DiscoveryHubPanel from './DiscoveryHubPanel';
+import { DiscoveryHubProvider } from './DiscoveryHubProvider';
+import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
+
+import type { HubGroupId } from './discoveryHubTypes';
+
+type MobileHubView = 'discovery' | 'product';
+
 export default function DiscoverExperienceShell() {
-  const router = useRouter();
+  const { intent, context } = useFeedExperience();
 
-  // Desktop Sidebar Layout Collapse State Management
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeGroupId, setActiveGroupId] = useState<HubGroupId>('home');
 
-  // High-End UX: Listen for Ctrl + B keyboard shortcut to quickly toggle the panel open/close
+  const [viewPreference, setViewPreference] = useState<{
+    productId: string;
+    view: MobileHubView;
+  } | null>(null);
+
+  const discoveryScrollRef = useRef<HTMLDivElement>(null);
+
+  const discoveryScrollTopRef = useRef(0);
+
+  const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
+
+  const activeView: MobileHubView = !activeProductId
+    ? 'discovery'
+    : viewPreference?.productId === activeProductId
+      ? viewPreference.view
+      : 'product';
+
+  const showProduct = Boolean(activeProductId) && activeView === 'product';
+
+  const resolvedWidgets = useMemo(
+    () =>
+      selectDiscoveryHubWidgets({
+        widgets: hubWidgets,
+        context
+      }),
+    [context]
+  );
+
+  /*
+   * Restore the original Discovery Hub position
+   * whenever the user continues their Discovery.
+   */
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-        e.preventDefault();
-        setIsCollapsed(prev => !prev);
+    if (activeView !== 'discovery') {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      if (discoveryScrollRef.current) {
+        discoveryScrollRef.current.scrollTop = discoveryScrollTopRef.current;
       }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [activeView]);
 
-  const initialIntent = useMemo<FeedIntent>(
-    () => ({
-      id: 'mobile-discovery',
-      type: 'store-discovery',
-      source: 'navigation',
-      categorySlug: 'all',
-      createdAt: new Date().toISOString()
-    }),
-    []
-  );
+  const handleDiscoveryScroll = (event: UIEvent<HTMLDivElement>) => {
+    discoveryScrollTopRef.current = event.currentTarget.scrollTop;
+  };
 
-  const context = useMemo<FeedContext>(
-    () => ({
-      catalog: {
-        products,
-        categories,
-        collections,
-        promotions: promos
-      },
-      user: {
-        sessionId: 'mobile-discovery-session',
-        authenticated: false,
-        tier: 'guest',
-        wishlistProductIds: [],
-        cartProductIds: [],
-        recentProductIds: []
-      },
-      activity: {
-        viewedProductIds: [],
-        viewedCategorySlugs: [],
-        searchedTerms: [],
-        clickedCollectionIds: []
-      },
-      environment: {
-        locale: 'en-NG',
-        currency: 'NGN',
-        device: 'mobile',
-        now: new Date().toISOString()
-      }
-    }),
-    []
-  );
+  const handleGroupSelect = (groupId: HubGroupId) => {
+    setActiveGroupId(groupId);
 
-  const changeCategory = useCallback(
-    (updates: Record<string, string | null>) => {
-      const category = updates.category;
-      router.push(category && category !== 'all' ? `/store?category=${category}` : '/store');
-    },
-    [router]
-  );
+    setViewPreference(
+      activeProductId
+        ? { productId: activeProductId, view: 'discovery' }
+        : null
+    );
+  };
 
-  const previewProduct = useCallback(
-    (product: ProductType) => {
-      router.push(`/store?product=${product.id}`);
-    },
-    [router]
-  );
+  const handleContinueDiscovery = () => {
+    setViewPreference(
+      activeProductId
+        ? { productId: activeProductId, view: 'discovery' }
+        : null
+    );
+  };
 
-  const toggleLike = useCallback((_productId: string) => {}, []);
-  const addToCart = useCallback((_product: ProductType, _variant: ProductVariantType) => {}, []);
+  const handleShowProduct = () => {
+    if (!activeProductId) {
+      return;
+    }
 
-  const previewPromotion = useCallback(
-    (promoId: string) => {
-      router.push(`/store?promotion=${promoId}`);
-    },
-    [router]
-  );
-
-  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
-    () => ({
-      changeCategory,
-      previewProduct,
-      toggleLike,
-      addToCart,
-      previewPromotion
-    }),
-    [changeCategory, previewProduct, toggleLike, addToCart, previewPromotion]
-  );
+    setViewPreference({
+      productId: activeProductId,
+      view: 'product'
+    });
+  };
 
   return (
-    <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      <DiscoveryHubProvider groups={hubGroups} widgets={hubWidgets}>
-        <div className="relative flex h-full min-h-0 w-full overflow-hidden">
-          {/* Desktop Discovery Rail */}
-          <aside
-            className={`
-            relative hidden min-h-0 shrink-0 flex-col overflow-hidden
-            border-r border-border/40 bg-background/60 backdrop-blur-md
-            transition-all duration-300 ease-in-out
-            lg:flex lg:h-[calc(100dvh-5rem)] lg:max-h-[calc(100dvh-5rem)]
-            ${isCollapsed ? 'w-16' : 'w-80'}
-          `}>
-            <button
-              type="button"
-              onClick={() => setIsCollapsed(current => !current)}
-              className="absolute -right-3 top-6 z-50 flex size-6 items-center justify-center rounded-full border bg-background text-foreground shadow-sm transition hover:bg-accent"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-              {isCollapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
-            </button>
+    <DiscoveryHubProvider
+      groups={hubGroups}
+      widgets={resolvedWidgets}
+      activeGroupId={activeGroupId}
+      onActiveGroupIdChange={setActiveGroupId}>
+      <div className="relative h-full min-h-0 w-full overflow-hidden">
+        <DiscoveryHubPanel className="h-full" onGroupSelect={handleGroupSelect}>
+          <div className="h-full min-h-0 overflow-hidden">
+            {/* Preserved Discovery Hub */}
 
             <div
-              className={`
-              h-full min-h-0 w-full overflow-hidden
-              transition-opacity duration-200
-              ${isCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'}
-            `}>
-              <DiscoveryHubPanel className="h-full" />
-            </div>
-          </aside>
+              aria-hidden={showProduct}
+              className={cn(
+                'h-full min-h-0',
 
-          {/* Mobile full-screen Discovery */}
-          <div className="h-full min-h-0 w-full flex-1 overflow-hidden lg:hidden">
-            <DiscoveryHubPanel className="h-full" />
+                showProduct ? 'hidden' : 'block'
+              )}>
+              <div
+                ref={discoveryScrollRef}
+                onScroll={handleDiscoveryScroll}
+                className="h-full overflow-x-hidden overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]">
+                <div className="w-full p-3 pb-28 md:p-4">
+                  <DiscoveryHubRenderer />
+                </div>
+              </div>
+            </div>
+
+            {/* Active product information */}
+
+            {showProduct ? (
+              <div className="h-full min-h-0 overflow-hidden">
+                <ActiveProductWidget onBackToDiscovery={handleContinueDiscovery} />
+              </div>
+            ) : null}
           </div>
-        </div>
-      </DiscoveryHubProvider>
-    </FeedExperienceProvider>
+        </DiscoveryHubPanel>
+
+        {/* Reopen the active product after continuing Discovery */}
+
+        {activeProductId && !showProduct ? (
+          <button
+            type="button"
+            onClick={handleShowProduct}
+            className="absolute bottom-4 right-4 z-[70] inline-flex h-11 items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-xl shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90">
+            <PanelRightOpen className="size-4" />
+            Product details
+          </button>
+        ) : null}
+      </div>
+    </DiscoveryHubProvider>
   );
 }

@@ -135,7 +135,7 @@ function ProductContent({
 
                 <SelectContent>
                   {product.variants.map(variant => (
-                    <SelectItem key={variant.id} value={String(variant.id)}>
+                    <SelectItem key={variant.id} value={String(variant.label)}>
                       {variant.label}
                     </SelectItem>
                   ))}

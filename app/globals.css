@@ -5,10 +5,13 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-base: var(--text-base);
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  /* Typography */
+  --font-base: var(--font-inter);
+  --font-heading: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
 
+  /* Application colours */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -36,12 +39,14 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Chart colours */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
+  /* Sidebar colours */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -51,6 +56,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Radius scale */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -59,10 +65,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
-
 :root {
-  --text-base: #0b1220;
-
   --background: #fbf7ef;
   --foreground: #0b1220;
 
@@ -126,8 +129,6 @@
 }
 
 .dark {
-  --text-base: #f8efe2;
-
   --background: #050814;
   --foreground: #f8efe2;
 
@@ -577,19 +578,21 @@
 .header-ambient-light {
   position: absolute;
   inset: 0;
-  pointer-events: none;
   z-index: 0;
+
+  pointer-events: none;
 
   background:
     radial-gradient(
       circle at 50% -80%,
-      color-mix(in oklab, var(--blue-500) 70%, transparent) 0%,
-      color-mix(in oklab, var(--green-500) 45%, transparent) 38%,
+      color-mix(in oklab, var(--color-blue-500) 70%, transparent) 0%,
+      color-mix(in oklab, var(--color-green-500) 45%, transparent) 38%,
       transparent 72%
     ),
     linear-gradient(180deg, color-mix(in oklab, var(--brand-gold) 8%, transparent), transparent 70%);
 
   opacity: 0.55;
+
   animation: header-light-breathe 7s ease-in-out infinite;
 }
 

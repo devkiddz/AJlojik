@@ -1,10 +1,15 @@
 'use client';
 
 import Image from 'next/image';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { ArrowRight, ChevronLeft, ChevronRight, LoaderCircle, ShoppingCart, Plus } from 'lucide-react';
+
 import { useEffect, useMemo, useState } from 'react';
 
+import { useCart } from '@/features/cart';
+import { useCatalog } from '@/features/catalog';
 import { useFeedExperience } from '@/features/feed-experience';
+
 import { cn } from '@/lib/utils';
 
 import type { HubSlideItem } from '../discoveryHubTypes';
@@ -12,49 +17,184 @@ import type { HubSlideItem } from '../discoveryHubTypes';
 type HubSliderProps = {
   items: HubSlideItem[];
   autoSlide?: boolean;
+
   variant?: 'hero' | 'strip' | 'grid' | 'minimal-grid';
 };
 
-const formatPrice = (price?: number) => {
-  if (!price) return null;
+type CartActionOptions = {
+  containerClassName?: string;
+  buttonClassName?: string;
+  compact?: boolean;
+};
+
+function formatPrice(price?: number): string | null {
+  if (price === undefined || price === null) {
+    return null;
+  }
 
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
     currency: 'NGN',
     maximumFractionDigits: 0
   }).format(price);
-};
+}
+
+function getTargetProductId(target: unknown): string | null {
+  if (typeof target !== 'object' || target === null) {
+    return null;
+  }
+
+  const candidate = target as {
+    type?: unknown;
+    productId?: unknown;
+  };
+
+  if (candidate.type !== 'product' || typeof candidate.productId !== 'string') {
+    return null;
+  }
+
+  return candidate.productId;
+}
 
 export default function HubSlider({ items, autoSlide = false, variant = 'strip' }: HubSliderProps) {
   const { actions } = useFeedExperience();
 
+  const { products } = useCatalog();
+
+  const { items: cartItems, addToCart, mutating } = useCart();
+
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
 
   const safeItems = useMemo(() => items.filter(Boolean), [items]);
 
-  const activeItem = safeItems[activeIndex];
+  const productById = useMemo(() => new Map(products.map(product => [product.id, product])), [products]);
 
-  const openItem = (item: HubSlideItem) => {
-    if (item.target) {
-      actions.openExperience(item.target);
+  const currentActiveIndex = safeItems.length > 0 ? Math.min(activeIndex, safeItems.length - 1) : 0;
+
+  const activeItem = safeItems[currentActiveIndex];
+
+  const resolveProduct = (item: HubSlideItem) => {
+    const targetProductId = getTargetProductId(item.target);
+
+    return productById.get(targetProductId ?? item.id);
+  };
+
+  const getCommerceState = (item: HubSlideItem) => {
+    const product = resolveProduct(item);
+
+    const selectedVariant = product?.variants[0];
+
+    const cartItem = selectedVariant
+      ? cartItems.find(item => item.variantId === selectedVariant.id)
+      : undefined;
+
+    return {
+      product,
+      selectedVariant,
+      cartItem,
+
+      pending: Boolean(selectedVariant) && pendingVariantId === selectedVariant?.id
+    };
+  };
+
+  const addSlideToCart = async (item: HubSlideItem): Promise<void> => {
+    const { product, selectedVariant } = getCommerceState(item);
+
+    if (!product || !selectedVariant || mutating) {
+      return;
+    }
+
+    setPendingVariantId(selectedVariant.id);
+
+    try {
+      await addToCart({
+        product,
+        variant: selectedVariant,
+        quantity: 1
+      });
+    } finally {
+      setPendingVariantId(null);
+    }
+  };
+
+  const openItem = (item: HubSlideItem): void => {
+    const product = resolveProduct(item);
+
+    /*
+     * Real catalog products always launch the complete
+     * Product Experience inside the active feed.
+     */
+    if (product) {
+      actions.openExperience({
+        type: 'product',
+        productId: product.id
+      });
 
       return;
     }
 
-    if (item.id.startsWith('prod_')) {
-      actions.openExperience({
-        type: 'product',
-        productId: item.id
-      });
+    /*
+     * Promotions, coupons and other Hub items may
+     * publish their own experience targets.
+     */
+    if (item.target) {
+      actions.openExperience(item.target);
     }
   };
 
-  const showPrevious = () => {
-    setActiveIndex(current => (current === 0 ? safeItems.length - 1 : current - 1));
+  const renderCartAction = (item: HubSlideItem, options: CartActionOptions = {}) => {
+    const { product, selectedVariant, cartItem, pending } = getCommerceState(item);
+
+    if (!product || !selectedVariant) {
+      return null;
+    }
+
+    const { containerClassName, buttonClassName, compact = false } = options;
+
+    return (
+      <div className={cn('inline-flex items-center gap-1.5', containerClassName)}>
+        {cartItem ? (
+          <span
+            aria-label={`${cartItem.quantity} ${cartItem.quantity === 1 ? 'item' : 'items'} in cart`}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-2 text-[10px] font-bold text-emerald-300">
+            <ShoppingCart className="size-3.5" />
+
+            <span aria-live="polite">{cartItem.quantity > 99 ? '99+' : cartItem.quantity}</span>
+          </span>
+        ) : null}
+
+        <button
+          type="button"
+          disabled={mutating || pending}
+          onClick={event => {
+            event.stopPropagation();
+
+            void addSlideToCart(item);
+          }}
+          className={cn(
+            'inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-primary/12 bg-background/55 px-3 py-2 text-[10px] font-semibold text-primary transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-55',
+            buttonClassName
+          )}>
+          {pending ? (
+            <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
+          ) : (
+            <Plus className="size-3.5 shrink-0" />
+          )}
+
+          <span className="truncate">{pending ? 'Adding...' : compact ? 'Add' : 'Add to cart'}</span>
+        </button>
+      </div>
+    );
   };
 
-  const showNext = () => {
-    setActiveIndex(current => (current + 1) % safeItems.length);
+  const showPrevious = (): void => {
+    setActiveIndex(currentActiveIndex === 0 ? safeItems.length - 1 : currentActiveIndex - 1);
+  };
+
+  const showNext = (): void => {
+    setActiveIndex((currentActiveIndex + 1) % safeItems.length);
   };
 
   useEffect(() => {
@@ -75,20 +215,21 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
   // ============================================================
   // EDITORIAL HERO
-  // Large immersive promo/deal with navigation controls.
   // ============================================================
 
   if (variant === 'hero' && activeItem) {
-    const activePrice = formatPrice(activeItem.price);
+    const { product: activeProduct, selectedVariant } = getCommerceState(activeItem);
+
+    const activeTitle = activeProduct?.name ?? activeItem.title;
+
+    const activeImage = selectedVariant?.image ?? activeItem.image;
+
+    const activePrice = formatPrice(selectedVariant?.price ?? activeItem.price);
 
     return (
       <div>
         <div className="group relative overflow-hidden rounded-3xl border border-primary/10 bg-background shadow-[0_24px_70px_rgba(0,0,0,0.38)]">
           <div className="grid min-h-66 grid-cols-5">
-            {/* ====================================================
-              PROMOTION DETAILS — LEFT
-          ==================================================== */}
-
             <div className="relative col-span-3 flex min-w-0 flex-col justify-between overflow-hidden p-5 md:p-6">
               <div className="absolute inset-0 bg-gradient-to-br from-card via-background to-background" />
 
@@ -104,14 +245,14 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                 </div>
 
                 <h4 className="mt-5 text-xl font-bold leading-tight tracking-tight text-primary">
-                  {activeItem.title}
+                  {activeTitle}
                 </h4>
 
-                {activeItem.subtitle && (
+                {activeItem.subtitle ? (
                   <p className="mt-3 line-clamp-3 text-sm leading-6 text-primary/55">{activeItem.subtitle}</p>
-                )}
+                ) : null}
 
-                {activePrice && (
+                {activePrice ? (
                   <div className="mt-5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/35">
                       Promotional price
@@ -119,19 +260,26 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
                     <p className="mt-1 text-lg font-bold text-primary">{activePrice}</p>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="relative mt-6">
-                <button
-                  type="button"
-                  onClick={() => openItem(activeItem)}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-background transition hover:opacity-90">
-                  Explore promotion
-                  <ArrowRight className="size-4" />
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openItem(activeItem)}
+                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-background transition hover:opacity-90">
+                    {activeProduct ? 'View product' : 'Explore promotion'}
 
-                {safeItems.length > 1 && (
+                    <ArrowRight className="size-4" />
+                  </button>
+
+                  {renderCartAction(activeItem, {
+                    buttonClassName: 'px-4 py-2.5 text-xs'
+                  })}
+                </div>
+
+                {safeItems.length > 1 ? (
                   <div className="mt-5 flex items-center justify-between gap-3">
                     <div className="flex gap-1.5">
                       {safeItems.map((item, index) => (
@@ -142,7 +290,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                           onClick={() => setActiveIndex(index)}
                           className={cn(
                             'h-1.5 rounded-full transition-all duration-300',
-                            index === activeIndex
+
+                            index === currentActiveIndex
                               ? 'w-7 bg-primary'
                               : 'w-1.5 bg-primary/20 hover:bg-primary/40'
                           )}
@@ -151,26 +300,22 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                     </div>
 
                     <span className="shrink-0 text-[10px] font-medium text-primary/35">
-                      {String(activeIndex + 1).padStart(2, '0')} / {String(safeItems.length).padStart(2, '0')}
+                      {String(currentActiveIndex + 1).padStart(2, '0')} / {String(safeItems.length).padStart(2, '0')}
                     </span>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
-
-            {/* ====================================================
-              PRODUCT IMAGE — RIGHT
-          ==================================================== */}
 
             <div className="relative col-span-2 min-h-66 overflow-hidden border-l border-primary/10 bg-card">
               <button
                 type="button"
                 onClick={() => openItem(activeItem)}
-                aria-label={`Explore ${activeItem.title}`}
+                aria-label={`Explore ${activeTitle}`}
                 className="absolute inset-0 block h-full w-full overflow-hidden text-left">
                 <Image
-                  src={activeItem.image}
-                  alt={activeItem.title}
+                  src={activeImage}
+                  alt={activeTitle}
                   fill
                   sizes="(max-width: 1024px) 40vw, 280px"
                   className="object-cover object-center transition duration-700 group-hover:scale-105"
@@ -181,17 +326,17 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/5" />
               </button>
 
-              {activeItem.badge && (
+              {activeItem.badge ? (
                 <span className="pointer-events-none absolute right-3 top-3 rounded-full border border-white/15 bg-black/40 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-xl">
                   {activeItem.badge}
                 </span>
-              )}
+              ) : null}
 
               <span className="pointer-events-none absolute bottom-4 left-3 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[9px] font-medium text-white/75 backdrop-blur-xl">
                 AJ Logik
               </span>
 
-              {safeItems.length > 1 && (
+              {safeItems.length > 1 ? (
                 <div className="absolute bottom-4 right-3 flex gap-2">
                   <button
                     type="button"
@@ -209,16 +354,16 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                     <ChevronRight className="size-4" />
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
       </div>
     );
   }
+
   // ============================================================
-  // THREE-PRODUCT VIEW
-  // Exactly three products, so there is no incomplete second row.
+  // THREE-PRODUCT GRID
   // ============================================================
 
   if (variant === 'grid' || variant === 'minimal-grid') {
@@ -226,47 +371,64 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
     return (
       <div className="mt-5 grid grid-cols-3 gap-2.5 sm:gap-3">
-        {visibleItems.map(item => (
-          <button
-            type="button"
-            key={item.id}
-            onClick={() => openItem(item)}
-            className="group overflow-hidden rounded-2xl border border-primary/10 bg-background/45 text-left shadow-[0_12px_35px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-background/60">
-            <div className="relative aspect-[3/4] min-h-32 overflow-hidden">
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                sizes="(max-width: 640px) 31vw, 140px"
-                className="object-cover transition duration-500 group-hover:scale-105"
-              />
+        {visibleItems.map(item => {
+          const { product, selectedVariant } = getCommerceState(item);
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+          const title = product?.name ?? item.title;
 
-              {item.badge && (
-                <span className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-semibold text-white backdrop-blur">
-                  {item.badge}
-                </span>
-              )}
-            </div>
+          const image = selectedVariant?.image ?? item.image;
 
-            <div className="p-2.5">
-              <p className="line-clamp-2 min-h-8 text-[11px] font-semibold leading-4 text-primary">
-                {item.title}
-              </p>
+          const price = formatPrice(selectedVariant?.price ?? item.price);
 
-              {variant === 'grid' && item.subtitle && (
-                <p className="mt-1 line-clamp-1 text-[10px] text-primary/50">{item.subtitle}</p>
-              )}
+          return (
+            <article
+              key={item.id}
+              className="group min-w-0 overflow-hidden rounded-2xl border border-primary/10 bg-background/45 text-left shadow-[0_12px_35px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-background/60">
+              <button type="button" onClick={() => openItem(item)} className="block w-full text-left">
+                <div className="relative aspect-[3/4] min-h-32 overflow-hidden">
+                  <Image
+                    src={image}
+                    alt={title}
+                    fill
+                    sizes="(max-width: 640px) 31vw, 140px"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
 
-              {variant === 'grid' && formatPrice(item.price) && (
-                <p className="mt-2 truncate text-[11px] font-bold text-primary/80">
-                  {formatPrice(item.price)}
-                </p>
-              )}
-            </div>
-          </button>
-        ))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+
+                  {item.badge ? (
+                    <span className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-semibold text-white backdrop-blur">
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="p-2.5">
+                  <p className="line-clamp-2 min-h-8 text-[11px] font-semibold leading-4 text-primary">
+                    {title}
+                  </p>
+
+                  {variant === 'grid' && item.subtitle ? (
+                    <p className="mt-1 line-clamp-1 text-[10px] text-primary/50">{item.subtitle}</p>
+                  ) : null}
+
+                  {variant === 'grid' && price ? (
+                    <p className="mt-2 truncate text-[11px] font-bold text-primary/80">{price}</p>
+                  ) : null}
+                </div>
+              </button>
+
+              {product && selectedVariant ? (
+                <div className="px-2.5 pb-2.5">
+                  {renderCartAction(item, {
+                    containerClassName: 'w-full',
+                    compact: true
+                  })}
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
     );
   }
@@ -277,29 +439,45 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
   return (
     <div className="mt-5 flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-      {safeItems.map(item => (
-        <button
-          type="button"
-          key={item.id}
-          onClick={() => openItem(item)}
-          className="w-28 shrink-0 text-left">
-          <div className="relative aspect-square w-28 overflow-hidden rounded-2xl border border-primary/10 bg-background shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
-            <Image
-              src={item.image}
-              alt={item.title}
-              fill
-              sizes="112px"
-              className="object-cover transition duration-500 hover:scale-105"
-            />
-          </div>
+      {safeItems.map(item => {
+        const { product, selectedVariant } = getCommerceState(item);
 
-          <p className="mt-2 line-clamp-2 text-[11px] font-medium leading-4 text-primary/75">{item.title}</p>
+        const title = product?.name ?? item.title;
 
-          {formatPrice(item.price) && (
-            <p className="mt-1 text-[11px] font-semibold text-primary/45">{formatPrice(item.price)}</p>
-          )}
-        </button>
-      ))}
+        const image = selectedVariant?.image ?? item.image;
+
+        const price = formatPrice(selectedVariant?.price ?? item.price);
+
+        return (
+          <article key={item.id} className="w-28 shrink-0">
+            <button type="button" onClick={() => openItem(item)} className="block w-full text-left">
+              <div className="relative aspect-square w-28 overflow-hidden rounded-2xl border border-primary/10 bg-background shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
+                <Image
+                  src={image}
+                  alt={title}
+                  fill
+                  sizes="112px"
+                  className="object-cover transition duration-500 hover:scale-105"
+                />
+              </div>
+
+              <p className="mt-2 line-clamp-2 text-[11px] font-medium leading-4 text-primary/75">{title}</p>
+
+              {price ? <p className="mt-1 text-[11px] font-semibold text-primary/45">{price}</p> : null}
+            </button>
+
+            {product && selectedVariant ? (
+              <div className="mt-2">
+                {renderCartAction(item, {
+                  containerClassName: 'w-full',
+                  buttonClassName: 'px-2',
+                  compact: true
+                })}
+              </div>
+            ) : null}
+          </article>
+        );
+      })}
     </div>
   );
 }

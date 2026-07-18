@@ -1,38 +1,59 @@
-import { CollectionType } from '@/data/collections';
-import { ProductType } from '@/types/types';
+import { Button } from '@/components/ui/button';
+import type { CollectionType } from '@/data/collections';
 import { getCollectionIcon } from '@/lib/collection-icons';
-
+import type { ProductType, ProductVariantType } from '@/types/types';
 import CollectionBanner from './CollectionBanner';
 import FeaturedCollection from './layouts/FeaturedCollection';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, PartyPopper } from 'lucide-react';
-type Props = {
+import { ArrowRight, PartyPopper, type LucideIcon } from 'lucide-react';
+
+type CollectionIconProps = {
+  // Allow LucideIcon, null, or undefined so it plays nicely with return values
+  icon?: LucideIcon | null;
+  accent?: string;
+};
+
+function CollectionIconDisplay({ icon: Icon = PartyPopper, accent }: CollectionIconProps) {
+  // If the passed icon is null, default back to PartyPopper
+  const ActiveIcon = Icon ?? PartyPopper;
+
+  return (
+    <ActiveIcon
+      className="size-5 md:size-6"
+      style={{
+        color: accent ?? '#64748b'
+      }}
+    />
+  );
+}
+
+type CollectionSectionProps = {
   collection: CollectionType;
   products: ProductType[];
   featuredProduct?: ProductType;
-  onSelect?: (id: string) => void;
-  onToggleLike?: (id: string) => void;
+  onPreview?: (product: ProductType) => void;
+  onToggleLike?: (productId: string) => void;
+  onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
 
 export default function CollectionSection({
   collection,
   products,
   featuredProduct,
-  onSelect,
-  onToggleLike
-}: Props) {
-  if (!collection.active || products.length === 0) {
+  onPreview,
+  onToggleLike,
+  onAddToCart
+}: CollectionSectionProps) {
+  if (!collection.active || !products.length || !featuredProduct) {
     return null;
   }
 
-  if (!featuredProduct) return null;
-  const carouselProducts = products.filter(product => product.id !== featuredProduct.id);
-  const displayProducts = carouselProducts.length > 0 ? carouselProducts : products;
-  const Icon = getCollectionIcon(collection.icon?.value);
+  const collectionIcon = getCollectionIcon(collection.icon?.value);
+  const supportingProducts = products.filter(product => product.id !== featuredProduct.id);
+  const displayProducts = supportingProducts.length > 0 ? supportingProducts : products;
 
   return (
-    <section className="relative max-w-full rounded-3xl bg-card border border-border/50 shadow-lg py-4">
-      <div className="relative overflow-hidden rounded-2xl">
+    <section className="relative max-w-full overflow-hidden rounded-3xl border border-border/60 bg-card shadow-lg">
+      <div className="relative overflow-hidden">
         {collection.banner?.image ? (
           <CollectionBanner
             banner={collection.banner}
@@ -40,50 +61,49 @@ export default function CollectionSection({
             count={displayProducts.length}
           />
         ) : (
-          <div className="flex items-center justify-between rounded-2xl  bg-card px-3 py-2 md:py-5 md:px-6">
-            {/* Left */}
-            <div className="flex items-center md:items-star gap-2t md:gap-4">
+          <header className="flex items-center justify-between gap-4 px-4 py-4 md:px-6 md:py-5">
+            <div className="flex min-w-0 items-center gap-3 md:gap-4">
               <div
-                className="flex h-6 w-6 lg:h-12 lg:w-12 items-center justify-center rounded-xl"
-                style={{ backgroundColor: `${collection.theme?.accent}20` }}>
-                <Icon className="h-4 w-4 lg:h-6 lg:w-6" color={collection.theme?.accent} />
+                className="grid size-10 shrink-0 place-items-center rounded-xl md:size-12"
+                style={{
+                  backgroundColor: `${collection.theme?.accent ?? '#64748b'}20`
+                }}>
+                <CollectionIconDisplay icon={collectionIcon} accent={collection.theme?.accent} />
               </div>
 
-              <div className="flex flex-col gap-1.5 items-start justify-between">
-                <div className="flex items-center gap-0.5 md:gap-2">
-                  <h2 className="text-[12px] md:text-sm font-bold tracking-tight lg:text-lg">
-                    {collection.title}
-                  </h2>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="truncate text-sm font-bold tracking-tight md:text-lg">{collection.title}</h2>
 
-                  <span className="rounded-full bg-destructive/10 px-1.5 py-1 text-[10px] font-bold text-destructive">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-bold text-primary">
                     {displayProducts.length}
                   </span>
                 </div>
 
-                {collection.subtitle && (
-                  <p className="hidden lg:inline-block max-w-2xl text-sm text-muted-foreground">
+                {collection.subtitle ? (
+                  <p className="mt-1 hidden max-w-2xl text-sm text-muted-foreground md:block">
                     {collection.subtitle}
                   </p>
-                )}
+                ) : null}
               </div>
             </div>
 
-            {/* Right */}
-            <Button variant="outline" className="gap-2 rounded-full text-[10px] lg:text-sm cursor-pointer">
-              View Collection
-              <ArrowRight className="h-4 w-4" />
+            <Button type="button" variant="outline" className="shrink-0 gap-2 rounded-full">
+              <span className="hidden sm:inline">View collection</span>
+              <ArrowRight className="size-4" />
             </Button>
-          </div>
+          </header>
         )}
       </div>
 
-      <div className="p-2 md:p-4 lg:p-6">
+      <div className="p-3 md:p-5 lg:p-6">
         <FeaturedCollection
           collection={collection}
           products={products}
           featuredProduct={featuredProduct}
-          onSelect={onSelect}
+          onPreview={onPreview}
           onToggleLike={onToggleLike}
+          onAddToCart={onAddToCart}
         />
       </div>
     </section>

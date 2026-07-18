@@ -1,3 +1,3 @@
-export * from "./buildStoreDiscoveryExperience";
-export * from './buildStoreDiscoveryExperience';
+export * from './buildProductExperience';
 export * from './buildShoppingJourneyItems';
+export * from './buildStoreDiscoveryExperience';

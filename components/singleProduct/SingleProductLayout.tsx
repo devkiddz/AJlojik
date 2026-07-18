@@ -19,14 +19,9 @@ type Props = {
 export default function SingleProductLayout({ product }: Props) {
   const [selectedVariantId, setSelectedVariantId] = useState<string>(String(product.variants[0]?.id ?? ''));
 
-  const selectedVariant =
-    product.variants.find(variant => String(variant.id) === selectedVariantId) ?? product.variants[0];
-
-  const inStock = selectedVariant?.stockLeft > 0;
-
   return (
     <main className="min-h-screen bg-background md:mt-20 md:px-6 overflow-y-auto scrollbar-none">
-      <SingleProductHero product={product} variant={selectedVariant} />
+      <SingleProductHero product={product} />
 
       <section className="md:mx-auto md:max-w-[90%] md:px-4 md:py-10 lg:px-2">
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-12">
@@ -38,7 +33,6 @@ export default function SingleProductLayout({ product }: Props) {
             <SingleProductGallery
               product={product}
               selectedVariantId={selectedVariantId}
-              setSelectedVariantId={setSelectedVariantId}
             />
           </div>
 
@@ -62,7 +56,7 @@ export default function SingleProductLayout({ product }: Props) {
   */}
           <aside className="lg:col-span-3">
             <div className="sticky top-20">
-              <SingleProductSidebar product={product} selectedVariant={selectedVariant} inStock={inStock} />
+              <SingleProductSidebar />
             </div>
           </aside>
         </div>

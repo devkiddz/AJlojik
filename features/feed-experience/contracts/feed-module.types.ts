@@ -1,6 +1,16 @@
-import type { CollectionType } from "@/data/collections";
-import type { Promo } from "@/data/promos";
-import type { CategoriesType, ProductType } from "@/types/types";
+import type {
+  CollectionType
+} from '@/data/collections';
+
+import type {
+  Promo
+} from '@/data/promos';
+
+import type {
+  CategoriesType,
+  ProductType
+} from '@/types/types';
+
 
 export type ResolvedCollection = {
   collection: CollectionType;
@@ -10,37 +20,75 @@ export type ResolvedCollection = {
 
 export type CategoryRailModule = {
   id: string;
-  type: "category-rail";
+  type: 'category-rail';
   priority: number;
-  data: { categories: CategoriesType; selectedCategory: string };
+
+  data: {
+    categories: CategoriesType;
+    selectedCategory: string;
+  };
 };
 
 export type PromotionModule = {
   id: string;
-  type: "promotion";
+  type: 'promotion';
   priority: number;
-  data: { promotions: Promo[]; products: ProductType[] };
+
+  data: {
+    promotions: Promo[];
+    products: ProductType[];
+  };
 };
 
 export type CollectionFeedModule = {
   id: string;
-  type: "collection-feed";
+  type: 'collection-feed';
   priority: number;
-  data: { collections: ResolvedCollection[]; fallbackProducts: ProductType[] };
+
+  data: {
+    collections: ResolvedCollection[];
+    fallbackProducts: ProductType[];
+  };
 };
 
 export type FeaturedProductsModule = {
   id: string;
-  type: "featured-products";
+  type: 'featured-products';
   priority: number;
-  data: { featuredProduct?: ProductType; featuredProducts: ProductType[] };
+
+  data: {
+    title?: string;
+    subtitle?: string;
+
+    categorySlug?: string;
+
+    featuredProduct?: ProductType;
+
+    /**
+     * Retained for compatibility with the original
+     * featured-products module.
+     */
+    featuredProducts: ProductType[];
+
+    /**
+     * Complete category product set used by the new
+     * Category Product Experience.
+     */
+    products?: ProductType[];
+
+    locale?: string;
+    currency?: string;
+  };
 };
 
 export type ProductGridModule = {
   id: string;
-  type: "product-grid";
+  type: 'product-grid';
   priority: number;
-  data: { products: ProductType[] };
+
+  data: {
+    products: ProductType[];
+  };
 };
 
 export type RecentlyViewedModule = {
@@ -70,7 +118,10 @@ export type ProductRailModuleDefinition = {
       | 'wishlist'
       | 'recently-viewed'
       | 'recommended'
-      | 'premium';
+      | 'premium'
+      | 'pairing'
+      | 'similar'
+      | 'continue-discovery';
   };
 };
 
@@ -120,9 +171,38 @@ export type ShoppingJourneyModuleDefinition = {
   };
 };
 
+export type ProductExperienceCategoryPresentation = {
+  slug: string;
+  label: string;
+  coverImage?: string;
+  accentColor?: string;
+};
 
+export type ProductExperienceBannerModule = {
+  id: string;
+  type: 'product-experience-banner';
+  priority: number;
+
+  data: {
+    product: ProductType;
+    category: ProductExperienceCategoryPresentation;
+
+    initialVariantId?: string;
+
+    eyebrow?: string;
+    title: string;
+    description?: string;
+
+    locale?: string;
+    currency?: string;
+
+    showCommerceActions: boolean;
+    showViewDetailsAction: boolean;
+  };
+};
 
 export type FeedModule =
+  | ProductExperienceBannerModule
   | CategoryRailModule
   | PromotionModule
   | CollectionFeedModule

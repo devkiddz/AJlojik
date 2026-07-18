@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import type { Workspace, WorkspaceRuntime } from './workspaceTypes';
-import { LoaderCircle } from 'lucide-react';
 const ACTIVE_WORKSPACE_STORAGE_KEY = 'rcentz_active_workspace_id';
 
 type WorkspaceContextValue = WorkspaceRuntime & {
@@ -162,7 +161,11 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   );
 
   useEffect(() => {
-    void refreshWorkspaces();
+    const timer = window.setTimeout(() => {
+      void refreshWorkspaces();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [refreshWorkspaces]);
 
   const value = useMemo<WorkspaceContextValue>(

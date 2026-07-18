@@ -4,17 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
+
 import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
 import PromoModal from '@/components/promos/PromoModal';
-import ProductModal from '@/components/shared/ProductModal';
-import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { categories } from '@/data/categories';
 import { collections } from '@/data/collections';
-import { products as initialProducts } from '@/data/products';
+import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { promos, type Promo } from '@/data/promos';
-
+import { useCatalog } from '@/features/catalog';
+import { useCart } from '@/features/cart';
 import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
 import { useWorkspace } from '@/features/workspace';
+
 import { cn } from '@/lib/utils';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
@@ -27,9 +28,31 @@ import { mockExperienceProfiles, type MockExperienceProfileId } from '../mocks';
 
 import { FeedExperienceProvider } from '../providers';
 import { FeedRenderer } from '../renderers';
+import { RegularProductPreviewModal } from '@/features/products/modals';
+import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
 
 function FeedExperienceWorkspaceContent() {
   const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
+  const { items: cartItems, addToCart: addCartItem } = useCart();
+
+  const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
+  const handleAddToCart = useCallback(
+    (product: ProductType, variant: ProductVariantType): void => {
+      void addCartItem({
+        product,
+        variant,
+        quantity: 1
+      });
+    },
+    [addCartItem]
+  );
+
+  const {
+    products: catalogProducts,
+    loading: catalogLoading,
+    error: catalogError,
+    setProducts
+  } = useCatalog();
 
   // ============================================================
   // ROUTING
@@ -72,10 +95,8 @@ function FeedExperienceWorkspaceContent() {
     mockExperienceProfiles.find(profile => profile.id === activeProfileId) ?? mockExperienceProfiles[0];
 
   // ============================================================
-  // PRODUCT STATE
+  // PRODUCT PREVIEW
   // ============================================================
-
-  const [storeProducts, setStoreProducts] = useState<ProductType[]>(initialProducts);
 
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
@@ -91,34 +112,33 @@ function FeedExperienceWorkspaceContent() {
     setSelectedProduct(null);
   }, []);
 
-  const toggleLike = useCallback((productId: string) => {
-    setStoreProducts(currentProducts =>
-      currentProducts.map(product =>
-        product.id === productId
+  const toggleLike = useCallback(
+    (productId: string) => {
+      setProducts(currentProducts =>
+        currentProducts.map(product =>
+          product.id === productId
+            ? {
+                ...product,
+                liked: !product.liked
+              }
+            : product
+        )
+      );
+
+      setSelectedProduct(currentProduct =>
+        currentProduct?.id === productId
           ? {
-              ...product,
-              liked: !product.liked
+              ...currentProduct,
+              liked: !currentProduct.liked
             }
-          : product
-      )
-    );
-
-    setSelectedProduct(currentProduct =>
-      currentProduct?.id === productId
-        ? {
-            ...currentProduct,
-            liked: !currentProduct.liked
-          }
-        : currentProduct
-    );
-  }, []);
-
-  const addToCart = useCallback((product: ProductType, variant: ProductVariantType) => {
-    alert(`${product.name} (${variant.label}) added to cart`);
-  }, []);
+          : currentProduct
+      );
+    },
+    [setProducts]
+  );
 
   // ============================================================
-  // PROMOTION STATE
+  // PROMOTION PREVIEW
   // ============================================================
 
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
@@ -161,13 +181,17 @@ function FeedExperienceWorkspaceContent() {
   const context = useMemo<FeedContext>(
     () => ({
       catalog: {
-        products: storeProducts,
+        products: catalogProducts,
         categories,
         collections,
-        promotions: promos
+        promotions: promos,
+        cartProductIds
       },
 
-      user: activeProfile.user,
+      user: {
+        ...activeProfile.user,
+        cartProductIds
+      },
 
       activity: activeProfile.activity,
 
@@ -186,15 +210,10 @@ function FeedExperienceWorkspaceContent() {
         now: new Date().toISOString()
       }
     }),
-    [activeProfile, storeProducts]
+    [activeProfile, catalogProducts, cartProductIds]
   );
-
   // ============================================================
   // BASE ACTIONS
-  // FeedExperienceProvider supplies:
-  // openExperience()
-  // restoreExperience()
-  // resetExperience()
   // ============================================================
 
   const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
@@ -202,12 +221,11 @@ function FeedExperienceWorkspaceContent() {
       changeCategory: updateQuery,
       previewProduct: openPreview,
       toggleLike,
-      addToCart,
+      addToCart: handleAddToCart,
       previewPromotion
     }),
-    [updateQuery, openPreview, toggleLike, addToCart, previewPromotion]
+    [updateQuery, openPreview, toggleLike, handleAddToCart, previewPromotion]
   );
-
   // ============================================================
   // DERIVED PRODUCTS
   // ============================================================
@@ -216,16 +234,16 @@ function FeedExperienceWorkspaceContent() {
     if (!selectedPromo) return [];
 
     return selectedPromo.productIds
-      .map(productId => storeProducts.find(product => product.id === productId))
+      .map(productId => catalogProducts.find(product => product.id === productId))
       .filter((product): product is ProductType => Boolean(product));
-  }, [selectedPromo, storeProducts]);
+  }, [selectedPromo, catalogProducts]);
 
   const filteredProducts = useMemo(
     () =>
       selectedCategory === 'all'
-        ? storeProducts
-        : storeProducts.filter(product => product.category === selectedCategory),
-    [selectedCategory, storeProducts]
+        ? catalogProducts
+        : catalogProducts.filter(product => product.category === selectedCategory),
+    [selectedCategory, catalogProducts]
   );
 
   const selectedIndex = selectedProduct
@@ -255,13 +273,17 @@ function FeedExperienceWorkspaceContent() {
   const [hubPreferenceLoaded, setHubPreferenceLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('aj_discovery_hub_collapsed');
+    const timer = window.setTimeout(() => {
+      const saved = window.localStorage.getItem('aj_discovery_hub_collapsed');
 
-    if (saved !== null) {
-      setHubCollapsed(saved === 'true');
-    }
+      if (saved !== null) {
+        setHubCollapsed(saved === 'true');
+      }
 
-    setHubPreferenceLoaded(true);
+      setHubPreferenceLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -271,10 +293,10 @@ function FeedExperienceWorkspaceContent() {
   }, [hubCollapsed, hubPreferenceLoaded]);
 
   // ============================================================
-  // WORKSPACE STATES
+  // LOADING AND ERROR STATES
   // ============================================================
 
-  if (workspaceLoading) {
+  if (workspaceLoading || catalogLoading) {
     return (
       <div className="grid min-h-[50vh] place-items-center">
         <div className="flex flex-col items-center gap-3">
@@ -286,13 +308,13 @@ function FeedExperienceWorkspaceContent() {
     );
   }
 
-  if (workspaceError) {
+  if (workspaceError || catalogError) {
     return (
       <div className="grid min-h-[50vh] place-items-center px-6 text-center">
         <div>
           <p className="font-semibold">AJ Logik is temporarily unavailable</p>
 
-          <p className="mt-2 text-sm text-muted-foreground">{workspaceError}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{workspaceError ?? catalogError}</p>
         </div>
       </div>
     );
@@ -312,6 +334,12 @@ function FeedExperienceWorkspaceContent() {
 
   return (
     <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
+      {/*
+       * The only MobileDiscoverySheet in the application.
+       * It shares this exact Feed Experience with the centre feed.
+       */}
+      <MobileDiscoverySheetHost />
+
       <ExperienceStackProvider key={activeWorkspace.id} workspaceId={activeWorkspace.id}>
         <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
           <div className="grid h-full min-h-0 grid-cols-12 items-stretch gap-4">
@@ -321,25 +349,9 @@ function FeedExperienceWorkspaceContent() {
                 'lg:h-full lg:min-h-0 lg:overflow-y-auto',
                 'lg:rounded-3xl lg:bg-card/50 lg:p-4',
                 'lg:scroll-smooth lg:scrollbar-none',
+
                 hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
               )}>
-              <section
-                className={cn(
-                  'col-span-12 min-w-0 pb-6 transition-all duration-300',
-                  'lg:h-full lg:min-h-0 lg:overflow-y-auto',
-                  'lg:rounded-3xl lg:bg-card/50 lg:p-4',
-                  'lg:scroll-smooth lg:scrollbar-none',
-                  hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
-                )}>
-                <MockExperienceSwitcher
-                  profiles={mockExperienceProfiles}
-                  activeProfileId={activeProfileId}
-                  onChange={setActiveProfileId}
-                />
-
-                <FeedRenderer />
-              </section>
-
               <MockExperienceSwitcher
                 profiles={mockExperienceProfiles}
                 activeProfileId={activeProfileId}
@@ -357,15 +369,12 @@ function FeedExperienceWorkspaceContent() {
             />
           </div>
 
-          <ProductModal
+          <RegularProductPreviewModal
             product={selectedProduct}
             open={previewOpen}
             onClose={closePreview}
-            onToggleLike={() => {
-              if (selectedProduct) {
-                toggleLike(selectedProduct.id);
-              }
-            }}
+            onToggleLike={toggleLike}
+            onAddToCart={handleAddToCart}
             onNext={handleNextProduct}
             onPrevious={handlePreviousProduct}
             hasNext={selectedIndex > -1 && selectedIndex < filteredProducts.length - 1}

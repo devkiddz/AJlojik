@@ -87,11 +87,16 @@ export default function HubCard({ widget }: HubCardProps) {
           </div>
 
           {widget.stats?.length ? (
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {widget.stats.map(stat => (
-                <div key={stat.label} className="rounded-xl bg-background/40 p-3 text-center">
-                  <p className="text-[12px] font-medium text-amber-300/80">{stat.label}</p>
-                  <p className="mt-1 text-sm font-bold text-primary">{stat.value}</p>
+                <div
+                  key={stat.label}
+                  className="min-w-0 rounded-xl border border-primary/10 bg-background/35 px-2 py-3 text-center">
+                  <p className="truncate text-[10px] font-medium uppercase tracking-wide text-primary/45">
+                    {stat.label}
+                  </p>
+
+                  <p className="mt-1 text-base font-bold text-primary">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -100,19 +105,23 @@ export default function HubCard({ widget }: HubCardProps) {
       )}
 
       {layout !== 'membership' && widget.stats?.length ? (
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 grid grid-cols-3 divide-x divide-primary/12 border-t border-primary/25">
           {widget.stats.map(stat => (
-            <div key={stat.label} className="rounded-xl bg-background/35 p-3">
-              <p className="text-[12px] font-medium text-accent">{stat.label}</p>
+            <div key={stat.label} className="min-w-0 px-3 py-3 first:pl-0 last:pr-0">
+              <p className="truncate text-[11px] font-medium text-accent">{stat.label}</p>
+
               <p className="mt-1 text-sm font-bold text-accent">{stat.value}</p>
-              {stat.helper && <p className="mt-0.5 text-[12px] text-primary/45">{stat.helper}</p>}
+
+              {stat.helper ? (
+                <p className="mt-0.5 truncate text-[11px] text-primary/45">{stat.helper}</p>
+              ) : null}
             </div>
           ))}
         </div>
       ) : null}
 
       {layout === 'tracking' && widget.location && (
-        <div className="mt-4 overflow-hidden rounded-xl border border-primary/12 bg-background">
+        <div className="mt-4 overflow-hidden rounded-xl border border-primary/25 bg-background">
           {widget.location.coordinates ? (
             <HubMap lat={widget.location.coordinates.lat} lng={widget.location.coordinates.lng} />
           ) : null}

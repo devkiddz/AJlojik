@@ -16,7 +16,8 @@ export default function SearchEmptyState({ query }: Props) {
       <h3 className="text-base font-semibold">No results found</h3>
 
       <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-        We couldn't find anything matching <span className="font-medium text-foreground">"{query}"</span>.
+        {"We couldn’t find anything matching"}{' '}
+        <span className="font-medium text-foreground">“{query}”</span>.
       </p>
     </div>
   );

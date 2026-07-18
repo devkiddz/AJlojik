@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useSearch } from '@/providers/SearchProvider';
 
 export default function SearchBar() {
-  const { query, setQuery, setActiveIndex, open, setOpen, loading } = useSearch();
+  const { query, setQuery, setActiveIndex, setOpen, loading } = useSearch();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,10 @@
-import type { HubWidget } from '@/components/discovery-hub-panel/discoveryHubTypes';
+import type {
+  HubWidget
+} from '@/components/discovery-hub-panel/discoveryHubTypes';
 
-import type { FeedContext } from '../contracts';
+import type {
+  FeedContext
+} from '../contracts';
 
 type SelectDiscoveryHubWidgetsInput = {
   widgets: HubWidget[];
@@ -11,315 +15,390 @@ export function selectDiscoveryHubWidgets({
   widgets,
   context
 }: SelectDiscoveryHubWidgetsInput): HubWidget[] {
-  const experience = context.experience;
+  const { user, experience } = context;
 
-  if (!experience) {
-    return widgets
-      .filter(widget => widget.enabled)
-      .sort(
-        (firstWidget, secondWidget) =>
-          firstWidget.order -
-          secondWidget.order
-      );
-  }
+  const cartCount = new Set(
+    user.cartProductIds
+  ).size;
 
-  const {
-    user,
-    activity
-  } = context;
+  const wishlistCount = new Set(
+    user.wishlistProductIds
+  ).size;
 
-  const {
-    orders,
-    rewards,
-    coupons,
-    intelligence
-  } = experience;
+  const recentCount = new Set(
+    user.recentProductIds
+  ).size;
 
-  const cartCount =
-    user.cartProductIds.length;
+  /*
+   * Commerce and activity widgets must still resolve when
+   * optional mock experience data is unavailable.
+   *
+   * This is important for the standalone mobile Hub shell.
+   */
+  const resolvedWidgets = widgets.map(
+    widget => {
+      switch (widget.id) {
+        case 'cart-summary':
+          return {
+            ...widget,
 
-  const wishlistCount =
-    user.wishlistProductIds.length;
+            /*
+             * Keep the cart widget mounted while empty so its
+             * custom component can render an empty state.
+             */
+            enabled: widget.enabled,
 
-  const recentCount =
-    user.recentProductIds.length;
+            badge:
+              cartCount > 0
+                ? `${cartCount} ${
+                    cartCount === 1
+                      ? 'selection'
+                      : 'selections'
+                  }`
+                : undefined,
 
-  const activeDelivery =
-    orders.activeDelivery;
+            description:
+              cartCount > 0
+                ? 'Your current cart is ready to continue.'
+                : 'Your cart is currently empty.'
+          };
 
-  const recentOrders =
-    orders.recent;
+        case 'wishlist-alert':
+        case 'wishlisted-products':
+          return {
+            ...widget,
 
-  const resolvedWidgets = widgets.map(widget => {
-    switch (widget.id) {
-      case 'cart-summary':
-        return {
-          ...widget,
+            enabled:
+              widget.enabled &&
+              wishlistCount > 0,
 
-          enabled: cartCount > 0,
+            badge:
+              wishlistCount > 0
+                ? `${wishlistCount} saved`
+                : undefined,
 
-          badge: `${cartCount} ${
-            cartCount === 1
-              ? 'item'
-              : 'items'
-          }`,
+            description:
+              wishlistCount > 0
+                ? 'Saved products are ready to revisit.'
+                : 'You currently have no saved products.'
+          };
 
-          description:
-            cartCount > 0
-              ? 'Your current cart is ready for checkout.'
-              : 'Your cart is currently empty.'
-        };
+        case 'continue-shopping':
+        case 'recently-viewed':
+          return {
+            ...widget,
 
-      case 'wishlist-alert':
-        return {
-          ...widget,
+            enabled:
+              widget.enabled &&
+              recentCount > 0,
 
-          enabled: wishlistCount > 0,
+            badge:
+              recentCount > 0
+                ? `${recentCount} recent`
+                : undefined,
 
-          badge:
-            `${wishlistCount} saved`,
+            description:
+              recentCount > 0
+                ? 'Continue exactly where you stopped.'
+                : widget.description
+          };
 
-          description:
-            wishlistCount > 0
-              ? 'Saved products are ready to revisit.'
-              : 'You currently have no saved products.'
-        };
+        /*
+         * Everything below this point requires the optional
+         * experience dataset.
+         *
+         * When it is unavailable, preserve the configured
+         * widget instead of exiting before commerce resolution.
+         */
+        case 'delivery-tracker':
+        case 'active-delivery': {
+          if (!experience) {
+            return widget;
+          }
 
-      case 'continue-shopping':
-      case 'recently-viewed':
-        return {
-          ...widget,
+          const activeDelivery =
+            experience.orders.activeDelivery;
 
-          enabled: recentCount > 0,
+          return {
+            ...widget,
 
-          badge:
-            recentCount > 0
-              ? `${recentCount} recent`
+            enabled:
+              widget.enabled &&
+              Boolean(activeDelivery),
+
+            badge: activeDelivery
+              ? `${activeDelivery.etaMinutes} min`
               : undefined,
 
-          description:
-            recentCount > 0
-              ? 'Continue exactly where you stopped.'
-              : widget.description
-        };
+            description: activeDelivery
+              ? `Order #${activeDelivery.orderId} is ${activeDelivery.status.replace(
+                  /-/g,
+                  ' '
+                )}.`
+              : widget.description,
 
-      case 'delivery-tracker':
-      case 'active-delivery':
-        return {
-          ...widget,
+            location:
+              activeDelivery?.location,
 
-          enabled: Boolean(activeDelivery),
-
-          badge: activeDelivery
-            ? `${activeDelivery.etaMinutes} min`
-            : undefined,
-
-          description: activeDelivery
-            ? `Order #${activeDelivery.orderId} is ${activeDelivery.status.replace('-', ' ')}.`
-            : widget.description,
-
-          location:
-            activeDelivery?.location,
-
-          progress: activeDelivery
-            ? {
-                label: 'Delivery progress',
-                value:
-                  activeDelivery.progress,
-
-                helper:
-                  activeDelivery.status
-                    .replace('-', ' ')
-              }
-            : widget.progress,
-
-          timeline:
-            activeDelivery?.timeline,
-
-          conditions:
-            activeDelivery?.conditions,
-
-          stats: activeDelivery
-            ? [
-                {
-                  label: 'ETA',
+            progress: activeDelivery
+              ? {
+                  label: 'Delivery progress',
                   value:
-                    `${activeDelivery.etaMinutes} mins`
-                },
-
-                {
-                  label: 'Order',
-                  value:
-                    `#${activeDelivery.orderId}`
+                    activeDelivery.progress,
+                  helper:
+                    activeDelivery.status.replace(
+                      /-/g,
+                      ' '
+                    )
                 }
-              ]
-            : widget.stats
-        };
+              : widget.progress,
 
-      case 'recent-orders':
-        return {
-          ...widget,
+            timeline:
+              activeDelivery?.timeline,
 
-          enabled:
-            recentOrders.length > 0,
+            conditions:
+              activeDelivery?.conditions,
 
-          badge:
-            `${recentOrders.length} ${
-              recentOrders.length === 1
-                ? 'order'
-                : 'orders'
-            }`,
+            stats: activeDelivery
+              ? [
+                  {
+                    label: 'ETA',
+                    value: `${activeDelivery.etaMinutes} mins`
+                  },
+                  {
+                    label: 'Order',
+                    value: `#${activeDelivery.orderId}`
+                  }
+                ]
+              : widget.stats
+          };
+        }
 
-          stats: [
-            {
-              label: 'Completed',
+  case 'recent-orders': {
+  const recentOrders =
+    experience?.orders.recent ?? [];
+
+  const completedOrderCount =
+    recentOrders.filter(
+      order => order.status === 'delivered'
+    ).length;
+
+  const activeOrderCount =
+    recentOrders.filter(
+      order => order.status !== 'delivered'
+    ).length;
+
+  const hasActiveCart = cartCount > 0;
+
+  /*
+   * A cart is one active purchase journey,
+   * regardless of how many products it contains.
+   */
+  const inProgressCount =
+    activeOrderCount +
+    (hasActiveCart ? 1 : 0);
+
+  return {
+    ...widget,
+
+    enabled: widget.enabled,
+
+    badge:
+      inProgressCount > 0
+        ? `${inProgressCount} in progress`
+        : undefined,
+
+    description:
+      hasActiveCart
+        ? `${cartCount} ${
+            cartCount === 1
+              ? 'cart selection is'
+              : 'cart selections are'
+          } waiting alongside your active orders.`
+        : recentOrders.length > 0
+          ? 'Your latest AJ Logik order activity.'
+          : 'You have no active shopping activity yet.',
+
+    stats: [
+      {
+        label: 'Completed',
+        value: completedOrderCount
+      },
+      {
+        label: 'In progress',
+        value: inProgressCount
+      },
+      {
+        label: 'Cart items',
+        value: cartCount
+      }
+    ]
+  };
+}
+        case 'rewards-summary':
+        case 'reward-points': {
+          if (!experience) {
+            return widget;
+          }
+
+          const rewards = experience.rewards;
+
+          return {
+            ...widget,
+
+            enabled:
+              widget.enabled &&
+              rewards.tier !== 'guest',
+
+            badge:
+              rewards.tier === 'premium'
+                ? 'Premium'
+                : 'Member',
+
+            stats: [
+              {
+                label: 'Points',
+                value:
+                  rewards.points.toLocaleString()
+              },
+              {
+                label: 'Coupons',
+                value: rewards.coupons
+              }
+            ],
+
+            progress: {
+              label: rewards.nextTier
+                ? `To ${rewards.nextTier}`
+                : 'Membership progress',
+
               value:
-                recentOrders.filter(
-                  order =>
-                    order.status ===
-                    'delivered'
-                ).length
+                rewards.progressToNextTier,
+
+              helper: rewards.nextTier
+                ? `${
+                    100 -
+                    rewards.progressToNextTier
+                  }% remaining`
+                : undefined
             },
 
-            {
-              label: 'Active',
-              value:
-                recentOrders.filter(
-                  order =>
-                    order.status !==
-                    'delivered'
-                ).length
-            }
-          ]
-        };
+            insight:
+              rewards.expiringPoints
+                ? `${rewards.expiringPoints} points will expire soon.`
+                : widget.insight
+          };
+      }
 
-      case 'rewards-summary':
-      case 'reward-points':
-        return {
-          ...widget,
+        case 'coupons': {
+          if (!experience) {
+            return widget;
+          }
 
-          enabled:
-            rewards.tier !== 'guest',
+          const coupons = experience.coupons;
 
-          badge:
-            rewards.tier === 'premium'
-              ? 'Premium'
-              : 'Member',
+          return {
+            ...widget,
 
-          stats: [
-            {
-              label: 'Points',
-              value:
-                rewards.points.toLocaleString()
-            },
+            enabled:
+              widget.enabled &&
+              coupons.length > 0,
 
-            {
-              label: 'Coupons',
-              value:
-                rewards.coupons
-            }
-          ],
+            badge:
+              coupons.length > 0
+                ? `${coupons.length} active`
+                : undefined,
 
-          progress: {
-            label: rewards.nextTier
-              ? `To ${rewards.nextTier}`
-              : 'Membership progress',
+            slides: coupons.map(coupon => ({
+              id: coupon.id,
+              title: coupon.title,
+              subtitle: coupon.description,
+              badge: coupon.badge,
+              image: coupon.image
+            }))
+          };
+        }
 
-            value:
-              rewards.progressToNextTier,
+        case 'suggested-picks':
+        case 'ai-suggestions': {
+          if (!experience) {
+            return widget;
+          }
 
-            helper: rewards.nextTier
-              ? `${100 - rewards.progressToNextTier}% remaining`
-              : undefined
-          },
+          const intelligence =
+            experience.intelligence;
 
-          insight:
-            rewards.expiringPoints
-              ? `${rewards.expiringPoints} points will expire soon.`
-              : widget.insight
-        };
+          return {
+            ...widget,
 
-      case 'coupons':
-        return {
-          ...widget,
+            enabled:
+              widget.enabled &&
+              intelligence.suggestedProductIds
+                .length > 0,
 
-          enabled: coupons.length > 0,
+            title:
+              user.tier === 'premium'
+                ? 'Premium Intelligence'
+                : 'AJ AI Suggestions',
 
-          badge:
-            `${coupons.length} active`,
+            description:
+              intelligence.headline,
 
-          slides: coupons.map(coupon => ({
-            id: coupon.id,
-            title: coupon.title,
-            subtitle:
-              coupon.description,
-            badge: coupon.badge,
-            image: coupon.image
-          }))
-        };
+            insight:
+              intelligence.insight,
 
-      case 'suggested-picks':
-      case 'ai-suggestions':
-        return {
-          ...widget,
+            badge:
+              user.tier === 'premium'
+                ? 'Exclusive'
+                : 'Smart'
+          };
+        }
 
-          enabled:
-            intelligence
-              .suggestedProductIds
-              .length > 0,
+        case 'pairing-assistant': {
+          if (!experience) {
+            return widget;
+          }
 
-          title:
-            context.user.tier ===
-            'premium'
-              ? 'Premium Intelligence'
-              : 'AJ AI Suggestions',
+          const intelligence =
+            experience.intelligence;
 
-          description:
-            intelligence.headline,
+          return {
+            ...widget,
 
-          insight:
-            intelligence.insight,
+            enabled:
+              widget.enabled &&
+              intelligence.pairingProductIds
+                .length > 0,
 
-          badge:
-            context.user.tier ===
-            'premium'
-              ? 'Exclusive'
-              : 'Smart'
-        };
+            insight:
+              intelligence.insight
+          };
+        }
 
-      case 'pairing-assistant':
-        return {
-          ...widget,
+        case 'shopping-promos':
+        case 'home-deals':
+          if (!experience) {
+            return widget;
+          }
 
-          enabled:
-            intelligence
-              .pairingProductIds
-              .length > 0,
+          return {
+            ...widget,
 
-          insight:
-            intelligence.insight
-        };
+            description:
+              experience.promotions
+                .bannerMessage,
 
-      case 'shopping-promos':
-      case 'home-deals':
-        return {
-          ...widget,
+            badge:
+              user.tier === 'premium'
+                ? 'Reserved'
+                : widget.badge
+          };
 
-          description:
-            experience.promotions
-              .bannerMessage,
-
-          badge:
-            context.user.tier ===
-            'premium'
-              ? 'Reserved'
-              : widget.badge
-        };
-
-      default:
-        return widget;
+        default:
+          return widget;
+      }
     }
-  });
+  );
 
   return resolvedWidgets
     .filter(widget => widget.enabled)

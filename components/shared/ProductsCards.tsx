@@ -107,7 +107,11 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                 className="pointer-events-auto translate-y-0 opacity-100 transition-all duration-300 md:pointer-events-none md:translate-y-2 md:opacity-0 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100"
                 onClick={e => {
                   e.stopPropagation();
-                  onPreview?.() ?? onSelect?.();
+                  if (onPreview) {
+                    onPreview();
+                  } else {
+                    onSelect?.();
+                  }
                 }}>
                 <button
                   type="button"

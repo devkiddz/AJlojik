@@ -18,31 +18,44 @@ export default function SearchPreview({ product }: Props) {
   const { selectProduct } = useSearch();
 
   // Global action hooks (Connect your active state dispatchers here)
-  const addToCartAction = (p: ProductType, v: any) => console.log('Cart Added:', p.id, v.id);
+  const addToCartAction = (p: ProductType, v: ProductVariantType) =>
+    console.log('Cart Added:', p.id, v.id);
 
   const toggleLikeAction = (id: string) => {
     console.log('Wishlist Mutation Fired For:', id);
   };
 
-  const [selectedVariantId, setSelectedVariantId] = useState<ProductVariantType['id'] | ''>('');
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [variantSelection, setVariantSelection] = useState<{
+    productId: string;
+    variantId: ProductVariantType['id'];
+  } | null>(null);
+
+  const [likedOverride, setLikedOverride] = useState<{
+    productId: string;
+    liked: boolean;
+  } | null>(null);
+
+  const [openProductId, setOpenProductId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Keep state matching whenever user changes items in main list
-  useEffect(() => {
-    if (product) {
-      setSelectedVariantId(product.variants?.[0]?.id ?? '');
-      setIsLiked(!!product.liked);
-    }
-    setIsOpen(false);
-  }, [product]);
+  const selectedVariantId =
+    product && variantSelection?.productId === product.id
+      ? variantSelection.variantId
+      : product?.variants?.[0]?.id ?? '';
+
+  const isOpen = Boolean(product && openProductId === product.id);
+
+  const isLiked = product
+    ? likedOverride?.productId === product.id
+      ? likedOverride.liked
+      : Boolean(product.liked)
+    : false;
 
   // Handle closing options dropdown when clicking away
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        setOpenProductId(null);
       }
     }
     document.addEventListener('mousedown', handleOutside);
@@ -67,7 +80,10 @@ export default function SearchPreview({ product }: Props) {
       e.preventDefault();
       e.stopPropagation();
     }
-    setIsLiked(prev => !prev);
+    setLikedOverride({
+      productId: product.id,
+      liked: !isLiked
+    });
     toggleLikeAction(product.id);
   };
 
@@ -124,7 +140,7 @@ export default function SearchPreview({ product }: Props) {
             <div ref={dropdownRef} className="relative shrink-0 z-50">
               <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => setOpenProductId(isOpen ? null : product.id)}
                 className="
                   flex 
                   h-8.5 
@@ -168,8 +184,11 @@ export default function SearchPreview({ product }: Props) {
                           key={v.id}
                           type="button"
                           onClick={() => {
-                            setSelectedVariantId(v.id);
-                            setIsOpen(false);
+                            setVariantSelection({
+                              productId: product.id,
+                              variantId: v.id
+                            });
+                            setOpenProductId(null);
                           }}
                           className={cn(
                             'flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors select-none',

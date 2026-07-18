@@ -54,13 +54,22 @@ function getTimeLeft(endsAt?: string): TimeLeft {
 }
 
 export default function PromoCountdown({ startsAt, endsAt, compact = false }: Props) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endsAt));
+  const [clock, setClock] = useState<{
+    endsAt?: string;
+    value: TimeLeft;
+  }>(() => ({
+    endsAt,
+    value: getTimeLeft(endsAt)
+  }));
+
+  const timeLeft = clock.endsAt === endsAt ? clock.value : getTimeLeft(endsAt);
 
   useEffect(() => {
-    setTimeLeft(getTimeLeft(endsAt));
-
     const interval = window.setInterval(() => {
-      setTimeLeft(getTimeLeft(endsAt));
+      setClock({
+        endsAt,
+        value: getTimeLeft(endsAt)
+      });
     }, 1000);
 
     return () => window.clearInterval(interval);

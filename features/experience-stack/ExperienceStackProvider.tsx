@@ -2,9 +2,13 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { usePathname, useRouter } from 'next/navigation';
+
 import { useFeedExperience } from '@/features/feed-experience';
 
 import type { FeedIntent } from '@/features/feed-experience/contracts';
+
+import { useIdentity } from '@/providers/IdentityProvider';
 
 import type {
   ExperienceHistoryEntry,
@@ -30,6 +34,7 @@ export type PushExperienceInput = {
   productId?: string | null;
 
   intentSnapshot: FeedIntent;
+
   contextSnapshot?: Record<string, unknown> | null;
 
   fingerprint: string;
@@ -37,7 +42,9 @@ export type PushExperienceInput = {
 
 export type UpdateHistorySettingsInput = {
   enabled?: boolean;
+
   retention?: ExperienceHistorySettings['retention'];
+
   maxEntries?: number;
 };
 
@@ -50,6 +57,10 @@ type ExperienceStackContextValue = ExperienceStackState & {
 
   loading: boolean;
   error: string | null;
+
+  canAccessExperienceModes: boolean;
+
+  requireExperienceAccess: () => boolean;
 
   refreshHistory: () => Promise<void>;
 
@@ -91,20 +102,68 @@ const defaultState: ExperienceStackState = {
 
 const ExperienceStackContext = createContext<ExperienceStackContextValue | null>(null);
 
+const EXPERIENCE_AUTH_ROUTE = '/sign-in';
+
+// ============================================================
+// RESPONSE ERROR
+// ============================================================
+
+class ExperienceStackRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+
+    this.name = 'ExperienceStackRequestError';
+
+    this.status = status;
+  }
+}
+
 // ============================================================
 // RESPONSE HELPER
 // ============================================================
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
-  const data = (await response.json()) as T & {
-    error?: string;
-  };
+  const contentType = response.headers.get('content-type') ?? '';
 
-  if (!response.ok) {
-    throw new Error(data.error ?? 'The Experience Stack request failed.');
+  const rawBody = await response.text();
+
+  let parsedData: unknown;
+  let parsedSuccessfully = false;
+
+  if (rawBody && contentType.includes('application/json')) {
+    try {
+      parsedData = JSON.parse(rawBody);
+
+      parsedSuccessfully = true;
+    } catch {
+      throw new ExperienceStackRequestError('The Experience Stack returned invalid JSON.', response.status);
+    }
   }
 
-  return data;
+  if (!response.ok) {
+    const errorData =
+      typeof parsedData === 'object' && parsedData !== null
+        ? (parsedData as {
+            error?: unknown;
+          })
+        : null;
+
+    const message =
+      typeof errorData?.error === 'string' ? errorData.error : 'The Experience Stack request failed.';
+
+    throw new ExperienceStackRequestError(message, response.status);
+  }
+
+  if (!parsedSuccessfully) {
+    throw new ExperienceStackRequestError(
+      `The Experience Stack returned an unexpected response (${response.status}).`,
+      response.status
+    );
+  }
+
+  return parsedData as T;
 }
 
 // ============================================================
@@ -116,9 +175,12 @@ export function ExperienceStackProvider({
   workspaceId,
   initialState = defaultState
 }: ExperienceStackProviderProps) {
-  const { actions } = useFeedExperience();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const isGuestWorkspace = workspaceId === 'guest-live';
+  const { isAuthenticated, isPending } = useIdentity();
+
+  const { actions } = useFeedExperience();
 
   const [entries, setEntries] = useState(initialState.entries);
 
@@ -130,6 +192,9 @@ export function ExperienceStackProvider({
 
   const [error, setError] = useState<string | null>(null);
 
+  const canAccessExperienceModes =
+    !isPending && isAuthenticated && Boolean(workspaceId) && workspaceId !== 'guest-live';
+
   // ==========================================================
   // INTERNAL STATE
   // ==========================================================
@@ -137,6 +202,7 @@ export function ExperienceStackProvider({
   const applyStackState = useCallback((state: ExperienceStackState) => {
     setEntries(state.entries);
     setSettings(state.settings);
+
     setCurrentEntry(state.currentEntry);
   }, []);
 
@@ -147,33 +213,82 @@ export function ExperienceStackProvider({
     [actions]
   );
 
-  const runOperation = useCallback(async <T,>(operation: () => Promise<T>): Promise<T> => {
-    setLoading(true);
+  const requestAuthentication = useCallback(() => {
+    setError('Create an account or sign in to access personalised Experience modes.');
+
+    const returnTo = encodeURIComponent(pathname || '/');
+
+    router.push(`${EXPERIENCE_AUTH_ROUTE}?returnTo=${returnTo}`);
+  }, [pathname, router]);
+
+  const requireExperienceAccess = useCallback((): boolean => {
+    if (isPending) {
+      setError('Confirming your account session.');
+
+      return false;
+    }
+
+    if (!isAuthenticated) {
+      requestAuthentication();
+
+      return false;
+    }
+
+    if (!workspaceId || workspaceId === 'guest-live') {
+      setError('Your account workspace is not available yet.');
+
+      return false;
+    }
+
     setError(null);
 
-    try {
-      return await operation();
-    } catch (operationError) {
-      const message =
-        operationError instanceof Error
-          ? operationError.message
-          : 'An unexpected Experience Stack error occurred.';
+    return true;
+  }, [isAuthenticated, isPending, requestAuthentication, workspaceId]);
 
-      setError(message);
+  const runOperation = useCallback(
+    async <T,>(operation: () => Promise<T>, fallback: T): Promise<T> => {
+      setLoading(true);
+      setError(null);
 
-      throw operationError;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        return await operation();
+      } catch (operationError) {
+        const message =
+          operationError instanceof Error
+            ? operationError.message
+            : 'An unexpected Experience Stack error occurred.';
+
+        setError(message);
+
+        if (operationError instanceof ExperienceStackRequestError && operationError.status === 401) {
+          requestAuthentication();
+        }
+
+        return fallback;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [requestAuthentication]
+  );
 
   // ==========================================================
   // REFRESH
   // ==========================================================
 
   const refreshHistory = useCallback(async () => {
-    if (isGuestWorkspace) {
+    if (isPending) {
+      return;
+    }
+
+    /*
+     * Guests do not receive local Experience
+     * history anymore.
+     */
+    if (!canAccessExperienceModes) {
+      applyStackState(defaultState);
       setError(null);
+
       return;
     }
 
@@ -190,11 +305,15 @@ export function ExperienceStackProvider({
       const state = await readJsonResponse<ExperienceStackState>(response);
 
       applyStackState(state);
-    });
-  }, [applyStackState, isGuestWorkspace, runOperation, workspaceId]);
+    }, undefined);
+  }, [applyStackState, canAccessExperienceModes, isPending, runOperation, workspaceId]);
 
   useEffect(() => {
-    void refreshHistory();
+    const timer = window.setTimeout(() => {
+      void refreshHistory();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [refreshHistory]);
 
   // ==========================================================
@@ -203,54 +322,22 @@ export function ExperienceStackProvider({
 
   const pushExperience = useCallback(
     async (input: PushExperienceInput): Promise<ExperienceHistoryEntry | null> => {
-      if (!settings.enabled) {
+      if (!requireExperienceAccess()) {
         return null;
       }
 
-      if (isGuestWorkspace) {
-        const now = new Date().toISOString();
-
-        const guestEntry: ExperienceHistoryEntry = {
-          id: `guest:${input.fingerprint}`,
-          label: input.label,
-          subtitle: input.subtitle ?? null,
-
-          categorySlug: input.categorySlug,
-          source: input.source,
-
-          experienceId: input.experienceId ?? null,
-          campaignId: input.campaignId ?? null,
-          collectionId: input.collectionId ?? null,
-          productId: input.productId ?? null,
-
-          intentSnapshot: input.intentSnapshot,
-          contextSnapshot: input.contextSnapshot ?? null,
-
-          fingerprint: input.fingerprint,
-
-          visitedAt: now,
-          expiresAt: null
-        };
-
-        setEntries(currentEntries => {
-          const withoutDuplicate = currentEntries.filter(
-            entry => entry.fingerprint !== guestEntry.fingerprint
-          );
-
-          return [guestEntry, ...withoutDuplicate].slice(0, settings.maxEntries);
-        });
-
-        setCurrentEntry(guestEntry);
-
-        return guestEntry;
+      if (!settings.enabled) {
+        return null;
       }
 
       return runOperation(async () => {
         const response = await fetch('/api/experience-history', {
           method: 'POST',
+
           headers: {
             'Content-Type': 'application/json'
           },
+
           body: JSON.stringify({
             workspaceId,
             ...input
@@ -272,37 +359,28 @@ export function ExperienceStackProvider({
         setCurrentEntry(entry);
 
         return entry;
-      });
+      }, null);
     },
-    [isGuestWorkspace, runOperation, settings.enabled, settings.maxEntries, workspaceId]
+    [requireExperienceAccess, runOperation, settings.enabled, settings.maxEntries, workspaceId]
   );
 
   // ==========================================================
   // BACK
   // ==========================================================
 
-  const goBack = useCallback(async () => {
-    if (isGuestWorkspace) {
-      const previousEntry = entries[1] ?? null;
-
-      if (!previousEntry) {
-        return null;
-      }
-
-      setEntries(currentEntries => currentEntries.slice(1));
-
-      setCurrentEntry(previousEntry);
-      restoreEntry(previousEntry);
-
-      return previousEntry;
+  const goBack = useCallback(async (): Promise<ExperienceHistoryEntry | null> => {
+    if (!requireExperienceAccess()) {
+      return null;
     }
 
     return runOperation(async () => {
       const response = await fetch('/api/experience-history/back', {
         method: 'POST',
+
         headers: {
           'Content-Type': 'application/json'
         },
+
         body: JSON.stringify({
           workspaceId
         })
@@ -310,6 +388,7 @@ export function ExperienceStackProvider({
 
       const result = await readJsonResponse<{
         previousEntry: ExperienceHistoryEntry | null;
+
         removedEntryId: string | null;
       }>(response);
 
@@ -320,11 +399,12 @@ export function ExperienceStackProvider({
       setEntries(currentEntries => currentEntries.filter(entry => entry.id !== result.removedEntryId));
 
       setCurrentEntry(result.previousEntry);
+
       restoreEntry(result.previousEntry);
 
       return result.previousEntry;
-    });
-  }, [entries, isGuestWorkspace, restoreEntry, runOperation, workspaceId]);
+    }, null);
+  }, [requireExperienceAccess, restoreEntry, runOperation, workspaceId]);
 
   // ==========================================================
   // JUMP
@@ -332,35 +412,18 @@ export function ExperienceStackProvider({
 
   const jumpTo = useCallback(
     async (entryId: string): Promise<ExperienceHistoryEntry | null> => {
-      if (isGuestWorkspace) {
-        const selectedEntry = entries.find(entry => entry.id === entryId) ?? null;
-
-        if (!selectedEntry) {
-          return null;
-        }
-
-        const refreshedEntry = {
-          ...selectedEntry,
-          visitedAt: new Date().toISOString()
-        };
-
-        setEntries(currentEntries => [
-          refreshedEntry,
-          ...currentEntries.filter(entry => entry.id !== entryId)
-        ]);
-
-        setCurrentEntry(refreshedEntry);
-        restoreEntry(refreshedEntry);
-
-        return refreshedEntry;
+      if (!requireExperienceAccess()) {
+        return null;
       }
 
       return runOperation(async () => {
         const response = await fetch('/api/experience-history/jump', {
           method: 'POST',
+
           headers: {
             'Content-Type': 'application/json'
           },
+
           body: JSON.stringify({
             workspaceId,
             entryId
@@ -375,16 +438,18 @@ export function ExperienceStackProvider({
 
         setEntries(currentEntries => [
           entry,
+
           ...currentEntries.filter(currentEntry => currentEntry.id !== entry.id)
         ]);
 
         setCurrentEntry(entry);
+
         restoreEntry(entry);
 
         return entry;
-      });
+      }, null);
     },
-    [entries, isGuestWorkspace, restoreEntry, runOperation, workspaceId]
+    [requireExperienceAccess, restoreEntry, runOperation, workspaceId]
   );
 
   // ==========================================================
@@ -392,19 +457,18 @@ export function ExperienceStackProvider({
   // ==========================================================
 
   const clearHistory = useCallback(async () => {
-    if (isGuestWorkspace) {
-      setEntries([]);
-      setCurrentEntry(null);
-      setError(null);
+    if (!requireExperienceAccess()) {
       return;
     }
 
     await runOperation(async () => {
       const response = await fetch('/api/experience-history', {
         method: 'DELETE',
+
         headers: {
           'Content-Type': 'application/json'
         },
+
         body: JSON.stringify({
           workspaceId
         })
@@ -416,17 +480,22 @@ export function ExperienceStackProvider({
 
       setEntries([]);
       setCurrentEntry(null);
-    });
-  }, [isGuestWorkspace, runOperation, workspaceId]);
+    }, undefined);
+  }, [requireExperienceAccess, runOperation, workspaceId]);
 
   // ==========================================================
   // START FRESH
   // ==========================================================
 
   const startFresh = useCallback(async () => {
+    if (!requireExperienceAccess()) {
+      return;
+    }
+
     await clearHistory();
+
     actions.resetExperience();
-  }, [actions, clearHistory]);
+  }, [actions, clearHistory, requireExperienceAccess]);
 
   // ==========================================================
   // SETTINGS
@@ -434,29 +503,18 @@ export function ExperienceStackProvider({
 
   const updateSettings = useCallback(
     async (input: UpdateHistorySettingsInput) => {
-      if (isGuestWorkspace) {
-        setSettings(currentSettings => ({
-          ...currentSettings,
-          ...input
-        }));
-
-        if (input.maxEntries !== undefined) {
-          setEntries(currentEntries => currentEntries.slice(0, input.maxEntries));
-        }
-
-        if (input.enabled === false) {
-          setCurrentEntry(null);
-        }
-
+      if (!requireExperienceAccess()) {
         return;
       }
 
       await runOperation(async () => {
         const response = await fetch('/api/experience-history/settings', {
           method: 'PATCH',
+
           headers: {
             'Content-Type': 'application/json'
           },
+
           body: JSON.stringify({
             workspaceId,
             ...input
@@ -472,9 +530,9 @@ export function ExperienceStackProvider({
         if (!updatedSettings.enabled) {
           setCurrentEntry(null);
         }
-      });
+      }, undefined);
     },
-    [isGuestWorkspace, runOperation, workspaceId]
+    [requireExperienceAccess, runOperation, workspaceId]
   );
 
   // ==========================================================
@@ -489,10 +547,13 @@ export function ExperienceStackProvider({
       settings,
       currentEntry,
 
-      canGoBack: entries.length > 1,
+      canGoBack: canAccessExperienceModes && entries.length > 1,
 
       loading,
       error,
+
+      canAccessExperienceModes,
+      requireExperienceAccess,
 
       refreshHistory,
       pushExperience,
@@ -507,8 +568,10 @@ export function ExperienceStackProvider({
       entries,
       settings,
       currentEntry,
+      canAccessExperienceModes,
       loading,
       error,
+      requireExperienceAccess,
       refreshHistory,
       pushExperience,
       goBack,

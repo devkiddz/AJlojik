@@ -1,25 +1,41 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { products } from '@/data/products';
-import { ProductType } from '@/types/types';
-import { SearchBar, SearchResultsDropdown } from '@/features/search';
+import {
+  createContext,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode
+} from 'react';
+
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
+import { useCatalog } from '@/features/catalog';
+
+import type { ProductType } from '@/types/types';
 
 type SearchContextType = {
   previewProduct: ProductType | null;
-  setPreviewProduct: (product: ProductType | null) => void;
+
   activeIndex: number;
   setActiveIndex: (index: number) => void;
+
   query: string;
   debouncedQuery: string;
   setQuery: (value: string) => void;
+
   open: boolean;
   setOpen: (value: boolean) => void;
+
   loading: boolean;
   results: ProductType[];
   recentSearches: string[];
   trendingProducts: ProductType[];
+
   selectHistory: (value: string) => void;
   selectTrending: (value: string) => void;
   selectCategory: (value: string) => void;
@@ -30,165 +46,290 @@ type SearchContextType = {
 
 const SearchContext = createContext<SearchContextType | null>(null);
 
-export default function SearchProvider({ children }: { children: ReactNode }) {
+const RECENT_SEARCHES_STORAGE_KEY = 'aj_recent_searches';
+const SEARCH_DEBOUNCE_MS = 300;
+
+type SearchUrlSynchronizerProps = {
+  debouncedQuery: string;
+  syncFromUrl: (value: string) => void;
+};
+
+function SearchUrlSynchronizer({
+  debouncedQuery,
+  syncFromUrl
+}: SearchUrlSynchronizerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [query, setQuery] = useState(searchParams.get('q') ?? '');
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [previewProduct, setPreviewProduct] = useState<ProductType | null>(null);
+  const lastRouteQueryRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('aj_recent_searches');
-    if (saved) {
-      setRecentSearches(JSON.parse(saved));
+    const routeQuery = searchParams.get('q') ?? '';
+
+    /*
+     * First render and browser navigation hydrate the provider
+     * from the URL without immediately rewriting that URL.
+     */
+    if (lastRouteQueryRef.current === null || routeQuery !== lastRouteQueryRef.current) {
+      lastRouteQueryRef.current = routeQuery;
+      syncFromUrl(routeQuery);
+      return;
     }
-  }, []);
 
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [debouncedQuery]);
-
-  useEffect(() => {
-    if (query === debouncedQuery) return;
-    setLoading(true);
-
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query, debouncedQuery]);
-
-  useEffect(() => {
-    const current = searchParams.get('q') ?? '';
-    if (current === debouncedQuery) return;
+    if (routeQuery === debouncedQuery) {
+      return;
+    }
 
     const params = new URLSearchParams(searchParams.toString());
+
     if (debouncedQuery.trim()) {
       params.set('q', debouncedQuery);
     } else {
       params.delete('q');
     }
 
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [debouncedQuery, pathname, searchParams, router]);
+    const nextQuery = params.toString();
+
+    lastRouteQueryRef.current = debouncedQuery;
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false
+    });
+  }, [debouncedQuery, pathname, router, searchParams, syncFromUrl]);
+
+  return null;
+}
+
+function readStoredSearches(): string[] {
+  try {
+    const stored = window.localStorage.getItem(RECENT_SEARCHES_STORAGE_KEY);
+
+    if (!stored) {
+      return [];
+    }
+
+    const parsed: unknown = JSON.parse(stored);
+
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export default function SearchProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
+
+  const { products } = useCatalog();
+
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  const [open, setOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  const [activeSelection, setActiveSelection] = useState<{
+    query: string;
+    index: number;
+  }>({
+    query: '',
+    index: 0
+  });
+
+  const activeIndex = activeSelection.query === debouncedQuery ? activeSelection.index : 0;
+
+  const setActiveIndex = useCallback(
+    (index: number): void => {
+      setActiveSelection({
+        query: debouncedQuery,
+        index
+      });
+    },
+    [debouncedQuery]
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setRecentSearches(readStoredSearches());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (query === debouncedQuery) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [debouncedQuery, query]);
+
+  const syncFromUrl = useCallback((value: string): void => {
+    setQuery(current => (current === value ? current : value));
+    setDebouncedQuery(current => (current === value ? current : value));
+  }, []);
 
   const results = useMemo(() => {
-    if (!debouncedQuery.trim()) return [];
-    const search = debouncedQuery.toLowerCase();
+    const normalizedQuery = debouncedQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return [];
+    }
 
     return products.filter(product => {
       return (
-        product.name.toLowerCase().includes(search) ||
-        product.shortDescription.toLowerCase().includes(search) ||
-        product.longDescription.toLowerCase().includes(search) ||
-        product.category.toLowerCase().includes(search)
+        product.name.toLowerCase().includes(normalizedQuery) ||
+        product.shortDescription.toLowerCase().includes(normalizedQuery) ||
+        product.longDescription.toLowerCase().includes(normalizedQuery) ||
+        product.category.toLowerCase().includes(normalizedQuery) ||
+        product.tags.some(tag => tag.toLowerCase().includes(normalizedQuery))
       );
     });
-  }, [debouncedQuery]);
+  }, [debouncedQuery, products]);
 
-  useEffect(() => {
-    if (!results.length) {
-      setPreviewProduct(null);
-      return;
-    }
-    setPreviewProduct(results[activeIndex] ?? results[0]);
-  }, [results, activeIndex]);
+  const resolvedActiveIndex =
+    results.length > 0 ? Math.min(Math.max(activeIndex, 0), results.length - 1) : -1;
 
-  const trendingProducts = useMemo(() => {
-    return products.filter(product => product.featured).slice(0, 6);
+  const previewProduct = resolvedActiveIndex >= 0 ? results[resolvedActiveIndex] : null;
+
+  const trendingProducts = useMemo(
+    () => products.filter(product => product.featured).slice(0, 6),
+    [products]
+  );
+
+  const persistHistory = useCallback((next: string[]): void => {
+    setRecentSearches(next);
+    window.localStorage.setItem(RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
-  const saveHistory = (value: string) => {
-    if (!value.trim()) return;
-    const next = [value, ...recentSearches.filter(item => item !== value)].slice(0, 8);
-    setRecentSearches(next);
-    localStorage.setItem('aj_recent_searches', JSON.stringify(next));
-  };
+  const saveHistory = useCallback(
+    (value: string): void => {
+      const normalizedValue = value.trim();
 
-  const removeHistory = (value: string) => {
-    const next = recentSearches.filter(item => item !== value);
-    setRecentSearches(next);
-    localStorage.setItem('aj_recent_searches', JSON.stringify(next));
-  };
+      if (!normalizedValue) {
+        return;
+      }
 
-  const clearHistory = () => {
+      const next = [
+        normalizedValue,
+        ...recentSearches.filter(item => item !== normalizedValue)
+      ].slice(0, 8);
+
+      persistHistory(next);
+    },
+    [persistHistory, recentSearches]
+  );
+
+  const removeHistory = useCallback(
+    (value: string): void => {
+      persistHistory(recentSearches.filter(item => item !== value));
+    },
+    [persistHistory, recentSearches]
+  );
+
+  const clearHistory = useCallback((): void => {
     setRecentSearches([]);
-    localStorage.removeItem('aj_recent_searches');
-  };
+    window.localStorage.removeItem(RECENT_SEARCHES_STORAGE_KEY);
+  }, []);
 
-  const selectHistory = (value: string) => {
-    setQuery(value);
-    saveHistory(value);
-  };
+  const selectHistory = useCallback(
+    (value: string): void => {
+      setQuery(value);
+      saveHistory(value);
+    },
+    [saveHistory]
+  );
 
-  const selectTrending = (value: string) => {
-    setQuery(value);
-    saveHistory(value);
-  };
+  const selectTrending = useCallback(
+    (value: string): void => {
+      setQuery(value);
+      saveHistory(value);
+    },
+    [saveHistory]
+  );
 
-  const selectCategory = (category: string) => {
-    router.push(`/store?category=${category}`);
-    setOpen(false);
-  };
+  const selectCategory = useCallback(
+    (category: string): void => {
+      router.push(`/store?category=${category}`);
+      setOpen(false);
+    },
+    [router]
+  );
 
-  // 🚀 FIXED: Now properly routes to /products/[product-slug]
-  const selectProduct = (product: ProductType) => {
-    saveHistory(product.name);
-    router.push(`/products/${product.slug}`);
-    setOpen(false);
-  };
+  const selectProduct = useCallback(
+    (product: ProductType): void => {
+      saveHistory(product.name);
+      router.push(`/products/${product.slug}`);
+      setOpen(false);
+    },
+    [router, saveHistory]
+  );
+
+  const value = useMemo<SearchContextType>(
+    () => ({
+      previewProduct,
+      activeIndex: resolvedActiveIndex,
+      setActiveIndex,
+      query,
+      debouncedQuery,
+      setQuery,
+      open,
+      setOpen,
+      loading: query !== debouncedQuery,
+      results,
+      recentSearches,
+      trendingProducts,
+      selectHistory,
+      selectTrending,
+      selectCategory,
+      selectProduct,
+      removeHistory,
+      clearHistory
+    }),
+    [
+      clearHistory,
+      debouncedQuery,
+      open,
+      previewProduct,
+      query,
+      recentSearches,
+      removeHistory,
+      resolvedActiveIndex,
+      results,
+      selectCategory,
+      selectHistory,
+      selectProduct,
+      selectTrending,
+      setActiveIndex,
+      trendingProducts
+    ]
+  );
 
   return (
-    <SearchContext.Provider
-      value={{
-        previewProduct,
-        setPreviewProduct,
-        query,
-        debouncedQuery,
-        setQuery,
-        open,
-        setOpen,
-        loading,
-        results,
-        recentSearches,
-        trendingProducts,
-        selectHistory,
-        selectTrending,
-        selectCategory,
-        selectProduct,
-        removeHistory,
-        activeIndex,
-        setActiveIndex,
-        clearHistory
-      }}>
+    <SearchContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <SearchUrlSynchronizer
+          debouncedQuery={debouncedQuery}
+          syncFromUrl={syncFromUrl}
+        />
+      </Suspense>
+
       {children}
     </SearchContext.Provider>
   );
 }
 
-export function useSearch() {
+export function useSearch(): SearchContextType {
   const context = useContext(SearchContext);
+
   if (!context) {
     throw new Error('useSearch must be used inside SearchProvider.');
   }
-  return context;
-}
 
-export function SearchBarComponent() {
-  return (
-    <SearchProvider>
-      <SearchBar />
-      <div className="hidden lg:block">
-        <SearchResultsDropdown />
-      </div>
-    </SearchProvider>
-  );
+  return context;
 }

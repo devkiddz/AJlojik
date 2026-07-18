@@ -1,4 +1,11 @@
-import { CreditCardIcon, Heart, ShoppingBagIcon, ShoppingCart } from 'lucide-react';
+'use client';
+
+import { useRouter } from 'next/navigation';
+
+import { Heart, ShoppingBagIcon, ShoppingCart } from 'lucide-react';
+
+import { useCart } from '@/features/cart';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,31 +15,59 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function CartLogics() {
+  const router = useRouter();
+
+  const { totalQuantity, itemCount, loading } = useCart();
+
+  const displayedQuantity = totalQuantity > 99 ? '99+' : totalQuantity;
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        aria-label={totalQuantity > 0 ? `Open cart with ${totalQuantity} items` : 'Open cart'}
+        className="rounded-full outline-none">
         <div className="flex flex-col gap-1">
-          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-none hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 aria-expanded:bg-muted bg-muted hover:bg-muted/80">
-            <ShoppingBagIcon className="h-4 w-4" />
-            {/* Badge: Positioned cleanly */}
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-white">
-              1
-            </span>
+          <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted transition hover:bg-muted/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50">
+            <ShoppingBagIcon className="size-4" />
+
+            {!loading && totalQuantity > 0 ? (
+              <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-4 text-accent-foreground">
+                {displayedQuantity}
+              </span>
+            ) : null}
           </div>
-          <span className="hidden md:inline text-xs">Orders</span>
+
+          <span className="hidden text-xs md:inline">Cart</span>
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem>
-          <CreditCardIcon className="mr-2 h-4 w-4" />
-          Billing
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem onClick={() => router.push('/cart')}>
+          <ShoppingCart className="mr-2 size-4" />
+
+          <span>View cart</span>
+
+          {!loading ? (
+            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+              {itemCount}
+            </span>
+          ) : null}
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Heart className="mr-2 h-4 w-4" />
+
+        <DropdownMenuItem onClick={() => router.push('/wishlist')}>
+          <Heart className="mr-2 size-4" />
           Wishlist
         </DropdownMenuItem>
+
         <DropdownMenuSeparator />
+
+        <div className="px-2 py-2 text-xs text-muted-foreground">
+          {loading
+            ? 'Loading your cart...'
+            : totalQuantity > 0
+              ? `${totalQuantity} ${totalQuantity === 1 ? 'item' : 'items'} in your cart`
+              : 'Your cart is empty'}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

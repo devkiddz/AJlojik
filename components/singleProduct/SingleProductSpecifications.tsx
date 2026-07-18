@@ -21,7 +21,7 @@ export default function SingleProductSpecifications({ product }: Props) {
   );
 }
 
-function Spec({ label, value }: { label: string; value: any }) {
+function Spec({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border p-4">
       <div className="text-sm text-muted-foreground">{label}</div>

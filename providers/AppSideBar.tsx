@@ -1,11 +1,10 @@
 'use client';
 
 import { Suspense } from 'react';
+
 import Image from 'next/image';
 import { Crown, Heart, LogOut, ShoppingCart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-
-import { useIdentity } from '@/providers/IdentityProvider';
 
 import {
   Sidebar,
@@ -20,20 +19,19 @@ import {
 } from '@/components/ui/sidebar';
 
 import { categories } from '@/data/categories';
+
+import { useCart } from '@/features/cart';
+
+import { useIdentity } from '@/providers/IdentityProvider';
 import SidebarHeaderContent from '@/providers/SidebarHeaderContent';
 
-/**
- * Store category navigation.
- *
- * This component owns only route/category behavior.
- */
 function SidebarShopMenu() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const activeCategory = searchParams.get('category') ?? 'all';
 
-  const handleCategoryChange = (slug: string) => {
+  const handleCategoryChange = (slug: string): void => {
     const params = new URLSearchParams(searchParams.toString());
 
     if (slug === 'all') {
@@ -75,22 +73,20 @@ function SidebarShopMenu() {
   );
 }
 
-/**
- * Main application sidebar.
- *
- * This component owns the authenticated identity presentation.
- */
 export function AppSidebar() {
   const router = useRouter();
 
   const { user, isAuthenticated, isPending, signOut } = useIdentity();
 
-  /**
-   * Temporary placeholders.
-   * These will come from the Commerce Provider shortly.
-   */
-  const cartCount = 0;
+  const { totalQuantity, loading: cartLoading } = useCart();
+
   const wishlistCount = 0;
+
+  const cartCountLabel = cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity;
+
+  const handleSignOut = async (): Promise<void> => {
+    await signOut();
+  };
 
   return (
     <Sidebar>
@@ -100,7 +96,6 @@ export function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent className="px-3">
-          {/* Store navigation */}
           <SidebarGroup className="p-3">
             <SidebarGroupLabel className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Shop
@@ -117,7 +112,6 @@ export function AppSidebar() {
             </Suspense>
           </SidebarGroup>
 
-          {/* Premium membership promotion */}
           <div className="mt-4 rounded-3xl border border-white/5 bg-background/50 p-4">
             <div className="flex items-center gap-2">
               <div className="flex size-9 items-center justify-center rounded-2xl bg-accent/15 text-accent">
@@ -143,7 +137,6 @@ export function AppSidebar() {
           </div>
         </SidebarContent>
 
-        {/* Real account identity */}
         <SidebarFooter className="mt-auto p-3">
           <div className="rounded-3xl border border-white/5 bg-background/50 p-4">
             {isPending ? (
@@ -182,27 +175,33 @@ export function AppSidebar() {
                   </div>
                 </button>
 
-                <div className="mt-3 space-y-1 text-sm">
+                <div className="mt-3 space-y-1">
                   <button
                     type="button"
                     onClick={() => router.push('/wishlist')}
-                    className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left transition hover:bg-muted">
+                    className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm transition hover:bg-muted">
                     <Heart className="size-4 text-secondary" />
-                    Wishlist ({wishlistCount})
+
+                    <span className="flex-1">Wishlist</span>
+
+                    <span className="text-xs font-semibold text-muted-foreground">{wishlistCount}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => router.push('/cart')}
-                    className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left transition hover:bg-muted">
+                    className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm transition hover:bg-muted">
                     <ShoppingCart className="size-4 text-secondary" />
-                    Cart ({cartCount})
+
+                    <span className="flex-1">Cart</span>
+
+                    <span className="text-xs font-semibold text-muted-foreground">{cartCountLabel}</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => void signOut()}
-                    className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-red-500 transition hover:bg-red-500/10">
+                    onClick={() => void handleSignOut()}
+                    className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm text-red-500 transition hover:bg-red-500/10">
                     <LogOut className="size-4" />
                     Sign out
                   </button>
@@ -214,9 +213,21 @@ export function AppSidebar() {
                   <p className="text-sm font-bold">Welcome to AJ Logik</p>
 
                   <p className="text-xs leading-5 text-muted-foreground">
-                    Sign in to save your cart, wishlist and personal experience.
+                    Your guest cart is available on this device. Sign in later to save and sync your shopping
+                    experience.
                   </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => router.push('/cart')}
+                  className="flex w-full items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-left text-sm font-semibold transition hover:bg-muted/80">
+                  <ShoppingCart className="size-4 text-secondary" />
+
+                  <span className="flex-1">Cart</span>
+
+                  <span className="text-xs font-semibold text-muted-foreground">{cartCountLabel}</span>
+                </button>
 
                 <button
                   type="button"

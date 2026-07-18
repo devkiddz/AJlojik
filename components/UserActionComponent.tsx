@@ -15,7 +15,7 @@ import {
   ShoppingCart,
   User
 } from 'lucide-react';
-
+import { useCart } from '@/features/cart';
 import BaseTriggerButton from '@/components/shared/BaseTriggerButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -121,8 +121,9 @@ export default function UserActionComponent() {
 
   const { user, isAuthenticated, signOut } = useIdentity();
 
-  const [open, setOpen] = React.useState(false);
+  const { totalQuantity, loading: cartLoading } = useCart();
 
+  const [open, setOpen] = React.useState(false);
   const [signingOut, setSigningOut] = React.useState(false);
 
   const navigateTo = (href: string) => {
@@ -212,7 +213,7 @@ export default function UserActionComponent() {
           <MenuItem
             icon={<ShoppingCart className="size-4" />}
             label="Cart"
-            badge={0}
+            badge={cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity}
             onClick={() => navigateTo('/cart')}
           />
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import CategoryCard from './CategoryCard';
@@ -12,35 +12,9 @@ type Props = {
 
 export default function CategoriesCarousel({ categories }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
-
-  const [progress, setProgress] = useState(0);
-  const [maxScroll, setMaxScroll] = useState(0);
-
-  const calculateMetrics = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const max = el.scrollWidth - el.clientWidth;
-    setMaxScroll(max > 0 ? max : 0);
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const max = el.scrollWidth - el.clientWidth;
-
-    if (max <= 0) {
-      setProgress(0);
-      return;
-    }
-
-    setProgress((el.scrollLeft / max) * 100);
-  }, []);
 
   // Hook into native wheel event to override passive browser scrolling defaults
   useEffect(() => {
@@ -71,23 +45,6 @@ export default function CategoriesCarousel({ categories }: Props) {
     });
   };
 
-  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = containerRef.current;
-    const track = trackRef.current;
-    if (!el || !track || maxScroll === 0) return;
-
-    const rect = track.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-
-    const ratio = Math.min(Math.max(clickX / rect.width, 0), 1);
-    const target = ratio * maxScroll;
-
-    el.scrollTo({
-      left: target,
-      behavior: 'smooth'
-    });
-  };
-
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = containerRef.current;
     if (!el) return;
@@ -113,15 +70,6 @@ export default function CategoriesCarousel({ categories }: Props) {
     isDragging.current = false;
   };
 
-  useEffect(() => {
-    calculateMetrics();
-
-    const handleResize = () => calculateMetrics();
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, [categories, calculateMetrics]);
-
   return (
     <section className="relative bg-muted p-4 rounded-sm md:rounded-2xl">
       {/* Header Controls */}
@@ -145,7 +93,6 @@ export default function CategoriesCarousel({ categories }: Props) {
       {/* Carousel */}
       <div
         ref={containerRef}
-        onScroll={handleScroll}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={stopDragging}

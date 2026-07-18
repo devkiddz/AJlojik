@@ -1,12 +1,50 @@
-"use client";
+'use client';
 
-import StoreFeaturedProductCard from "@/components/store/StoreFeaturedProductCard";
-import StoreFeaturedProductsSlide from "@/components/store/StoreFeaturedProductsSlide";
-import type { FeedActions, FeaturedProductsModule as FeaturedProductsModuleType } from "../contracts";
+import { FeaturedProductCard, ProductCard } from '@/features/products/cards';
 
-type Props = { module: FeaturedProductsModuleType; actions: FeedActions };
-export function FeaturedProductsModule({ module, actions }: Props) {
+import type { FeedActions, FeaturedProductsModule as FeaturedProductsModuleType } from '../contracts';
+
+type FeaturedProductsModuleProps = {
+  module: FeaturedProductsModuleType;
+  actions: FeedActions;
+};
+
+export function FeaturedProductsModule({ module, actions }: FeaturedProductsModuleProps) {
   const { featuredProduct, featuredProducts } = module.data;
-  if (!featuredProduct && featuredProducts.length === 0) return null;
-  return <section><div className="grid grid-cols-12 gap-6"><div className="col-span-12 lg:col-span-4">{featuredProduct ? <StoreFeaturedProductCard product={featuredProduct} onPreview={actions.previewProduct} onToggleLike={actions.toggleLike} onAddToCart={actions.addToCart} /> : null}</div><div className="col-span-12 min-w-0 lg:col-span-8"><StoreFeaturedProductsSlide products={featuredProducts} onPreview={actions.previewProduct} onAddToCart={actions.addToCart} onLike={(product) => actions.toggleLike(product.id)} /></div></div></section>;
+
+  if (!featuredProduct && !featuredProducts.length) {
+    return null;
+  }
+
+  const remainingProducts = featuredProduct
+    ? featuredProducts.filter(product => product.id !== featuredProduct.id)
+    : featuredProducts;
+
+  return (
+    <section className="space-y-5">
+      {featuredProduct ? (
+        <FeaturedProductCard
+          product={featuredProduct}
+          onPreview={actions.previewProduct}
+          onToggleLike={actions.toggleLike}
+          onAddToCart={actions.addToCart}
+        />
+      ) : null}
+
+      {remainingProducts.length ? (
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 scrollbar-none">
+          {remainingProducts.map(product => (
+            <div key={product.id} className="w-60 shrink-0 snap-start md:w-64">
+              <ProductCard
+                product={product}
+                onPreview={actions.previewProduct}
+                onToggleLike={actions.toggleLike}
+                onAddToCart={actions.addToCart}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
 }
