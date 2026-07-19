@@ -1,3 +1,9 @@
+import type { CollectionType } from '@/data/collections';
+
+import type {
+  ProductType
+} from '@/types/types';
+
 import type {
   FeedContext,
   FeedExperience,
@@ -26,6 +32,181 @@ import {
   buildShoppingJourneyItems
 } from './buildShoppingJourneyItems';
 
+type FeaturedProductResolutionSource =
+  | 'explicit'
+  | 'best-selling'
+  | 'featured-flag'
+  | 'in-stock-fallback'
+  | 'stable-fallback'
+  | 'disabled'
+  | 'unavailable';
+
+type CollectionWithPresentationControls =
+  CollectionType & {
+    /**
+     * Undefined retains the existing enabled behaviour.
+     * False is an intentional manager decision.
+     */
+    bannerEnabled?: boolean;
+
+    /**
+     * Undefined retains the existing enabled behaviour.
+     * False prevents the engine from inventing a featured product.
+     */
+    featuredEnabled?: boolean;
+  };
+
+type FeaturedProductResolution = {
+  product?: ProductType;
+  source: FeaturedProductResolutionSource;
+};
+
+function resolveStableFallbackProduct(
+  collectionId: string,
+  products: ProductType[]
+): ProductType | undefined {
+  if (products.length === 0) {
+    return undefined;
+  }
+
+  const seed = Array.from(collectionId).reduce(
+    (total, character) => {
+      return total + character.charCodeAt(0);
+    },
+    0
+  );
+
+  return products[seed % products.length];
+}
+
+function resolveCollectionFeaturedProduct({
+  collection,
+  products,
+  enabled
+}: {
+  collection: CollectionType;
+  products: ProductType[];
+  enabled: boolean;
+}): FeaturedProductResolution {
+  /**
+   * An explicit manager decision must always win.
+   *
+   * When disabled, no fallback featured product is created.
+   */
+  if (!enabled) {
+    return {
+      source: 'disabled'
+    };
+  }
+
+  if (products.length === 0) {
+    return {
+      source: 'unavailable'
+    };
+  }
+
+  /**
+   * First preference:
+   * the product deliberately selected by the manager.
+   */
+  const explicitProduct = collection.featuredProductId
+    ? products.find(
+        product =>
+          product.id === collection.featuredProductId
+      )
+    : undefined;
+
+  if (explicitProduct) {
+    return {
+      product: explicitProduct,
+      source: 'explicit'
+    };
+  }
+
+  /**
+   * Second preference:
+   * the strongest-selling eligible product.
+   */
+  const bestSellingProduct = [...products]
+    .filter(product => product.soldCount > 0)
+    .sort((firstProduct, secondProduct) => {
+      const soldDifference =
+        secondProduct.soldCount -
+        firstProduct.soldCount;
+
+      if (soldDifference !== 0) {
+        return soldDifference;
+      }
+
+      return firstProduct.id.localeCompare(
+        secondProduct.id
+      );
+    })[0];
+
+  if (bestSellingProduct) {
+    return {
+      product: bestSellingProduct,
+      source: 'best-selling'
+    };
+  }
+
+  /**
+   * Third preference:
+   * an existing catalog-level featured flag.
+   */
+  const flaggedProduct = products.find(
+    product => product.featured
+  );
+
+  if (flaggedProduct) {
+    return {
+      product: flaggedProduct,
+      source: 'featured-flag'
+    };
+  }
+
+  /**
+   * Fourth preference:
+   * the first product with at least one purchasable variant.
+   */
+  const inStockProduct = products.find(
+    product =>
+      product.variants.some(
+        variant => variant.stockLeft > 0
+      )
+  );
+
+  if (inStockProduct) {
+    return {
+      product: inStockProduct,
+      source: 'in-stock-fallback'
+    };
+  }
+
+  /**
+   * Final forgiving fallback:
+   * use a deterministic selection instead of Math.random().
+   *
+   * This keeps the assembled experience stable between renders.
+   */
+  const stableFallback =
+    resolveStableFallbackProduct(
+      collection.id,
+      products
+    );
+
+  if (stableFallback) {
+    return {
+      product: stableFallback,
+      source: 'stable-fallback'
+    };
+  }
+
+  return {
+    source: 'unavailable'
+  };
+}
+
 export function buildStoreDiscoveryExperience(
   intent: FeedIntent,
   context: FeedContext
@@ -33,9 +214,7 @@ export function buildStoreDiscoveryExperience(
   const selectedCategory =
     intent.categorySlug ?? 'all';
 
-  const {
-    catalog
-  } = context;
+  const { catalog } = context;
 
   // ============================================================
   // CORE CATALOG RESOLUTION
@@ -47,12 +226,11 @@ export function buildStoreDiscoveryExperience(
       selectedCategory
     );
 
-  const filteredProductIds =
-    new Set(
-      filteredProducts.map(
-        product => product.id
-      )
-    );
+  const filteredProductIds = new Set(
+    filteredProducts.map(
+      product => product.id
+    )
+  );
 
   const featuredProducts =
     selectFeaturedProducts(
@@ -72,16 +250,20 @@ export function buildStoreDiscoveryExperience(
     );
 
   /**
-   * Collections are scoped to the currently selected category.
+   * Each collection is converted into a resolved experience column.
    *
-   * For "all", every resolved collection remains available.
-   *
-   * For a specific category, only products belonging to that
-   * category remain inside each collection.
+   * The engine decides:
+   * - whether the banner role is visible;
+   * - whether the featured role is enabled;
+   * - which product forgives a missing featured selection;
+   * - whether the rail occupies partial or full width.
    */
   const resolvedCollections =
     allResolvedCollections
       .map(resolvedCollection => {
+        const { collection } =
+          resolvedCollection;
+
         const scopedProducts =
           selectedCategory === 'all'
             ? resolvedCollection.products
@@ -92,58 +274,72 @@ export function buildStoreDiscoveryExperience(
                   )
               );
 
-        const originalFeaturedProduct =
-          resolvedCollection.featuredProduct;
+        const controlledCollection =
+          collection as CollectionWithPresentationControls;
 
-        const featuredProductStillValid =
-          originalFeaturedProduct
-            ? scopedProducts.some(
-                product =>
-                  product.id ===
-                  originalFeaturedProduct.id
-              )
-            : false;
+        const bannerEnabled =
+          controlledCollection.bannerEnabled !== false;
 
-        const scopedFeaturedProduct =
-          featuredProductStillValid
-            ? originalFeaturedProduct
-            : scopedProducts.find(
-                product =>
-                  product.featured
-              ) ??
-              scopedProducts[0];
+        const featuredEnabled =
+          controlledCollection.featuredEnabled !== false;
+
+        const featuredResolution =
+          resolveCollectionFeaturedProduct({
+            collection,
+            products: scopedProducts,
+            enabled: featuredEnabled
+          });
+
+        const bannerVisible =
+          bannerEnabled &&
+          Boolean(collection.banner);
+
+        const featuredVisible =
+          featuredEnabled &&
+          Boolean(featuredResolution.product);
 
         return {
-          ...resolvedCollection,
+          collection,
 
-          products:
-            scopedProducts,
+          products: scopedProducts,
 
           featuredProduct:
-            scopedFeaturedProduct
+            featuredResolution.product,
+
+          presentation: {
+            banner: {
+              enabled: bannerEnabled,
+              visible: bannerVisible
+            },
+
+            featured: {
+              enabled: featuredEnabled,
+              visible: featuredVisible,
+              source: featuredResolution.source
+            },
+
+            rail: {
+              span: featuredVisible
+                ? ('partial' as const)
+                : ('full' as const)
+            }
+          }
         };
       })
       .filter(
         resolvedCollection =>
-          resolvedCollection.products
-            .length > 0
+          resolvedCollection.products.length > 0
       );
 
   /**
-   * When a featured collection is available, that collection owns:
+   * Once at least one collection is resolved, the collection feed
+   * owns the composite product-experience layout.
    *
-   * - the featured product
-   * - the supporting product slides
-   * - the horizontal 7 / 5 presentation
-   *
-   * The standalone featured-products module must not duplicate it.
+   * This avoids rendering a second standalone featured-products
+   * section beneath the collections.
    */
-const hasFeaturedCollection =
-  resolvedCollections.some(
-    resolvedCollection =>
-      resolvedCollection.collection.layout === 'featured' &&
-      Boolean(resolvedCollection.featuredProduct)
-  );
+  const collectionFeedOwnsProductExperience =
+    resolvedCollections.length > 0;
 
   const activePromotions =
     selectActivePromotions(
@@ -163,17 +359,14 @@ const hasFeaturedCollection =
   const categoryExperienceTitle =
     selectedCategory === 'all'
       ? 'Featured across AJ Logik'
-      : selectedCategoryRecord
-          ?.label ??
+      : selectedCategoryRecord?.label ??
         'Featured products';
 
   const categoryExperienceSubtitle =
     selectedCategory === 'all'
       ? 'A premium mix of standout products from across the AJ Logik experience.'
-      : selectedCategoryRecord
-          ?.shortDescription ??
-        selectedCategoryRecord
-          ?.description ??
+      : selectedCategoryRecord?.shortDescription ??
+        selectedCategoryRecord?.description ??
         `Explore standout products from ${categoryExperienceTitle}.`;
 
   // ============================================================
@@ -183,26 +376,21 @@ const hasFeaturedCollection =
   const shoppingJourneyItems =
     buildShoppingJourneyItems({
       context,
-      products:
-        catalog.products
+      products: catalog.products
     });
 
   const excludedRecommendationIds = [
     ...context.user.cartProductIds,
-    ...context.user
-      .wishlistProductIds,
-    ...context.user
-      .recentProductIds
+    ...context.user.wishlistProductIds,
+    ...context.user.recentProductIds
   ];
 
   const recommendedProducts =
     selectRecommendedProducts({
-      products:
-        catalog.products,
+      products: catalog.products,
 
       preferredCategorySlugs:
-        context.activity
-          .viewedCategorySlugs,
+        context.activity.viewedCategorySlugs,
 
       excludedProductIds:
         excludedRecommendationIds,
@@ -219,214 +407,193 @@ const hasFeaturedCollection =
   // EXPERIENCE MODULE CANDIDATES
   // ============================================================
 
-  const candidates: ExperienceModuleCandidate[] =
-    [
-      {
-        module: {
-          id:
-            'store-category-rail',
+  const candidates: ExperienceModuleCandidate[] = [
+    {
+      module: {
+        id: 'store-category-rail',
 
-          type:
-            'category-rail',
+        type: 'category-rail',
 
-          priority: 100,
+        priority: 100,
 
-          data: {
-            categories:
-              catalog.categories,
+        data: {
+          categories:
+            catalog.categories,
 
-            selectedCategory
-          }
-        },
-
-        reason:
-          'Store navigation is always required for discovery.'
+          selectedCategory
+        }
       },
 
-      {
-        module: {
-          id:
-            'shopping-journey',
+      reason:
+        'Store navigation is always required for discovery.'
+    },
 
-          type:
-            'shopping-journey',
+    {
+      module: {
+        id: 'shopping-journey',
 
-          priority: 98,
+        type: 'shopping-journey',
 
-          data: {
-            title:
-              'Your Shopping Journey',
+        priority: 98,
 
-            subtitle:
-              'Continue from where you stopped or revisit something you saved.',
+        data: {
+          title:
+            'Your Shopping Journey',
 
-            items:
-              shoppingJourneyItems,
+          subtitle:
+            'Continue from where you stopped or revisit something you saved.',
 
-            tone:
-              journeyTone
-          }
-        },
+          items:
+            shoppingJourneyItems,
 
-        enabled:
-          shoppingJourneyItems
-            .length > 0,
-
-        reason:
-          'Shopping Journey requires cart, wishlist or recent activity.'
+          tone:
+            journeyTone
+        }
       },
 
-      {
-        module: {
-          id:
-            'user-recommendations',
+      enabled:
+        shoppingJourneyItems.length > 0,
 
-          type:
-            'product-rail',
+      reason:
+        'Shopping Journey requires cart, wishlist or recent activity.'
+    },
 
-          priority: 92,
+    {
+      module: {
+        id: 'user-recommendations',
 
-          data: {
-            title:
-              context.user.tier ===
-              'premium'
-                ? 'Premium Picks for You'
-                : 'Recommended for You',
+        type: 'product-rail',
 
-            subtitle:
-              context.user.tier ===
-              'premium'
-                ? 'Luxury selections inspired by your recent activity.'
-                : 'Selected from the categories you explore most.',
+        priority: 92,
 
-            products:
-              recommendedProducts,
+        data: {
+          title:
+            context.user.tier === 'premium'
+              ? 'Premium Picks for You'
+              : 'Recommended for You',
 
-            source:
-              context.user.tier ===
-              'premium'
-                ? 'premium'
-                : 'recommended'
-          }
-        },
+          subtitle:
+            context.user.tier === 'premium'
+              ? 'Luxury selections inspired by your recent activity.'
+              : 'Selected from the categories you explore most.',
 
-        enabled:
-          context.user.tier !==
-            'guest' &&
-          recommendedProducts.length >
-            0,
+          products:
+            recommendedProducts,
 
-        reason:
-          'Recommendations require an identified customer and resolved products.'
+          source:
+            context.user.tier === 'premium'
+              ? 'premium'
+              : 'recommended'
+        }
       },
 
-      {
-        module: {
-          id:
-            'store-promotions',
+      enabled:
+        context.user.tier !== 'guest' &&
+        recommendedProducts.length > 0,
 
-          type:
-            'promotion',
+      reason:
+        'Recommendations require an identified customer and resolved products.'
+    },
 
-          priority: 90,
+    {
+      module: {
+        id: 'store-promotions',
 
-          data: {
-            promotions:
-              activePromotions,
+        type: 'promotion',
 
-            products:
-              filteredProducts
-          }
-        },
+        priority: 90,
 
-        enabled:
-          activePromotions.length >
-          0,
+        data: {
+          promotions:
+            activePromotions,
 
-        reason:
-          'Promotion module requires at least one active promotion.'
+          products:
+            filteredProducts
+        }
       },
 
-      {
-        module: {
-          id:
-            'store-collections',
+      enabled:
+        activePromotions.length > 0,
 
-          type:
-            'collection-feed',
+      reason:
+        'Promotion module requires at least one active promotion.'
+    },
 
-          priority: 80,
+    {
+      module: {
+        id: 'store-collections',
 
-          data: {
-            collections:
-              resolvedCollections,
+        type: 'collection-feed',
 
-            fallbackProducts:
-              filteredProducts
-          }
-        },
+        priority: 80,
 
-        enabled:
-          resolvedCollections.length >
-          0,
+        data: {
+          collections:
+            resolvedCollections,
 
-        reason:
-          'Collection feed requires resolved collections containing products from the active category.'
+          fallbackProducts:
+            filteredProducts
+        }
       },
 
-      /**
-       * This is now a fallback presentation.
-       *
-       * It appears only when the category has products but no
-       * featured collection already owns the featured-product layout.
-       */
-      {
-        module: {
-          id:
-            'store-category-product-experience',
+      enabled:
+        resolvedCollections.length > 0,
 
-          type:
-            'featured-products',
+      reason:
+        'Collection feed requires resolved collections containing products from the active category.'
+    },
 
-          priority: 70,
+    /**
+     * The standalone category experience is a true fallback.
+     *
+     * It appears only when no collection can own the composite
+     * banner, featured-product and product-slider experience.
+     */
+    {
+      module: {
+        id:
+          'store-category-product-experience',
 
-          data: {
-            title:
-              categoryExperienceTitle,
+        type:
+          'featured-products',
 
-            subtitle:
-              categoryExperienceSubtitle,
+        priority: 70,
 
-            categorySlug:
-              selectedCategory,
+        data: {
+          title:
+            categoryExperienceTitle,
 
-            featuredProduct,
+          subtitle:
+            categoryExperienceSubtitle,
 
-            featuredProducts,
+          categorySlug:
+            selectedCategory,
 
-            products:
-              filteredProducts,
+          featuredProduct,
 
-            locale:
-              context.environment
-                .locale,
+          featuredProducts,
 
-            currency:
-              context.environment
-                .currency
-          }
-        },
+          products:
+            filteredProducts,
 
-        enabled:
-          !hasFeaturedCollection &&
-          filteredProducts.length > 0,
+          locale:
+            context.environment.locale,
 
-        reason:
-          hasFeaturedCollection
-            ? 'A featured collection already owns the featured product and supporting product presentation.'
-            : 'Category Product Experience provides a fallback when no featured collection is available.'
-      }
-    ];
+          currency:
+            context.environment.currency
+        }
+      },
+
+      enabled:
+        !collectionFeedOwnsProductExperience &&
+        filteredProducts.length > 0,
+
+      reason:
+        collectionFeedOwnsProductExperience
+          ? 'The collection feed owns the complete product-experience layout.'
+          : 'Category Product Experience provides a fallback when no resolved collection is available.'
+    }
+  ];
 
   // ============================================================
   // MODULE COMPOSITION
@@ -453,14 +620,6 @@ const hasFeaturedCollection =
     prioritization.modules;
 
   // ============================================================
-  // DEVELOPMENT DIAGNOSTICS
-  // ============================================================
-
-    if(process.env.NODE_ENV ===
-    'development'){
-      console.error( '[FeedExperienceRegistry] Resolver failed.', Error);
-    }
-  // ============================================================
   // FINAL EXPERIENCE
   // ============================================================
 
@@ -472,7 +631,9 @@ const hasFeaturedCollection =
       `store-discovery:${selectedCategory}`,
 
     intent,
+
     context,
+
     modules,
 
     status:

@@ -1,18 +1,55 @@
-import type { CollectionType } from "@/data/collections";
-import type { ProductType } from "@/types/types";
-import type { ResolvedCollection } from "../contracts";
+import type {
+  CollectionType
+} from '@/data/collections';
 
-export function resolveCollections(collections: CollectionType[], products: ProductType[]): ResolvedCollection[] {
+import type {
+  ProductType
+} from '@/types/types';
+
+import type {
+  ResolvedCollectionSource
+} from '../contracts';
+
+export function resolveCollections(
+  collections: CollectionType[],
+  products: ProductType[]
+): ResolvedCollectionSource[] {
   return collections
-    .filter((collection) => collection.active)
-    .sort((a, b) => a.priority - b.priority)
-    .map((collection) => ({
-      collection,
-      products: collection.productIds
-        .map((id) => products.find((product) => product.id === id))
-        .filter((product): product is ProductType => Boolean(product)),
-      featuredProduct: collection.featuredProductId
-        ? products.find((product) => product.id === collection.featuredProductId)
-        : undefined,
-    }));
+    .filter(collection => collection.active)
+    .sort(
+      (firstCollection, secondCollection) =>
+        firstCollection.priority -
+        secondCollection.priority
+    )
+    .map(collection => {
+      const resolvedProducts =
+        collection.productIds
+          .map(productId =>
+            products.find(
+              product =>
+                product.id === productId
+            )
+          )
+          .filter(
+            (
+              product
+            ): product is ProductType =>
+              Boolean(product)
+          );
+
+      const featuredProduct =
+        collection.featuredProductId
+          ? resolvedProducts.find(
+              product =>
+                product.id ===
+                collection.featuredProductId
+            )
+          : undefined;
+
+      return {
+        collection,
+        products: resolvedProducts,
+        featuredProduct
+      };
+    });
 }

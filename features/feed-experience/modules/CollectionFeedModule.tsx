@@ -22,12 +22,10 @@ export function CollectionFeedModule({ module, actions }: CollectionFeedModulePr
 
   return (
     <section className="space-y-6 pt-4 md:space-y-8">
-      {collections.map(({ collection, products, featuredProduct }) => (
+      {collections.map(experience => (
         <CollectionRenderer
-          key={collection.id}
-          collection={collection}
-          products={products}
-          featuredProduct={featuredProduct}
+          key={experience.collection.id}
+          experience={experience}
           onPreview={productActions.onPreview}
           onOpenExperience={productActions.onOpenExperience}
           onAddToCart={productActions.onAddToCart}

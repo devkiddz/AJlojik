@@ -11,12 +11,41 @@ import type {
   ProductType
 } from '@/types/types';
 
-
-export type ResolvedCollection = {
+export type ResolvedCollectionSource = {
   collection: CollectionType;
   products: ProductType[];
   featuredProduct?: ProductType;
 };
+
+export type FeaturedProductResolutionSource =
+  | 'explicit'
+  | 'best-selling'
+  | 'featured-flag'
+  | 'in-stock-fallback'
+  | 'stable-fallback'
+  | 'disabled'
+  | 'unavailable';
+
+export type ResolvedCollection =
+  ResolvedCollectionSource & {
+    presentation: {
+      banner: {
+        enabled: boolean;
+        visible: boolean;
+      };
+
+      featured: {
+        enabled: boolean;
+        visible: boolean;
+        source: FeaturedProductResolutionSource;
+      };
+
+      rail: {
+        span: 'partial' | 'full';
+      };
+    };
+  };
+
 
 export type CategoryRailModule = {
   id: string;

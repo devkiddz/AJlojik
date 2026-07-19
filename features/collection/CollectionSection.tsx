@@ -1,10 +1,8 @@
-import { ArrowRight, PartyPopper, type LucideIcon } from 'lucide-react';
+'use client';
 
-import { Button } from '@/components/ui/button';
+import type { ResolvedCollection } from '@/features/feed-experience/contracts';
 
-import type { CollectionType } from '@/data/collections';
-
-import { getCollectionIcon } from '@/lib/collection-icons';
+import { cn } from '@/lib/utils';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
 
@@ -12,30 +10,8 @@ import CollectionBanner from './CollectionBanner';
 
 import FeaturedCollection from './layouts/FeaturedCollection';
 
-type CollectionIconProps = {
-  icon?: LucideIcon | null;
-  accent?: string;
-};
-
-function CollectionIconDisplay({ icon: Icon = PartyPopper, accent }: CollectionIconProps) {
-  const ActiveIcon = Icon ?? PartyPopper;
-
-  return (
-    <ActiveIcon
-      className="size-5 md:size-6"
-      style={{
-        color: accent ?? '#64748b'
-      }}
-    />
-  );
-}
-
 type CollectionSectionProps = {
-  collection: CollectionType;
-
-  products: ProductType[];
-
-  featuredProduct?: ProductType;
+  experience: ResolvedCollection;
 
   onPreview?: (product: ProductType) => void;
 
@@ -45,70 +21,100 @@ type CollectionSectionProps = {
 };
 
 export default function CollectionSection({
-  collection,
-  products,
-  featuredProduct,
+  experience,
   onPreview,
   onOpenExperience,
   onAddToCart
 }: CollectionSectionProps) {
-  if (!collection.active || products.length === 0 || !featuredProduct) {
+  const { collection, products, featuredProduct } = experience;
+
+  if (!collection.active || products.length === 0) {
     return null;
   }
 
-  const collectionIcon = getCollectionIcon(collection.icon?.value);
+  /**
+   * Runtime compatibility for collection objects still arriving
+   * in the older source shape without `presentation`.
+   *
+   * The builder should ultimately provide this object, but the
+   * renderer must not crash while legacy data is still present.
+   */
+  const presentation = experience.presentation ?? {
+    banner: {
+      enabled: Boolean(collection.banner),
+      visible: Boolean(collection.banner)
+    },
 
-  const supportingProducts = products.filter(product => product.id !== featuredProduct.id);
+    featured: {
+      enabled: Boolean(featuredProduct),
+      visible: Boolean(featuredProduct),
+      source: featuredProduct ? ('explicit' as const) : ('unavailable' as const)
+    },
+
+    rail: {
+      span:
+        featuredProduct && products.some(product => product.id !== featuredProduct.id)
+          ? ('partial' as const)
+          : ('full' as const)
+    }
+  };
+
+  const showBanner = presentation.banner.visible && Boolean(collection.banner);
+
+  const showFeatured = presentation.featured.visible && Boolean(featuredProduct);
+
+  const supportingProducts =
+    showFeatured && featuredProduct
+      ? products.filter(product => product.id !== featuredProduct.id)
+      : products;
 
   const productCount = supportingProducts.length;
 
   return (
-    <section className="relative max-w-full overflow-hidden rounded-3xl border border-border/60 bg-card shadow-lg">
-      <div className="relative overflow-hidden">
-        {collection.banner?.image ? (
-          <CollectionBanner banner={collection.banner} title={collection.title} count={productCount} />
-        ) : (
-          <header className="flex items-center justify-between gap-4 px-4 py-4 md:px-6 md:py-5">
-            <div className="flex min-w-0 items-center gap-3 md:gap-4">
-              <div
-                className="grid size-10 shrink-0 place-items-center rounded-xl md:size-12"
-                style={{
-                  backgroundColor: `${collection.theme?.accent ?? '#64748b'}20`
-                }}>
-                <CollectionIconDisplay icon={collectionIcon} accent={collection.theme?.accent} />
-              </div>
+    <section
+      className={cn(
+        'relative min-w-0 max-w-full overflow-hidden',
+        'rounded-3xl border border-border/60',
+        'bg-card shadow-lg'
+      )}>
+      {/* ============================================
+          OPTIONAL COLLECTION BANNER
+      ============================================ */}
 
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="truncate text-sm font-bold tracking-tight md:text-lg">{collection.title}</h2>
+      {showBanner && collection.banner ? (
+        <CollectionBanner banner={collection.banner} title={collection.title} count={productCount} />
+      ) : null}
 
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.68rem] font-bold text-primary">
-                    {products.length}
-                  </span>
-                </div>
+      {/* ============================================
+          COLLECTION CONTENT
+      ============================================ */}
 
-                {collection.subtitle ? (
-                  <p className="mt-1 hidden max-w-2xl text-sm text-muted-foreground md:block">
-                    {collection.subtitle}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+      <div className="min-w-0 px-3 py-4 sm:px-4">
+        <header className="mb-3 flex min-w-0 items-end justify-between gap-4 px-1 sm:mb-4">
+          <div className="min-w-0">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary/60">
+              Curated collection
+            </p>
 
-            <Button type="button" variant="outline" className="shrink-0 gap-2 rounded-full">
-              <span className="hidden sm:inline">View collection</span>
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              {collection.title}
+            </h2>
 
-              <ArrowRight className="size-4" />
-            </Button>
-          </header>
-        )}
-      </div>
+            {collection.subtitle ? (
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{collection.subtitle}</p>
+            ) : null}
+          </div>
 
-      <div className="p-3 md:p-5 lg:p-6">
+          <span className="shrink-0 text-xs font-medium text-muted-foreground">
+            {products.length} {products.length === 1 ? 'product' : 'products'}
+          </span>
+        </header>
+
         <FeaturedCollection
-          collection={collection}
-          products={products}
-          featuredProduct={featuredProduct}
+          experience={{
+            ...experience,
+            presentation
+          }}
           onPreview={onPreview}
           onOpenExperience={onOpenExperience}
           onAddToCart={onAddToCart}

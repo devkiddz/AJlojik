@@ -67,16 +67,14 @@ export function PremiumCardSurface({
           ...style,
 
           '--premium-card-pointer-x': '50%',
-
           '--premium-card-pointer-y': '50%',
-
           '--premium-card-glow-size': `${glowSize}px`
         } as PremiumCardStyle
       }
-      className={cn(styles.surface, className)}>
+      className={cn(styles.surface, 'min-h-0 min-w-0', className)}>
       <div aria-hidden="true" className={styles.glow} />
 
-      <div className="relative z-10 h-full">{children}</div>
+      <div className="relative z-10 min-h-0 min-w-0">{children}</div>
     </article>
   );
 }

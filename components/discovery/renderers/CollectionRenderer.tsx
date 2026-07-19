@@ -1,17 +1,13 @@
 'use client';
 
-import type { CollectionType } from '@/data/collections';
-
 import CollectionSection from '@/features/collection/CollectionSection';
+
+import type { ResolvedCollection } from '@/features/feed-experience/contracts';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
 
 export type CollectionRendererProps = {
-  collection: CollectionType;
-
-  products: ProductType[];
-
-  featuredProduct?: ProductType;
+  experience: ResolvedCollection;
 
   onPreview?: (product: ProductType) => void;
 
@@ -21,22 +17,20 @@ export type CollectionRendererProps = {
 };
 
 export default function CollectionRenderer({
-  collection,
-  products,
-  featuredProduct,
+  experience,
   onPreview,
   onOpenExperience,
   onAddToCart
 }: CollectionRendererProps) {
+  const { collection, products } = experience;
+
   if (!collection.active || products.length === 0) {
     return null;
   }
 
   return (
     <CollectionSection
-      collection={collection}
-      products={products}
-      featuredProduct={featuredProduct}
+      experience={experience}
       onPreview={onPreview}
       onOpenExperience={onOpenExperience}
       onAddToCart={onAddToCart}
