@@ -7,6 +7,7 @@ import { ProductType } from '@/types/types';
 import PromoCard from './PromoCard';
 import { Button } from '../ui/button';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   promos: Promo[];
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export default function PromoSection({ promos, products, onSelect }: Props) {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -30,6 +32,15 @@ export default function PromoSection({ promos, products, onSelect }: Props) {
         behavior: 'smooth'
       });
     }
+  };
+
+  const selectPromo = (promo: Promo) => {
+    if (onSelect) {
+      onSelect(promo.id);
+      return;
+    }
+
+    router.push(promo.href ?? `/promos/${promo.slug}`);
   };
 
   return (
@@ -85,7 +96,7 @@ export default function PromoSection({ promos, products, onSelect }: Props) {
               <PromoCard
                 promo={promo}
                 products={products.filter(p => promo.productIds.includes(p.id))}
-                onSelect={onSelect}
+                onSelect={() => selectPromo(promo)}
               />
             </div>
           ))}

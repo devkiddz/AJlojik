@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import {
   ArrowRight,
@@ -22,16 +21,9 @@ import {
 import { useMemo, useState, type ReactNode } from 'react';
 
 import SignOutButton from '@/components/auth/SignOutButton';
-import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
-import { categories } from '@/data/categories';
-import { collections } from '@/data/collections';
-import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
-import { promos } from '@/data/promos';
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
-import type { FeedActions, FeedContext, FeedIntent } from '@/features/feed-experience/contracts';
-import { mockExperienceProfiles } from '@/features/feed-experience/mocks';
-import { FeedExperienceProvider } from '@/features/feed-experience/providers';
+import StoreExperienceSidebar from '@/features/feed-experience/layout/StoreExperienceSidebar';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 import { cn } from '@/lib/utils';
@@ -263,107 +255,14 @@ export default function CommerceDashboard(props: CommerceDashboardProps) {
         <CommerceDashboardContent {...props} />
       </div>
 
-      <AccountDiscoveryRail
+      <StoreExperienceSidebar
         tier={props.user.tier}
+        authenticated
         recentProductIds={props.recentProductIds}
         collapsed={hubCollapsed}
         onCollapsedChange={setHubCollapsed}
       />
     </div>
-  );
-}
-
-function AccountDiscoveryRail({
-  tier,
-  recentProductIds,
-  collapsed,
-  onCollapsedChange
-}: {
-  tier: string;
-  recentProductIds: string[];
-  collapsed: boolean;
-  onCollapsedChange: (collapsed: boolean) => void;
-}) {
-  const router = useRouter();
-  const { products } = useCatalog();
-  const { items: cartItems, addToCart } = useCart();
-  const { productIds: wishlistProductIds, toggleWishlist } = useWishlist();
-
-  const profile =
-    mockExperienceProfiles.find(item => item.id === (tier.toLowerCase() === 'premium' ? 'premium' : 'shopper')) ??
-    mockExperienceProfiles[0];
-
-  const initialIntent = useMemo<FeedIntent>(
-    () => ({
-      id: 'account:store-discovery',
-      type: 'store-discovery',
-      source: 'route',
-      categorySlug: 'all',
-      createdAt: new Date().toISOString()
-    }),
-    []
-  );
-
-  const context = useMemo<FeedContext>(
-    () => ({
-      catalog: { products, categories, collections, promotions: promos },
-      user: {
-        ...profile.user,
-        authenticated: true,
-        tier: tier.toLowerCase() === 'premium' ? 'premium' : 'member',
-        cartProductIds: [...new Set(cartItems.map(item => item.productId))],
-        wishlistProductIds,
-        recentProductIds
-      },
-      activity: {
-        ...profile.activity,
-        viewedProductIds: recentProductIds
-      },
-      experience: {
-        orders: profile.orders,
-        rewards: profile.rewards,
-        coupons: profile.coupons,
-        intelligence: profile.intelligence,
-        promotions: profile.promotions
-      },
-      environment: {
-        locale: 'en-NG',
-        currency: 'NGN',
-        device: 'desktop',
-        now: new Date().toISOString()
-      }
-    }),
-    [cartItems, products, profile, recentProductIds, tier, wishlistProductIds]
-  );
-
-  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
-    () => ({
-      changeCategory: updates => {
-        const category = updates.category;
-        router.push(category && category !== 'all' ? `/store?category=${encodeURIComponent(category)}` : '/store');
-      },
-      previewProduct: product => router.push(`/products/${product.slug}`),
-      toggleLike: productId => {
-        const product = products.find(item => item.id === productId);
-        void toggleWishlist({ id: productId, name: product?.name });
-      },
-      addToCart: (product, variant) => {
-        void addToCart({ product, variant, quantity: 1 });
-      },
-      previewPromotion: () => router.push('/store')
-    }),
-    [addToCart, products, router, toggleWishlist]
-  );
-
-  return (
-    <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      <DesktopDiscoveryRail
-        groups={hubGroups}
-        widgets={hubWidgets}
-        collapsed={collapsed}
-        onCollapsedChange={onCollapsedChange}
-      />
-    </FeedExperienceProvider>
   );
 }
 
