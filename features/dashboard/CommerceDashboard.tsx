@@ -167,7 +167,7 @@ function CommerceDashboardContent({
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Customer journey</p>
               <h2 className="mt-1 text-lg font-bold tracking-tight">Your latest commerce signals</h2>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 scrollbar-hide sm:flex-wrap sm:overflow-visible sm:pb-0">
               <RelationshipPill label="Viewed" value={recentProducts.length} />
               <RelationshipPill label="In cart" value={totalQuantity} />
               <RelationshipPill label="Saved" value={wishlistCount} />
@@ -178,7 +178,7 @@ function CommerceDashboardContent({
           <article className="rounded-[1.65rem] border border-border/60 bg-background/70 p-5 shadow-sm backdrop-blur sm:p-6">
             <SectionHeading eyebrow="Recent activity" title="Shopping activity" description="Completed order spend with your current cart shown as planned spend." actionHref="/orders" actionLabel="View orders" />
 
-            <div className="mt-6 grid min-h-64 grid-cols-7 items-end gap-2 sm:gap-4">
+            <div className="mt-6 flex min-h-56 snap-x snap-mandatory items-end gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-8 scrollbar-hide sm:grid sm:min-h-64 sm:grid-cols-7 sm:gap-4 sm:overflow-visible sm:pb-0 sm:pr-0">
               {expenseSeries.map(point => (
                 <ExpenseBar key={point.month} label={point.month} value={point.value} maxValue={maxExpense} />
               ))}
@@ -197,7 +197,7 @@ function CommerceDashboardContent({
           </div>
         </section>
 
-        <section aria-label="Commerce overview" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-label="Commerce overview" className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-8 scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 xl:grid-cols-4">
           <MetricCard icon={<WalletCards />} label="Lifetime spend" value={currencyFormatter.format(totalSpent)} helper={`${orderCount} orders recorded`} tone="violet" />
           <MetricCard icon={<ShoppingBag />} label="Active cart" value={String(totalQuantity)} helper={currencyFormatter.format(subtotal)} tone="emerald" />
           <MetricCard icon={<Heart />} label="Saved products" value={String(wishlistCount)} helper="Synced wishlist" tone="rose" />
@@ -242,7 +242,7 @@ function CommerceDashboardContent({
             <Link href="/store" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">Discover products <ArrowRight className="size-3.5" /></Link>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2 pr-8 scrollbar-hide lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0 lg:pr-0">
           <ShoppingListCard
             icon={<ShoppingBag className="size-5" />}
             eyebrow="Ready when you are"
@@ -301,7 +301,7 @@ export default function CommerceDashboard(props: CommerceDashboardProps) {
 
 function MetricCard({ icon, label, value, helper, tone }: { icon: ReactNode; label: string; value: string; helper: string; tone: Tone }) {
   return (
-    <article className="group rounded-3xl border border-border/60 bg-card/75 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <article className="group w-[72vw] max-w-64 shrink-0 snap-start rounded-3xl border border-border/60 bg-card/75 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto sm:max-w-none sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className={cn('grid size-10 place-items-center rounded-2xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div>
         <TrendingUp className="size-4 text-emerald-500" />
@@ -317,7 +317,7 @@ function ExpenseBar({ label, value, maxValue, planned = false }: { label: string
   const height = value > 0 ? Math.max((value / maxValue) * 100, 8) : 3;
 
   return (
-    <div className="group flex h-full min-w-0 flex-col justify-end text-center">
+    <div className="group flex h-full w-11 shrink-0 snap-start flex-col justify-end text-center sm:w-auto sm:min-w-0">
       <span className="mb-2 truncate text-[9px] font-semibold opacity-0 transition group-hover:opacity-100 sm:text-[10px]">{compactCurrencyFormatter.format(value)}</span>
       <div className="relative mx-auto flex h-48 w-full max-w-10 items-end overflow-hidden rounded-xl bg-muted/60 p-1 sm:h-52">
         <div className={cn('w-full rounded-lg transition-all duration-500 group-hover:brightness-110', planned ? 'bg-primary' : 'bg-foreground/80')} style={{ height: `${height}%` }} />
@@ -367,7 +367,7 @@ function ShoppingListCard({ icon, eyebrow, title, count, products, href, emptyMe
   const uniqueProducts = Array.from(new Map(products.map(product => [product.id, product])).values()).slice(0, 4);
 
   return (
-    <article className="rounded-[2rem] border border-border/60 bg-card/70 p-5 shadow-lg sm:p-6">
+    <article className="w-[86vw] max-w-md shrink-0 snap-start rounded-[2rem] border border-border/60 bg-card/70 p-4 shadow-lg sm:p-6 lg:w-auto lg:max-w-none">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary">{icon}</div>
@@ -414,7 +414,7 @@ function StatusPill({ label, value }: { label: string; value: string }) {
 }
 
 function RelationshipPill({ label, value }: { label: string; value: number }) {
-  return <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/65 px-3 py-2 text-[10px]"><span className="text-muted-foreground">{label}</span><span className="grid min-w-5 place-items-center rounded-full bg-foreground px-1.5 py-0.5 font-bold text-background">{value}</span></div>;
+  return <div className="flex shrink-0 snap-start items-center gap-2 rounded-full border border-border/60 bg-background/65 px-3 py-2 text-[10px]"><span className="text-muted-foreground">{label}</span><span className="grid min-w-5 place-items-center rounded-full bg-foreground px-1.5 py-0.5 font-bold text-background">{value}</span></div>;
 }
 
 function EmptyPanel({ message, compact = false }: { message: string; compact?: boolean }) {
