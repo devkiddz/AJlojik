@@ -131,6 +131,7 @@ export function AppSidebar() {
 
             <button
               type="button"
+              onClick={() => router.push('/membership')}
               className="mt-4 w-full rounded-2xl bg-accent px-3 py-2 text-sm font-bold text-accent-foreground transition hover:opacity-90">
               Upgrade
             </button>

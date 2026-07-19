@@ -232,12 +232,18 @@ export default function UserActionComponent() {
             onClick={() => navigateTo('/orders')}
           />
 
-          <MenuItem icon={<CreditCard className="size-4" />} label="Payments" disabled={!isAuthenticated} />
+          <MenuItem
+            icon={<CreditCard className="size-4" />}
+            label="Payments"
+            disabled={!isAuthenticated}
+            onClick={() => navigateTo('/payments')}
+          />
 
           <MenuItem
             icon={<Settings className="size-4" />}
             label="Account settings"
             disabled={!isAuthenticated}
+            onClick={() => navigateTo('/settings')}
           />
         </div>
 

@@ -168,7 +168,7 @@ export default function ProductShelf({
         role="region"
         aria-label={ariaLabel}
         className={cn(
-          'flex min-w-0 snap-x snap-mandatory gap-4',
+          'flex min-w-0 snap-x snap-mandatory gap-3 sm:gap-4',
           'overflow-x-auto overscroll-x-contain scroll-smooth',
           'px-1 pb-3 scrollbar-none'
         )}>
@@ -179,8 +179,8 @@ export default function ProductShelf({
               'shrink-0 snap-start',
 
               threeUp
-                ? ['w-[82%]', 'sm:w-[calc((100%_-_1rem)/2)]', 'lg:w-[calc((100%_-_2rem)/3)]']
-                : ['w-52', 'sm:w-56', 'md:w-60'],
+                ? ['w-[76%]', 'sm:w-[calc((100%_-_1rem)/2)]', 'lg:w-[calc((100%_-_2rem)/3)]']
+                : ['w-[44vw] min-w-40 max-w-48', 'sm:w-52 sm:max-w-none', 'md:w-56'],
 
               itemClassName
             )}>
