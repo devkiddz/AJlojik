@@ -174,8 +174,8 @@ function CommerceDashboardContent({
             </div>
           </div>
 
-          <div className="grid items-stretch gap-4 xl:grid-cols-2">
-          <article className="rounded-[1.65rem] border border-border/60 bg-background/70 p-5 shadow-sm backdrop-blur sm:p-6">
+          <div className="flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto overscroll-x-contain pb-2 pr-8 scrollbar-hide xl:grid xl:grid-cols-2 xl:overflow-visible xl:pb-0 xl:pr-0">
+          <article className="w-[88vw] max-w-2xl shrink-0 snap-start rounded-[1.65rem] border border-border/60 bg-background/70 p-5 shadow-sm backdrop-blur sm:w-[78vw] sm:p-6 xl:w-auto xl:max-w-none">
             <SectionHeading eyebrow="Recent activity" title="Shopping activity" description="Completed order spend with your current cart shown as planned spend." actionHref="/orders" actionLabel="View orders" />
 
             <div className="mt-6 flex min-h-56 snap-x snap-mandatory items-end gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-8 scrollbar-hide sm:grid sm:min-h-64 sm:grid-cols-7 sm:gap-4 sm:overflow-visible sm:pb-0 sm:pr-0">
@@ -193,6 +193,7 @@ function CommerceDashboardContent({
             products={recentProducts}
             emptyMessage="Your recently viewed products will appear as you explore the store."
             compact
+            journeyPeer
           />
           </div>
         </section>
@@ -213,7 +214,7 @@ function CommerceDashboardContent({
               <span className="rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider">Slide →</span>
             </div>
 
-            <div aria-label="Inventory metrics" className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-8 scrollbar-hide sm:mt-6 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 xl:grid-cols-4">
+            <div aria-label="Inventory metrics" className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-8 scrollbar-hide sm:mt-6">
               <InventoryRow icon={<PackageCheck />} label="Available units" value={inventory.totalUnits.toLocaleString()} tone="emerald" />
               <InventoryRow icon={<TriangleAlert />} label="Low-stock options" value={String(inventory.lowStockVariants)} tone="amber" />
               <InventoryRow icon={<Boxes />} label="Out-of-stock options" value={String(inventory.outOfStockVariants)} tone="rose" />
@@ -327,17 +328,14 @@ function ExpenseBar({ label, value, maxValue, planned = false }: { label: string
   );
 }
 
-function ProductSection({ eyebrow, title, description, products, emptyMessage, featured = false, compact = false }: { eyebrow: string; title: string; description: string; products: ProductType[]; emptyMessage: string; featured?: boolean; compact?: boolean }) {
+function ProductSection({ eyebrow, title, description, products, emptyMessage, featured = false, compact = false, journeyPeer = false }: { eyebrow: string; title: string; description: string; products: ProductType[]; emptyMessage: string; featured?: boolean; compact?: boolean; journeyPeer?: boolean }) {
   return (
-    <section className="rounded-[2rem] border border-border/60 bg-card/60 p-5 shadow-lg sm:p-6">
+    <section className={cn('rounded-[2rem] border border-border/60 bg-card/60 p-5 shadow-lg sm:p-6', journeyPeer && 'w-[88vw] max-w-2xl shrink-0 snap-start sm:w-[78vw] xl:w-auto xl:max-w-none')}>
       <SectionHeading eyebrow={eyebrow} title={title} description={description} actionHref="/store" actionLabel="Explore store" />
       {products.length ? (
-        <div className={cn(
-          'mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide sm:grid sm:overflow-visible sm:pb-0',
-          compact ? 'sm:grid-cols-3' : featured ? 'sm:grid-cols-3 xl:grid-cols-6' : 'sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
-        )}>
+        <div className="mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-6 scrollbar-hide">
           {products.slice(0, compact ? 3 : 6).map(product => (
-            <div key={product.id} className="w-40 shrink-0 snap-start sm:w-auto">
+            <div key={product.id} className={cn('shrink-0 snap-start', compact ? 'w-36 sm:w-40' : featured ? 'w-40 sm:w-44 xl:w-48' : 'w-40 sm:w-44')}>
               <DashboardProductCard product={product} />
             </div>
           ))}
@@ -355,7 +353,8 @@ function DashboardProductCard({ product }: { product: ProductType }) {
       <div className="relative aspect-square overflow-hidden rounded-xl bg-muted shadow-sm">
         {variant ? <Image src={variant.image} alt={product.name} fill sizes="180px" className="object-cover transition duration-500 group-hover:scale-105" /> : null}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-        <span className="absolute bottom-2 right-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold text-black shadow-sm">{variant ? compactCurrencyFormatter.format(variant.price) : 'N/A'}</span>
+        <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold text-black shadow-sm">{variant ? compactCurrencyFormatter.format(variant.price) : 'N/A'}</span>
+        <span className="absolute bottom-2 right-2 grid size-8 translate-y-1 place-items-center rounded-full bg-primary text-primary-foreground opacity-90 shadow-lg transition duration-300 group-hover:translate-y-0 group-hover:scale-105 group-hover:opacity-100"><ArrowRight className="size-3.5" /></span>
       </div>
       <p className="mt-2 truncate text-xs font-semibold">{product.name}</p>
       <p className="mt-1 truncate text-[10px] capitalize text-muted-foreground">{product.category.replaceAll('-', ' ')}</p>
@@ -406,7 +405,7 @@ function SectionHeading({ eyebrow, title, description, actionHref, actionLabel }
 }
 
 function InventoryRow({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: Tone }) {
-  return <div className="flex min-h-24 w-[78vw] max-w-72 shrink-0 snap-start flex-col justify-between rounded-2xl border border-border/50 bg-background/70 p-4 shadow-sm sm:min-h-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center sm:gap-3"><div className="flex items-center justify-between sm:contents"><div className={cn('grid size-10 place-items-center rounded-xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div><span className="text-lg font-bold sm:order-3 sm:text-sm">{value}</span></div><span className="mt-3 min-w-0 flex-1 truncate text-xs text-muted-foreground sm:mt-0">{label}</span></div>;
+  return <div className="flex min-h-24 w-[78vw] max-w-72 shrink-0 snap-start flex-col justify-between rounded-2xl border border-border/50 bg-background/70 p-4 shadow-sm sm:min-h-0 sm:w-64 sm:max-w-none sm:flex-row sm:items-center sm:gap-3"><div className="flex items-center justify-between sm:contents"><div className={cn('grid size-10 place-items-center rounded-xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div><span className="text-lg font-bold sm:order-3 sm:text-sm">{value}</span></div><span className="mt-3 min-w-0 flex-1 truncate text-xs text-muted-foreground sm:mt-0">{label}</span></div>;
 }
 
 function StatusPill({ label, value }: { label: string; value: string }) {
