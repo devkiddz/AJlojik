@@ -194,7 +194,7 @@ function CommerceDashboardContent({
           <article className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
             <SectionHeading eyebrow="Store health" title="Inventory tracker" description="Live availability across catalog options." />
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 xl:grid-cols-4">
               <InventoryRow icon={<PackageCheck />} label="Available units" value={inventory.totalUnits.toLocaleString()} tone="emerald" />
               <InventoryRow icon={<TriangleAlert />} label="Low-stock options" value={String(inventory.lowStockVariants)} tone="amber" />
               <InventoryRow icon={<Boxes />} label="Out-of-stock options" value={String(inventory.outOfStockVariants)} tone="rose" />
@@ -302,8 +302,15 @@ function ProductSection({ eyebrow, title, description, products, emptyMessage, f
     <section className="rounded-[2rem] border border-border/60 bg-card/60 p-5 shadow-lg sm:p-6">
       <SectionHeading eyebrow={eyebrow} title={title} description={description} actionHref="/store" actionLabel="Explore store" />
       {products.length ? (
-        <div className={cn('mt-5 grid gap-3', compact ? 'grid-cols-2 sm:grid-cols-3' : featured ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6')}>
-          {products.slice(0, compact ? 3 : 6).map(product => <DashboardProductCard key={product.id} product={product} />)}
+        <div className={cn(
+          'mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide sm:grid sm:overflow-visible sm:pb-0',
+          compact ? 'sm:grid-cols-3' : featured ? 'sm:grid-cols-3 xl:grid-cols-6' : 'sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+        )}>
+          {products.slice(0, compact ? 3 : 6).map(product => (
+            <div key={product.id} className="w-40 shrink-0 snap-start sm:w-auto">
+              <DashboardProductCard product={product} />
+            </div>
+          ))}
         </div>
       ) : <EmptyPanel message={emptyMessage} />}
     </section>
@@ -369,7 +376,7 @@ function SectionHeading({ eyebrow, title, description, actionHref, actionLabel }
 }
 
 function InventoryRow({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: Tone }) {
-  return <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-background/45 p-3"><div className={cn('grid size-9 place-items-center rounded-xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div><span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{label}</span><span className="text-sm font-bold">{value}</span></div>;
+  return <div className="flex min-w-56 shrink-0 snap-start items-center gap-3 rounded-2xl border border-border/50 bg-background/45 p-3 sm:min-w-0"><div className={cn('grid size-9 place-items-center rounded-xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div><span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{label}</span><span className="text-sm font-bold">{value}</span></div>;
 }
 
 function StatusPill({ label, value }: { label: string; value: string }) {
