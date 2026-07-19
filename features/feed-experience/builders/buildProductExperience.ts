@@ -7,7 +7,6 @@ import type {
 } from '../contracts';
 
 import {
-  resolveCollections,
   selectActivePromotions
 } from '../selectors';
 
@@ -534,37 +533,6 @@ export function buildProductExperience(
       )
     );
 
-  const resolvedCollections =
-    resolveCollections(
-      catalog.collections,
-      catalog.products
-    );
-
-  const relatedCollections =
-    resolvedCollections
-      .filter(
-        resolvedCollection => {
-          const containsSelectedProduct =
-            resolvedCollection.products.some(
-              product =>
-                product.id ===
-                selectedProduct.id
-            );
-
-          const containsSameCategory =
-            resolvedCollection.products.some(
-              product =>
-                product.category ===
-                selectedProduct.category
-            );
-
-          return (
-            containsSelectedProduct ||
-            containsSameCategory
-          );
-        }
-      )
-      .slice(0, 3);
 
   const contextDate =
     resolveContextDate(
@@ -730,28 +698,6 @@ export function buildProductExperience(
     });
   }
 
-  if (
-    relatedCollections.length > 0
-  ) {
-    modules.push({
-      id:
-        `related-collections:${selectedProduct.id}`,
-
-      type:
-        'collection-feed',
-
-      priority:
-        600,
-
-      data: {
-        collections:
-          relatedCollections,
-
-        fallbackProducts:
-          similarProducts
-      }
-    });
-  }
 
   if (
     activePromotions.length > 0

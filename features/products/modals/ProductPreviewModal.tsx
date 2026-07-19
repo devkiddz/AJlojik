@@ -6,27 +6,24 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { WishlistButton } from '@/features/wishlist';
 
 import {
   ArrowRight,
-  BadgeCheck,
   ChevronLeft,
   ChevronRight,
   Clock3,
   PackageCheck,
-  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Star,
   Tag
 } from 'lucide-react';
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WishlistButton } from '@/features/wishlist';
 
 import { cn } from '@/lib/utils';
 
@@ -37,6 +34,7 @@ type ProductPreviewMode = 'regular' | 'featured' | 'promo';
 export type ProductPreviewModalProps = {
   product: ProductType | null;
   open: boolean;
+
   mode?: ProductPreviewMode;
 
   badge?: string;
@@ -44,6 +42,10 @@ export type ProductPreviewModalProps = {
 
   onClose: () => void;
 
+  /**
+   * Retained for compatibility with existing consumers.
+   * WishlistButton owns the current wishlist interaction.
+   */
   onToggleLike?: (productId: string) => void;
 
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
@@ -58,11 +60,17 @@ export type ProductPreviewModalProps = {
   totalProducts?: number;
 };
 
+type PreviewContentProps = Omit<ProductPreviewModalProps, 'open' | 'product'> & {
+  product: ProductType;
+  mode: ProductPreviewMode;
+};
+
 function PreviewContent({
   product,
   mode,
   badge,
   accent,
+  onClose,
   onAddToCart,
   onPrevious,
   onNext,
@@ -70,297 +78,474 @@ function PreviewContent({
   hasNext,
   currentIndex,
   totalProducts
-}: Omit<ProductPreviewModalProps, 'open' | 'onClose'> & {
-  product: ProductType;
-  mode: ProductPreviewMode;
-}) {
-  const [variantSelection, setVariantSelection] = useState<{
-    productId: string;
-    variantId: string;
-  } | null>(null);
+}: PreviewContentProps) {
+  const initialVariant =
+    product.variants.find(variant => variant.stockLeft > 0) ?? product.variants[0] ?? null;
 
-  const selectedVariantId =
-    variantSelection?.productId === product.id
-      ? variantSelection.variantId
-      : String(product.variants[0]?.id ?? '');
+  const [selectedVariantId, setSelectedVariantId] = useState(initialVariant ? String(initialVariant.id) : '');
 
   const activeVariant =
-    product.variants.find(variant => String(variant.id) === selectedVariantId) ?? product.variants[0] ?? null;
+    product.variants.find(variant => String(variant.id) === selectedVariantId) ?? initialVariant;
 
-  if (!activeVariant) return null;
+  if (!activeVariant) {
+    return null;
+  }
+
+  const discountPercentage = product.discountPercentage ?? 0;
 
   const originalPrice =
-    mode === 'promo' && product.discountPercentage > 0
-      ? Math.round(activeVariant.price / (1 - product.discountPercentage / 100))
+    discountPercentage > 0 && discountPercentage < 100
+      ? Math.round(activeVariant.price / (1 - discountPercentage / 100))
       : null;
+
+  const formattedCategory = product.category.replaceAll('-', ' ');
+
+  const previewBadge =
+    mode === 'featured'
+      ? (badge ?? 'Featured experience')
+      : mode === 'promo'
+        ? (badge ?? (discountPercentage > 0 ? `${discountPercentage}% off` : 'Special offer'))
+        : product.isNew
+          ? 'New arrival'
+          : 'Quick preview';
+
+  const PreviewBadgeIcon = mode === 'featured' ? Sparkles : mode === 'promo' ? Tag : PackageCheck;
+
+  const hasNavigation =
+    Boolean(onPrevious) || Boolean(onNext) || (totalProducts !== undefined && totalProducts > 0);
 
   return (
     <motion.div
       key={product.id}
       initial={{
         opacity: 0,
-        x: 30
+        scale: 0.99
       }}
       animate={{
         opacity: 1,
-        x: 0
+        scale: 1
       }}
       exit={{
         opacity: 0,
-        x: -30
+        scale: 0.99
       }}
       transition={{
-        duration: 0.22
+        duration: 0.18,
+        ease: 'easeOut'
       }}
-      className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
-      {/* MEDIA PANEL */}
-      <section className="relative min-h-[20rem] overflow-hidden bg-muted lg:min-h-full">
-        <Image
-          src={activeVariant.image}
-          alt={product.name}
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 60vw"
-          className="object-cover"
-        />
+      className={cn(
+        'grid h-full min-h-0',
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/25" />
+        /**
+         * Mobile:
+         * Image window above the independently scrollable details.
+         *
+         * Desktop:
+         * Two equal windows beside each other.
+         */
+        'grid-rows-[18rem_minmax(0,1fr)]',
+        'lg:grid-cols-2',
+        'lg:grid-rows-1'
+      )}>
+      {/* =====================================================
+          LEFT WINDOW — IMAGE ONLY
 
-        {mode === 'featured' && (
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
-        )}
+          This column does not scroll.
+          The primary image does not use fill.
+      ====================================================== */}
 
-        <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
-          {mode === 'featured' && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md">
-              <Sparkles className="size-3.5" />
-              Featured
-            </span>
-          )}
-
-          {mode === 'promo' && (
-            <span
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md"
-              style={{
-                backgroundColor: accent ?? 'hsl(var(--secondary))'
-              }}>
-              <Tag className="size-3.5" />
-              {badge ?? 'Special offer'}
-            </span>
-          )}
-
-          {product.isNew && (
-            <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-black">
-              New arrival
-            </span>
-          )}
-        </div>
-
-        <WishlistButton
-          productId={product.id}
-          productName={product.name}
-          appearance="dark-overlay"
-          className="absolute right-4 top-4"
-        />
-
-        {(onPrevious || onNext) && (
-          <>
-            <button
-              type="button"
-              aria-label="Previous product"
-              onClick={onPrevious}
-              disabled={!hasPrevious}
-              className="absolute left-4 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition hover:bg-black/70 disabled:opacity-25">
-              <ChevronLeft className="size-5" />
-            </button>
-
-            <button
-              type="button"
-              aria-label="Next product"
-              onClick={onNext}
-              disabled={!hasNext}
-              className="absolute right-4 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition hover:bg-black/70 disabled:opacity-25">
-              <ChevronRight className="size-5" />
-            </button>
-          </>
-        )}
-
-        {totalProducts !== undefined && totalProducts > 0 && (
-          <span className="absolute bottom-5 left-5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
-            {(currentIndex ?? 0) + 1} / {totalProducts}
-          </span>
-        )}
-
-        <div className="absolute inset-x-0 bottom-0 p-5 text-white lg:p-7">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-white/65">{product.category}</p>
-
-          <h2 className="mt-2 max-w-2xl text-2xl font-black tracking-tight md:text-4xl">{product.name}</h2>
+      <section
+        className={cn(
+          'relative min-h-0 overflow-hidden',
+          'border-b border-primary/10',
+          'bg-muted/20',
+          'lg:border-b-0 lg:border-r'
+        )}>
+        <div
+          className={cn(
+            'flex size-full min-h-0',
+            'items-center justify-center',
+            'overflow-hidden',
+            'p-6 sm:p-8 lg:p-12'
+          )}>
+          <Image
+            src={activeVariant.image}
+            alt={product.name}
+            width={1200}
+            height={1200}
+            priority
+            sizes="(max-width: 1024px) 90vw, 50vw"
+            className={cn(
+              /**
+               * Intrinsic image dimensions make the image
+               * independent of absolute positioning.
+               */
+              'h-auto w-auto',
+              'max-h-full max-w-full',
+              'object-contain',
+              'drop-shadow-2xl'
+            )}
+          />
         </div>
       </section>
 
-      {/* DETAILS PANEL */}
-      <section className="min-h-0 overflow-y-auto bg-background scrollbar-none">
-        <div className="space-y-6 p-5 md:p-7 lg:p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium">
-              <Star className="size-4 fill-amber-400 text-amber-400" />
-              {product.rating.toFixed(1)}
-            </span>
+      {/* =====================================================
+          RIGHT WINDOW — DETAILS
 
-            <span className="text-sm text-muted-foreground">{product.reviews.toLocaleString()} reviews</span>
+          This is a flex column:
+          - Details body scrolls
+          - Footer remains fixed
+      ====================================================== */}
 
-            <span className="text-sm text-muted-foreground">{product.soldCount.toLocaleString()} sold</span>
-          </div>
+      <section className={cn('flex h-full min-h-0 flex-col', 'overflow-hidden bg-background')}>
+        {/* =================================================
+            SCROLLABLE DETAILS BODY
+        ================================================== */}
 
-          <p className="text-sm leading-7 text-muted-foreground">{product.shortDescription}</p>
+        <div className={cn('min-h-0 flex-1', 'overflow-y-auto overscroll-contain', 'scrollbar-none')}>
+          <div className="space-y-7 p-6 sm:p-8 lg:p-10">
+            {/* ============================================
+                TOP LABELS
+            ============================================ */}
 
-          <div className="rounded-2xl border bg-card p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="w-full sm:max-w-[14rem]">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Product option
-                </p>
-
-                <Select
-                  value={selectedVariantId}
-                  onValueChange={value => {
-                    if (value !== null) {
-                      setVariantSelection({
-                        productId: product.id,
-                        variantId: value
-                      });
-                    }
-                  }}>
-                  <SelectTrigger className="w-full rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {product.variants.map(variant => (
-                      <SelectItem key={variant.id} value={String(variant.id)}>
-                        {variant.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="sm:text-right">
-                {originalPrice && (
-                  <p className="text-sm text-muted-foreground line-through">
-                    ₦{originalPrice.toLocaleString()}
-                  </p>
+            <div className="flex flex-wrap items-center gap-2 pr-10">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5',
+                  'rounded-full',
+                  'bg-primary/10 px-3 py-1.5',
+                  'text-xs font-semibold text-primary'
                 )}
+                style={
+                  mode === 'promo' && accent
+                    ? {
+                        backgroundColor: accent,
+                        color: '#ffffff'
+                      }
+                    : undefined
+                }>
+                <PreviewBadgeIcon className="size-3.5" />
 
-                <p className={cn('text-3xl font-black', mode === 'promo' && 'text-secondary')}>
-                  ₦{activeVariant.price.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-muted px-3 py-1.5">{activeVariant.label}</span>
+                {previewBadge}
+              </span>
 
               <span
                 className={cn(
-                  'rounded-full px-3 py-1.5',
-                  activeVariant.stockLeft > 0
-                    ? 'bg-emerald-500/10 text-emerald-600'
-                    : 'bg-destructive/10 text-destructive'
+                  'rounded-full bg-muted',
+                  'px-3 py-1.5',
+                  'text-xs capitalize',
+                  'text-muted-foreground'
                 )}>
-                {activeVariant.stockLeft > 0 ? `${activeVariant.stockLeft} available` : 'Out of stock'}
+                {formattedCategory}
               </span>
 
-              {product.discountPercentage > 0 && (
-                <span className="rounded-full bg-secondary/10 px-3 py-1.5 text-secondary">
-                  {product.discountPercentage}% off
+              {discountPercentage > 0 ? (
+                <span
+                  className={cn(
+                    'rounded-full',
+                    'bg-emerald-500/10',
+                    'px-3 py-1.5',
+                    'text-xs font-semibold',
+                    'text-emerald-600'
+                  )}>
+                  Save {discountPercentage}%
                 </span>
+              ) : null}
+            </div>
+
+            {/* ============================================
+                PRODUCT IDENTITY
+            ============================================ */}
+
+            <DialogHeader className="text-left">
+              <DialogTitle
+                className={cn('text-2xl font-bold', 'leading-tight tracking-tight', 'sm:text-3xl')}>
+                {product.name}
+              </DialogTitle>
+
+              <DialogDescription className="mt-3 text-sm leading-7 sm:text-base">
+                {product.shortDescription}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* ============================================
+                RATING, ACTIVITY AND PRODUCT NAVIGATION
+            ============================================ */}
+
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                  <Star className="size-4 fill-amber-400 text-amber-400" />
+
+                  {product.rating.toFixed(1)}
+                </span>
+
+                <span className="text-sm text-muted-foreground">
+                  {product.reviews.toLocaleString()} reviews
+                </span>
+
+                <span className="text-sm text-muted-foreground">
+                  {product.soldCount.toLocaleString()} sold
+                </span>
+              </div>
+
+              {hasNavigation ? (
+                <div className="flex items-center gap-2">
+                  {onPrevious ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      aria-label="Previous product"
+                      disabled={hasPrevious === false}
+                      onClick={onPrevious}
+                      className="size-9 rounded-full">
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                  ) : null}
+
+                  {totalProducts !== undefined && totalProducts > 0 ? (
+                    <span className="min-w-12 text-center text-xs text-muted-foreground">
+                      {(currentIndex ?? 0) + 1}
+                      {' / '}
+                      {totalProducts}
+                    </span>
+                  ) : null}
+
+                  {onNext ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      aria-label="Next product"
+                      disabled={hasNext === false}
+                      onClick={onNext}
+                      className="size-9 rounded-full">
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  ) : null}
+
+                  <WishlistButton productId={product.id} productName={product.name} className="shrink-0" />
+                </div>
+              ) : (
+                <WishlistButton productId={product.id} productName={product.name} className="shrink-0" />
               )}
             </div>
-          </div>
 
-          <div>
-            <h3 className="font-bold">Product details</h3>
+            {/* ============================================
+                SELECTED PRICE
+            ============================================ */}
 
-            <p className="mt-3 whitespace-pre-line text-sm leading-7 text-muted-foreground">
-              {product.longDescription}
-            </p>
-          </div>
+            <div className={cn('rounded-3xl', 'border border-primary/10', 'bg-primary/5 p-5')}>
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div>
+                  <p
+                    className={cn(
+                      'text-xs font-medium uppercase',
+                      'tracking-[0.14em]',
+                      'text-muted-foreground'
+                    )}>
+                    Selected option
+                  </p>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border bg-card p-4">
-              <PackageCheck className="size-5 text-primary" />
+                  <p className="mt-1 text-sm font-semibold text-foreground">{activeVariant.label}</p>
 
-              <p className="mt-3 text-sm font-semibold">Availability</p>
+                  <div className="mt-4 flex flex-wrap items-baseline gap-2">
+                    <p className="text-3xl font-bold tracking-tight text-foreground">
+                      ₦{activeVariant.price.toLocaleString()}
+                    </p>
 
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Inventory is updated from the AJ Logik catalog.
-              </p>
-            </div>
+                    {originalPrice ? (
+                      <p className="text-sm text-muted-foreground line-through">
+                        ₦{originalPrice.toLocaleString()}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
 
-            <div className="rounded-2xl border bg-card p-4">
-              <Clock3 className="size-5 text-primary" />
+                <span
+                  className={cn(
+                    'rounded-full px-3 py-1.5',
+                    'text-xs font-semibold',
 
-              <p className="mt-3 text-sm font-semibold">Delivery</p>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">{product.estimatedDelivery}</p>
-            </div>
-
-            <div className="rounded-2xl border bg-card p-4">
-              <ShieldCheck className="size-5 text-primary" />
-
-              <p className="mt-3 text-sm font-semibold">Secure shopping</p>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Protected checkout and verified inventory.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border bg-card p-4">
-              <BadgeCheck className="size-5 text-primary" />
-
-              <p className="mt-3 text-sm font-semibold">Premium selection</p>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Curated for the AJ Logik shopping experience.
-              </p>
-            </div>
-          </div>
-
-          {product.tags.length > 0 && (
-            <div>
-              <h3 className="text-sm font-bold">Tags</h3>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {product.tags.map(tag => (
-                  <span
-                    key={tag}
-                    className="rounded-full border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
-                    {tag}
-                  </span>
-                ))}
+                    activeVariant.stockLeft > 0
+                      ? 'bg-emerald-500/10 text-emerald-600'
+                      : 'bg-destructive/10 text-destructive'
+                  )}>
+                  {activeVariant.stockLeft > 0 ? `${activeVariant.stockLeft} available` : 'Out of stock'}
+                </span>
               </div>
             </div>
-          )}
+
+            {/* ============================================
+                VARIANT SELECTOR
+            ============================================ */}
+
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Choose your preferred option</h3>
+
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Selecting an option updates the image, price and availability.
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {product.variants.map(variant => {
+                  const isSelected = String(variant.id) === selectedVariantId;
+
+                  const isUnavailable = variant.stockLeft <= 0;
+
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => {
+                        setSelectedVariantId(String(variant.id));
+                      }}
+                      className={cn(
+                        'min-w-0 rounded-2xl border',
+                        'px-3 py-3.5 text-left',
+                        'transition',
+
+                        isSelected
+                          ? cn('border-primary', 'bg-primary', 'text-primary-foreground', 'shadow-sm')
+                          : cn(
+                              'border-primary/10',
+                              'bg-card',
+                              'text-muted-foreground',
+                              'hover:border-primary/30',
+                              'hover:text-foreground'
+                            ),
+
+                        isUnavailable && !isSelected && 'opacity-45'
+                      )}>
+                      <span className="block truncate text-sm font-semibold">{variant.label}</span>
+
+                      <span className="mt-1 block text-xs opacity-75">₦{variant.price.toLocaleString()}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ============================================
+                AVAILABILITY AND DELIVERY
+            ============================================ */}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className={cn('rounded-3xl', 'border border-primary/10', 'bg-card p-5')}>
+                <div
+                  className={cn(
+                    'grid size-10 place-items-center',
+                    'rounded-2xl',
+                    'bg-primary/10 text-primary'
+                  )}>
+                  <PackageCheck className="size-5" />
+                </div>
+
+                <h3 className="mt-4 text-sm font-semibold text-foreground">
+                  {activeVariant.stockLeft > 0 ? 'Available now' : 'Currently unavailable'}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {activeVariant.stockLeft > 0
+                    ? `${activeVariant.stockLeft} units remain for the selected option.`
+                    : 'Select another available product option.'}
+                </p>
+              </div>
+
+              <div className={cn('rounded-3xl', 'border border-primary/10', 'bg-card p-5')}>
+                <div
+                  className={cn(
+                    'grid size-10 place-items-center',
+                    'rounded-2xl',
+                    'bg-primary/10 text-primary'
+                  )}>
+                  <Clock3 className="size-5" />
+                </div>
+
+                <h3 className="mt-4 text-sm font-semibold text-foreground">Estimated delivery</h3>
+
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{product.estimatedDelivery}</p>
+              </div>
+            </div>
+
+            {/* ============================================
+                LONG DESCRIPTION
+            ============================================ */}
+
+            {product.longDescription ? (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">About this product</h3>
+
+                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                  {product.longDescription}
+                </p>
+              </div>
+            ) : null}
+
+            {/* ============================================
+                PRODUCT TAGS
+            ============================================ */}
+
+            {product.tags.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Product highlights</h3>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {product.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className={cn('rounded-full bg-muted', 'px-3 py-1.5', 'text-xs text-muted-foreground')}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <footer className="sticky bottom-0 border-t bg-background/95 p-4 backdrop-blur-xl md:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row">
+        {/* =================================================
+            FIXED RIGHT FOOTER
+
+            This footer never enters the details scrollbar.
+        ================================================== */}
+
+        <footer
+          className={cn(
+            'shrink-0',
+            'border-t border-primary/10',
+            'bg-background/95 p-4',
+            'backdrop-blur-xl',
+            'sm:p-5'
+          )}>
+          <div className="grid gap-3 sm:grid-cols-2">
             <Button
               type="button"
               size="lg"
-              className="flex-1 gap-2 rounded-full"
               disabled={activeVariant.stockLeft <= 0}
-              onClick={() => onAddToCart?.(product, activeVariant)}>
-              <ShoppingBag className="size-4" />
-              Add {activeVariant.label} to cart
+              onClick={() => {
+                onAddToCart?.(product, activeVariant);
+              }}
+              className="h-12 justify-between rounded-2xl">
+              <span className="flex items-center gap-2">
+                <ShoppingBag className="size-4" />
+
+                {activeVariant.stockLeft > 0 ? 'Add to cart' : 'Unavailable'}
+              </span>
+
+              <ArrowRight className="size-4" />
             </Button>
 
-            <Button size="lg" variant="outline" className="gap-2 rounded-full">
-              <Link href={`/products/${product.slug}`}>
-                View full product
-                <ArrowRight className="size-4" />
-              </Link>
+            <Button
+              render={<Link href={`/products/${product.slug}`} onClick={onClose} />}
+              size="lg"
+              variant="outline"
+              className="h-12 justify-between rounded-2xl">
+              <span>View full product</span>
+
+              <ArrowRight className="size-4" />
             </Button>
           </div>
         </footer>
@@ -376,23 +561,62 @@ export function ProductPreviewModal({
   onClose,
   ...props
 }: ProductPreviewModalProps) {
-  if (!product) return null;
+  if (!product) {
+    return null;
+  }
 
   return (
     <Dialog
       open={open}
       onOpenChange={nextOpen => {
-        if (!nextOpen) onClose();
+        if (!nextOpen) {
+          onClose();
+        }
       }}>
       <DialogContent
         className={cn(
-          'h-[92dvh] w-[96vw] max-w-7xl p-0',
-          'rounded-3xl border-border/70 shadow-2xl',
-          '[&>button]:z-50 [&>button]:rounded-full [&>button]:bg-background/80'
+          /**
+           * Wide like onboarding, but noticeably shorter.
+           *
+           * The fixed height still allows the right details
+           * window to become independently scrollable.
+           */
+          'h-[84dvh] max-h-[44rem]',
+          'w-[calc(100%_-_1.5rem)]',
+          'max-w-none overflow-hidden',
+          'rounded-3xl',
+          'border-primary/10 p-0',
+          'shadow-2xl',
+
+          'sm:max-w-[96vw]',
+          'lg:h-[78dvh]',
+          'lg:max-w-[1180px]',
+          'xl:max-w-[1320px]',
+
+          '[&>button]:z-50',
+          '[&>button]:rounded-full',
+          '[&>button]:bg-background/85',
+          '[&>button]:p-2',
+          '[&>button]:shadow-md',
+          '[&>button]:backdrop-blur-md'
         )}>
-        <div className="h-full min-h-0">
-          <AnimatePresence mode="wait">
-            <PreviewContent key={`${mode}:${product.id}`} product={product} mode={mode} {...props} />
+        <DialogHeader className="sr-only">
+          <DialogTitle>Preview {product.name}</DialogTitle>
+
+          <DialogDescription>
+            Review product pricing, options, availability and information.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="h-full min-h-0 overflow-hidden">
+          <AnimatePresence initial={false} mode="wait">
+            <PreviewContent
+              key={`${mode}:${product.id}`}
+              product={product}
+              mode={mode}
+              onClose={onClose}
+              {...props}
+            />
           </AnimatePresence>
         </div>
       </DialogContent>
