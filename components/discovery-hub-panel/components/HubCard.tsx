@@ -1,7 +1,12 @@
+'use client';
+
 import { ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
+import { useFeedExperience } from '@/features/feed-experience';
 import { cn } from '@/lib/utils';
-import type { HubWidget } from '../discoveryHubTypes';
+import type { HubAction, HubWidget } from '../discoveryHubTypes';
 import HubMap from './HubMap';
 import HubSlider from './HubSlider';
 
@@ -31,7 +36,26 @@ const layoutStyles: Record<NonNullable<HubWidget['layout']>, string> = {
 };
 
 export default function HubCard({ widget }: HubCardProps) {
+  const router = useRouter();
+  const { actions } = useFeedExperience();
+
   const layout = widget.layout ?? 'summary';
+
+  const widgetActions = widget.actions?.length ? widget.actions : widget.action ? [widget.action] : [];
+
+  const runWidgetAction = (action: HubAction) => {
+    if (action.target) {
+      actions.openExperience(action.target);
+
+      return;
+    }
+
+    // Hub data is application-owned, but keep programmatic navigation internal.
+    if (action.href?.startsWith('/')) {
+      router.push(action.href);
+    }
+  };
+
   if (layout === 'hero') {
     return (
       <article
@@ -199,12 +223,20 @@ export default function HubCard({ widget }: HubCardProps) {
         </p>
       )}
 
-      {widget.action && (
-        <button className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/12 bg-background/50 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary hover:text-background">
-          {widget.action.label}
-          <ArrowRight className="size-3" />
-        </button>
-      )}
+      {widgetActions.length ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {widgetActions.map(action => (
+            <button
+              key={`${action.label}:${action.href ?? action.target?.type ?? 'action'}`}
+              type="button"
+              onClick={() => runWidgetAction(action)}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/12 bg-background/50 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary hover:text-background">
+              {action.label}
+              <ArrowRight className="size-3" />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }

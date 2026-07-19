@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -104,6 +104,85 @@ const ExperienceStackContext = createContext<ExperienceStackContextValue | null>
 
 const EXPERIENCE_AUTH_ROUTE = '/sign-in';
 
+function describeIntent(intent: FeedIntent, context: ReturnType<typeof useFeedExperience>['context']) {
+  const product =
+    intent.type === 'product'
+      ? context.catalog.products.find(item => item.id === intent.targetId)
+      : undefined;
+
+  const collection =
+    intent.type === 'collection'
+      ? context.catalog.collections.find(item => item.id === intent.targetId)
+      : undefined;
+
+  const promotion =
+    intent.type === 'promotion'
+      ? context.catalog.promotions.find(item => item.id === intent.targetId)
+      : undefined;
+
+  const categorySlug = intent.categorySlug ?? product?.category ?? 'all';
+
+  switch (intent.type) {
+    case 'product':
+      return {
+        label: product?.name ?? 'Product experience',
+        subtitle: product?.shortDescription ?? null,
+        categorySlug,
+        source: 'PRODUCT' as const,
+        productId: intent.targetId ?? null,
+        fingerprint: `product:${intent.targetId ?? 'unknown'}`
+      };
+
+    case 'collection':
+      return {
+        label: collection?.title ?? 'Collection experience',
+        subtitle: collection?.subtitle ?? null,
+        categorySlug,
+        source: 'COLLECTION' as const,
+        collectionId: intent.targetId ?? null,
+        fingerprint: `collection:${intent.targetId ?? 'unknown'}`
+      };
+
+    case 'promotion':
+      return {
+        label: promotion?.title ?? 'Promotion experience',
+        subtitle: promotion?.description ?? null,
+        categorySlug,
+        source: 'CAMPAIGN' as const,
+        campaignId: intent.targetId ?? null,
+        fingerprint: `promotion:${intent.targetId ?? 'unknown'}`
+      };
+
+    case 'search':
+      return {
+        label: intent.query ? `Search: ${intent.query}` : 'Search experience',
+        subtitle: null,
+        categorySlug,
+        source: 'SEARCH' as const,
+        fingerprint: `search:${intent.query?.trim().toLowerCase() ?? ''}`
+      };
+
+    case 'category':
+    case 'store-discovery':
+      return {
+        label: categorySlug === 'all' ? 'Store discovery' : `Browse ${categorySlug}`,
+        subtitle: null,
+        categorySlug,
+        source: intent.source === 'hub-card' ? ('DISCOVERY_HUB' as const) : ('CATEGORY' as const),
+        fingerprint: `${intent.type}:${categorySlug}`
+      };
+
+    case 'home':
+      return {
+        label: 'Home experience',
+        subtitle: null,
+        categorySlug: 'all',
+        source: 'SYSTEM' as const,
+        fingerprint: 'home'
+      };
+  }
+}
+
 // ============================================================
 // RESPONSE ERROR
 // ============================================================
@@ -180,7 +259,9 @@ export function ExperienceStackProvider({
 
   const { isAuthenticated, isPending } = useIdentity();
 
-  const { actions } = useFeedExperience();
+  const { actions, context, experience, intent } = useFeedExperience();
+
+  const recordedIntentIdRef = useRef<string | null>(null);
 
   const [entries, setEntries] = useState(initialState.entries);
 
@@ -363,6 +444,28 @@ export function ExperienceStackProvider({
     },
     [requireExperienceAccess, runOperation, settings.enabled, settings.maxEntries, workspaceId]
   );
+
+  // Persist meaningful feed transitions as a Spotify-style listening history.
+  // Guests remain entirely passive: browsing never opens an authentication gate.
+  useEffect(() => {
+    if (!canAccessExperienceModes || !settings.enabled) {
+      return;
+    }
+
+    if (recordedIntentIdRef.current === intent.id) {
+      return;
+    }
+
+    recordedIntentIdRef.current = intent.id;
+
+    const description = describeIntent(intent, context);
+
+    void pushExperience({
+      ...description,
+      experienceId: experience.id,
+      intentSnapshot: intent
+    });
+  }, [canAccessExperienceModes, context, experience.id, intent, pushExperience, settings.enabled]);
 
   // ==========================================================
   // BACK

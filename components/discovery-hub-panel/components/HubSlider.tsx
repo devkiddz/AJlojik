@@ -84,7 +84,9 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
   const getCommerceState = (item: HubSlideItem) => {
     const product = resolveProduct(item);
 
-    const selectedVariant = product?.variants[0];
+    const selectedVariant = product
+      ? (product.variants.find(variant => variant.stockLeft > 0) ?? product.variants[0])
+      : undefined;
 
     const cartItem = selectedVariant
       ? cartItems.find(item => item.variantId === selectedVariant.id)
@@ -102,7 +104,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
   const addSlideToCart = async (item: HubSlideItem): Promise<void> => {
     const { product, selectedVariant } = getCommerceState(item);
 
-    if (!product || !selectedVariant || mutating) {
+    if (!product || !selectedVariant || selectedVariant.stockLeft <= 0 || mutating) {
       return;
     }
 
@@ -153,6 +155,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
     const { containerClassName, buttonClassName, compact = false } = options;
 
+    const soldOut = selectedVariant.stockLeft <= 0;
+
     return (
       <div className={cn('inline-flex items-center gap-1.5', containerClassName)}>
         {cartItem ? (
@@ -167,7 +171,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
         <button
           type="button"
-          disabled={mutating || pending}
+          disabled={soldOut || mutating || pending}
           onClick={event => {
             event.stopPropagation();
 
@@ -183,7 +187,9 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
             <Plus className="size-3.5 shrink-0" />
           )}
 
-          <span className="truncate">{pending ? 'Adding...' : compact ? 'Add' : 'Add to cart'}</span>
+          <span className="truncate">
+            {soldOut ? 'Sold out' : pending ? 'Adding...' : compact ? 'Add' : 'Add to cart'}
+          </span>
         </button>
       </div>
     );
