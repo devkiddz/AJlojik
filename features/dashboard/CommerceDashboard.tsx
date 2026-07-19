@@ -161,16 +161,9 @@ function CommerceDashboardContent({
           </div>
         </header>
 
-        <section aria-label="Commerce overview" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard icon={<WalletCards />} label="Lifetime spend" value={currencyFormatter.format(totalSpent)} helper={`${orderCount} orders recorded`} tone="violet" />
-          <MetricCard icon={<ShoppingBag />} label="Active cart" value={String(totalQuantity)} helper={currencyFormatter.format(subtotal)} tone="emerald" />
-          <MetricCard icon={<Heart />} label="Saved products" value={String(wishlistCount)} helper="Synced wishlist" tone="rose" />
-          <MetricCard icon={<Boxes />} label="Inventory units" value={inventory.totalUnits.toLocaleString()} helper={`${inventory.variantCount} product options`} tone="amber" />
-        </section>
-
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.55fr)]">
+        <section aria-label="Recent account activity" className="grid items-stretch gap-5 xl:grid-cols-2">
           <article className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
-            <SectionHeading eyebrow="Expense intelligence" title="Shopping activity" description="Completed order spend with your current cart shown as planned spend." actionHref="/orders" actionLabel="View orders" />
+            <SectionHeading eyebrow="Recent activity" title="Shopping activity" description="Completed order spend with your current cart shown as planned spend." actionHref="/orders" actionLabel="View orders" />
 
             <div className="mt-6 grid min-h-64 grid-cols-7 items-end gap-2 sm:gap-4">
               {expenseSeries.map(point => (
@@ -180,10 +173,28 @@ function CommerceDashboardContent({
             </div>
           </article>
 
+          <ProductSection
+            eyebrow="Recent activity"
+            title="Recently viewed"
+            description="Pick up where your latest shopping sessions stopped."
+            products={recentProducts}
+            emptyMessage="Your recently viewed products will appear as you explore the store."
+            compact
+          />
+        </section>
+
+        <section aria-label="Commerce overview" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard icon={<WalletCards />} label="Lifetime spend" value={currencyFormatter.format(totalSpent)} helper={`${orderCount} orders recorded`} tone="violet" />
+          <MetricCard icon={<ShoppingBag />} label="Active cart" value={String(totalQuantity)} helper={currencyFormatter.format(subtotal)} tone="emerald" />
+          <MetricCard icon={<Heart />} label="Saved products" value={String(wishlistCount)} helper="Synced wishlist" tone="rose" />
+          <MetricCard icon={<Boxes />} label="Inventory units" value={inventory.totalUnits.toLocaleString()} helper={`${inventory.variantCount} product options`} tone="amber" />
+        </section>
+
+        <section>
           <article className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
             <SectionHeading eyebrow="Store health" title="Inventory tracker" description="Live availability across catalog options." />
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <InventoryRow icon={<PackageCheck />} label="Available units" value={inventory.totalUnits.toLocaleString()} tone="emerald" />
               <InventoryRow icon={<TriangleAlert />} label="Low-stock options" value={String(inventory.lowStockVariants)} tone="amber" />
               <InventoryRow icon={<Boxes />} label="Out-of-stock options" value={String(inventory.outOfStockVariants)} tone="rose" />
@@ -201,14 +212,6 @@ function CommerceDashboardContent({
             </div>
           </article>
         </section>
-
-        <ProductSection
-          eyebrow="Continue exploring"
-          title="Recently viewed"
-          description="Pick up where your latest shopping sessions stopped."
-          products={recentProducts}
-          emptyMessage="Your recently viewed products will appear as you explore the store."
-        />
 
         <section className="grid gap-5 lg:grid-cols-2">
           <ShoppingListCard
@@ -294,13 +297,13 @@ function ExpenseBar({ label, value, maxValue, planned = false }: { label: string
   );
 }
 
-function ProductSection({ eyebrow, title, description, products, emptyMessage, featured = false }: { eyebrow: string; title: string; description: string; products: ProductType[]; emptyMessage: string; featured?: boolean }) {
+function ProductSection({ eyebrow, title, description, products, emptyMessage, featured = false, compact = false }: { eyebrow: string; title: string; description: string; products: ProductType[]; emptyMessage: string; featured?: boolean; compact?: boolean }) {
   return (
     <section className="rounded-[2rem] border border-border/60 bg-card/60 p-5 shadow-lg sm:p-6">
       <SectionHeading eyebrow={eyebrow} title={title} description={description} actionHref="/store" actionLabel="Explore store" />
       {products.length ? (
-        <div className={cn('mt-5 grid gap-3', featured ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6')}>
-          {products.slice(0, 6).map(product => <DashboardProductCard key={product.id} product={product} />)}
+        <div className={cn('mt-5 grid gap-3', compact ? 'grid-cols-2 sm:grid-cols-3' : featured ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6')}>
+          {products.slice(0, compact ? 3 : 6).map(product => <DashboardProductCard key={product.id} product={product} />)}
         </div>
       ) : <EmptyPanel message={emptyMessage} />}
     </section>
