@@ -2,26 +2,19 @@
 
 import Image from 'next/image';
 
-import { Eye, Heart, LoaderCircle, ShoppingBag } from 'lucide-react';
+import { Eye, Heart, LoaderCircle, ShoppingBag, Star } from 'lucide-react';
 
 import type { MouseEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 import { useWishlist } from '@/features/wishlist';
-
 import { cn } from '@/lib/utils';
 
-import type { BaseProductCardProps } from './productCardTypes';
-
 import { PremiumCardSurface } from './PremiumCardSurface';
-
 import { ProductStatusBadges } from './ProductStatusBadges';
-
+import type { BaseProductCardProps } from './productCardTypes';
 import { useProductCartQuantity } from './useProductCartQuantity';
-
 import { useProductVariant } from './useProductVariant';
 
 type FeaturedProductCardPresentation = 'hero' | 'collection';
@@ -29,6 +22,12 @@ type FeaturedProductCardPresentation = 'hero' | 'collection';
 type FeaturedProductCardProps = BaseProductCardProps & {
   presentation?: FeaturedProductCardPresentation;
 };
+
+const currencyFormatter = new Intl.NumberFormat('en-NG', {
+  style: 'currency',
+  currency: 'NGN',
+  maximumFractionDigits: 0
+});
 
 export function FeaturedProductCard({
   product,
@@ -39,30 +38,22 @@ export function FeaturedProductCard({
   onAddToCart
 }: FeaturedProductCardProps) {
   const { selectedVariant, selectedVariantId, setSelectedVariantId } = useProductVariant(product);
-
   const { quantity, cartMutating } = useProductCartQuantity(product.id);
-
   const { toggleWishlist, isWishlisted, isMutating } = useWishlist();
 
   if (!selectedVariant) {
     return null;
   }
 
-  const isCollectionPresentation = presentation === 'collection';
-
+  const compact = presentation === 'collection';
   const saved = isWishlisted(product.id);
-
   const wishlistMutating = isMutating(product.id);
-
   const outOfStock = selectedVariant.stockLeft <= 0;
+  const lowStock = !outOfStock && selectedVariant.stockLeft <= 5;
 
   const stopEvent = (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
-  };
-
-  const openProductExperience = () => {
-    onOpenExperience?.(product);
   };
 
   const handlePreview = (event: MouseEvent<HTMLElement>) => {
@@ -73,234 +64,125 @@ export function FeaturedProductCard({
   const handleAddToCart = (event: MouseEvent<HTMLElement>) => {
     stopEvent(event);
 
-    onAddToCart?.(product, selectedVariant);
+    if (outOfStock || cartMutating || !onAddToCart) {
+      return;
+    }
+
+    onAddToCart(product, selectedVariant);
   };
 
   const handleWishlist = (event: MouseEvent<HTMLElement>) => {
     stopEvent(event);
 
-    void toggleWishlist({
-      id: product.id,
-      name: product.name
-    });
+    if (wishlistMutating) {
+      return;
+    }
+
+    void toggleWishlist({ id: product.id, name: product.name });
   };
-
-  // ==========================================================
-  // COMPACT COLLECTION PRESENTATION
-  // ==========================================================
-
-  if (isCollectionPresentation) {
-    return (
-      <PremiumCardSurface
-        glowSize={360}
-        className={cn(
-          'group h-auto self-start overflow-hidden rounded-3xl',
-          'border border-border/60 bg-card shadow-lg',
-          className
-        )}>
-        <article className="flex min-h-80 min-w-0 overflow-hidden">
-          {/* Product image — left */}
-
-          <div className="relative w-2/5 shrink-0 overflow-hidden bg-muted">
-            <button
-              type="button"
-              aria-label={`Open ${product.name} experience`}
-              onClick={openProductExperience}
-              className="absolute inset-0 z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
-              <span className="sr-only">Open {product.name}</span>
-            </button>
-
-            <Image
-              src={selectedVariant.image}
-              alt={product.name}
-              fill
-              sizes="(max-width: 1024px) 40vw, 18vw"
-              className="object-contain p-3 transition-transform duration-700 group-hover:scale-[1.02]"
-            />
-
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-
-            <ProductStatusBadges product={product} />
-          </div>
-
-          {/* Product information — right */}
-
-          <div className="flex min-w-0 flex-1 flex-col p-4">
-            <button
-              type="button"
-              aria-label={`Open ${product.name} experience`}
-              onClick={openProductExperience}
-              className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="h-px w-6 shrink-0 bg-border" />
-
-                <p className="truncate text-[0.65rem] font-semibold uppercase tracking-widest text-primary/60">
-                  {product.category}
-                </p>
-              </div>
-
-              <h2 className="mt-3 line-clamp-2 text-lg font-bold leading-tight tracking-tight text-card-foreground">
-                {product.name}
-              </h2>
-
-              <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                {product.shortDescription}
-              </p>
-            </button>
-
-            <div className="mt-auto pt-4">
-              <p className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
-                Selected option
-              </p>
-
-              <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
-                <SelectTrigger className="mt-2 h-9 w-full rounded-xl px-3">
-                  <SelectValue placeholder="Select option" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {product.variants.map(variant => (
-                    <SelectItem key={variant.id} value={String(variant.id)}>
-                      {variant.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="mt-3 flex items-end justify-between gap-3">
-                <p className="text-xs text-muted-foreground">Price</p>
-
-                <p className="whitespace-nowrap text-lg font-bold tracking-tight text-card-foreground">
-                  ₦{selectedVariant.price.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="mt-4 flex min-w-0 items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  aria-label={`Preview ${product.name}`}
-                  className="size-9 shrink-0 rounded-full p-0"
-                  onClick={handlePreview}>
-                  <Eye className="size-4" />
-                </Button>
-
-                <Button
-                  type="button"
-                  className="relative h-9 min-w-0 flex-1 gap-2 rounded-full px-3"
-                  disabled={outOfStock || cartMutating || !onAddToCart}
-                  onClick={handleAddToCart}>
-                  {cartMutating ? (
-                    <LoaderCircle className="size-4 shrink-0 animate-spin" />
-                  ) : (
-                    <ShoppingBag className="size-4 shrink-0" />
-                  )}
-
-                  <span className="truncate text-xs">{outOfStock ? 'Out of stock' : 'Add to cart'}</span>
-
-                  {quantity > 0 ? (
-                    <span className="shrink-0 rounded-full bg-primary-foreground/15 px-1.5 py-0.5 text-[0.65rem] font-black">
-                      +{quantity}
-                    </span>
-                  ) : null}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  aria-label={
-                    saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`
-                  }
-                  aria-pressed={saved}
-                  disabled={wishlistMutating}
-                  className={cn('size-9 shrink-0 rounded-full p-0', saved && 'text-primary')}
-                  onClick={handleWishlist}>
-                  {wishlistMutating ? (
-                    <LoaderCircle className="size-4 animate-spin" />
-                  ) : (
-                    <Heart className={cn('size-4', saved && 'fill-current')} />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </article>
-      </PremiumCardSurface>
-    );
-  }
-
-  // ==========================================================
-  // LARGE HERO PRESENTATION
-  // ==========================================================
 
   return (
     <PremiumCardSurface
-      glowSize={520}
+      glowSize={compact ? 360 : 520}
       className={cn(
-        'group overflow-hidden rounded-3xl border border-border/60 bg-card shadow-lg',
+        'group overflow-hidden rounded-[1.75rem] border border-border/60 bg-card',
+        'shadow-[0_20px_60px_-34px_rgba(0,0,0,0.55)]',
+        'transition duration-300 hover:border-border hover:shadow-[0_26px_70px_-32px_rgba(0,0,0,0.65)]',
         className
       )}>
-      <div className="grid h-full min-h-96 grid-cols-1 md:grid-cols-2">
-        {/* Product image — left */}
+      <article
+        className={cn(
+          'grid min-w-0',
+          compact
+            ? 'grid-cols-[minmax(7.5rem,0.82fr)_minmax(0,1.18fr)] sm:grid-cols-[minmax(10rem,0.85fr)_minmax(0,1.15fr)]'
+            : 'grid-cols-1 md:min-h-[25rem] md:grid-cols-[minmax(17rem,0.9fr)_minmax(0,1.1fr)]'
+        )}>
+        <div
+          className={cn(
+            'relative overflow-hidden bg-muted',
+            compact ? 'min-h-72 sm:min-h-80' : 'aspect-[16/10] min-h-64 md:aspect-auto md:min-h-full'
+          )}>
+          <Image
+            src={selectedVariant.image}
+            alt={product.name}
+            fill
+            priority={!compact}
+            sizes={compact ? '(max-width: 640px) 42vw, 24vw' : '(max-width: 768px) 100vw, 42vw'}
+            className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.035]"
+          />
 
-        <div className="relative min-h-64 overflow-hidden bg-muted md:min-h-96">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-black/10" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.16),transparent_38%)]" />
+
           <button
             type="button"
             aria-label={`Open ${product.name} experience`}
-            onClick={openProductExperience}
-            className="absolute inset-0 z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+            onClick={() => onOpenExperience?.(product)}
+            className="absolute inset-0 z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80">
             <span className="sr-only">Open {product.name}</span>
           </button>
 
-          <div className="aspect-5/2">
-            <Image
-              src={selectedVariant.image}
-              alt={product.name}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
-            />
-          </div>
-
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
           <ProductStatusBadges product={product} />
+
+          <div className={cn('pointer-events-none absolute inset-x-0 bottom-0 z-20', compact ? 'p-3' : 'p-5')}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/65">
+              Featured selection
+            </p>
+            {!compact ? (
+              <p className="mt-1 line-clamp-1 text-sm font-semibold text-white/95">{selectedVariant.label}</p>
+            ) : null}
+          </div>
         </div>
 
-        {/* Product information — right */}
-
-        <div className="flex min-w-0 flex-col p-6 md:p-8">
+        <div className={cn('flex min-w-0 flex-col', compact ? 'p-4 sm:p-5' : 'p-5 sm:p-7 lg:p-8')}>
           <button
             type="button"
-            aria-label={`Open ${product.name} experience`}
-            onClick={openProductExperience}
+            onClick={() => onOpenExperience?.(product)}
             className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary/60">
-              {product.category}
-            </p>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-[10px] font-medium text-muted-foreground">
+              <span className="truncate font-semibold uppercase tracking-[0.16em] text-primary/70">
+                {product.category.replaceAll('-', ' ')}
+              </span>
+              <span className="size-1 rounded-full bg-border" />
+              <span className="inline-flex items-center gap-1">
+                <Star className="size-3 fill-amber-400 text-amber-400" />
+                {product.rating.toFixed(1)}
+              </span>
+              {!compact ? (
+                <>
+                  <span className="size-1 rounded-full bg-border" />
+                  <span>{product.soldCount.toLocaleString()} sold</span>
+                </>
+              ) : null}
+            </div>
 
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-card-foreground md:text-4xl">
+            <h2
+              className={cn(
+                'mt-3 line-clamp-2 font-bold leading-tight tracking-tight text-card-foreground',
+                compact ? 'text-lg' : 'text-2xl sm:text-3xl lg:text-4xl'
+              )}>
               {product.name}
             </h2>
 
-            <p className="mt-4 line-clamp-4 text-sm leading-7 text-muted-foreground">
+            <p
+              className={cn(
+                'mt-3 text-muted-foreground',
+                compact ? 'line-clamp-2 text-xs leading-5' : 'line-clamp-3 text-sm leading-6'
+              )}>
               {product.shortDescription}
             </p>
           </button>
 
-          <div className="mt-auto pt-8">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Selected option
-            </p>
-
-            <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="w-full sm:max-w-52">
+          <div className={cn('mt-auto', compact ? 'pt-4' : 'pt-7')}>
+            <div className={cn('grid items-end gap-3', compact ? 'grid-cols-1' : 'sm:grid-cols-[minmax(0,1fr)_auto]')}>
+              <div className="min-w-0">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                  Choose option
+                </p>
                 <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
-                  <SelectTrigger className="h-10 rounded-xl">
+                  <SelectTrigger className={cn('w-full rounded-xl bg-background/60', compact ? 'h-9' : 'h-10 sm:max-w-64')}>
                     <SelectValue placeholder="Select option" />
                   </SelectTrigger>
-
                   <SelectContent>
                     {product.variants.map(variant => (
                       <SelectItem key={variant.id} value={String(variant.id)}>
@@ -311,59 +193,70 @@ export function FeaturedProductCard({
                 </Select>
               </div>
 
-              <div className="shrink-0 sm:text-right">
-                <p className="text-xs text-muted-foreground">Price</p>
-
-                <p className="mt-1 text-2xl font-bold tracking-tight">
-                  ₦{selectedVariant.price.toLocaleString()}
+              <div className={cn('min-w-0', compact ? 'text-left' : 'sm:text-right')}>
+                <p className={cn('font-bold tracking-tight text-card-foreground', compact ? 'text-lg' : 'text-2xl')}>
+                  {currencyFormatter.format(selectedVariant.price)}
+                </p>
+                <p
+                  className={cn(
+                    'mt-1 text-[10px] font-medium',
+                    outOfStock ? 'text-destructive' : lowStock ? 'text-amber-600' : 'text-emerald-600'
+                  )}>
+                  {outOfStock ? 'Currently unavailable' : lowStock ? `Only ${selectedVariant.stockLeft} left` : 'Ready to order'}
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Button type="button" variant="outline" className="gap-2 rounded-full" onClick={handlePreview}>
-                <Eye className="size-4" />
-                Preview
-              </Button>
-
+            <div className={cn('mt-4 grid items-center gap-2', 'grid-cols-[minmax(0,1fr)_2.5rem_2.5rem]')}>
               <Button
                 type="button"
-                className="relative gap-2 rounded-full"
                 disabled={outOfStock || cartMutating || !onAddToCart}
-                onClick={handleAddToCart}>
+                onClick={handleAddToCart}
+                className="relative h-10 min-w-0 gap-2 rounded-full bg-foreground px-4 text-background hover:bg-foreground/90">
                 {cartMutating ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (
                   <ShoppingBag className="size-4" />
                 )}
-
-                {outOfStock ? 'Out of stock' : 'Add to cart'}
-
+                <span className="truncate text-xs">{outOfStock ? 'Out of stock' : 'Add to cart'}</span>
                 {quantity > 0 ? (
-                  <span className="rounded-full bg-primary-foreground/15 px-1.5 py-0.5 text-[0.65rem] font-black">
-                    +{quantity}
-                  </span>
+                  <span className="rounded-full bg-background/15 px-1.5 py-0.5 text-[10px] font-black">{quantity}</span>
                 ) : null}
               </Button>
 
               <Button
                 type="button"
+                size="icon"
+                variant="outline"
+                onClick={handlePreview}
+                aria-label={`Preview ${product.name}`}
+                title="Quick preview"
+                className="size-10 rounded-full bg-background/60">
+                <Eye className="size-4" />
+              </Button>
+
+              <Button
+                type="button"
+                size="icon"
                 variant="ghost"
                 aria-pressed={saved}
+                aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
                 disabled={wishlistMutating}
-                className={cn('gap-2 rounded-full', saved && 'text-primary')}
-                onClick={handleWishlist}>
+                onClick={handleWishlist}
+                className={cn(
+                  'size-10 rounded-full border border-border/60 bg-background/40',
+                  saved && 'border-rose-500/30 text-rose-500'
+                )}>
                 {wishlistMutating ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (
                   <Heart className={cn('size-4', saved && 'fill-current')} />
                 )}
-                Wishlist
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      </article>
     </PremiumCardSurface>
   );
 }
