@@ -138,17 +138,12 @@ export function buildStoreDiscoveryExperience(
    *
    * The standalone featured-products module must not duplicate it.
    */
-  const hasFeaturedCollection =
-    resolvedCollections.some(
-      resolvedCollection =>
-        resolvedCollection.collection
-          .layout === 'featured' &&
-        Boolean(
-          resolvedCollection.featuredProduct
-        ) &&
-        resolvedCollection.products
-          .length > 1
-    );
+const hasFeaturedCollection =
+  resolvedCollections.some(
+    resolvedCollection =>
+      resolvedCollection.collection.layout === 'featured' &&
+      Boolean(resolvedCollection.featuredProduct)
+  );
 
   const activePromotions =
     selectActivePromotions(
@@ -461,53 +456,10 @@ export function buildStoreDiscoveryExperience(
   // DEVELOPMENT DIAGNOSTICS
   // ============================================================
 
-  if (
-    process.env.NODE_ENV ===
-    'development'
-  ) {
-    console.table(
-      prioritization.priorities.map(
-        priority => ({
-          moduleId:
-            priority.moduleId,
-
-          base:
-            priority.basePriority,
-
-          contextual:
-            priority.contextualScore,
-
-          final:
-            priority.finalPriority,
-
-          signals:
-            priority.signals
-              .map(
-                signal =>
-                  signal.id
-              )
-              .join(', ')
-        })
-      )
-    );
-
-    console.table({
-      selectedCategory,
-
-      filteredProducts:
-        filteredProducts.length,
-
-      resolvedCollections:
-        resolvedCollections.length,
-
-      hasFeaturedCollection,
-
-      standaloneCategoryExperience:
-        !hasFeaturedCollection &&
-        filteredProducts.length > 0
-    });
-  }
-
+    if(process.env.NODE_ENV ===
+    'development'){
+      console.error( '[FeedExperienceRegistry] Resolver failed.', Error);
+    }
   // ============================================================
   // FINAL EXPERIENCE
   // ============================================================

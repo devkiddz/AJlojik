@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
 
+type ProductShelfLayout = 'default' | 'three-up';
+
 type ProductShelfProps = {
   products: ProductType[];
 
@@ -20,8 +22,20 @@ type ProductShelfProps = {
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 
   ariaLabel?: string;
+
   className?: string;
+
   itemClassName?: string;
+
+  /**
+   * default:
+   * Standard fixed-width product cards.
+   *
+   * three-up:
+   * Shows three equal product cards inside the available
+   * desktop shelf width.
+   */
+  layout?: ProductShelfLayout;
 };
 
 export default function ProductShelf({
@@ -31,7 +45,8 @@ export default function ProductShelf({
   onAddToCart,
   ariaLabel = 'Products',
   className,
-  itemClassName
+  itemClassName,
+  layout = 'default'
 }: ProductShelfProps) {
   const shelfId = useId();
 
@@ -86,7 +101,7 @@ export default function ProductShelf({
       return;
     }
 
-    const distance = element.clientWidth * 0.8;
+    const distance = element.clientWidth * 0.95;
 
     element.scrollBy({
       left: direction === 'left' ? -distance : distance,
@@ -98,6 +113,8 @@ export default function ProductShelf({
   if (products.length === 0) {
     return null;
   }
+
+  const threeUp = layout === 'three-up';
 
   return (
     <div className={cn('group/shelf relative min-w-0', className)}>
@@ -156,7 +173,17 @@ export default function ProductShelf({
           'px-1 pb-3 scrollbar-none'
         )}>
         {products.map(product => (
-          <div key={product.id} className={cn('w-52 shrink-0 snap-start sm:w-56 md:w-60', itemClassName)}>
+          <div
+            key={product.id}
+            className={cn(
+              'shrink-0 snap-start',
+
+              threeUp
+                ? ['w-[82%]', 'sm:w-[calc((100%_-_1rem)/2)]', 'lg:w-[calc((100%_-_2rem)/3)]']
+                : ['w-52', 'sm:w-56', 'md:w-60'],
+
+              itemClassName
+            )}>
             <ProductCard
               product={product}
               onPreview={onPreview}

@@ -10,8 +10,6 @@ import { PremiumCardSurface } from './PremiumCardSurface';
 
 import { ProductActionTray } from './ProductActionTray';
 
-import { ProductStatusBadges } from './ProductStatusBadges';
-
 import { useProductVariant } from './useProductVariant';
 
 export function ProductCard({
@@ -21,7 +19,7 @@ export function ProductCard({
   onOpenExperience,
   onAddToCart
 }: BaseProductCardProps) {
-  const { selectedVariant, selectedVariantId, setSelectedVariantId } = useProductVariant(product);
+  const { selectedVariant, soldOut } = useProductVariant(product);
 
   if (!selectedVariant) {
     return null;
@@ -53,16 +51,17 @@ export function ProductCard({
             className="object-cover transition duration-500 group-hover:scale-[1.025]"
           />
 
-          <ProductStatusBadges product={product} />
+          {/* ============================================
+              ONLY PERSISTENT PRODUCT LABEL
+          ============================================ */}
 
-          <ProductActionTray
-            product={product}
-            selectedVariant={selectedVariant}
-            selectedVariantId={selectedVariantId}
-            onSelectedVariantIdChange={setSelectedVariantId}
-            onPreview={onPreview}
-            onAddToCart={onAddToCart}
-          />
+          {soldOut ? (
+            <span className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-white/15 bg-black/75 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-white shadow-lg backdrop-blur-md">
+              Sold out
+            </span>
+          ) : null}
+
+          <ProductActionTray product={product} onPreview={onPreview} onAddToCart={onAddToCart} />
         </div>
 
         <button

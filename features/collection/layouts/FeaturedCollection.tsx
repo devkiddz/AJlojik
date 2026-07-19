@@ -2,9 +2,9 @@
 
 import type { CollectionType } from '@/data/collections';
 
-import { FeaturedProductCard } from '@/features/products/cards';
+import CollectionProductRail from '@/features/collection/components/CollectionProductRail';
 
-import ProductShelf from '@/features/products/components/ProductShelf';
+import { CollectionFeatureProductCard } from '@/features/products/cards/CollectionFeatureProductCard';
 
 import { cn } from '@/lib/utils';
 
@@ -43,16 +43,21 @@ export default function FeaturedCollection({
   return (
     <section
       className={cn(
-        'grid min-w-0 items-stretch gap-4',
+        'grid min-w-0 grid-cols-1 gap-4',
 
-        hasSupportingProducts && 'xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]'
+        hasSupportingProducts && 'lg:h-50 lg:grid-cols-12 lg:items-stretch'
       )}>
       {/* ============================================
-          FEATURED PRODUCT
+          FEATURED PRODUCT — EQUAL LEFT GRID
       ============================================ */}
 
-      <div className="min-w-0">
-        <FeaturedProductCard
+      <div
+        className={cn(
+          'min-w-0',
+
+          hasSupportingProducts ? 'lg:col-span-5' : 'lg:col-span-12'
+        )}>
+        <CollectionFeatureProductCard
           product={featuredProduct}
           className="h-full"
           onPreview={onPreview}
@@ -62,47 +67,25 @@ export default function FeaturedCollection({
       </div>
 
       {/* ============================================
-          SUPPORTING PRODUCT SLIDES
+          PRODUCT RAIL — EQUAL RIGHT GRID
       ============================================ */}
 
       {hasSupportingProducts ? (
-        <div
-          className={cn(
-            'flex h-full min-w-0 flex-col overflow-hidden rounded-3xl',
-            'border border-border/60 bg-card/40 p-4 shadow-sm',
-            'md:p-5'
-          )}>
-          <header className="mb-4 flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/55">
-                More in this collection
-              </p>
-
-              <h3 className="mt-2 truncate text-lg font-semibold tracking-tight text-card-foreground">
-                {collection.title}
-              </h3>
-
-              {collection.subtitle ? (
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                  {collection.subtitle}
-                </p>
-              ) : null}
-            </div>
-
-            <span className="hidden shrink-0 rounded-full border border-border/60 bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-              {supportingProducts.length} {supportingProducts.length === 1 ? 'product' : 'products'}
-            </span>
-          </header>
-
-          <ProductShelf
-            products={supportingProducts}
-            ariaLabel={`${collection.title} products`}
-            onPreview={onPreview}
-            onOpenExperience={onOpenExperience}
-            onAddToCart={onAddToCart}
-            className="mt-auto"
-            itemClassName="w-44 sm:w-48 xl:w-52"
-          />
+        <div className="min-w-0 lg:col-span-6">
+          <div
+            className={cn(
+              'h-full min-h-0 min-w-0 overflow-hidden rounded-3xl',
+              'border border-border/60 bg-card/40 p-4 shadow-sm'
+            )}>
+            <CollectionProductRail
+              title={collection.title}
+              subtitle={collection.subtitle}
+              products={supportingProducts}
+              onPreview={onPreview}
+              onOpenExperience={onOpenExperience}
+              onAddToCart={onAddToCart}
+            />
+          </div>
         </div>
       ) : null}
     </section>
