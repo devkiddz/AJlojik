@@ -161,8 +161,21 @@ function CommerceDashboardContent({
           </div>
         </header>
 
-        <section aria-label="Recent account activity" className="grid items-stretch gap-5 xl:grid-cols-2">
-          <article className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
+        <section aria-label="Recent account activity" className="overflow-hidden rounded-[2.25rem] border border-border/60 bg-[linear-gradient(145deg,hsl(var(--card)/0.92),hsl(var(--muted)/0.42))] p-3 shadow-xl sm:p-5">
+          <div className="mb-4 flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Customer journey</p>
+              <h2 className="mt-1 text-lg font-bold tracking-tight">Your latest commerce signals</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <RelationshipPill label="Viewed" value={recentProducts.length} />
+              <RelationshipPill label="In cart" value={totalQuantity} />
+              <RelationshipPill label="Saved" value={wishlistCount} />
+            </div>
+          </div>
+
+          <div className="grid items-stretch gap-4 xl:grid-cols-2">
+          <article className="rounded-[1.65rem] border border-border/60 bg-background/70 p-5 shadow-sm backdrop-blur sm:p-6">
             <SectionHeading eyebrow="Recent activity" title="Shopping activity" description="Completed order spend with your current cart shown as planned spend." actionHref="/orders" actionLabel="View orders" />
 
             <div className="mt-6 grid min-h-64 grid-cols-7 items-end gap-2 sm:gap-4">
@@ -181,6 +194,7 @@ function CommerceDashboardContent({
             emptyMessage="Your recently viewed products will appear as you explore the store."
             compact
           />
+          </div>
         </section>
 
         <section aria-label="Commerce overview" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -194,7 +208,12 @@ function CommerceDashboardContent({
           <article className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
             <SectionHeading eyebrow="Store health" title="Inventory tracker" description="Live availability across catalog options." />
 
-            <div className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 xl:grid-cols-4">
+            <div className="mt-4 flex items-center justify-between sm:hidden">
+              <p className="text-[10px] font-medium text-muted-foreground">Swipe cards to inspect stock health</p>
+              <span className="rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider">Slide →</span>
+            </div>
+
+            <div aria-label="Inventory metrics" className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-8 scrollbar-hide sm:mt-6 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 xl:grid-cols-4">
               <InventoryRow icon={<PackageCheck />} label="Available units" value={inventory.totalUnits.toLocaleString()} tone="emerald" />
               <InventoryRow icon={<TriangleAlert />} label="Low-stock options" value={String(inventory.lowStockVariants)} tone="amber" />
               <InventoryRow icon={<Boxes />} label="Out-of-stock options" value={String(inventory.outOfStockVariants)} tone="rose" />
@@ -213,7 +232,17 @@ function CommerceDashboardContent({
           </article>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-2">
+        <section aria-label="Shopping workspace" className="rounded-[2.25rem] border border-border/60 bg-card/45 p-3 shadow-lg sm:p-5">
+          <div className="mb-4 flex flex-col gap-3 px-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/70">Shopping workspace</p>
+              <h2 className="mt-1 text-xl font-bold tracking-tight">Move products toward checkout</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Your cart and wishlist stay connected, so saved ideas can become active purchases.</p>
+            </div>
+            <Link href="/store" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">Discover products <ArrowRight className="size-3.5" /></Link>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
           <ShoppingListCard
             icon={<ShoppingBag className="size-5" />}
             eyebrow="Ready when you are"
@@ -232,6 +261,7 @@ function CommerceDashboardContent({
             href="/wishlist"
             emptyMessage="Save products to build your personal collection."
           />
+          </div>
         </section>
 
         <ProductSection
@@ -376,11 +406,15 @@ function SectionHeading({ eyebrow, title, description, actionHref, actionLabel }
 }
 
 function InventoryRow({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: Tone }) {
-  return <div className="flex min-w-56 shrink-0 snap-start items-center gap-3 rounded-2xl border border-border/50 bg-background/45 p-3 sm:min-w-0"><div className={cn('grid size-9 place-items-center rounded-xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div><span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{label}</span><span className="text-sm font-bold">{value}</span></div>;
+  return <div className="flex min-h-24 w-[78vw] max-w-72 shrink-0 snap-start flex-col justify-between rounded-2xl border border-border/50 bg-background/70 p-4 shadow-sm sm:min-h-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center sm:gap-3"><div className="flex items-center justify-between sm:contents"><div className={cn('grid size-10 place-items-center rounded-xl [&_svg]:size-4', toneStyles[tone])}>{icon}</div><span className="text-lg font-bold sm:order-3 sm:text-sm">{value}</span></div><span className="mt-3 min-w-0 flex-1 truncate text-xs text-muted-foreground sm:mt-0">{label}</span></div>;
 }
 
 function StatusPill({ label, value }: { label: string; value: string }) {
   return <div className="rounded-full border border-border/60 bg-background/65 px-3 py-2"><span className="text-[9px] text-muted-foreground">{label}</span><span className="ml-2 text-[10px] font-bold uppercase">{value}</span></div>;
+}
+
+function RelationshipPill({ label, value }: { label: string; value: number }) {
+  return <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/65 px-3 py-2 text-[10px]"><span className="text-muted-foreground">{label}</span><span className="grid min-w-5 place-items-center rounded-full bg-foreground px-1.5 py-0.5 font-bold text-background">{value}</span></div>;
 }
 
 function EmptyPanel({ message, compact = false }: { message: string; compact?: boolean }) {
