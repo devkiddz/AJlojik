@@ -16,11 +16,21 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter
-  });
+function supportsCurrentSchema(client: PrismaClient | undefined): client is PrismaClient {
+  if (!client) return false;
+
+  return ['adminTodo', 'adminApprovalRequest', 'adminAuditEvent', 'delivery', 'staffProfile', 'storefrontHero']
+    .every(delegate => delegate in client);
+}
+
+const cachedClient = globalForPrisma.prisma;
+
+// Turbopack preserves globalThis during development reloads. After `prisma
+// generate`, that can leave an old in-memory client without newly generated
+// delegates. Replace it instead of allowing `undefined.findMany` at runtime.
+export const prisma = supportsCurrentSchema(cachedClient)
+  ? cachedClient
+  : new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
