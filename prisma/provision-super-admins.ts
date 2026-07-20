@@ -33,4 +33,21 @@ async function main() {
   console.log('Protected developer and AJ Logik Super Admin accounts are ready.');
 }
 
-main().then(() => prisma.$disconnect()).catch(async error => { console.error(error); await prisma.$disconnect(); process.exit(1); });
+async function run() {
+  if (!process.env.DEVELOPER_SUPER_ADMIN_PASSWORD || !process.env.AJLOJIK_SUPER_ADMIN_PASSWORD) {
+    console.log('Super Admin provisioning skipped: deployment password variables are not configured.');
+    await prisma.$disconnect();
+    return;
+  }
+
+  try {
+    await main();
+    await prisma.$disconnect();
+  } catch (error) {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+}
+
+void run();

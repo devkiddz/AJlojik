@@ -26,8 +26,11 @@ export default function GlobalDiscoveryHost() {
     return () => { active = false; };
   }, [isAuthenticated]);
 
-  // Home intentionally stays editorial. Store already owns its integrated hub.
-  if (pathname === '/' || pathname === '/store' || !discoveryEnabled) return null;
+  const ownsIntegratedDiscovery = pathname === '/store' || pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/adminlogin/login';
+
+  // These routes render their own integrated Discovery Hub. Mounting the
+  // global host as well creates two desktop rails sharing the same edge.
+  if (pathname === '/' || ownsIntegratedDiscovery || !discoveryEnabled) return null;
 
   return (
     <>
