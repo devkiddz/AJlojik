@@ -786,8 +786,8 @@ model StorefrontHero {
 
   enabled       Boolean @default(true)
   mediaType     String  @default("VIDEO")
-  mediaUrl      String?
-  posterUrl     String?
+  mediaUrl      String? @default("https://www.youtube.com/watch?v=WN_fa23hasc")
+  posterUrl     String? @default("https://images.unsplash.com/photo-1575444758702-4a6b9222336e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
   eyebrow       String  @default("Your personal shopping experience")
   title         String  @default("Every beautiful moment starts here.")
   summary       String?

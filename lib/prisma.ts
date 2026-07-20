@@ -17,7 +17,7 @@ const globalForPrisma = globalThis as unknown as {
   prismaSchemaVersion?: string;
 };
 
-const PRISMA_SCHEMA_VERSION = '20260720210000';
+const PRISMA_SCHEMA_VERSION = '20260720223000';
 
 function supportsCurrentSchema(client: PrismaClient | undefined, schemaVersion: string | undefined): client is PrismaClient {
   if (!client || schemaVersion !== PRISMA_SCHEMA_VERSION) return false;

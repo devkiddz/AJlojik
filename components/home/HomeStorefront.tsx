@@ -13,10 +13,13 @@ import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
 import { ProductCard } from '@/features/products/cards';
 import { RegularProductPreviewModal } from '@/features/products/modals';
+import HeroBackgroundMedia from './HeroBackgroundMedia';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
 
 const currency = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
+const DEFAULT_HERO_VIDEO = 'https://www.youtube.com/watch?v=WN_fa23hasc';
+const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1575444758702-4a6b9222336e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
 type StorefrontHeroConfig = { mediaType: string; mediaUrl: string | null; posterUrl: string | null; eyebrow: string; title: string; summary: string | null; primaryLabel: string; primaryHref: string; secondaryLabel: string; secondaryHref: string; autoplay: boolean } | null;
 
@@ -34,7 +37,8 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
   const newProducts = useMemo(() => products.filter(product => product.isNew).slice(0, 8), [products]);
   const recommendations = useMemo(() => [...products].sort((a, b) => b.rating - a.rating).slice(0, 8), [products]);
   const featuredVariant = featured?.variants.find(variant => variant.stockLeft > 0) ?? featured?.variants[0];
-  const heroMedia = hero?.mediaUrl || 'https://assets.mixkit.co/videos/preview/mixkit-friends-having-dinner-at-a-restaurant-4340-large.mp4';
+  const heroMedia = hero?.mediaUrl || DEFAULT_HERO_VIDEO;
+  const heroFallbackImage = hero?.posterUrl || DEFAULT_HERO_IMAGE || featuredVariant?.image;
 
   const addProduct = (product: ProductType, variant: ProductVariantType) => {
     void addToCart({ product, variant, quantity: 1 });
@@ -53,7 +57,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
   return (
     <div className="bg-background pb-14">
       <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#03070d] text-white">
-        {hero?.mediaType === 'IMAGE' ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroMedia})` }} /> : <video autoPlay={hero?.autoplay ?? true} muted loop playsInline poster={hero?.posterUrl || featuredVariant.image} className="absolute inset-0 size-full object-cover"><source src={heroMedia} type="video/mp4" /></video>}
+        <HeroBackgroundMedia mediaType={hero?.mediaType ?? 'VIDEO'} mediaUrl={heroMedia} fallbackImage={heroFallbackImage} autoplay={hero?.autoplay ?? true} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(1,5,12,.96)_0%,rgba(1,5,12,.7)_43%,rgba(1,5,12,.18)_75%),linear-gradient(0deg,#03070d_0%,transparent_45%)]" />
         <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-[1500px] overflow-hidden">
           <div className="relative z-10 flex flex-col justify-center p-7 sm:p-12 lg:p-16 xl:p-20">
