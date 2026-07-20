@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
+    "seed:admins": "tsx prisma/seed-admins.ts",
     "seed:production": "node --env-file=.vercel/.env.production.local ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
     "postinstall": "prisma generate",
     "vercel-build": "prisma migrate deploy && next build"

@@ -8,22 +8,25 @@ import {
   BadgeCheck,
   Boxes,
   ChevronRight,
+  ClipboardCheck,
   CircleDollarSign,
+  Eye,
   Heart,
   PackageCheck,
   ShoppingBag,
   Sparkles,
   TrendingUp,
   TriangleAlert,
+  Truck,
+  WandSparkles,
   WalletCards
 } from 'lucide-react';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import SignOutButton from '@/components/auth/SignOutButton';
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
-import StoreExperienceSidebar from '@/features/feed-experience/layout/StoreExperienceSidebar';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 import { cn } from '@/lib/utils';
@@ -49,6 +52,8 @@ type CommerceDashboardProps = {
   expenseSeries: ExpensePoint[];
   totalSpent: number;
   orderCount: number;
+  checkedOutCount: number;
+  onDeliveryCount: number;
 };
 
 const currencyFormatter = new Intl.NumberFormat('en-NG', {
@@ -71,7 +76,9 @@ function CommerceDashboardContent({
   recentProductIds,
   expenseSeries,
   totalSpent,
-  orderCount
+  orderCount,
+  checkedOutCount,
+  onDeliveryCount
 }: CommerceDashboardProps) {
   const { products, loading: catalogLoading } = useCatalog();
   const { items: cartItems, totalQuantity, subtotal, loading: cartLoading } = useCart();
@@ -161,6 +168,21 @@ function CommerceDashboardContent({
           </div>
         </header>
 
+        <MobileCommerceDashboard
+          inventory={inventory}
+          recentProducts={recentProducts}
+          wishlistProducts={wishlistProducts}
+          cartProducts={cartItems.map(item => item.product)}
+          recommendations={recommendations}
+          wishlistCount={wishlistCount}
+          cartCount={totalQuantity}
+          checkedOutCount={checkedOutCount}
+          onDeliveryCount={onDeliveryCount}
+          totalSpent={totalSpent}
+          orderCount={orderCount}
+        />
+
+        <div className="hidden space-y-5 sm:block">
         <section aria-label="Recent account activity" className="overflow-hidden rounded-[2.25rem] border border-border/60 bg-[linear-gradient(145deg,hsl(var(--card)/0.92),hsl(var(--muted)/0.42))] p-3 shadow-xl sm:p-5">
           <div className="mb-4 flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -275,30 +297,49 @@ function CommerceDashboardContent({
         />
 
         {dashboardLoading ? <p className="text-center text-xs text-muted-foreground">Refreshing your commerce workspace…</p> : null}
+        </div>
       </div>
     </main>
   );
 }
 
 export default function CommerceDashboard(props: CommerceDashboardProps) {
-  const [hubCollapsed, setHubCollapsed] = useState(false);
+  return <CommerceDashboardContent {...props} />;
+}
 
+type MobileInventory = { totalUnits: number; lowStockVariants: number; outOfStockVariants: number; inventoryValue: number; variantCount: number };
+
+function MobileCommerceDashboard({ inventory, recentProducts, wishlistProducts, cartProducts, recommendations, wishlistCount, cartCount, checkedOutCount, onDeliveryCount, totalSpent, orderCount }: { inventory: MobileInventory; recentProducts: ProductType[]; wishlistProducts: ProductType[]; cartProducts: ProductType[]; recommendations: ProductType[]; wishlistCount: number; cartCount: number; checkedOutCount: number; onDeliveryCount: number; totalSpent: number; orderCount: number }) {
+  const smartPicks = recommendations.filter(product => product.featured || product.isNew).slice(0, 4);
+  const stockHealth = inventory.variantCount ? Math.round(((inventory.variantCount - inventory.outOfStockVariants) / inventory.variantCount) * 100) : 0;
   return (
-    <div className="grid min-h-dvh grid-cols-12 items-start gap-4">
-      <div className={cn('col-span-12 min-w-0 transition-all duration-300', hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8')}>
-        <CommerceDashboardContent {...props} />
-      </div>
+    <div className="space-y-5 sm:hidden">
+      <section className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/80 p-4 shadow-lg">
+        <div className="flex items-center justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.2em] text-primary">Commerce pulse</p><h2 className="mt-1 text-lg font-black">Inventory & activity</h2></div><Link href="/orders" className="grid size-9 place-items-center rounded-full border border-border/60"><ChevronRight className="size-4" /></Link></div>
+        <div className="mt-5 grid grid-cols-4 gap-2"><MobileRing label="Stock" value={`${stockHealth}%`} progress={stockHealth} tone="emerald" /><MobileRing label="Units" value={compactNumber(inventory.totalUnits)} progress={Math.min(inventory.totalUnits, 100)} tone="violet" /><MobileRing label="Orders" value={String(orderCount)} progress={Math.min(orderCount * 12, 100)} tone="amber" /><MobileRing label="Alerts" value={String(inventory.lowStockVariants + inventory.outOfStockVariants)} progress={Math.min((inventory.lowStockVariants + inventory.outOfStockVariants) * 14, 100)} tone="rose" /></div>
+        <div className="mt-5 divide-y divide-border/50 rounded-2xl bg-muted/45 px-3"><MobileSignal icon={<WalletCards />} label="Lifetime commerce" helper={`${orderCount} completed activities`} value={compactCurrencyFormatter.format(totalSpent)} /><MobileSignal icon={<Boxes />} label="Catalog stock value" helper={`${inventory.variantCount} active options`} value={compactCurrencyFormatter.format(inventory.inventoryValue)} /><MobileSignal icon={<TriangleAlert />} label="Inventory attention" helper="Low and unavailable options" value={String(inventory.lowStockVariants + inventory.outOfStockVariants)} alert /></div>
+      </section>
 
-      <StoreExperienceSidebar
-        tier={props.user.tier}
-        authenticated
-        recentProductIds={props.recentProductIds}
-        collapsed={hubCollapsed}
-        onCollapsedChange={setHubCollapsed}
-      />
+      <MobileBlock title="Commerce journey" subtitle="Swipe through each stage of your shopping flow">
+        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-6 scrollbar-hide"><MobileStage icon={<Heart />} title="Wish listed" count={wishlistCount} products={wishlistProducts} href="/wishlist" tone="rose" /><MobileStage icon={<ShoppingBag />} title="Carted" count={cartCount} products={cartProducts} href="/cart" tone="emerald" /><MobileStage icon={<ClipboardCheck />} title="Checked out" count={checkedOutCount} products={[]} href="/orders" tone="violet" /><MobileStage icon={<Truck />} title="On delivery" count={onDeliveryCount} products={[]} href="/orders" tone="amber" /></div>
+      </MobileBlock>
+
+      <MobileBlock title="Discovery intelligence" subtitle="Your activity, recommendations, and smart selections">
+        <div className="space-y-3"><MobileProductGroup icon={<Eye />} eyebrow="Continue" title="Recently viewed" products={recentProducts} href="/store" /><MobileProductGroup icon={<Sparkles />} eyebrow="For you" title="Recommended" products={recommendations} href="/store" /><MobileProductGroup icon={<WandSparkles />} eyebrow="AJ intelligence" title="Smart picks" products={smartPicks.length ? smartPicks : recommendations} href="/ai" /></div>
+      </MobileBlock>
+
+      <section className="overflow-hidden rounded-[2rem] border border-border/60 bg-[#07172b] p-5 text-white shadow-xl"><p className="text-[9px] font-black uppercase tracking-[.2em] text-amber-300">Store experience</p><div className="mt-2 flex items-end justify-between gap-4"><div><h2 className="text-xl font-black">Keep discovering</h2><p className="mt-1 text-xs leading-5 text-white/60">Fresh products and moments chosen around your activity.</p></div><Link href="/store" className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#07172b]"><ArrowRight className="size-4" /></Link></div><div className="mt-5 flex snap-x gap-3 overflow-x-auto pb-1 scrollbar-hide">{recommendations.slice(0, 4).map(product => <MobileProductTile key={product.id} product={product} dark />)}</div></section>
     </div>
   );
 }
+
+function MobileBlock({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) { return <section className="rounded-[2rem] border border-border/60 bg-card/75 p-4 shadow-lg"><div className="mb-4"><h2 className="text-lg font-black">{title}</h2><p className="mt-1 text-[10px] leading-4 text-muted-foreground">{subtitle}</p></div>{children}</section>; }
+function MobileRing({ label, value, progress, tone }: { label: string; value: string; progress: number; tone: Tone }) { const color = tone === 'emerald' ? '#10b981' : tone === 'violet' ? '#8b5cf6' : tone === 'amber' ? '#f59e0b' : '#f43f5e'; return <div className="min-w-0 text-center"><div className="relative mx-auto grid size-14 place-items-center rounded-full" style={{ background: `conic-gradient(${color} ${Math.max(progress, 4)}%, hsl(var(--muted)) 0)` }}><div className="grid size-11 place-items-center rounded-full bg-card text-[11px] font-black">{value}</div></div><p className="mt-2 truncate text-[9px] font-semibold text-muted-foreground">{label}</p></div>; }
+function MobileSignal({ icon, label, helper, value, alert = false }: { icon: ReactNode; label: string; helper: string; value: string; alert?: boolean }) { return <div className="flex items-center gap-3 py-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-background text-primary [&_svg]:size-4">{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{label}</p><p className="mt-0.5 truncate text-[9px] text-muted-foreground">{helper}</p></div><span className={cn('shrink-0 text-xs font-black', alert && 'text-rose-500')}>{value}</span></div>; }
+function MobileStage({ icon, title, count, products, href, tone }: { icon: ReactNode; title: string; count: number; products: ProductType[]; href: string; tone: Tone }) { return <Link href={href} className="w-[72vw] max-w-64 shrink-0 snap-start rounded-3xl border border-border/55 bg-background/70 p-4"><div className="flex items-center justify-between"><span className={cn('grid size-10 place-items-center rounded-2xl [&_svg]:size-4', toneStyles[tone])}>{icon}</span><span className="text-2xl font-black">{count}</span></div><h3 className="mt-4 text-sm font-black">{title}</h3><p className="mt-1 text-[9px] text-muted-foreground">Products at this stage</p><div className="mt-4 flex -space-x-2">{products.slice(0, 4).map(product => { const variant = product.variants[0]; return <span key={product.id} className="relative size-9 overflow-hidden rounded-full border-2 border-background bg-muted">{variant ? <Image src={variant.image} alt="" fill sizes="36px" className="object-cover" /> : null}</span>; })}{!products.length ? <span className="inline-flex h-9 items-center rounded-full bg-muted px-3 text-[9px] font-semibold">View activity</span> : null}</div></Link>; }
+function MobileProductGroup({ icon, eyebrow, title, products, href }: { icon: ReactNode; eyebrow: string; title: string; products: ProductType[]; href: string }) { return <article className="overflow-hidden rounded-3xl bg-muted/45 p-3"><div className="flex items-center gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-background text-primary [&_svg]:size-4">{icon}</span><div className="min-w-0 flex-1"><p className="text-[8px] font-bold uppercase tracking-[.16em] text-muted-foreground">{eyebrow}</p><h3 className="mt-0.5 text-sm font-black">{title}</h3></div><Link href={href} className="grid size-8 place-items-center rounded-full bg-background"><ChevronRight className="size-4" /></Link></div><div className="mt-3 flex snap-x gap-2 overflow-x-auto scrollbar-hide">{products.slice(0, 4).map(product => <MobileProductTile key={product.id} product={product} />)}{!products.length ? <p className="py-4 text-[10px] text-muted-foreground">This section grows as you shop.</p> : null}</div></article>; }
+function MobileProductTile({ product, dark = false }: { product: ProductType; dark?: boolean }) { const variant = product.variants.find(item => item.stockLeft > 0) ?? product.variants[0]; return <Link href={`/products/${product.slug}`} className="w-28 shrink-0 snap-start"><div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">{variant ? <Image src={variant.image} alt={product.name} fill sizes="112px" className="object-cover" /> : null}</div><p className={cn('mt-2 truncate text-[10px] font-bold', dark && 'text-white')}>{product.name}</p><p className={cn('mt-0.5 text-[9px]', dark ? 'text-white/55' : 'text-muted-foreground')}>{variant ? compactCurrencyFormatter.format(variant.price) : 'Unavailable'}</p></Link>; }
+function compactNumber(value: number) { return new Intl.NumberFormat('en-NG', { notation: 'compact', maximumFractionDigits: 1 }).format(value); }
 
 function MetricCard({ icon, label, value, helper, tone }: { icon: ReactNode; label: string; value: string; helper: string; tone: Tone }) {
   return (

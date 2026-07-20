@@ -52,7 +52,7 @@ export function roleForStaffLevel(level: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3'): Wor
 
 export async function getAdminAccess() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect('/sign-in');
+  if (!session) redirect('https://ajlojik.vercel.app/adminlogin/login');
 
   const membership = await prisma.workspaceMembership.findFirst({
     where: {

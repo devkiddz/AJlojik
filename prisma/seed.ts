@@ -10,6 +10,7 @@ import { seedCatalog } from './seeds/catalog.seed';
 import { seedExperienceEvents } from './seeds/experience.seed';
 import { seedCommerce } from './seeds/commerce.seed';
 import { seedHistorySettings } from './seeds/history-settings.seed';
+import { seedAdminAccounts } from './seeds/admin.seed';
 
 async function main() {
   console.log('================================');
@@ -19,6 +20,7 @@ async function main() {
 const workspaces = await seedWorkspaces(prisma);
 
 await seedMemberships(prisma, workspaces);
+await seedAdminAccounts(prisma, workspaces);
 await seedWallets(prisma, workspaces);
 await seedHistorySettings(prisma, workspaces);
 

@@ -6,7 +6,7 @@ import { useState, type FormEvent } from 'react';
 import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
 
-export default function SignInForm() {
+export default function SignInForm({ callbackURL = '/account', showAdminLink = true }: { callbackURL?: string; showAdminLink?: boolean }) {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -26,7 +26,7 @@ export default function SignInForm() {
         email,
         password,
         rememberMe,
-        callbackURL: readAuthReturnTo('/account')
+        callbackURL: readAuthReturnTo(callbackURL)
       });
 
       if (error) {
@@ -34,7 +34,7 @@ export default function SignInForm() {
         return;
       }
 
-      router.push('/account');
+      router.push(callbackURL);
       router.refresh();
     } catch {
       setErrorMessage('Something went wrong while signing you in.');
@@ -112,6 +112,15 @@ export default function SignInForm() {
           Create an account
         </Link>
       </p>
+
+      {showAdminLink ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Staff member?{' '}
+          <Link href="https://ajlojik.vercel.app/adminlogin/login" className="font-semibold text-primary">
+            Open admin login
+          </Link>
+        </p>
+      ) : null}
     </form>
   );
 }

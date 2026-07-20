@@ -82,6 +82,8 @@ export default async function AccountPage() {
         expenseSeries={createExpenseSeries(orders)}
         totalSpent={totalSpent}
         orderCount={orders.length}
+        checkedOutCount={orders.filter(order => ['CONFIRMED', 'PROCESSING', 'READY', 'DISPATCHED', 'DELIVERED'].includes(order.status)).length}
+        onDeliveryCount={orders.filter(order => order.status === 'DISPATCHED').length}
       />
     </CatalogProvider>
   );
