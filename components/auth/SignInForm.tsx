@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
+import GoogleAuthButton from './GoogleAuthButton';
 
-export default function SignInForm({ callbackURL = '/account', showAdminLink = true }: { callbackURL?: string; showAdminLink?: boolean }) {
+export default function SignInForm({ callbackURL = '/account', showAdminLink = true, googleEnabled = false }: { callbackURL?: string; showAdminLink?: boolean; googleEnabled?: boolean }) {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -45,6 +46,7 @@ export default function SignInForm({ callbackURL = '/account', showAdminLink = t
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <GoogleAuthButton callbackURL={callbackURL} enabled={googleEnabled} label="Continue with Google" />
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-medium">
           Email address

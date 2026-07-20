@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
+import GoogleAuthButton from './GoogleAuthButton';
 
-export default function SignUpForm() {
+export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
 
   const [name, setName] = useState('');
@@ -67,6 +68,7 @@ export default function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <GoogleAuthButton callbackURL="/account" enabled={googleEnabled} label="Sign up with Google" />
       <div className="space-y-2">
         <label htmlFor="name" className="text-sm font-medium">
           Full name

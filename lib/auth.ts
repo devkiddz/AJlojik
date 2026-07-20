@@ -4,7 +4,12 @@ import { APIError } from 'better-auth/api';
 
 import { prisma } from '@/lib/prisma';
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL,
+
   database: prismaAdapter(prisma, {
     provider: 'postgresql'
   }),
@@ -12,6 +17,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true
   },
+
+  socialProviders: googleClientId && googleClientSecret ? {
+    google: {
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+      prompt: 'select_account'
+    }
+  } : {},
 
   user: {
     additionalFields: {
