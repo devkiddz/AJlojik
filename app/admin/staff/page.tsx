@@ -9,7 +9,8 @@ export default async function AdminStaffPage() {
   const access = await getAdminAccess();
   if (!access.permissions.has('staff:view') && !access.permissions.has('staff:assign')) throw new Error('Staff activity requires Level 3 or Super Admin access.');
 
-  const staff = await prisma.staffProfile.findMany({ where: { workspaceId: access.membership.workspaceId }, include: { user: { select: { name: true, email: true, image: true, updatedAt: true } } }, orderBy: [{ active: 'desc' }, { level: 'desc' }] });
+  const actor = await prisma.user.findUnique({ where: { id: access.session.user.id }, select: { isGhostDeveloper: true } });
+  const staff = await prisma.staffProfile.findMany({ where: { workspaceId: access.membership.workspaceId, ...(actor?.isGhostDeveloper ? {} : { user: { isGhostDeveloper: false } }) }, include: { user: { select: { name: true, email: true, image: true, updatedAt: true } } }, orderBy: [{ active: 'desc' }, { level: 'desc' }] });
   const canAssign = access.permissions.has('staff:assign');
   return (
     <main className="min-h-dvh px-3 py-5 sm:px-6 lg:px-8"><div className="mx-auto max-w-6xl space-y-5">

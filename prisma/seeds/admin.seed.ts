@@ -4,13 +4,14 @@ import { auth } from '../../lib/auth';
 
 import type { SeededWorkspaces } from './workspace.seed';
 
-const DEVELOPER_EMAIL = 'devkiddzadmin@recentzadmin.com';
+const DEVELOPER_EMAIL = 'developer@rcentzlab.com';
 const DEMO_EMAIL = 'demo.superadmin@ajlojik.com';
 
 export async function seedAdminAccounts(prisma: PrismaClient, workspaces: SeededWorkspaces) {
-  const developer = await prisma.user.findUnique({ where: { email: DEVELOPER_EMAIL }, select: { id: true } });
+  const developer = await prisma.user.findFirst({ where: { email: { in: [DEVELOPER_EMAIL, 'devkiddzadmin@recentzadmin.com'] } }, select: { id: true } });
 
   if (developer) {
+    await prisma.user.update({ where: { id: developer.id }, data: { email: DEVELOPER_EMAIL, isGhostDeveloper: true, accountState: 'ACTIVE', lockedUntil: null, restrictionReason: null } });
     await prisma.workspaceMembership.upsert({
       where: { workspaceId_userId: { workspaceId: workspaces.live.id, userId: developer.id } },
       update: { role: 'SUPER_ADMIN', active: true },

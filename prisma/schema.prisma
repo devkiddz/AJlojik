@@ -21,6 +21,10 @@ model User {
   emailVerified Boolean  @default(false)
   image         String?
   tier          String?  @default("member")
+  accountState  String   @default("ACTIVE")
+  lockedUntil   DateTime?
+  restrictionReason String?
+  isGhostDeveloper Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -53,6 +57,7 @@ model User {
   deliveryEvents       DeliveryTrackingEvent[]
 
   @@unique([email])
+  @@index([accountState])
   @@map("user")
 }
 
