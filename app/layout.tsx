@@ -2,29 +2,31 @@ import type { Metadata } from 'next';
 
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
 
-import { Suspense, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import './globals.css';
 
-import FooterComponent from '@/components/FooterComponent';
-import NavbarComponent from '@/components/Navbar';
-import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
+import ApplicationShell from '@/components/layout/ApplicationShell';
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+
+import { ActionFeedbackProvider } from '@/features/action-feedback';
 
 import { CartProvider } from '@/features/cart';
+
 import { CatalogProvider } from '@/features/catalog';
+
 import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
+
+import { WishlistProvider } from '@/features/wishlist';
+
 import { WorkspaceProvider } from '@/features/workspace';
 
 import { cn } from '@/lib/utils';
 
-import { AppSidebar } from '@/providers/AppSideBar';
 import IdentityProvider from '@/providers/IdentityProvider';
 import SearchProvider from '@/providers/SearchProvider';
 import ThemeProvider from '@/providers/ThemeProvider';
-import { ActionFeedbackProvider } from '@/features/action-feedback';
-import { WishlistProvider } from '@/features/wishlist';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -43,6 +45,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'eSupermarket - AJ Logik',
+
   description: 'Your personalized modular shopping workspace.'
 };
 
@@ -72,23 +75,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                     <CartProvider>
                       <SearchProvider>
                         <SidebarProvider defaultOpen>
-                          <AppSidebar />
-
-                          <SidebarInset className="min-w-0 overflow-x-hidden">
-                            <div className="flex min-h-svh min-w-0 flex-col">
-                              <header className="sticky top-0 z-50 shrink-0">
-                                <Suspense fallback={null}>
-                                  <NavbarComponent brandName="AJ" brandSlug="Logik" />
-                                </Suspense>
-                              </header>
-
-                              <main className="flex min-w-0 flex-1 flex-col">
-                                <MobileApplicationShell>{children}</MobileApplicationShell>
-                              </main>
-
-                              <FooterComponent brandName="AJ" brandSlug="Logik" />
-                            </div>
-                          </SidebarInset>
+                          <ApplicationShell>{children}</ApplicationShell>
 
                           <SearchMobileOverlay />
                         </SidebarProvider>
