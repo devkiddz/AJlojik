@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 
 import Image from 'next/image';
-import { Crown, Heart, LogOut, ShoppingCart } from 'lucide-react';
+import { Crown, Heart, LogOut, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import {
@@ -21,6 +21,7 @@ import {
 import { categories } from '@/data/categories';
 
 import { useCart } from '@/features/cart';
+import { useWorkspace } from '@/features/workspace';
 
 import { useIdentity } from '@/providers/IdentityProvider';
 import SidebarHeaderContent from '@/providers/SidebarHeaderContent';
@@ -79,6 +80,9 @@ export function AppSidebar() {
   const { user, isAuthenticated, isPending, signOut } = useIdentity();
 
   const { totalQuantity, loading: cartLoading } = useCart();
+  const { activeWorkspace } = useWorkspace();
+  const adminRoles = ['SUPPORT', 'MANAGER', 'ADMIN', 'SUPER_ADMIN'];
+  const hasAdminAccess = Boolean(activeWorkspace && adminRoles.includes(activeWorkspace.membership.role));
 
   const wishlistCount = 0;
 
@@ -177,6 +181,15 @@ export function AppSidebar() {
                 </button>
 
                 <div className="mt-3 space-y-1">
+                  {hasAdminAccess ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/admin')}
+                      className="flex w-full items-center gap-2 rounded-2xl bg-primary/10 px-3 py-2 text-left text-sm font-semibold text-primary transition hover:bg-primary/15">
+                      <ShieldCheck className="size-4" />
+                      Admin console
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => router.push('/wishlist')}

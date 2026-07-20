@@ -42,6 +42,16 @@ model User {
   experienceHistoryEntries  ExperienceHistoryEntry[]
   experienceHistorySettings ExperienceHistorySettings[]
 
+  staffProfile         StaffProfile?
+  staffInvitations     StaffProfile[]          @relation("StaffInvitedBy")
+  approvalRequests     AdminApprovalRequest[]  @relation("ApprovalRequestedBy")
+  approvalReviews      AdminApprovalRequest[]  @relation("ApprovalReviewedBy")
+  adminAuditEvents     AdminAuditEvent[]
+  assignedAdminTodos   AdminTodo[]             @relation("AdminTodoAssignee")
+  createdAdminTodos    AdminTodo[]             @relation("AdminTodoCreator")
+  dispatchedDeliveries Delivery[]              @relation("DeliveryDispatcher")
+  deliveryEvents       DeliveryTrackingEvent[]
+
   @@unique([email])
   @@map("user")
 }
@@ -468,6 +478,8 @@ model Order {
   mode       WorkspaceMode @default(LIVE)
   dataSource DataSource    @default(REAL)
 
+  delivery Delivery?
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -737,15 +749,283 @@ model Workspace {
   experienceHistorySettings ExperienceHistorySettings[]
   provisions                DemoProvision[]
 
-  carts     Cart[]
-  wishlists Wishlist[]
-  orders    Order[]
+  carts            Cart[]
+  wishlists        Wishlist[]
+  orders           Order[]
+  staffProfiles    StaffProfile[]
+  approvalRequests AdminApprovalRequest[]
+  adminAuditEvents AdminAuditEvent[]
+  adminTodos       AdminTodo[]
+  deliveries       Delivery[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([mode, active])
   @@map("workspace")
+}
+
+// ============================================================
+// ADMIN CONTROL PLANE
+// ============================================================
+
+model StaffProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  level        StaffLevel
+  employeeCode String     @unique
+  title        String?
+  department   String?
+  active       Boolean    @default(true)
+
+  invitedById String?
+  invitedBy   User?   @relation("StaffInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, level, active])
+  @@map("staff_profile")
+}
+
+enum StaffLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+}
+
+model AdminApprovalRequest {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  requestedById String
+  requestedBy   User   @relation("ApprovalRequestedBy", fields: [requestedById], references: [id])
+
+  reviewedById String?
+  reviewedBy   User?   @relation("ApprovalReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  action     AdminApprovalAction
+  targetType AdminTargetType
+  targetId   String
+  reason     String
+  payload    Json?
+  status     AdminApprovalStatus @default(PENDING)
+  reviewNote String?
+  reviewedAt DateTime?
+  executedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, createdAt])
+  @@index([requestedById, createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_approval_request")
+}
+
+enum AdminApprovalAction {
+  DELETE
+  DELIVERY_STATUS_UPDATE
+  DELIVERY_EXCEPTION
+  PUBLISH_LIVE
+  OTHER
+}
+
+enum AdminTargetType {
+  PRODUCT
+  PROMOTION
+  EXPERIENCE
+  FEATURED_LAYOUT
+  ORDER
+  DELIVERY
+  TRACKING_EVENT
+  USER
+  STAFF
+  OTHER
+}
+
+enum AdminApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXECUTED
+}
+
+model AdminAuditEvent {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  action     String
+  targetType AdminTargetType
+  targetId   String?
+  summary    String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime        @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_audit_event")
+}
+
+model AdminTodo {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  assigneeId  String?
+  assignee    User?   @relation("AdminTodoAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?   @relation("AdminTodoCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+  source      AdminTodoSource   @default(SYSTEM)
+  priority    AdminTodoPriority @default(MEDIUM)
+  status      AdminTodoStatus   @default(OPEN)
+  targetType  AdminTargetType?
+  targetId    String?
+  dueAt       DateTime?
+  completedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([workspaceId, status, priority])
+  @@index([assigneeId, status])
+  @@map("admin_todo")
+}
+
+enum AdminTodoSource {
+  SYSTEM
+  AI
+  STAFF
+  APPROVAL
+  DELIVERY
+  INVENTORY
+}
+
+enum AdminTodoPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum AdminTodoStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  DISMISSED
+}
+
+// ============================================================
+// DELIVERY AND TRACKING
+// ============================================================
+
+model Delivery {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  method           DeliveryMethod
+  status           DeliveryStatus @default(PENDING)
+  trackingCode     String         @unique
+  barcodeTokenHash String?
+  barcodeExpiresAt DateTime?
+
+  dispatcherId    String?
+  dispatcher      User?   @relation("DeliveryDispatcher", fields: [dispatcherId], references: [id], onDelete: SetNull)
+  dispatcherName  String?
+  dispatcherPhone String?
+
+  estimatedArrival DateTime?
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  trackingEnabled  Boolean   @default(false)
+  lastLatitude     Float?
+  lastLongitude    Float?
+  lastLocationAt   DateTime?
+
+  events DeliveryTrackingEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, createdAt])
+  @@index([dispatcherId, status])
+  @@map("delivery")
+}
+
+model DeliveryTrackingEvent {
+  id String @id @default(cuid())
+
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  status         DeliveryStatus
+  source         DeliveryEventSource
+  latitude       Float?
+  longitude      Float?
+  accuracyMeters Float?
+  note           String?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+
+  @@index([deliveryId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("delivery_tracking_event")
+}
+
+enum DeliveryMethod {
+  AJ_DELIVERY
+  PERSONAL_COURIER
+  STORE_PICKUP
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  BARCODE_SCANNED
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum DeliveryEventSource {
+  SYSTEM
+  STAFF
+  DISPATCHER_SCAN
+  DISPATCHER_GPS
+  CUSTOMER
+  APPROVAL
 }
 
 model WorkspaceMembership {

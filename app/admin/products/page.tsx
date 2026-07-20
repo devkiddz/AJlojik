@@ -1,14 +1,9 @@
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
-
 import AdminProductsDashboard, { type AdminProductRecord } from '@/features/admin/products/AdminProductsDashboard';
-import { auth } from '@/lib/auth';
+import { getAdminAccess } from '@/features/admin/auth/adminPermissions';
 import { prisma } from '@/lib/prisma';
 
 export default async function AdminProductsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) redirect('/sign-in');
+  const access = await getAdminAccess();
 
   const [products, membership] = await Promise.all([
     prisma.product.findMany({
@@ -24,11 +19,7 @@ export default async function AdminProductsPage() {
       },
       orderBy: { updatedAt: 'desc' }
     }),
-    prisma.workspaceMembership.findFirst({
-      where: { userId: session.user.id, active: true },
-      orderBy: { joinedAt: 'asc' },
-      select: { role: true, workspace: { select: { name: true, mode: true } } }
-    })
+    Promise.resolve(access.membership)
   ]);
 
   const records: AdminProductRecord[] = products.map(product => ({
@@ -66,10 +57,10 @@ export default async function AdminProductsPage() {
     <AdminProductsDashboard
       products={records}
       operator={{
-        name: session.user.name,
-        role: membership?.role ?? 'CATALOG_OPERATOR',
-        workspace: membership?.workspace.name ?? 'AJ Logik',
-        mode: membership?.workspace.mode ?? 'LIVE'
+        name: access.session.user.name,
+        role: membership.role,
+        workspace: membership.workspace.name,
+        mode: membership.workspace.mode
       }}
     />
   );

@@ -2,25 +2,14 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-const managementRoles = ['MANAGER', 'ADMIN', 'OWNER', 'SUPER_ADMIN'] as const;
+import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 
 async function authorizeCatalogWrite() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect('/sign-in');
-
-  const membership = await prisma.workspaceMembership.findFirst({
-    where: { userId: session.user.id, active: true, role: { in: [...managementRoles] } },
-    select: { id: true }
-  });
-
-  if (!membership) throw new Error('A manager or administrator role is required to change catalog products.');
+  return requireAdminPermission('product:update');
 }
 
 function text(formData: FormData, key: string) {
@@ -49,7 +38,7 @@ function productData(formData: FormData) {
 }
 
 export async function createProduct(formData: FormData) {
-  await authorizeCatalogWrite();
+  await requireAdminPermission('product:create');
   const data = productData(formData);
   const product = await prisma.product.create({ data: { id: randomUUID(), ...data } });
   revalidatePath('/admin/products');
