@@ -66,6 +66,13 @@ export default async function AccountPage() {
     .filter(order => order.status !== 'CANCELLED' && order.status !== 'REFUNDED')
     .reduce((sum, order) => sum + Number(order.total), 0);
 
+  const shoppingListProductIds = Array.isArray(experienceProfile.shoppingLists)
+    ? Array.from(new Set(experienceProfile.shoppingLists.flatMap(list => {
+        if (!list || typeof list !== 'object' || !('productIds' in list) || !Array.isArray(list.productIds)) return [];
+        return list.productIds.filter((id): id is string => typeof id === 'string');
+      })))
+    : [];
+
   return (
     <CatalogProvider initialProducts={catalog}>
       <CommerceDashboard
@@ -84,6 +91,7 @@ export default async function AccountPage() {
         orderCount={orders.length}
         checkedOutCount={orders.filter(order => ['CONFIRMED', 'PROCESSING', 'READY', 'DISPATCHED', 'DELIVERED'].includes(order.status)).length}
         onDeliveryCount={orders.filter(order => order.status === 'DISPATCHED').length}
+        shoppingListProductIds={shoppingListProductIds}
       />
     </CatalogProvider>
   );

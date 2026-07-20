@@ -97,7 +97,7 @@ function PreviewContent({
           : 'Quick preview';
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[minmax(15rem,40vh)_minmax(0,1fr)] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:grid-rows-1">
+    <div className="grid h-full min-h-0 grid-rows-[minmax(20rem,48vh)_minmax(0,1fr)] md:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)] md:grid-rows-1">
       <section className="group/visual relative min-h-0 overflow-hidden border-b border-border/60 bg-muted md:border-b-0 md:border-r">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background via-muted to-primary/10" />
         <div className="pointer-events-none absolute -left-20 -top-20 size-64 rounded-full bg-white/20 blur-3xl dark:bg-white/5" />
@@ -116,15 +116,15 @@ function PreviewContent({
           ) : null}
         </div>
 
-        <div className="relative flex h-full items-center justify-center px-12 pb-14 pt-12 sm:px-16 md:px-12 lg:px-16">
+        <div className="relative flex h-full items-center justify-center px-5 pb-14 pt-12 sm:px-8 lg:px-10">
           <Image
             src={activeVariant.image}
             alt={product.name}
             width={900}
             height={900}
             priority
-            sizes="(max-width: 768px) 75vw, 440px"
-            className="h-auto max-h-full w-auto max-w-full object-contain drop-shadow-[0_28px_38px_rgba(0,0,0,0.25)] transition duration-700 ease-out group-hover/visual:scale-[1.055] group-hover/visual:-rotate-1"
+            sizes="(max-width: 768px) 92vw, 62vw"
+            className="h-full max-h-full w-full max-w-full object-contain drop-shadow-[0_28px_38px_rgba(0,0,0,0.25)] transition duration-700 ease-out group-hover/visual:scale-[1.055] group-hover/visual:-rotate-1"
           />
         </div>
 
@@ -323,9 +323,9 @@ export function ProductPreviewModal({
     <Dialog open={open} onOpenChange={nextOpen => !nextOpen && onClose()}>
       <DialogContent
         className={cn(
-          'h-[min(90dvh,44rem)] w-[calc(100%_-_1rem)] max-w-[61rem] overflow-hidden rounded-[1.75rem]',
+          'h-[min(94dvh,58rem)] w-[calc(100%_-_1rem)] max-w-[86rem] overflow-hidden rounded-[1.75rem]',
           'border-border/60 bg-background p-0 shadow-[0_32px_100px_-24px_rgba(0,0,0,0.65)]',
-          'md:h-[min(78dvh,35rem)]',
+          'md:h-[min(88dvh,52rem)]',
           '[&>button]:z-[60] [&>button]:rounded-full [&>button]:border [&>button]:border-border/60',
           '[&>button]:bg-background/80 [&>button]:shadow-lg [&>button]:backdrop-blur-xl'
         )}>

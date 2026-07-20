@@ -48,9 +48,10 @@ export default function SingleProductLayout({ product }: { product: ProductType 
 
         <section className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(24rem,.88fr)] xl:gap-10">
           <div className="min-w-0">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-border/50 bg-muted shadow-sm">
-              <Image src={variant.image} alt={`${product.name} — ${variant.label}`} fill priority sizes="(max-width:1024px) 100vw, 58vw" className="object-cover transition duration-500" />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/10" />
+            <div className="group relative aspect-[16/11] min-h-[28rem] overflow-hidden rounded-[2rem] border border-border/50 bg-[#080b12] shadow-2xl sm:min-h-[36rem]">
+              <Image src={variant.image} alt="" fill priority sizes="(max-width:1024px) 100vw, 58vw" className="scale-110 object-cover opacity-35 blur-2xl transition duration-700 group-hover:scale-125" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-black/25" />
+              <Image src={variant.image} alt={`${product.name} — ${variant.label}`} fill priority sizes="(max-width:1024px) 100vw, 58vw" className="z-10 object-contain p-5 drop-shadow-[0_35px_55px_rgba(0,0,0,.55)] transition duration-700 group-hover:scale-[1.035] sm:p-10" />
               {product.discountPercentage > 0 ? <span className="absolute left-4 top-4 rounded-md bg-amber-400 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-black">Save {product.discountPercentage}%</span> : null}
             </div>
 

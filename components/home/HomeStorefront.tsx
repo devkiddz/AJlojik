@@ -49,9 +49,9 @@ export default function HomeStorefront() {
 
   return (
     <div className="bg-background pb-14">
-      <section className="mx-auto w-full max-w-[1600px] px-3 pt-3 sm:px-5 sm:pt-5">
-        <div className="grid overflow-hidden rounded-[1.75rem] border border-border/50 bg-[#07172b] text-white shadow-2xl lg:grid-cols-[1.02fr_.98fr]">
-          <div className="relative z-10 flex min-h-[30rem] flex-col justify-center p-7 sm:p-12 lg:p-16">
+      <section className="w-full">
+        <div className="grid min-h-[72dvh] overflow-hidden bg-[#07172b] text-white shadow-2xl lg:grid-cols-[.9fr_1.1fr]">
+          <div className="relative z-10 flex min-h-[34rem] flex-col justify-center p-7 sm:p-12 lg:min-h-[72dvh] lg:p-16 xl:p-24">
             <div className="absolute -left-32 top-0 size-96 rounded-full bg-blue-500/20 blur-3xl" />
             <div className="relative">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.16em] backdrop-blur">
@@ -66,7 +66,7 @@ export default function HomeStorefront() {
             </div>
           </div>
 
-          <Link href={`/products/${featured.slug}`} className="group relative min-h-[25rem] overflow-hidden lg:min-h-[38rem]">
+          <Link href={`/products/${featured.slug}`} className="group relative min-h-[32rem] overflow-hidden lg:min-h-[72dvh]">
             <Image src={featuredVariant.image} alt={featured.name} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.035]" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/5 to-transparent lg:bg-gradient-to-r lg:from-[#07172b]/35 lg:via-transparent lg:to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
@@ -78,6 +78,10 @@ export default function HomeStorefront() {
         </div>
       </section>
 
+      <div className="relative z-10 -mt-10 rounded-t-[2rem] bg-background pt-1">
+        <ProductRail title="Most active experiences" subtitle="The products customers are exploring and choosing now" products={trending} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} />
+      </div>
+
       <section className="mx-auto mt-8 w-full max-w-[1500px] px-4 sm:px-6">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {categories.slice(0, 6).map(category => (
@@ -88,8 +92,6 @@ export default function HomeStorefront() {
           ))}
         </div>
       </section>
-
-      <ProductRail title="Popular right now" subtitle="The products customers are choosing most" products={trending} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} />
 
       <section className="mx-auto mt-10 grid w-full max-w-[1500px] gap-4 px-4 sm:px-6 lg:grid-cols-2">
         <PromoTile product={recommendations[0] ?? featured} eyebrow="Curated for you" title="Premium picks, without the noise" tone="dark" />

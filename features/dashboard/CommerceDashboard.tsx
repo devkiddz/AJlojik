@@ -54,6 +54,7 @@ type CommerceDashboardProps = {
   orderCount: number;
   checkedOutCount: number;
   onDeliveryCount: number;
+  shoppingListProductIds: string[];
 };
 
 const currencyFormatter = new Intl.NumberFormat('en-NG', {
@@ -78,7 +79,8 @@ function CommerceDashboardContent({
   totalSpent,
   orderCount,
   checkedOutCount,
-  onDeliveryCount
+  onDeliveryCount,
+  shoppingListProductIds
 }: CommerceDashboardProps) {
   const { products, loading: catalogLoading } = useCatalog();
   const { items: cartItems, totalQuantity, subtotal, loading: cartLoading } = useCart();
@@ -96,6 +98,7 @@ function CommerceDashboardContent({
     () => wishlistProductIds.map(id => productById.get(id)).filter((product): product is ProductType => Boolean(product)),
     [productById, wishlistProductIds]
   );
+  const shoppingListProducts = useMemo(() => shoppingListProductIds.map(id => productById.get(id)).filter((product): product is ProductType => Boolean(product)), [productById, shoppingListProductIds]);
 
   const inventory = useMemo(() => {
     const variants = products.flatMap(product => product.variants);
@@ -119,14 +122,17 @@ function CommerceDashboardContent({
     const preferredCategories = new Set([
       ...recentProducts.map(product => product.category),
       ...wishlistProducts.map(product => product.category),
-      ...cartItems.map(item => item.product.category)
+      ...cartItems.map(item => item.product.category),
+      ...shoppingListProducts.map(product => product.category)
     ]);
+    const shoppingListIds = new Set(shoppingListProductIds);
 
     return [...products]
       .filter(product => !excludedIds.has(product.id) && product.variants.some(variant => variant.stockLeft > 0))
       .sort((first, second) => {
         const score = (product: ProductType) =>
           (preferredCategories.has(product.category) ? 6 : 0) +
+          (shoppingListIds.has(product.id) ? 8 : 0) +
           (product.featured ? 3 : 0) +
           (product.isNew ? 2 : 0) +
           product.rating;
@@ -134,7 +140,7 @@ function CommerceDashboardContent({
         return score(second) - score(first);
       })
       .slice(0, 6);
-  }, [cartItems, products, recentProductIds, recentProducts, wishlistProductIds, wishlistProducts]);
+  }, [cartItems, products, recentProductIds, recentProducts, shoppingListProductIds, shoppingListProducts, wishlistProductIds, wishlistProducts]);
 
   const maxExpense = Math.max(...expenseSeries.map(point => point.value), subtotal, 1);
   const firstName = user.name.split(' ')[0] || user.name;
@@ -174,6 +180,7 @@ function CommerceDashboardContent({
           wishlistProducts={wishlistProducts}
           cartProducts={cartItems.map(item => item.product)}
           recommendations={recommendations}
+          shoppingListProducts={shoppingListProducts}
           wishlistCount={wishlistCount}
           cartCount={totalQuantity}
           checkedOutCount={checkedOutCount}
@@ -309,7 +316,7 @@ export default function CommerceDashboard(props: CommerceDashboardProps) {
 
 type MobileInventory = { totalUnits: number; lowStockVariants: number; outOfStockVariants: number; inventoryValue: number; variantCount: number };
 
-function MobileCommerceDashboard({ inventory, recentProducts, wishlistProducts, cartProducts, recommendations, wishlistCount, cartCount, checkedOutCount, onDeliveryCount, totalSpent, orderCount }: { inventory: MobileInventory; recentProducts: ProductType[]; wishlistProducts: ProductType[]; cartProducts: ProductType[]; recommendations: ProductType[]; wishlistCount: number; cartCount: number; checkedOutCount: number; onDeliveryCount: number; totalSpent: number; orderCount: number }) {
+function MobileCommerceDashboard({ inventory, recentProducts, wishlistProducts, cartProducts, recommendations, shoppingListProducts, wishlistCount, cartCount, checkedOutCount, onDeliveryCount, totalSpent, orderCount }: { inventory: MobileInventory; recentProducts: ProductType[]; wishlistProducts: ProductType[]; cartProducts: ProductType[]; recommendations: ProductType[]; shoppingListProducts: ProductType[]; wishlistCount: number; cartCount: number; checkedOutCount: number; onDeliveryCount: number; totalSpent: number; orderCount: number }) {
   const smartPicks = recommendations.filter(product => product.featured || product.isNew).slice(0, 4);
   const stockHealth = inventory.variantCount ? Math.round(((inventory.variantCount - inventory.outOfStockVariants) / inventory.variantCount) * 100) : 0;
   return (
@@ -325,7 +332,7 @@ function MobileCommerceDashboard({ inventory, recentProducts, wishlistProducts, 
       </MobileBlock>
 
       <MobileBlock title="Discovery intelligence" subtitle="Your activity, recommendations, and smart selections">
-        <div className="space-y-3"><MobileProductGroup icon={<Eye />} eyebrow="Continue" title="Recently viewed" products={recentProducts} href="/store" /><MobileProductGroup icon={<Sparkles />} eyebrow="For you" title="Recommended" products={recommendations} href="/store" /><MobileProductGroup icon={<WandSparkles />} eyebrow="AJ intelligence" title="Smart picks" products={smartPicks.length ? smartPicks : recommendations} href="/ai" /></div>
+        <div className="space-y-3"><MobileProductGroup icon={<Heart />} eyebrow="Your playlists" title="Shopping lists" products={shoppingListProducts} href="/settings" /><MobileProductGroup icon={<Eye />} eyebrow="Continue" title="Recently viewed" products={recentProducts} href="/store" /><MobileProductGroup icon={<Sparkles />} eyebrow="For you" title="Recommended" products={recommendations} href="/store" /><MobileProductGroup icon={<WandSparkles />} eyebrow="AJ intelligence" title="Smart picks" products={smartPicks.length ? smartPicks : recommendations} href="/ai" /></div>
       </MobileBlock>
 
       <section className="overflow-hidden rounded-[2rem] border border-border/60 bg-[#07172b] p-5 text-white shadow-xl"><p className="text-[9px] font-black uppercase tracking-[.2em] text-amber-300">Store experience</p><div className="mt-2 flex items-end justify-between gap-4"><div><h2 className="text-xl font-black">Keep discovering</h2><p className="mt-1 text-xs leading-5 text-white/60">Fresh products and moments chosen around your activity.</p></div><Link href="/store" className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#07172b]"><ArrowRight className="size-4" /></Link></div><div className="mt-5 flex snap-x gap-3 overflow-x-auto pb-1 scrollbar-hide">{recommendations.slice(0, 4).map(product => <MobileProductTile key={product.id} product={product} dark />)}</div></section>

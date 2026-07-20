@@ -132,6 +132,13 @@ model ExperienceProfile {
   onboardingCompleted    Boolean @default(false)
   personalizationEnabled Boolean @default(true)
 
+  shoppingLists Json?
+  experienceDensity String  @default("immersive")
+  autoplayPreviews  Boolean @default(true)
+  discoveryEnabled  Boolean @default(true)
+  recommendationMode String @default("balanced")
+  shoppingNotifications Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

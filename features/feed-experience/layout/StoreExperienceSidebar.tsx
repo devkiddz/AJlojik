@@ -23,6 +23,7 @@ type StoreExperienceSidebarProps = {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
   mobileOnly?: boolean;
+  desktopOnly?: boolean;
 };
 
 export default function StoreExperienceSidebar({
@@ -31,7 +32,8 @@ export default function StoreExperienceSidebar({
   recentProductIds = [],
   collapsed,
   onCollapsedChange,
-  mobileOnly = false
+  mobileOnly = false,
+  desktopOnly = false
 }: StoreExperienceSidebarProps) {
   const router = useRouter();
   const { products } = useCatalog();
@@ -103,7 +105,7 @@ export default function StoreExperienceSidebar({
 
   return (
     <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      <MobileDiscoverySheetHost />
+      {desktopOnly ? null : <MobileDiscoverySheetHost />}
       {mobileOnly ? null : (
         <DesktopDiscoveryRail
           groups={hubGroups}

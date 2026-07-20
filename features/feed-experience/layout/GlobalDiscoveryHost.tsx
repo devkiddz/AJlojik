@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { usePathname } from 'next/navigation';
 
@@ -13,9 +13,21 @@ export default function GlobalDiscoveryHost() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useIdentity();
   const [collapsed, setCollapsed] = useState(true);
+  const [discoveryEnabled, setDiscoveryEnabled] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void fetch('/api/account/experience-settings')
+      .then(response => response.ok ? response.json() : null)
+      .then(data => {
+        if (active && data?.profile) setDiscoveryEnabled(data.profile.discoveryEnabled !== false);
+      });
+    return () => { active = false; };
+  }, [isAuthenticated]);
 
   // Home intentionally stays editorial. Store already owns its integrated hub.
-  if (pathname === '/' || pathname === '/store') return null;
+  if (pathname === '/' || pathname === '/store' || !discoveryEnabled) return null;
 
   return (
     <>
@@ -36,6 +48,7 @@ export default function GlobalDiscoveryHost() {
           authenticated={isAuthenticated}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
+          desktopOnly
         />
       </div>
     </>
