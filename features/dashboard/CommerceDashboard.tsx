@@ -190,6 +190,16 @@ function CommerceDashboardContent({
         />
 
         <div className="hidden space-y-5 sm:block">
+        <DesktopCommerceAnalytics
+          inventory={inventory}
+          expenseSeries={expenseSeries}
+          maxExpense={maxExpense}
+          subtotal={subtotal}
+          totalSpent={totalSpent}
+          orderCount={orderCount}
+          wishlistCount={wishlistCount}
+          cartCount={totalQuantity}
+        />
         <section aria-label="Recent account activity" className="overflow-hidden rounded-[2.25rem] border border-border/60 bg-[linear-gradient(145deg,hsl(var(--card)/0.92),hsl(var(--muted)/0.42))] p-3 shadow-xl sm:p-5">
           <div className="mb-4 flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -227,14 +237,14 @@ function CommerceDashboardContent({
           </div>
         </section>
 
-        <section aria-label="Commerce overview" className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-8 scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 xl:grid-cols-4">
+        <section aria-label="Commerce overview" className="hidden">
           <MetricCard icon={<WalletCards />} label="Lifetime spend" value={currencyFormatter.format(totalSpent)} helper={`${orderCount} orders recorded`} tone="violet" />
           <MetricCard icon={<ShoppingBag />} label="Active cart" value={String(totalQuantity)} helper={currencyFormatter.format(subtotal)} tone="emerald" />
           <MetricCard icon={<Heart />} label="Saved products" value={String(wishlistCount)} helper="Synced wishlist" tone="rose" />
           <MetricCard icon={<Boxes />} label="Inventory units" value={inventory.totalUnits.toLocaleString()} helper={`${inventory.variantCount} product options`} tone="amber" />
         </section>
 
-        <section>
+        <section className="hidden">
           <article className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
             <SectionHeading eyebrow="Store health" title="Inventory tracker" description="Live availability across catalog options." />
 
@@ -315,6 +325,72 @@ export default function CommerceDashboard(props: CommerceDashboardProps) {
 }
 
 type MobileInventory = { totalUnits: number; lowStockVariants: number; outOfStockVariants: number; inventoryValue: number; variantCount: number };
+
+function DesktopCommerceAnalytics({ inventory, expenseSeries, maxExpense, subtotal, totalSpent, orderCount, wishlistCount, cartCount }: { inventory: MobileInventory; expenseSeries: ExpensePoint[]; maxExpense: number; subtotal: number; totalSpent: number; orderCount: number; wishlistCount: number; cartCount: number }) {
+  const availableVariants = Math.max(inventory.variantCount - inventory.lowStockVariants - inventory.outOfStockVariants, 0);
+  const stockHealth = inventory.variantCount ? Math.round(((inventory.variantCount - inventory.outOfStockVariants) / inventory.variantCount) * 100) : 0;
+  const segment = (value: number) => inventory.variantCount ? (value / inventory.variantCount) * 100 : 0;
+
+  return (
+    <section aria-label="Commerce command center" className="overflow-hidden rounded-[2.75rem] border border-border/60 bg-[linear-gradient(135deg,hsl(var(--card)/0.96),hsl(var(--muted)/0.38))] p-5 shadow-2xl lg:p-8 xl:p-10">
+      <div className="mb-6 flex items-end justify-between gap-6 lg:mb-8">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">Commerce command center</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight lg:text-4xl">Your inventory, spend and shopping pulse</h2>
+          <p className="mt-2 max-w-2xl text-xs text-muted-foreground lg:text-sm">A live view of what is available, what needs attention, and how your commerce activity is moving.</p>
+        </div>
+        <Link href="/store" className="hidden items-center gap-2 rounded-full bg-foreground px-5 py-3 text-xs font-bold text-background transition hover:scale-[1.03] lg:inline-flex">Open store <ArrowRight className="size-4" /></Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-12 lg:gap-5">
+        <article className="col-span-2 overflow-hidden rounded-[2.5rem] bg-[#07172b] p-6 text-white shadow-xl lg:col-span-7 lg:min-h-[29rem] lg:p-8 xl:p-10">
+          <div className="flex items-start justify-between gap-5">
+            <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-emerald-300">Inventory health</p><h3 className="mt-2 text-xl font-black lg:text-3xl">Stock distribution</h3></div>
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold">{inventory.variantCount} options</span>
+          </div>
+          <div className="mt-8 grid items-center gap-8 md:grid-cols-[minmax(13rem,18rem)_1fr] lg:mt-10">
+            <div className="relative mx-auto grid size-52 place-items-center rounded-full shadow-[0_0_70px_rgba(16,185,129,.18)] lg:size-64 xl:size-72" style={{ background: `conic-gradient(#10b981 0 ${segment(availableVariants)}%, #f59e0b ${segment(availableVariants)}% ${segment(availableVariants + inventory.lowStockVariants)}%, #f43f5e 0)` }}>
+              <div className="grid size-40 place-items-center rounded-full bg-[#07172b] text-center lg:size-48 xl:size-52"><div><p className="text-4xl font-black lg:text-6xl">{stockHealth}%</p><p className="mt-1 text-[10px] uppercase tracking-[.18em] text-white/50">available</p></div></div>
+            </div>
+            <div className="space-y-3">
+              <StockLegend color="bg-emerald-400" label="Healthy options" value={availableVariants} total={inventory.variantCount} />
+              <StockLegend color="bg-amber-400" label="Low stock" value={inventory.lowStockVariants} total={inventory.variantCount} />
+              <StockLegend color="bg-rose-400" label="Unavailable" value={inventory.outOfStockVariants} total={inventory.variantCount} />
+              <div className="mt-5 rounded-3xl border border-white/10 bg-white/[.07] p-4 lg:p-5"><p className="text-[10px] text-white/50">Total units in circulation</p><p className="mt-1 text-2xl font-black lg:text-4xl">{inventory.totalUnits.toLocaleString()}</p></div>
+            </div>
+          </div>
+        </article>
+
+        <article className="col-span-2 rounded-[1.5rem] border border-border/60 bg-background/75 p-5 shadow-lg lg:col-span-5 lg:min-h-[29rem] lg:p-7 xl:p-8">
+          <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-500">Budget rhythm</p><h3 className="mt-2 text-xl font-black lg:text-2xl">Spend activity</h3></div><span className="grid size-11 place-items-center rounded-2xl bg-violet-500/10 text-violet-500"><WalletCards className="size-5" /></span></div>
+          <div className="mt-7 flex h-64 items-end gap-3 lg:mt-10 lg:h-72 lg:gap-4">
+            {expenseSeries.map(point => <DesktopBudgetBar key={point.month} label={point.month} value={point.value} maxValue={maxExpense} />)}
+            <DesktopBudgetBar label="Cart" value={subtotal} maxValue={maxExpense} planned />
+          </div>
+          <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-4"><div><p className="text-[10px] text-muted-foreground">Lifetime recorded</p><p className="mt-1 text-lg font-black lg:text-2xl">{compactCurrencyFormatter.format(totalSpent)}</p></div><p className="text-right text-[10px] text-muted-foreground">{orderCount}<br />completed orders</p></div>
+        </article>
+
+        <AnalyticsTile className="rounded-[1.25rem] lg:col-span-3" icon={<CircleDollarSign />} label="Inventory value" value={compactCurrencyFormatter.format(inventory.inventoryValue)} helper="Current catalog estimate" tone="violet" />
+        <AnalyticsTile className="rounded-[3rem] lg:col-span-3" icon={<ShoppingBag />} label="Active cart" value={String(cartCount)} helper={currencyFormatter.format(subtotal)} tone="emerald" />
+        <AnalyticsTile className="rounded-[1.25rem] lg:col-span-3" icon={<Heart />} label="Saved products" value={String(wishlistCount)} helper="Synced to your wishlist" tone="rose" />
+        <AnalyticsTile className="rounded-[3rem] lg:col-span-3" icon={<PackageCheck />} label="Orders completed" value={String(orderCount)} helper="Your commerce history" tone="amber" />
+      </div>
+    </section>
+  );
+}
+
+function StockLegend({ color, label, value, total }: { color: string; label: string; value: number; total: number }) {
+  return <div className="rounded-2xl bg-white/[.06] p-3.5"><div className="flex items-center gap-3"><span className={cn('size-2.5 rounded-full', color)} /><span className="flex-1 text-xs text-white/65">{label}</span><strong className="text-sm">{value}</strong></div><div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10"><div className={cn('h-full rounded-full', color)} style={{ width: `${total ? (value / total) * 100 : 0}%` }} /></div></div>;
+}
+
+function DesktopBudgetBar({ label, value, maxValue, planned = false }: { label: string; value: number; maxValue: number; planned?: boolean }) {
+  const height = value > 0 ? Math.max((value / maxValue) * 100, 7) : 3;
+  return <div className="group flex h-full min-w-0 flex-1 flex-col justify-end text-center"><span className="mb-2 hidden truncate text-[9px] font-bold group-hover:block xl:block">{compactCurrencyFormatter.format(value)}</span><div className="relative flex min-h-0 flex-1 items-end overflow-hidden rounded-full bg-muted/70 p-1.5"><div className={cn('w-full rounded-full transition-all duration-500 group-hover:brightness-110', planned ? 'bg-primary' : 'bg-foreground/80')} style={{ height: `${height}%` }} /></div><span className={cn('mt-2 text-[9px]', planned ? 'font-black text-primary' : 'text-muted-foreground')}>{label}</span></div>;
+}
+
+function AnalyticsTile({ className, icon, label, value, helper, tone }: { className?: string; icon: ReactNode; label: string; value: string; helper: string; tone: Tone }) {
+  return <article className={cn('group col-span-1 min-h-44 border border-border/60 bg-card/80 p-5 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl lg:min-h-52 lg:p-6', className)}><div className={cn('grid size-11 place-items-center rounded-2xl [&_svg]:size-5', toneStyles[tone])}>{icon}</div><p className="mt-6 text-[10px] font-semibold uppercase tracking-[.15em] text-muted-foreground">{label}</p><p className="mt-2 truncate text-2xl font-black tracking-tight lg:text-3xl xl:text-4xl">{value}</p><p className="mt-2 truncate text-[10px] text-muted-foreground lg:text-xs">{helper}</p></article>;
+}
 
 function MobileCommerceDashboard({ inventory, recentProducts, wishlistProducts, cartProducts, recommendations, shoppingListProducts, wishlistCount, cartCount, checkedOutCount, onDeliveryCount, totalSpent, orderCount }: { inventory: MobileInventory; recentProducts: ProductType[]; wishlistProducts: ProductType[]; cartProducts: ProductType[]; recommendations: ProductType[]; shoppingListProducts: ProductType[]; wishlistCount: number; cartCount: number; checkedOutCount: number; onDeliveryCount: number; totalSpent: number; orderCount: number }) {
   const smartPicks = recommendations.filter(product => product.featured || product.isNew).slice(0, 4);
