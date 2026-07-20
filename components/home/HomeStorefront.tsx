@@ -88,9 +88,9 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
       </div>
 
       <section className="mx-auto mt-8 w-full max-w-[1500px] px-4 sm:px-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-3 scrollbar-none sm:mx-0 sm:px-0">
           {categories.slice(0, 6).map(category => (
-            <Link key={category.id} href={`/store?category=${category.slug}`} className="group flex min-h-24 flex-col items-center justify-center rounded-2xl border border-border/55 bg-card px-3 py-4 text-center shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+            <Link key={category.id} href={`/store?category=${category.slug}`} className="group flex min-h-24 w-36 shrink-0 snap-start flex-col items-center justify-center rounded-2xl border border-border/55 bg-card px-3 py-4 text-center shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:w-40 lg:w-44">
               <Image src={category.image} alt="" width={44} height={44} className="size-11 rounded-xl object-cover transition group-hover:scale-105" />
               <span className="mt-2 line-clamp-1 text-xs font-bold">{category.label}</span>
             </Link>
@@ -98,7 +98,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
         </div>
       </section>
 
-      <section className="mx-auto mt-10 grid w-full max-w-[1500px] gap-4 px-4 sm:px-6 lg:grid-cols-2">
+      <section className="mx-auto mt-10 flex w-full max-w-[1500px] snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 scrollbar-none sm:px-6">
         <PromoTile product={recommendations[0] ?? featured} eyebrow="Curated for you" title="Premium picks, without the noise" tone="dark" />
         <PromoTile product={newProducts[0] ?? trending[1] ?? featured} eyebrow="Fresh arrivals" title="Meet what’s new in the store" tone="light" />
       </section>
@@ -106,7 +106,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
       {newProducts.length ? <ProductRail title="New and noteworthy" subtitle="Fresh additions worth discovering" products={newProducts} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} /> : null}
       <ProductRail title="Recommended for your next moment" subtitle="Highly rated selections across the store" products={recommendations} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} />
 
-      <section className="mx-auto mt-12 grid w-full max-w-[1500px] gap-3 px-4 sm:grid-cols-3 sm:px-6">
+      <section className="mx-auto mt-12 flex w-full max-w-[1500px] snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-4 scrollbar-none sm:px-6">
         <TrustCard icon={<Truck />} title="Flexible delivery" text="AJ Delivery, pickup, or your approved personal dispatcher." />
         <TrustCard icon={<ShieldCheck />} title="Protected shopping" text="Secure account actions, live inventory, and verified tracking." />
         <TrustCard icon={<Headphones />} title="Human support" text="Premium assistance before, during, and after every order." />
@@ -136,7 +136,7 @@ function PromoTile({ product, eyebrow, title, tone }: { product: ProductType; ey
   const variant = product.variants[0];
   if (!variant) return null;
   return (
-    <Link href={`/products/${product.slug}`} className={`group relative min-h-80 overflow-hidden rounded-[1.75rem] border border-border/50 ${tone === 'dark' ? 'bg-slate-950 text-white' : 'bg-stone-100 text-slate-950'}`}>
+    <Link href={`/products/${product.slug}`} className={`group relative block min-h-80 w-[88vw] max-w-2xl shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-border/50 lg:w-[44rem] ${tone === 'dark' ? 'bg-slate-950 text-white' : 'bg-stone-100 text-slate-950'}`}>
       <Image src={variant.image} alt="" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
       <div className={`absolute inset-0 ${tone === 'dark' ? 'bg-gradient-to-r from-black/90 via-black/55 to-transparent' : 'bg-gradient-to-r from-white/95 via-white/65 to-transparent'}`} />
       <div className="absolute inset-y-0 left-0 flex max-w-[70%] flex-col justify-center p-7 sm:p-10">
@@ -147,5 +147,5 @@ function PromoTile({ product, eyebrow, title, tone }: { product: ProductType; ey
 }
 
 function TrustCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
-  return <article className="flex gap-4 rounded-2xl border border-border/55 bg-card p-5"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{icon}</span><div><h3 className="text-sm font-black">{title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p></div></article>;
+  return <article className="flex w-[82vw] max-w-sm shrink-0 snap-start gap-4 rounded-2xl border border-border/55 bg-card p-5 sm:w-80"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{icon}</span><div><h3 className="text-sm font-black">{title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p></div></article>;
 }
