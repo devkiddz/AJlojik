@@ -125,8 +125,8 @@ function ProductRail({ title, subtitle, products, onOpen, onPreview, onAdd }: { 
         <div><h2 className="text-2xl font-black tracking-tight sm:text-3xl">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{subtitle}</p></div>
         <Link href="/store" className="hidden items-center gap-1 text-sm font-bold hover:underline sm:inline-flex">See all <ChevronRight className="size-4" /></Link>
       </header>
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-5 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-6 xl:grid-cols-7">
-        {products.slice(0, 7).map(product => <ProductCard key={product.id} product={product} onOpenExperience={onOpen} onPreview={onPreview} onAddToCart={onAdd} className="w-[48vw] max-w-[205px] shrink-0 snap-start sm:w-auto sm:max-w-none" />)}
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-5 scrollbar-none sm:mx-0 sm:px-0">
+        {products.slice(0, 8).map(product => <ProductCard key={product.id} product={product} onOpenExperience={onOpen} onPreview={onPreview} onAddToCart={onAdd} className="w-[48vw] max-w-[205px] shrink-0 snap-start sm:w-48 sm:max-w-none lg:w-52" />)}
       </div>
     </section>
   );

@@ -23,15 +23,9 @@ export function ProductGridModule({ module, actions }: ProductGridModuleProps) {
   }
 
   return (
-    <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <section className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-4 scrollbar-none">
       {products.map(product => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onPreview={actions.previewProduct}
-          onToggleLike={actions.toggleLike}
-          onAddToCart={actions.addToCart}
-        />
+        <div key={product.id} className="w-[48vw] max-w-56 shrink-0 snap-start md:w-56 xl:w-60"><ProductCard product={product} onPreview={actions.previewProduct} onToggleLike={actions.toggleLike} onAddToCart={actions.addToCart} /></div>
       ))}
     </section>
   );
