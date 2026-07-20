@@ -36,7 +36,7 @@ export default function MobileBottomNavigation({
 }: MobileBottomNavigationProps) {
   const pathname = usePathname();
 
-  const navigationItems: MobileNavigationItem[] = [
+  const allNavigationItems: MobileNavigationItem[] = [
     {
       type: 'route',
       id: 'home',
@@ -74,6 +74,8 @@ export default function MobileBottomNavigation({
     }
   ];
 
+  const navigationItems = allNavigationItems.filter(item => pathname !== '/' || item.id !== 'discover');
+
   return (
     <nav
       aria-label="Main mobile navigation"
@@ -94,7 +96,7 @@ export default function MobileBottomNavigation({
         dark:border-white/[0.04]
         lg:hidden
       ">
-      <div className="grid grid-cols-5 gap-1">
+      <div className={cn('grid gap-1', pathname === '/' ? 'grid-cols-4' : 'grid-cols-5')}>
         {navigationItems.map(item => {
           const Icon = item.icon;
 
