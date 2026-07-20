@@ -1,10 +1,10 @@
-import HeroComponent from '@/components/HeroComponent';
+import HomeStorefront from '@/components/home/HomeStorefront';
 import HomeMobileDiscoveryHost from '@/features/feed-experience/layout/HomeMobileDiscoveryHost';
 
 export default function HomeRoute() {
   return (
-    <div className="">
-      <HeroComponent />
+    <div>
+      <HomeStorefront />
       <HomeMobileDiscoveryHost />
     </div>
   );
