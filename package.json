@@ -12,7 +12,8 @@
     "provision:super-admins": "tsx prisma/provision-super-admins.ts",
     "seed:production": "node --env-file=.vercel/.env.production.local ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
     "postinstall": "prisma generate",
-    "vercel-build": "next build"
+    "vercel-build": "prisma generate && next build"
+}
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
