@@ -74,7 +74,7 @@ export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: 
         <label htmlFor="name" className="text-sm font-medium">
           Full name
         </label>
-        <PasswordField
+        <input
           id="name"
           name="name"
           type="text"
@@ -108,7 +108,7 @@ export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: 
         <label htmlFor="password" className="text-sm font-medium">
           Password
         </label>
-        <input
+        <PasswordField
           id="password"
           name="password"
           autoComplete="new-password"

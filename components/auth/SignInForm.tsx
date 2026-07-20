@@ -53,7 +53,7 @@ export default function SignInForm({ callbackURL = '/account', showAdminLink = t
           Email address
         </label>
 
-        <PasswordField
+        <input
           id="email"
           name="email"
           type="email"
@@ -71,7 +71,7 @@ export default function SignInForm({ callbackURL = '/account', showAdminLink = t
           Password
         </label>
 
-        <input
+        <PasswordField
           id="password"
           name="password"
           autoComplete="current-password"
