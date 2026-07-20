@@ -55,7 +55,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
   const openProduct = (product: ProductType) => router.push(`/products/${product.slug}`);
 
   return (
-    <div className="bg-background pb-14">
+    <div className="bg-background pb-14 md:-ml-px md:w-[calc(100%+1px)]">
       <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#03070d] text-white">
         <HeroBackgroundMedia mediaType={hero?.mediaType ?? 'VIDEO'} mediaUrl={heroMedia} fallbackImage={heroFallbackImage} autoplay={hero?.autoplay ?? true} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(1,5,12,.96)_0%,rgba(1,5,12,.7)_43%,rgba(1,5,12,.18)_75%),linear-gradient(0deg,#03070d_0%,transparent_45%)]" />

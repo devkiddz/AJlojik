@@ -639,3 +639,12 @@ body {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* Consistent desktop affordance for every interactive control. */
+:where(button:not(:disabled), [role='button']:not([aria-disabled='true']), a[href], input[type='button']:not(:disabled), input[type='submit']:not(:disabled), input[type='reset']:not(:disabled), select:not(:disabled), summary) {
+  cursor: pointer;
+}
+
+:where(button:disabled, input:disabled, select:disabled, [aria-disabled='true']) {
+  cursor: not-allowed;
+}

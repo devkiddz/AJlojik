@@ -6,6 +6,7 @@ import { useState, type FormEvent } from 'react';
 import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
 import GoogleAuthButton from './GoogleAuthButton';
+import PasswordField from './PasswordField';
 
 export default function SignInForm({ callbackURL = '/account', showAdminLink = true, googleEnabled = false }: { callbackURL?: string; showAdminLink?: boolean; googleEnabled?: boolean }) {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function SignInForm({ callbackURL = '/account', showAdminLink = t
           Email address
         </label>
 
-        <input
+        <PasswordField
           id="email"
           name="email"
           type="email"
@@ -73,7 +74,6 @@ export default function SignInForm({ callbackURL = '/account', showAdminLink = t
         <input
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}

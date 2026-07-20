@@ -6,6 +6,7 @@ import { useState, type FormEvent } from 'react';
 import { readAuthReturnTo } from '@/features/action-feedback';
 import { authClient } from '@/lib/auth-client';
 import GoogleAuthButton from './GoogleAuthButton';
+import PasswordField from './PasswordField';
 
 export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
@@ -73,7 +74,7 @@ export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: 
         <label htmlFor="name" className="text-sm font-medium">
           Full name
         </label>
-        <input
+        <PasswordField
           id="name"
           name="name"
           type="text"
@@ -110,7 +111,6 @@ export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: 
         <input
           id="password"
           name="password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -125,10 +125,9 @@ export default function SignUpForm({ googleEnabled = false }: { googleEnabled?: 
         <label htmlFor="confirmPassword" className="text-sm font-medium">
           Confirm password
         </label>
-        <input
+        <PasswordField
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           required
           value={confirmPassword}

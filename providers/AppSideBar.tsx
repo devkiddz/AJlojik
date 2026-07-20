@@ -95,7 +95,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <div className="flex h-full flex-col overflow-hidden rounded-md shadow-sm backdrop-blur-xl">
+      <div className="flex h-full flex-col overflow-hidden rounded-none shadow-none backdrop-blur-xl">
         <SidebarHeader className="px-4 pb-3 pt-4">
           <SidebarHeaderContent />
         </SidebarHeader>
