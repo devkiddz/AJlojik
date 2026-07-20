@@ -2,6 +2,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import CommerceDashboard, { type ExpensePoint } from '@/features/dashboard/CommerceDashboard';
+import { CatalogProvider } from '@/features/catalog';
+import { getCatalog } from '@/features/catalog/services/get-catalog';
 import { getOrCreateExperienceProfile } from '@/features/feed-experience/services';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -34,7 +36,7 @@ export default async function AccountPage() {
 
   const experienceProfile = await getOrCreateExperienceProfile(session.user.id);
 
-  const [orders, recentViews] = await Promise.all([
+  const [orders, recentViews, catalog] = await Promise.all([
     prisma.order
       .findMany({
         where: { userId: session.user.id },
@@ -49,7 +51,8 @@ export default async function AccountPage() {
         take: 8,
         select: { productId: true }
       })
-      .catch(() => [])
+      .catch(() => []),
+    getCatalog().catch(() => [])
   ]);
 
   const recentProductIds = Array.from(
@@ -64,20 +67,22 @@ export default async function AccountPage() {
     .reduce((sum, order) => sum + Number(order.total), 0);
 
   return (
-    <CommerceDashboard
-      user={{
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image ?? null,
-        tier: typeof session.user.tier === 'string' ? session.user.tier : 'member',
-        emailVerified: session.user.emailVerified
-      }}
-      persona={experienceProfile.persona}
-      personalizationEnabled={experienceProfile.personalizationEnabled}
-      recentProductIds={recentProductIds}
-      expenseSeries={createExpenseSeries(orders)}
-      totalSpent={totalSpent}
-      orderCount={orders.length}
-    />
+    <CatalogProvider initialProducts={catalog}>
+      <CommerceDashboard
+        user={{
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image ?? null,
+          tier: typeof session.user.tier === 'string' ? session.user.tier : 'member',
+          emailVerified: session.user.emailVerified
+        }}
+        persona={experienceProfile.persona}
+        personalizationEnabled={experienceProfile.personalizationEnabled}
+        recentProductIds={recentProductIds}
+        expenseSeries={createExpenseSeries(orders)}
+        totalSpent={totalSpent}
+        orderCount={orders.length}
+      />
+    </CatalogProvider>
   );
 }
