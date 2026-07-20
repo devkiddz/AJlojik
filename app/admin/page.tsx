@@ -13,12 +13,12 @@ export default async function AdminHomePage() {
   });
 
   const [todos, approvals, staffCount, productCount, deliveries, recentActivity] = await Promise.all([
-    prisma.adminTodo.findMany({ where: { workspaceId: access.membership.workspaceId, status: { in: ['OPEN', 'IN_PROGRESS', 'BLOCKED'] } }, orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }], take: 8 }).catch(() => []),
-    prisma.adminApprovalRequest.findMany({ where: { workspaceId: access.membership.workspaceId, status: 'PENDING' }, include: { requestedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []),
-    prisma.staffProfile.count({ where: { workspaceId: access.membership.workspaceId, active: true } }).catch(() => 0),
+    prisma.adminTodo?.findMany ? prisma.adminTodo.findMany({ where: { workspaceId: access.membership.workspaceId, status: { in: ['OPEN', 'IN_PROGRESS', 'BLOCKED'] } }, orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }], take: 8 }).catch(() => []) : Promise.resolve([]),
+    prisma.adminApprovalRequest?.findMany ? prisma.adminApprovalRequest.findMany({ where: { workspaceId: access.membership.workspaceId, status: 'PENDING' }, include: { requestedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []) : Promise.resolve([]),
+    prisma.staffProfile?.count ? prisma.staffProfile.count({ where: { workspaceId: access.membership.workspaceId, active: true } }).catch(() => 0) : Promise.resolve(0),
     prisma.product.count({ where: { active: true } }).catch(() => 0),
-    prisma.delivery.count({ where: { workspaceId: access.membership.workspaceId, status: { notIn: ['DELIVERED', 'CANCELLED', 'FAILED'] } } }).catch(() => 0),
-    prisma.adminAuditEvent.findMany({ where: { workspaceId: access.membership.workspaceId }, include: { actor: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => [])
+    prisma.delivery?.count ? prisma.delivery.count({ where: { workspaceId: access.membership.workspaceId, status: { notIn: ['DELIVERED', 'CANCELLED', 'FAILED'] } } }).catch(() => 0) : Promise.resolve(0),
+    prisma.adminAuditEvent?.findMany ? prisma.adminAuditEvent.findMany({ where: { workspaceId: access.membership.workspaceId }, include: { actor: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []) : Promise.resolve([])
   ]);
 
   const canReview = access.permissions.has('approval:review');
@@ -36,7 +36,7 @@ export default async function AdminHomePage() {
             <div className="mt-5 space-y-3">{todos.length ? todos.map(todo => <div key={todo.id} className="flex items-start gap-3 rounded-2xl border border-border/50 bg-background/55 p-4"><span className="mt-1 size-2 shrink-0 rounded-full bg-primary" /><div className="min-w-0 flex-1"><p className="text-xs font-bold">{todo.title}</p><p className="mt-1 text-[10px] leading-4 text-muted-foreground">{todo.description}</p></div><span className="rounded-full bg-muted px-2 py-1 text-[8px] font-bold">{todo.priority}</span></div>) : <Empty label="No urgent work is waiting." />}</div>
           </Panel>
           <Panel eyebrow="Quick create" title="Commerce studios" description="Publish only within the active workspace.">
-            <div className="mt-5 grid gap-2"><QuickLink href="/admin/products/new" icon={<PackagePlus />} label="Add product" /><QuickLink href="/admin/products" icon={<Boxes />} label={`${productCount} live products`} /><QuickLink href="/admin/staff" icon={<UsersRound />} label="Staff and access" /><QuickLink href="/admin/deliveries" icon={<Truck />} label="Delivery operations" /></div>
+            <div className="mt-5 grid gap-2"><QuickLink href="/admin/products/new" icon={<PackagePlus />} label="Add product" /><QuickLink href="/admin/products" icon={<Boxes />} label={`${productCount} live products`} />{access.permissions.has('system:manage') ? <QuickLink href="/admin/hero" icon={<Sparkles />} label="Homepage hero studio" /> : null}<QuickLink href="/admin/staff" icon={<UsersRound />} label="Staff and access" /><QuickLink href="/admin/deliveries" icon={<Truck />} label="Delivery operations" /></div>
           </Panel>
         </section>
 

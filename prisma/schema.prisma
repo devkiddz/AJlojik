@@ -764,12 +764,38 @@ model Workspace {
   adminAuditEvents AdminAuditEvent[]
   adminTodos       AdminTodo[]
   deliveries       Delivery[]
+  storefrontHero   StorefrontHero?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([mode, active])
   @@map("workspace")
+}
+
+model StorefrontHero {
+  id String @id @default(cuid())
+
+  workspaceId String @unique
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  enabled       Boolean @default(true)
+  mediaType     String  @default("VIDEO")
+  mediaUrl      String?
+  posterUrl     String?
+  eyebrow       String  @default("Your personal shopping experience")
+  title         String  @default("Every beautiful moment starts here.")
+  summary       String?
+  primaryLabel  String  @default("Create your experience")
+  primaryHref   String  @default("/sign-up")
+  secondaryLabel String @default("Sign in")
+  secondaryHref  String @default("/sign-in")
+  autoplay      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("storefront_hero")
 }
 
 // ============================================================

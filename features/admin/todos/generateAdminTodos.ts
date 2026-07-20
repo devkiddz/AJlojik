@@ -3,6 +3,11 @@ import 'server-only';
 import { prisma } from '@/lib/prisma';
 
 export async function generateAdminTodos(workspaceId: string) {
+  if (!prisma.productVariant?.findMany || !prisma.delivery?.findMany || !prisma.adminTodo?.findFirst || !prisma.adminTodo?.create) {
+    console.warn('Admin todo generation is waiting for the latest Prisma client.');
+    return;
+  }
+
   const [lowStockVariants, delayedDeliveries] = await Promise.all([
     prisma.productVariant.findMany({
       where: { active: true, inventory: { is: { quantity: { lte: 5 } } } },

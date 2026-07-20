@@ -18,7 +18,9 @@ import type { ProductType, ProductVariantType } from '@/types/types';
 
 const currency = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
 
-export default function HomeStorefront() {
+type StorefrontHeroConfig = { mediaType: string; mediaUrl: string | null; posterUrl: string | null; eyebrow: string; title: string; summary: string | null; primaryLabel: string; primaryHref: string; secondaryLabel: string; secondaryHref: string; autoplay: boolean } | null;
+
+export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig }) {
   const router = useRouter();
   const { products, loading, error } = useCatalog();
   const { addToCart } = useCart();
@@ -32,6 +34,7 @@ export default function HomeStorefront() {
   const newProducts = useMemo(() => products.filter(product => product.isNew).slice(0, 8), [products]);
   const recommendations = useMemo(() => [...products].sort((a, b) => b.rating - a.rating).slice(0, 8), [products]);
   const featuredVariant = featured?.variants.find(variant => variant.stockLeft > 0) ?? featured?.variants[0];
+  const heroMedia = hero?.mediaUrl || 'https://assets.mixkit.co/videos/preview/mixkit-friends-having-dinner-at-a-restaurant-4340-large.mp4';
 
   const addProduct = (product: ProductType, variant: ProductVariantType) => {
     void addToCart({ product, variant, quantity: 1 });
@@ -50,22 +53,20 @@ export default function HomeStorefront() {
   return (
     <div className="bg-background pb-14">
       <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#03070d] text-white">
-        <video autoPlay muted loop playsInline poster={featuredVariant.image} className="absolute inset-0 size-full object-cover">
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-friends-having-dinner-at-a-restaurant-4340-large.mp4" type="video/mp4" />
-        </video>
+        {hero?.mediaType === 'IMAGE' ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroMedia})` }} /> : <video autoPlay={hero?.autoplay ?? true} muted loop playsInline poster={hero?.posterUrl || featuredVariant.image} className="absolute inset-0 size-full object-cover"><source src={heroMedia} type="video/mp4" /></video>}
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(1,5,12,.96)_0%,rgba(1,5,12,.7)_43%,rgba(1,5,12,.18)_75%),linear-gradient(0deg,#03070d_0%,transparent_45%)]" />
         <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-[1500px] overflow-hidden">
           <div className="relative z-10 flex flex-col justify-center p-7 sm:p-12 lg:p-16 xl:p-20">
             <div className="absolute -left-32 top-0 size-96 rounded-full bg-blue-500/20 blur-3xl" />
             <div className="relative">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.16em] backdrop-blur">
-                <Sparkles className="size-3.5 text-amber-300" /> Your personal shopping experience
+                <Sparkles className="size-3.5 text-amber-300" /> {hero?.eyebrow ?? 'Your personal shopping experience'}
               </span>
-              <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[.92] tracking-[-.055em] sm:text-7xl xl:text-8xl">Every beautiful moment starts here.</h1>
-              <p className="mt-5 max-w-xl text-sm leading-6 text-white/70 sm:text-base">Discover products, event essentials, and premium picks selected around how you shop—not just what is popular.</p>
+              <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[.92] tracking-[-.055em] sm:text-7xl xl:text-8xl">{hero?.title ?? 'Every beautiful moment starts here.'}</h1>
+              <p className="mt-5 max-w-xl text-sm leading-6 text-white/70 sm:text-base">{hero?.summary ?? 'Build shopping lists like playlists, discover elegant experiences shaped around your taste, and move every pick from inspiration to delivery in one personal hub.'}</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-black text-[#07172b] transition hover:scale-[1.02]">Create your experience <ArrowRight className="size-4" /></Link>
-                <Link href="/sign-in" className="inline-flex items-center gap-2 rounded-md border border-white/25 bg-black/20 px-6 py-3.5 text-sm font-bold backdrop-blur transition hover:bg-white/10">Sign in</Link>
+                <Link href={hero?.primaryHref || '/sign-up'} className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-black text-[#07172b] transition hover:scale-[1.02]">{hero?.primaryLabel || 'Create your experience'} <ArrowRight className="size-4" /></Link>
+                <Link href={hero?.secondaryHref || '/sign-in'} className="inline-flex items-center gap-2 rounded-md border border-white/25 bg-black/20 px-6 py-3.5 text-sm font-bold backdrop-blur transition hover:bg-white/10">{hero?.secondaryLabel || 'Sign in'}</Link>
               </div>
             </div>
           </div>
