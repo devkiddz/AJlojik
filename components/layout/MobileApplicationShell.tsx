@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import MobileBottomNavigation from '@/components/navigation/MobileBottomNavigation';
-import GlobalDiscoveryHost from '@/features/feed-experience/layout/GlobalDiscoveryHost';
 
 type MobileApplicationShellProps = {
   children: ReactNode;
@@ -60,8 +59,6 @@ export default function MobileApplicationShell({ children }: MobileApplicationSh
   return (
     <MobileDiscoveryContext.Provider value={contextValue}>
       <div className="min-h-dvh pb-24 lg:pb-0">{children}</div>
-
-      <GlobalDiscoveryHost />
 
       <MobileBottomNavigation discoveryOpen={discoveryOpen} onToggleDiscovery={toggleDiscovery} />
     </MobileDiscoveryContext.Provider>
