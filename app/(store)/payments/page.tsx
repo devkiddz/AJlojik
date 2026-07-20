@@ -1,5 +1,12 @@
-import ActionPageShell from '@/components/action-pages/ActionPageShell';
+import { Suspense } from 'react';
+
+import StoreLoadingState from '@/components/loading/StoreLoadingState';
+import CheckoutExperience from '@/features/payments/components/CheckoutExperience';
 
 export default function PaymentsPage() {
-  return <ActionPageShell eyebrow="Account" title="Payments" description="Saved payment methods, billing preferences, and transaction records will be managed here." />;
+  return (
+    <Suspense fallback={<StoreLoadingState label="Preparing secure checkout" />}>
+      <CheckoutExperience />
+    </Suspense>
+  );
 }

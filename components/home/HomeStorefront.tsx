@@ -59,7 +59,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
       <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#03070d] text-white">
         <HeroBackgroundMedia mediaType={hero?.mediaType ?? 'VIDEO'} mediaUrl={heroMedia} fallbackImage={heroFallbackImage} autoplay={hero?.autoplay ?? true} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(1,5,12,.96)_0%,rgba(1,5,12,.7)_43%,rgba(1,5,12,.18)_75%),linear-gradient(0deg,#03070d_0%,transparent_45%)]" />
-        <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-[1500px] overflow-hidden">
+        <div className="relative grid min-h-[calc(100dvh-4rem)] w-full overflow-hidden">
           <div className="relative z-10 flex flex-col justify-center p-7 sm:p-12 lg:p-16 xl:p-20">
             <div className="absolute -left-32 top-0 size-96 rounded-full bg-blue-500/20 blur-3xl" />
             <div className="relative">
@@ -91,7 +91,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
         <ProductRail title="Most active experiences" subtitle="The products customers are exploring and choosing now" products={trending} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} />
       </div>
 
-      <section className="mx-auto mt-8 w-full max-w-[1500px] px-4 sm:px-6">
+      <section className="mt-8 w-full px-4 sm:px-6">
         <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-3 scrollbar-none sm:mx-0 sm:px-0">
           {categories.slice(0, 6).map(category => (
             <Link key={category.id} href={`/store?category=${category.slug}`} className="group flex min-h-24 w-36 shrink-0 snap-start flex-col items-center justify-center rounded-2xl border border-border/55 bg-card px-3 py-4 text-center shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:w-40 lg:w-44">
@@ -102,7 +102,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
         </div>
       </section>
 
-      <section className="mx-auto mt-10 flex w-full max-w-[1500px] snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 scrollbar-none sm:px-6">
+      <section className="mt-10 flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 scrollbar-none sm:px-6">
         <PromoTile product={recommendations[0] ?? featured} eyebrow="Curated for you" title="Premium picks, without the noise" tone="dark" />
         <PromoTile product={newProducts[0] ?? trending[1] ?? featured} eyebrow="Fresh arrivals" title="Meet what’s new in the store" tone="light" />
       </section>
@@ -110,7 +110,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
       {newProducts.length ? <ProductRail title="New and noteworthy" subtitle="Fresh additions worth discovering" products={newProducts} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} /> : null}
       <ProductRail title="Recommended for your next moment" subtitle="Highly rated selections across the store" products={recommendations} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} />
 
-      <section className="mx-auto mt-12 flex w-full max-w-[1500px] snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-4 scrollbar-none sm:px-6">
+      <section className="mt-12 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-4 scrollbar-none sm:px-6">
         <TrustCard icon={<Truck />} title="Flexible delivery" text="AJ Delivery, pickup, or your approved personal dispatcher." />
         <TrustCard icon={<ShieldCheck />} title="Protected shopping" text="Secure account actions, live inventory, and verified tracking." />
         <TrustCard icon={<Headphones />} title="Human support" text="Premium assistance before, during, and after every order." />
@@ -124,7 +124,7 @@ export default function HomeStorefront({ hero }: { hero: StorefrontHeroConfig })
 function ProductRail({ title, subtitle, products, onOpen, onPreview, onAdd }: { title: string; subtitle: string; products: ProductType[]; onOpen: (product: ProductType) => void; onPreview: (product: ProductType) => void; onAdd: (product: ProductType, variant: ProductVariantType) => void }) {
   if (!products.length) return null;
   return (
-    <section className="mx-auto mt-12 w-full max-w-[1500px] px-4 sm:px-6">
+    <section className="mt-12 w-full px-4 sm:px-6">
       <header className="mb-5 flex items-end justify-between gap-4">
         <div><h2 className="text-2xl font-black tracking-tight sm:text-3xl">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{subtitle}</p></div>
         <Link href="/store" className="hidden items-center gap-1 text-sm font-bold hover:underline sm:inline-flex">See all <ChevronRight className="size-4" /></Link>

@@ -8,35 +8,61 @@ import type {
 export async function getUserWorkspaces(
   userId: string
 ): Promise<WorkspaceRuntime> {
-  const liveWorkspace = await prisma.workspace.findFirst({
+  const coreWorkspaces = await prisma.workspace.findMany({
     where: {
-      mode: 'LIVE',
+      mode: {
+        in: ['LIVE', 'DEMO', 'PRACTICE']
+      },
       active: true
     },
     orderBy: {
       createdAt: 'asc'
     },
     select: {
-      id: true
+      id: true,
+      mode: true
     }
   });
 
-  if (liveWorkspace) {
+  for (const workspace of coreWorkspaces) {
     await prisma.workspaceMembership.upsert({
       where: {
         workspaceId_userId: {
-          workspaceId: liveWorkspace.id,
+          workspaceId: workspace.id,
           userId
         }
       },
-      update: {},
+      update: {
+        active: true
+      },
       create: {
-        workspaceId: liveWorkspace.id,
+        workspaceId: workspace.id,
         userId,
         role: 'MEMBER',
         active: true
       }
     });
+
+    if (workspace.mode === 'DEMO' || workspace.mode === 'PRACTICE') {
+      await prisma.demoWallet.upsert({
+        where: {
+          workspaceId_userId: {
+            workspaceId: workspace.id,
+            userId
+          }
+        },
+        update: {
+          active: true
+        },
+        create: {
+          workspaceId: workspace.id,
+          userId,
+          currency: 'NGN',
+          balance: workspace.mode === 'DEMO' ? 1_000_000 : 500_000,
+          active: true
+        }
+      });
+    }
   }
 
   const memberships =

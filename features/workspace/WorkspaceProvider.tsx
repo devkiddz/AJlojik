@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 
 import type { Workspace, WorkspaceRuntime } from './workspaceTypes';
 const ACTIVE_WORKSPACE_STORAGE_KEY = 'rcentz_active_workspace_id';
@@ -86,6 +87,7 @@ function createRuntime(
 }
 
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
+  const router = useRouter();
   const [runtime, setRuntime] = useState<WorkspaceRuntime>(defaultRuntime);
 
   const [loading, setLoading] = useState(true);
@@ -156,8 +158,17 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       window.localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, nextWorkspace.id);
 
       setRuntime(createRuntime(runtime.availableWorkspaces, nextWorkspace));
+
+      window.dispatchEvent(new CustomEvent('aj:workspace-switched', {
+        detail: {
+          workspaceId: nextWorkspace.id,
+          mode: nextWorkspace.mode
+        }
+      }));
+
+      router.refresh();
     },
-    [runtime.activeWorkspace?.id, runtime.availableWorkspaces]
+    [router, runtime.activeWorkspace?.id, runtime.availableWorkspaces]
   );
 
   useEffect(() => {
