@@ -6,7 +6,9 @@ import { usePathname } from 'next/navigation';
 
 import FooterComponent from '@/components/FooterComponent';
 import NavbarComponent from '@/components/Navbar';
+
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
+import WorkspaceShell from '@/components/layout/WorkspaceShell';
 
 import { SidebarInset } from '@/components/ui/sidebar';
 
@@ -51,7 +53,13 @@ export default function ApplicationShell({ children }: ApplicationShellProps) {
 
               isHomeRoute && 'min-h-0 overflow-hidden'
             )}>
-            {isHomeRoute ? children : <MobileApplicationShell>{children}</MobileApplicationShell>}
+            {isHomeRoute ? (
+              children
+            ) : (
+              <MobileApplicationShell>
+                <WorkspaceShell>{children}</WorkspaceShell>
+              </MobileApplicationShell>
+            )}
           </main>
 
           {!isHomeRoute ? <FooterComponent brandName="AJ" brandSlug="Logik" /> : null}

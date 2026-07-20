@@ -3,24 +3,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+
 import { LoaderCircle } from 'lucide-react';
 
 import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
+import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
 import PromoModal from '@/components/promos/PromoModal';
+
 import { categories } from '@/data/categories';
 import { collections } from '@/data/collections';
 import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { promos, type Promo } from '@/data/promos';
-import { useCatalog } from '@/features/catalog';
+
 import { useCart } from '@/features/cart';
+import { useCatalog } from '@/features/catalog';
 import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
+import { RegularProductPreviewModal } from '@/features/products/modals';
+import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 
 import { cn } from '@/lib/utils';
 
-import type { ProductType, ProductVariantType } from '@/types/types';
+import { useIdentity } from '@/providers/IdentityProvider';
 
-import { MockExperienceSwitcher } from '../components/MockExperienceSwitcher';
+import type { ProductType, ProductVariantType } from '@/types/types';
 
 import type { FeedActions, FeedContext, FeedIntent } from '../contracts';
 
@@ -28,12 +34,21 @@ import { mockExperienceProfiles, type MockExperienceProfileId } from '../mocks';
 
 import { FeedExperienceProvider } from '../providers';
 import { FeedRenderer } from '../renderers';
-import { RegularProductPreviewModal } from '@/features/products/modals';
-import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
 
 function FeedExperienceWorkspaceContent() {
   const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
+
+  const { user, isAuthenticated } = useIdentity();
+
   const { items: cartItems, addToCart: addCartItem } = useCart();
+
+  const { productIds: wishlistProductIds, toggleWishlist } = useWishlist();
+
+  const { products: catalogProducts, loading: catalogLoading, error: catalogError } = useCatalog();
+
+  // ============================================================
+  // CART
+  // ============================================================
 
   const handleAddToCart = useCallback(
     (product: ProductType, variant: ProductVariantType) => {
@@ -45,14 +60,8 @@ function FeedExperienceWorkspaceContent() {
     },
     [addCartItem]
   );
-  const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
 
-  const {
-    products: catalogProducts,
-    loading: catalogLoading,
-    error: catalogError,
-    setProducts
-  } = useCatalog();
+  const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
 
   // ============================================================
   // ROUTING
@@ -86,10 +95,16 @@ function FeedExperienceWorkspaceContent() {
   );
 
   // ============================================================
-  // MOCK EXPERIENCE PROFILE
+  // IDENTITY-BASED EXPERIENCE PROFILE
   // ============================================================
 
-  const [activeProfileId, setActiveProfileId] = useState<MockExperienceProfileId>('guest');
+  const normalizedTier = user?.tier?.toLowerCase() ?? 'guest';
+
+  const activeProfileId: MockExperienceProfileId = !isAuthenticated
+    ? 'guest'
+    : normalizedTier === 'premium'
+      ? 'premium'
+      : 'shopper';
 
   const activeProfile =
     mockExperienceProfiles.find(profile => profile.id === activeProfileId) ?? mockExperienceProfiles[0];
@@ -104,6 +119,7 @@ function FeedExperienceWorkspaceContent() {
 
   const openPreview = useCallback((product: ProductType) => {
     setSelectedProduct(product);
+
     setPreviewOpen(true);
   }, []);
 
@@ -114,27 +130,32 @@ function FeedExperienceWorkspaceContent() {
 
   const toggleLike = useCallback(
     (productId: string) => {
-      setProducts(currentProducts =>
-        currentProducts.map(product =>
-          product.id === productId
-            ? {
-                ...product,
-                liked: !product.liked
-              }
-            : product
-        )
-      );
+      const product = catalogProducts.find(item => item.id === productId);
 
+      const currentlyWishlisted = wishlistProductIds.includes(productId);
+
+      void toggleWishlist({
+        id: productId,
+        name: product?.name
+      });
+
+      /*
+       * Temporary compatibility for the
+       * existing preview modal.
+       *
+       * The real source of truth remains
+       * WishlistProvider.
+       */
       setSelectedProduct(currentProduct =>
         currentProduct?.id === productId
           ? {
               ...currentProduct,
-              liked: !currentProduct.liked
+              liked: !currentlyWishlisted
             }
           : currentProduct
       );
     },
-    [setProducts]
+    [catalogProducts, toggleWishlist, wishlistProductIds]
   );
 
   // ============================================================
@@ -148,9 +169,12 @@ function FeedExperienceWorkspaceContent() {
   const previewPromotion = useCallback((promoId: string) => {
     const promotion = promos.find(item => item.id === promoId);
 
-    if (!promotion) return;
+    if (!promotion) {
+      return;
+    }
 
     setSelectedPromo(promotion);
+
     setPromoOpen(true);
   }, []);
 
@@ -186,18 +210,30 @@ function FeedExperienceWorkspaceContent() {
         collections,
         promotions: promos
       },
+
       user: {
         ...activeProfile.user,
-        cartProductIds
+
+        authenticated: isAuthenticated,
+
+        tier: !isAuthenticated ? 'guest' : normalizedTier === 'premium' ? 'premium' : 'member',
+
+        cartProductIds,
+
+        wishlistProductIds
       },
 
       activity: activeProfile.activity,
 
       experience: {
         orders: activeProfile.orders,
+
         rewards: activeProfile.rewards,
+
         coupons: activeProfile.coupons,
+
         intelligence: activeProfile.intelligence,
+
         promotions: activeProfile.promotions
       },
 
@@ -208,8 +244,9 @@ function FeedExperienceWorkspaceContent() {
         now: new Date().toISOString()
       }
     }),
-    [activeProfile, catalogProducts, cartProductIds]
+    [activeProfile, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, wishlistProductIds]
   );
+
   // ============================================================
   // BASE ACTIONS
   // ============================================================
@@ -234,7 +271,9 @@ function FeedExperienceWorkspaceContent() {
   // ============================================================
 
   const selectedPromoProducts = useMemo(() => {
-    if (!selectedPromo) return [];
+    if (!selectedPromo) {
+      return [];
+    }
 
     return selectedPromo.productIds
       .map(productId => catalogProducts.find(product => product.id === productId))
@@ -262,7 +301,9 @@ function FeedExperienceWorkspaceContent() {
   }, [filteredProducts, selectedIndex]);
 
   const handlePreviousProduct = useCallback(() => {
-    if (selectedIndex <= 0) return;
+    if (selectedIndex <= 0) {
+      return;
+    }
 
     setSelectedProduct(filteredProducts[selectedIndex - 1]);
   }, [filteredProducts, selectedIndex]);
@@ -290,9 +331,11 @@ function FeedExperienceWorkspaceContent() {
   }, []);
 
   useEffect(() => {
-    if (!hubPreferenceLoaded) return;
+    if (!hubPreferenceLoaded) {
+      return;
+    }
 
-    localStorage.setItem('aj_discovery_hub_collapsed', String(hubCollapsed));
+    window.localStorage.setItem('aj_discovery_hub_collapsed', String(hubCollapsed));
   }, [hubCollapsed, hubPreferenceLoaded]);
 
   // ============================================================
@@ -337,10 +380,6 @@ function FeedExperienceWorkspaceContent() {
 
   return (
     <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      {/*
-       * The only MobileDiscoverySheet in the application.
-       * It shares this exact Feed Experience with the centre feed.
-       */}
       <MobileDiscoverySheetHost />
 
       <ExperienceStackProvider key={activeWorkspace.id} workspaceId={activeWorkspace.id}>
@@ -355,12 +394,6 @@ function FeedExperienceWorkspaceContent() {
 
                 hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
               )}>
-              <MockExperienceSwitcher
-                profiles={mockExperienceProfiles}
-                activeProfileId={activeProfileId}
-                onChange={setActiveProfileId}
-              />
-
               <FeedRenderer />
             </section>
 
