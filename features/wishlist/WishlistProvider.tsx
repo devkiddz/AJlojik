@@ -116,7 +116,17 @@ export function WishlistProvider({ children }: WishlistProviderProps) {
       return;
     }
 
-    void refreshWishlist();
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void refreshWishlist();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isPending, refreshWishlist]);
 
   const addProduct = useCallback(
@@ -251,7 +261,7 @@ export function WishlistProvider({ children }: WishlistProviderProps) {
         execute: async payload => {
           const { productId } = parseWishlistActionPayload(payload);
 
-          if (currentlySaved) {
+          if (productIdsRef.current.includes(productId)) {
             await removeProduct(productId);
           } else {
             await addProduct(productId);

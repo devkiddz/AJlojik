@@ -8,6 +8,37 @@ import type {
 export async function getUserWorkspaces(
   userId: string
 ): Promise<WorkspaceRuntime> {
+  const liveWorkspace = await prisma.workspace.findFirst({
+    where: {
+      mode: 'LIVE',
+      active: true
+    },
+    orderBy: {
+      createdAt: 'asc'
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (liveWorkspace) {
+    await prisma.workspaceMembership.upsert({
+      where: {
+        workspaceId_userId: {
+          workspaceId: liveWorkspace.id,
+          userId
+        }
+      },
+      update: {},
+      create: {
+        workspaceId: liveWorkspace.id,
+        userId,
+        role: 'MEMBER',
+        active: true
+      }
+    });
+  }
+
   const memberships =
     await prisma.workspaceMembership.findMany({
       where: {

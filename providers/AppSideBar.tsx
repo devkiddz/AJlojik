@@ -21,6 +21,7 @@ import {
 import { categories } from '@/data/categories';
 
 import { useCart } from '@/features/cart';
+import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 
 import { useIdentity } from '@/providers/IdentityProvider';
@@ -80,13 +81,13 @@ export function AppSidebar() {
   const { user, isAuthenticated, isPending, signOut } = useIdentity();
 
   const { totalQuantity, loading: cartLoading } = useCart();
+  const { count: wishlistCount, loading: wishlistLoading } = useWishlist();
   const { activeWorkspace } = useWorkspace();
   const adminRoles = ['SUPPORT', 'MANAGER', 'ADMIN', 'SUPER_ADMIN'];
   const hasAdminAccess = Boolean(activeWorkspace && adminRoles.includes(activeWorkspace.membership.role));
 
-  const wishlistCount = 0;
-
   const cartCountLabel = cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity;
+  const wishlistCountLabel = wishlistLoading ? '…' : wishlistCount > 99 ? '99+' : wishlistCount;
 
   const handleSignOut = async (): Promise<void> => {
     await signOut();
@@ -198,7 +199,7 @@ export function AppSidebar() {
 
                     <span className="flex-1">Wishlist</span>
 
-                    <span className="text-xs font-semibold text-muted-foreground">{wishlistCount}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{wishlistCountLabel}</span>
                   </button>
 
                   <button

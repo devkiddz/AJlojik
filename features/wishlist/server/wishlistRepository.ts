@@ -17,9 +17,10 @@ async function requireProduct(
   productId: string
 ): Promise<void> {
   const product =
-    await prisma.product.findUnique({
+    await prisma.product.findFirst({
       where: {
-        id: productId
+        id: productId,
+        active: true
       },
 
       select: {
