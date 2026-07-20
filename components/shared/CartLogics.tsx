@@ -9,7 +9,8 @@ import {
   LoaderCircle,
   PackageOpen,
   ShoppingBag,
-  ShoppingCart
+  ShoppingCart,
+  Trash2
 } from 'lucide-react';
 
 import { useMemo, useState, type ReactNode } from 'react';
@@ -34,15 +35,27 @@ export function CartLogics() {
   const [open, setOpen] = useState(false);
   const [activeView, setActiveView] = useState<ShoppingView>('cart');
 
-  const { items, totalQuantity, subtotal, loading: cartLoading, error: cartError } = useCart();
+  const { items, totalQuantity, subtotal, loading: cartLoading, error: cartError, removeFromCart } = useCart();
   const { products } = useCatalog();
   const {
     productIds: wishlistProductIds,
     count: wishlistCount,
     loading: wishlistLoading,
     error: wishlistError,
-    canPersist
+    canPersist,
+    removeProduct,
+    isMutating: isWishlistMutating
   } = useWishlist();
+  const [removingCartItemId, setRemovingCartItemId] = useState<string | null>(null);
+
+  const removeCartItem = async (itemId: string) => {
+    setRemovingCartItemId(itemId);
+    try {
+      await removeFromCart(itemId);
+    } finally {
+      setRemovingCartItemId(null);
+    }
+  };
 
   const displayedQuantity = totalQuantity > 99 ? '99+' : totalQuantity;
 
@@ -152,23 +165,26 @@ export function CartLogics() {
             items.length ? (
               <div className="space-y-2">
                 {items.slice(0, 3).map(item => (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
-                    onClick={() => navigateTo(`/products/${item.product.slug}`)}
                     className="group flex w-full items-center gap-3 rounded-2xl border border-transparent p-2 text-left transition hover:border-border/60 hover:bg-card">
-                    <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+                    <button type="button" onClick={() => navigateTo(`/products/${item.product.slug}`)} className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                       <Image src={item.variant.image} alt={item.product.name} fill sizes="56px" className="object-cover" />
-                    </div>
+                    </button>
 
-                    <div className="min-w-0 flex-1">
+                    <button type="button" onClick={() => navigateTo(`/products/${item.product.slug}`)} className="min-w-0 flex-1 text-left">
                       <p className="truncate text-xs font-semibold">{item.product.name}</p>
                       <p className="mt-1 truncate text-[10px] text-muted-foreground">{item.variant.label}</p>
                       <p className="mt-1 text-xs font-bold">{currencyFormatter.format(item.variant.price)}</p>
-                    </div>
+                    </button>
 
-                    <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold">×{item.quantity}</span>
-                  </button>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold">×{item.quantity}</span>
+                      <button type="button" disabled={removingCartItemId === item.id} onClick={() => void removeCartItem(item.id)} aria-label={`Remove ${item.product.name} from cart`} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-bold text-destructive transition hover:bg-destructive/10 disabled:opacity-50">
+                        {removingCartItemId === item.id ? <LoaderCircle className="size-3 animate-spin" /> : <Trash2 className="size-3" />} Remove
+                      </button>
+                    </div>
+                  </div>
                 ))}
 
                 {items.length > 3 ? (
@@ -186,25 +202,25 @@ export function CartLogics() {
                 const variant = product.variants.find(item => item.stockLeft > 0) ?? product.variants[0];
 
                 return (
-                  <button
+                  <div
                     key={product.id}
-                    type="button"
-                    onClick={() => navigateTo(`/products/${product.slug}`)}
                     className="group flex w-full items-center gap-3 rounded-2xl border border-transparent p-2 text-left transition hover:border-border/60 hover:bg-card">
-                    <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+                    <button type="button" onClick={() => navigateTo(`/products/${product.slug}`)} className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                       {variant ? <Image src={variant.image} alt={product.name} fill sizes="56px" className="object-cover" /> : null}
-                    </div>
+                    </button>
 
-                    <div className="min-w-0 flex-1">
+                    <button type="button" onClick={() => navigateTo(`/products/${product.slug}`)} className="min-w-0 flex-1 text-left">
                       <p className="truncate text-xs font-semibold">{product.name}</p>
                       <p className="mt-1 line-clamp-1 text-[10px] text-muted-foreground">{product.shortDescription}</p>
                       <p className="mt-1 text-xs font-bold">
                         {variant ? currencyFormatter.format(variant.price) : 'Unavailable'}
                       </p>
-                    </div>
+                    </button>
 
-                    <Heart className="size-4 shrink-0 fill-rose-500 text-rose-500" />
-                  </button>
+                    <button type="button" disabled={isWishlistMutating(product.id)} onClick={() => void removeProduct(product.id)} aria-label={`Remove ${product.name} from wishlist`} className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[9px] font-bold text-destructive transition hover:bg-destructive/10 disabled:opacity-50">
+                      {isWishlistMutating(product.id) ? <LoaderCircle className="size-3 animate-spin" /> : <Trash2 className="size-3" />} Remove
+                    </button>
+                  </div>
                 );
               })}
             </div>

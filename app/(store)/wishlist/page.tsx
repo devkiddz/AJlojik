@@ -145,8 +145,9 @@ function WishlistCard({ product, busy, onRemove, onAddToCart }: {
           disabled={busy}
           onClick={() => void onRemove()}
           aria-label={`Remove ${product.name} from wishlist`}
-          className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-background/85 text-rose-500 shadow-md backdrop-blur transition hover:scale-105 disabled:opacity-50">
-          {busy ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+          className="absolute right-2 top-2 inline-flex h-9 items-center gap-1.5 rounded-full bg-background/90 px-3 text-[10px] font-bold text-rose-500 shadow-md backdrop-blur transition hover:scale-[1.02] disabled:opacity-50">
+          {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+          <span>{busy ? 'Removing' : 'Remove from list'}</span>
         </button>
       </div>
 
