@@ -49,24 +49,28 @@ export default function HomeStorefront() {
 
   return (
     <div className="bg-background pb-14">
-      <section className="w-full">
-        <div className="grid min-h-[72dvh] overflow-hidden bg-[#07172b] text-white shadow-2xl lg:grid-cols-[.9fr_1.1fr]">
-          <div className="relative z-10 flex min-h-[34rem] flex-col justify-center p-7 sm:p-12 lg:min-h-[72dvh] lg:p-16 xl:p-24">
+      <section className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#03070d] text-white">
+        <video autoPlay muted loop playsInline poster={featuredVariant.image} className="absolute inset-0 size-full object-cover">
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-friends-having-dinner-at-a-restaurant-4340-large.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(1,5,12,.96)_0%,rgba(1,5,12,.7)_43%,rgba(1,5,12,.18)_75%),linear-gradient(0deg,#03070d_0%,transparent_45%)]" />
+        <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-[1500px] overflow-hidden">
+          <div className="relative z-10 flex flex-col justify-center p-7 sm:p-12 lg:p-16 xl:p-20">
             <div className="absolute -left-32 top-0 size-96 rounded-full bg-blue-500/20 blur-3xl" />
             <div className="relative">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.16em] backdrop-blur">
-                <Sparkles className="size-3.5 text-amber-300" /> Recommended experience
+                <Sparkles className="size-3.5 text-amber-300" /> Your personal shopping experience
               </span>
-              <h1 className="mt-6 max-w-2xl text-4xl font-black leading-[.98] tracking-[-.045em] sm:text-6xl xl:text-7xl">Make every moment feel considered.</h1>
+              <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[.92] tracking-[-.055em] sm:text-7xl xl:text-8xl">Every beautiful moment starts here.</h1>
               <p className="mt-5 max-w-xl text-sm leading-6 text-white/70 sm:text-base">Discover products, event essentials, and premium picks selected around how you shop—not just what is popular.</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href={`/products/${featured.slug}`} className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-black text-[#07172b] transition hover:bg-white/90">Shop featured <ArrowRight className="size-4" /></Link>
-                <Link href="/store" className="inline-flex items-center gap-2 rounded-md border border-white/25 bg-white/5 px-5 py-3 text-sm font-bold transition hover:bg-white/10">Explore store</Link>
+                <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-black text-[#07172b] transition hover:scale-[1.02]">Create your experience <ArrowRight className="size-4" /></Link>
+                <Link href="/sign-in" className="inline-flex items-center gap-2 rounded-md border border-white/25 bg-black/20 px-6 py-3.5 text-sm font-bold backdrop-blur transition hover:bg-white/10">Sign in</Link>
               </div>
             </div>
           </div>
 
-          <Link href={`/products/${featured.slug}`} className="group relative min-h-[32rem] overflow-hidden lg:min-h-[72dvh]">
+          <Link href={`/products/${featured.slug}`} className="hidden">
             <Image src={featuredVariant.image} alt={featured.name} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.035]" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/5 to-transparent lg:bg-gradient-to-r lg:from-[#07172b]/35 lg:via-transparent lg:to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
@@ -78,7 +82,7 @@ export default function HomeStorefront() {
         </div>
       </section>
 
-      <div className="relative z-10 -mt-10 rounded-t-[2rem] bg-background pt-1">
+      <div className="relative z-10 -mt-12 rounded-t-[2.5rem] bg-background pt-2 shadow-[0_-30px_70px_rgba(0,0,0,.28)]">
         <ProductRail title="Most active experiences" subtitle="The products customers are exploring and choosing now" products={trending} onOpen={openProduct} onPreview={setPreviewProduct} onAdd={addProduct} />
       </div>
 
@@ -120,8 +124,8 @@ function ProductRail({ title, subtitle, products, onOpen, onPreview, onAdd }: { 
         <div><h2 className="text-2xl font-black tracking-tight sm:text-3xl">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{subtitle}</p></div>
         <Link href="/store" className="hidden items-center gap-1 text-sm font-bold hover:underline sm:inline-flex">See all <ChevronRight className="size-4" /></Link>
       </header>
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-5 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-4 xl:grid-cols-5">
-        {products.slice(0, 5).map(product => <ProductCard key={product.id} product={product} onOpenExperience={onOpen} onPreview={onPreview} onAddToCart={onAdd} className="w-[72vw] max-w-[265px] shrink-0 snap-start sm:w-auto sm:max-w-none" />)}
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-5 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-6 xl:grid-cols-7">
+        {products.slice(0, 7).map(product => <ProductCard key={product.id} product={product} onOpenExperience={onOpen} onPreview={onPreview} onAddToCart={onAdd} className="w-[48vw] max-w-[205px] shrink-0 snap-start sm:w-auto sm:max-w-none" />)}
       </div>
     </section>
   );

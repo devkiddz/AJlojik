@@ -189,7 +189,7 @@ function CommerceDashboardContent({
           orderCount={orderCount}
         />
 
-        <div className="hidden space-y-5 sm:block">
+        <div className="hidden space-y-5 sm:!block">
         <DesktopCommerceAnalytics
           inventory={inventory}
           expenseSeries={expenseSeries}
@@ -396,10 +396,11 @@ function MobileCommerceDashboard({ inventory, recentProducts, wishlistProducts, 
   const smartPicks = recommendations.filter(product => product.featured || product.isNew).slice(0, 4);
   const stockHealth = inventory.variantCount ? Math.round(((inventory.variantCount - inventory.outOfStockVariants) / inventory.variantCount) * 100) : 0;
   return (
-    <div className="space-y-5 sm:hidden">
+    <div className="block space-y-5 sm:!hidden">
       <section className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/80 p-4 shadow-lg">
         <div className="flex items-center justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.2em] text-primary">Commerce pulse</p><h2 className="mt-1 text-lg font-black">Inventory & activity</h2></div><Link href="/orders" className="grid size-9 place-items-center rounded-full border border-border/60"><ChevronRight className="size-4" /></Link></div>
         <div className="mt-5 grid grid-cols-4 gap-2"><MobileRing label="Stock" value={`${stockHealth}%`} progress={stockHealth} tone="emerald" /><MobileRing label="Units" value={compactNumber(inventory.totalUnits)} progress={Math.min(inventory.totalUnits, 100)} tone="violet" /><MobileRing label="Orders" value={String(orderCount)} progress={Math.min(orderCount * 12, 100)} tone="amber" /><MobileRing label="Alerts" value={String(inventory.lowStockVariants + inventory.outOfStockVariants)} progress={Math.min((inventory.lowStockVariants + inventory.outOfStockVariants) * 14, 100)} tone="rose" /></div>
+        <div className="mt-5 rounded-2xl bg-background/70 p-3"><div className="flex h-20 items-end gap-2">{[inventory.totalUnits, Math.max(inventory.variantCount - inventory.outOfStockVariants, 0), inventory.lowStockVariants, inventory.outOfStockVariants].map((value, index) => { const maximum = Math.max(inventory.totalUnits, inventory.variantCount, 1); const labels = ['Units', 'Ready', 'Low', 'Out']; const colors = ['bg-violet-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500']; return <div key={labels[index]} className="flex h-full flex-1 flex-col justify-end text-center"><div className="flex flex-1 items-end overflow-hidden rounded-lg bg-muted/60 p-1"><span className={cn('w-full rounded-md', colors[index])} style={{ height: `${Math.max((value / maximum) * 100, value ? 8 : 2)}%` }} /></div><span className="mt-1.5 text-[8px] font-bold text-muted-foreground">{labels[index]}</span></div>; })}</div></div>
         <div className="mt-5 divide-y divide-border/50 rounded-2xl bg-muted/45 px-3"><MobileSignal icon={<WalletCards />} label="Lifetime commerce" helper={`${orderCount} completed activities`} value={compactCurrencyFormatter.format(totalSpent)} /><MobileSignal icon={<Boxes />} label="Catalog stock value" helper={`${inventory.variantCount} active options`} value={compactCurrencyFormatter.format(inventory.inventoryValue)} /><MobileSignal icon={<TriangleAlert />} label="Inventory attention" helper="Low and unavailable options" value={String(inventory.lowStockVariants + inventory.outOfStockVariants)} alert /></div>
       </section>
 

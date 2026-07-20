@@ -14,7 +14,10 @@ export async function generateAdminTodos(workspaceId: string) {
       select: { id: true, trackingCode: true },
       take: 20
     })
-  ]);
+  ]).catch(error => {
+    console.error('Admin todo generation skipped because operational data is unavailable.', error);
+    return [[], []] as const;
+  });
 
   for (const item of lowStockVariants) {
     const existing = await prisma.adminTodo.findFirst({ where: { workspaceId, source: 'INVENTORY', targetType: 'PRODUCT', targetId: item.productId, status: { in: ['OPEN', 'IN_PROGRESS', 'BLOCKED'] } }, select: { id: true } });

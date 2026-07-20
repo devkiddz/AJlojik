@@ -8,15 +8,17 @@ import { prisma } from '@/lib/prisma';
 
 export default async function AdminHomePage() {
   const access = await getAdminAccess();
-  await generateAdminTodos(access.membership.workspaceId);
+  await generateAdminTodos(access.membership.workspaceId).catch(error => {
+    console.error('Unable to refresh admin todos.', error);
+  });
 
   const [todos, approvals, staffCount, productCount, deliveries, recentActivity] = await Promise.all([
-    prisma.adminTodo.findMany({ where: { workspaceId: access.membership.workspaceId, status: { in: ['OPEN', 'IN_PROGRESS', 'BLOCKED'] } }, orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }], take: 8 }),
-    prisma.adminApprovalRequest.findMany({ where: { workspaceId: access.membership.workspaceId, status: 'PENDING' }, include: { requestedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }),
-    prisma.staffProfile.count({ where: { workspaceId: access.membership.workspaceId, active: true } }),
-    prisma.product.count({ where: { active: true } }),
-    prisma.delivery.count({ where: { workspaceId: access.membership.workspaceId, status: { notIn: ['DELIVERED', 'CANCELLED', 'FAILED'] } } }),
-    prisma.adminAuditEvent.findMany({ where: { workspaceId: access.membership.workspaceId }, include: { actor: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 })
+    prisma.adminTodo.findMany({ where: { workspaceId: access.membership.workspaceId, status: { in: ['OPEN', 'IN_PROGRESS', 'BLOCKED'] } }, orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }], take: 8 }).catch(() => []),
+    prisma.adminApprovalRequest.findMany({ where: { workspaceId: access.membership.workspaceId, status: 'PENDING' }, include: { requestedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []),
+    prisma.staffProfile.count({ where: { workspaceId: access.membership.workspaceId, active: true } }).catch(() => 0),
+    prisma.product.count({ where: { active: true } }).catch(() => 0),
+    prisma.delivery.count({ where: { workspaceId: access.membership.workspaceId, status: { notIn: ['DELIVERED', 'CANCELLED', 'FAILED'] } } }).catch(() => 0),
+    prisma.adminAuditEvent.findMany({ where: { workspaceId: access.membership.workspaceId }, include: { actor: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => [])
   ]);
 
   const canReview = access.permissions.has('approval:review');

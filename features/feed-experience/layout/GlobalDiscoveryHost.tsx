@@ -12,7 +12,7 @@ import StoreExperienceSidebar from './StoreExperienceSidebar';
 export default function GlobalDiscoveryHost() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useIdentity();
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(() => !pathname.startsWith('/account'));
   const [discoveryEnabled, setDiscoveryEnabled] = useState(true);
 
   useEffect(() => {
