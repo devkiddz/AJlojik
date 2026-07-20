@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 
 import type {
   HubContextValue,
@@ -8,88 +16,220 @@ import type {
   HubGroupId,
   HubPreview,
   HubWidget
-} from '../components/discovery-hub-panel/discoveryHubTypes';
+} from '@/components/discovery-hub-panel/discoveryHubTypes';
 
-const DiscoveryHubContext = createContext<HubContextValue | null>(null);
+const DiscoveryHubContext =
+  createContext<HubContextValue | null>(
+    null
+  );
 
 type DiscoveryHubProviderProps = {
   groups: HubGroup[];
   widgets: HubWidget[];
   children: ReactNode;
 
-  /**
-   * Optional controlled group state.
-   * DesktopDiscoveryRail uses this so the selected tab survives
-   * compact/expanded transitions.
-   */
   activeGroupId?: HubGroupId;
 
-  onActiveGroupIdChange?: (groupId: HubGroupId) => void;
+  onActiveGroupIdChange?: (
+    groupId: HubGroupId
+  ) => void;
 };
 
 export function DiscoveryHubProvider({
   groups,
   widgets,
   children,
-  activeGroupId: controlledGroupId,
+  activeGroupId:
+    controlledGroupId,
   onActiveGroupIdChange
 }: DiscoveryHubProviderProps) {
-  const [internalActiveGroupId, setInternalActiveGroupId] = useState<HubGroupId>('home');
+  const sortedGroups =
+    useMemo(
+      () =>
+        [...groups].sort(
+          (
+            firstGroup,
+            secondGroup
+          ) =>
+            firstGroup.order -
+            secondGroup.order
+        ),
+      [groups]
+    );
 
-  const [activePreview, setActivePreview] = useState<HubPreview | null>(null);
+  const sortedWidgets =
+    useMemo(
+      () =>
+        [...widgets]
+          .filter(
+            widget =>
+              widget.enabled
+          )
+          .sort(
+            (
+              firstWidget,
+              secondWidget
+            ) =>
+              firstWidget.order -
+              secondWidget.order
+          ),
+      [widgets]
+    );
 
-  const activeGroupId = controlledGroupId ?? internalActiveGroupId;
+  const firstGroupId =
+    sortedGroups[0]?.id ?? '';
 
-  const setActiveGroupId = (groupId: HubGroupId) => {
-    if (onActiveGroupIdChange) {
-      onActiveGroupIdChange(groupId);
+  const [
+    internalActiveGroupId,
+    setInternalActiveGroupId
+  ] = useState<HubGroupId>(
+    firstGroupId
+  );
+
+  const [
+    activePreview,
+    setActivePreview
+  ] =
+    useState<HubPreview | null>(
+      null
+    );
+
+  const requestedGroupId =
+    controlledGroupId ??
+    internalActiveGroupId;
+
+  const requestedGroupExists =
+    sortedGroups.some(
+      group =>
+        group.id ===
+        requestedGroupId
+    );
+
+  const activeGroupId =
+    requestedGroupExists
+      ? requestedGroupId
+      : firstGroupId;
+
+  useEffect(() => {
+    if (
+      controlledGroupId !==
+      undefined
+    ) {
       return;
     }
 
-    setInternalActiveGroupId(groupId);
-  };
+    if (
+      requestedGroupExists
+    ) {
+      return;
+    }
 
-  const sortedGroups = useMemo(
-    () => [...groups].sort((firstGroup, secondGroup) => firstGroup.order - secondGroup.order),
-    [groups]
+    setInternalActiveGroupId(
+      firstGroupId
+    );
+  }, [
+    controlledGroupId,
+    firstGroupId,
+    requestedGroupExists
+  ]);
+
+  const setActiveGroupId =
+    useCallback(
+      (
+        groupId: HubGroupId
+      ) => {
+        const groupExists =
+          sortedGroups.some(
+            group =>
+              group.id ===
+              groupId
+          );
+
+        if (!groupExists) {
+          return;
+        }
+
+        if (
+          onActiveGroupIdChange
+        ) {
+          onActiveGroupIdChange(
+            groupId
+          );
+
+          return;
+        }
+
+        setInternalActiveGroupId(
+          groupId
+        );
+      },
+      [
+        onActiveGroupIdChange,
+        sortedGroups
+      ]
+    );
+
+  const openPreview =
+    useCallback(
+      (
+        preview: HubPreview
+      ) => {
+        setActivePreview(
+          preview
+        );
+      },
+      []
+    );
+
+  const closePreview =
+    useCallback(() => {
+      setActivePreview(null);
+    }, []);
+
+  const value =
+    useMemo<HubContextValue>(
+      () => ({
+        groups: sortedGroups,
+        widgets:
+          sortedWidgets,
+
+        activeGroupId,
+        activePreview,
+
+        setActiveGroupId,
+        openPreview,
+        closePreview
+      }),
+      [
+        activeGroupId,
+        activePreview,
+        closePreview,
+        openPreview,
+        setActiveGroupId,
+        sortedGroups,
+        sortedWidgets
+      ]
+    );
+
+  return (
+    <DiscoveryHubContext.Provider
+      value={value}
+    >
+      {children}
+    </DiscoveryHubContext.Provider>
   );
-
-  const sortedWidgets = useMemo(
-    () =>
-      [...widgets]
-        .filter(widget => widget.enabled)
-        .sort((firstWidget, secondWidget) => firstWidget.order - secondWidget.order),
-    [widgets]
-  );
-
-  const openPreview = (preview: HubPreview) => {
-    setActivePreview(preview);
-  };
-
-  const closePreview = () => {
-    setActivePreview(null);
-  };
-
-  const value: HubContextValue = {
-    groups: sortedGroups,
-    widgets: sortedWidgets,
-
-    activeGroupId,
-    activePreview,
-
-    setActiveGroupId,
-    openPreview,
-    closePreview
-  };
-
-  return <DiscoveryHubContext.Provider value={value}>{children}</DiscoveryHubContext.Provider>;
 }
 
 export function useDiscoveryHub() {
-  const context = useContext(DiscoveryHubContext);
+  const context =
+    useContext(
+      DiscoveryHubContext
+    );
 
   if (!context) {
-    throw new Error('useDiscoveryHub must be used within a DiscoveryHubProvider');
+    throw new Error(
+      'useDiscoveryHub must be used within a DiscoveryHubProvider'
+    );
   }
 
   return context;

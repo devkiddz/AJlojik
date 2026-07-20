@@ -1,164 +1,332 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type UIEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type UIEvent
+} from 'react';
 
-import { PanelRightOpen } from 'lucide-react';
+import {
+  usePathname
+} from 'next/navigation';
+
+import {
+  PanelRightOpen
+} from 'lucide-react';
 
 import ActiveProductWidget from '@/components/ActiveProductWidget';
 
-import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
+import {
+  discoveryRegistry
+} from '@/data/discoveryHubData';
 
-import { useFeedExperience } from '@/features/feed-experience';
+import {
+  resolveDiscoveryExperience,
+  resolveDiscoveryPageMode
+} from '@/features/feed-experience/discovery';
 
-import { selectDiscoveryHubWidgets } from '@/features/feed-experience/selectors';
+import {
+  useFeedExperience
+} from '@/features/feed-experience';
 
 import { cn } from '@/lib/utils';
 
+import {
+  DiscoveryHubProvider
+} from '@/providers/DiscoveryHubProvider';
+
 import DiscoveryHubPanel from './DiscoveryHubPanel';
 
-import { DiscoveryHubProvider } from '../../providers/DiscoveryHubProvider';
+import {
+  DiscoveryHubRenderer
+} from './DiscoveryHubRenderer';
 
-import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
+import type {
+  HubGroupId
+} from './discoveryHubTypes';
 
-import type { HubGroupId } from './discoveryHubTypes';
-
-type MobileHubView = 'discovery' | 'product';
+type MobileHubView =
+  | 'discovery'
+  | 'product';
 
 export default function DiscoverExperienceShell() {
-  const { intent, context } = useFeedExperience();
+  const pathname =
+    usePathname();
 
-  const [activeGroupId, setActiveGroupId] = useState<HubGroupId>('home');
+  const {
+    intent,
+    context
+  } = useFeedExperience();
 
-  const [viewPreference, setViewPreference] = useState<{
+  const pageMode =
+    resolveDiscoveryPageMode(
+      pathname
+    );
+
+  const [
+    activeGroupId,
+    setActiveGroupId
+  ] =
+    useState<HubGroupId>('');
+
+  const [
+    viewPreference,
+    setViewPreference
+  ] = useState<{
     productId: string;
     view: MobileHubView;
   } | null>(null);
 
-  const discoveryScrollRef = useRef<HTMLDivElement>(null);
+  const lastResolutionFocusRef =
+    useRef<string>('');
 
-  const discoveryScrollTopRef = useRef(0);
+  const discoveryScrollRef =
+    useRef<HTMLDivElement>(
+      null
+    );
 
-  const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
+  const discoveryScrollTopRef =
+    useRef(0);
 
-  const activeView: MobileHubView = !activeProductId
-    ? 'discovery'
-    : viewPreference?.productId === activeProductId
-      ? viewPreference.view
-      : 'product';
+  const resolution =
+    useMemo(
+      () =>
+        resolveDiscoveryExperience({
+          pageMode,
 
-  const showProduct = Boolean(activeProductId) && activeView === 'product';
+          intent,
 
-  const resolvedWidgets = useMemo(
-    () =>
-      selectDiscoveryHubWidgets({
-        widgets: hubWidgets,
-        context
-      }),
-    [context]
-  );
+          context,
+
+          registry:
+            discoveryRegistry,
+
+          previousActiveGroupId:
+            activeGroupId ||
+            undefined
+        }),
+      [
+        activeGroupId,
+        context,
+        intent,
+        pageMode
+      ]
+    );
+
+  const resolutionFocusKey =
+    `${pageMode}:${intent.id}`;
 
   useEffect(() => {
-    if (activeView !== 'discovery') {
+    const activeGroupStillExists =
+      resolution.groups.some(
+        group =>
+          group.id ===
+          activeGroupId
+      );
+
+    const experienceChanged =
+      lastResolutionFocusRef.current !==
+      resolutionFocusKey;
+
+    if (
+      experienceChanged ||
+      !activeGroupStillExists
+    ) {
+      lastResolutionFocusRef.current =
+        resolutionFocusKey;
+
+      setActiveGroupId(
+        resolution.primaryGroupId ??
+          resolution.groups[0]?.id ??
+          ''
+      );
+    }
+  }, [
+    activeGroupId,
+    resolution.groups,
+    resolution.primaryGroupId,
+    resolutionFocusKey
+  ]);
+
+  const activeProductId =
+    intent.type === 'product'
+      ? intent.targetId ??
+        null
+      : null;
+
+  const activeView: MobileHubView =
+    !activeProductId
+      ? 'discovery'
+      : viewPreference
+            ?.productId ===
+          activeProductId
+        ? viewPreference.view
+        : 'product';
+
+  const showProduct =
+    Boolean(
+      activeProductId
+    ) &&
+    activeView === 'product';
+
+  useEffect(() => {
+    if (
+      activeView !==
+      'discovery'
+    ) {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      if (discoveryScrollRef.current) {
-        discoveryScrollRef.current.scrollTop = discoveryScrollTopRef.current;
-      }
-    });
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          if (
+            discoveryScrollRef.current
+          ) {
+            discoveryScrollRef.current.scrollTop =
+              discoveryScrollTopRef.current;
+          }
+        }
+      );
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      window.cancelAnimationFrame(
+        frameId
+      );
     };
   }, [activeView]);
 
-  const handleDiscoveryScroll = (event: UIEvent<HTMLDivElement>) => {
-    discoveryScrollTopRef.current = event.currentTarget.scrollTop;
+  const handleDiscoveryScroll = (
+    event:
+      UIEvent<HTMLDivElement>
+  ) => {
+    discoveryScrollTopRef.current =
+      event.currentTarget.scrollTop;
   };
 
-  const handleGroupSelect = (groupId: HubGroupId) => {
-    setActiveGroupId(groupId);
+  const handleGroupSelect = (
+    groupId: HubGroupId
+  ) => {
+    setActiveGroupId(
+      groupId
+    );
 
     setViewPreference(
       activeProductId
         ? {
-            productId: activeProductId,
+            productId:
+              activeProductId,
 
-            view: 'discovery'
+            view:
+              'discovery'
           }
         : null
     );
   };
 
-  const handleContinueDiscovery = () => {
-    setViewPreference(
-      activeProductId
-        ? {
-            productId: activeProductId,
+  const handleContinueDiscovery =
+    () => {
+      setViewPreference(
+        activeProductId
+          ? {
+              productId:
+                activeProductId,
 
-            view: 'discovery'
-          }
-        : null
-    );
-  };
+              view:
+                'discovery'
+            }
+          : null
+      );
+    };
 
-  const handleShowProduct = () => {
-    if (!activeProductId) {
-      return;
-    }
+  const handleShowProduct =
+    () => {
+      if (!activeProductId) {
+        return;
+      }
 
-    setViewPreference({
-      productId: activeProductId,
+      setViewPreference({
+        productId:
+          activeProductId,
 
-      view: 'product'
-    });
-  };
+        view:
+          'product'
+      });
+    };
 
   return (
     <DiscoveryHubProvider
-      groups={hubGroups}
-      widgets={resolvedWidgets}
-      activeGroupId={activeGroupId}
-      onActiveGroupIdChange={setActiveGroupId}>
+      groups={resolution.groups}
+      widgets={
+        resolution.widgets
+      }
+      activeGroupId={
+        activeGroupId
+      }
+      onActiveGroupIdChange={
+        setActiveGroupId
+      }
+    >
       <div className="relative h-full min-h-0 w-full overflow-hidden">
-        <DiscoveryHubPanel className="h-full" onGroupSelect={handleGroupSelect}>
+        <DiscoveryHubPanel
+          className="h-full"
+          onGroupSelect={
+            handleGroupSelect
+          }
+        >
           <div className="h-full min-h-0 overflow-hidden">
-            {/* Preserved Discovery Hub */}
-
             <div
-              aria-hidden={showProduct}
+              aria-hidden={
+                showProduct
+              }
               className={cn(
                 'h-full min-h-0',
 
-                showProduct ? 'hidden' : 'block'
-              )}>
+                showProduct
+                  ? 'hidden'
+                  : 'block'
+              )}
+            >
               <div
-                ref={discoveryScrollRef}
-                onScroll={handleDiscoveryScroll}
-                className="h-full overflow-x-hidden overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]">
+                ref={
+                  discoveryScrollRef
+                }
+                onScroll={
+                  handleDiscoveryScroll
+                }
+                className="h-full overflow-x-hidden overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]"
+              >
                 <div className="w-full p-3 pb-28 md:p-4">
                   <DiscoveryHubRenderer />
                 </div>
               </div>
             </div>
 
-            {/* Active product information */}
-
             {showProduct ? (
               <div className="h-full min-h-0 overflow-hidden">
-                <ActiveProductWidget onBackToDiscovery={handleContinueDiscovery} />
+                <ActiveProductWidget
+                  onBackToDiscovery={
+                    handleContinueDiscovery
+                  }
+                />
               </div>
             ) : null}
           </div>
         </DiscoveryHubPanel>
 
-        {activeProductId && !showProduct ? (
+        {activeProductId &&
+        !showProduct ? (
           <button
             type="button"
-            onClick={handleShowProduct}
-            className="absolute bottom-4 right-4 z-[70] inline-flex h-11 items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-xl shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90">
+            onClick={
+              handleShowProduct
+            }
+            className="absolute bottom-4 right-4 z-[70] inline-flex h-11 items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-xl shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90"
+          >
             <PanelRightOpen className="size-4" />
+
             Product details
           </button>
         ) : null}

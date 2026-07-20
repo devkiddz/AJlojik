@@ -6,15 +6,9 @@ import type {
 } from '@/features/feed-experience/contracts';
 
 // ============================================================
-// SHARED DISCOVERY IDENTIFIERS
+// EXTENSIBLE DISCOVERY IDENTIFIERS
 // ============================================================
 
-/**
- * Discovery identifiers are intentionally extensible.
- *
- * New RCENTZ products and business modules can register
- * capabilities without editing a central string union.
- */
 export type DiscoveryGroupId = string;
 
 export type DiscoveryWidgetId = string;
@@ -30,22 +24,15 @@ export type DiscoveryIntentType = string;
 export type DiscoverySignalKey = string;
 
 // ============================================================
-// CURRENT HUB IDENTIFIERS
+// CURRENT HUB COMPATIBILITY IDENTIFIERS
 // ============================================================
 
-/**
- * Compatibility aliases.
- *
- * Existing Hub components can continue using HubGroupId
- * and HubWidgetId while the architecture migrates toward
- * the broader Discovery contracts.
- */
 export type HubGroupId = DiscoveryGroupId;
 
 export type HubWidgetId = DiscoveryWidgetId;
 
 // ============================================================
-// EXISTING HUB PRESENTATION TYPES
+// HUB PRESENTATION TYPES
 // ============================================================
 
 export type HubWidgetLayout =
@@ -132,16 +119,6 @@ export type HubLocation = {
   };
 };
 
-// ============================================================
-// CURRENT HUB WIDGET CONTRACT
-// ============================================================
-
-/**
- * Existing rendered Hub widget.
- *
- * This remains intact during the migration so the current
- * Hub data and renderers continue to compile.
- */
 export type HubWidget = {
   id: HubWidgetId;
   groupId: HubGroupId;
@@ -184,23 +161,13 @@ export type HubWidget = {
   layout?: HubWidgetLayout;
 };
 
-// ============================================================
-// CURRENT HUB GROUP CONTRACT
-// ============================================================
-
 /**
- * These icon keys remain available to the current renderer.
+ * Icons are registry keys rather than a closed union.
  *
- * The new Discovery registry uses DiscoveryIconKey so future
- * products are not restricted to this list.
+ * Current AJ Logik keys still work, while future RCENTZ
+ * blueprints may register new icons without changing this type.
  */
-export type HubGroupIcon =
-  | 'home'
-  | 'shopping'
-  | 'orders'
-  | 'rewards'
-  | 'ai'
-  | 'settings';
+export type HubGroupIcon = DiscoveryIconKey;
 
 export type HubGroupIndicator =
   | 'dot'
@@ -208,9 +175,6 @@ export type HubGroupIndicator =
   | 'live'
   | 'spark';
 
-/**
- * Existing rendered Hub group.
- */
 export type HubGroup = {
   id: HubGroupId;
   label: string;
@@ -222,10 +186,6 @@ export type HubGroup = {
 
   indicator?: HubGroupIndicator;
 };
-
-// ============================================================
-// HUB PREVIEW AND PROVIDER CONTRACTS
-// ============================================================
 
 export type HubPreview = {
   widgetId: HubWidgetId;
@@ -260,16 +220,10 @@ export type HubContextValue = {
 };
 
 // ============================================================
-// COMPACT DISCOVERY CONTRACTS
+// COMPACT DISCOVERY TYPES
 // ============================================================
 
-export type CompactDiscoveryItemIcon =
-  | 'cart'
-  | 'wishlist'
-  | 'recent'
-  | 'recommendation'
-  | 'membership'
-  | 'ai';
+export type CompactDiscoveryItemIcon = DiscoveryIconKey;
 
 export type CompactDiscoveryItemTone =
   | 'default'
@@ -292,33 +246,17 @@ export type CompactDiscoveryItem = {
 
   priority: number;
 
-  /**
-   * The expanded Discovery group that owns this item.
-   */
   groupId?: HubGroupId;
 
-  /**
-   * The specific widget represented by this shortcut.
-   */
   widgetId?: HubWidgetId;
 
-  /**
-   * Optional attention signal.
-   */
   active?: boolean;
 };
 
 // ============================================================
-// DISCOVERY ELIGIBILITY
+// DISCOVERY REGISTRY RULES
 // ============================================================
 
-/**
- * Reusable rules controlling where a registered capability
- * is eligible to participate.
- *
- * These are metadata contracts only. The future resolver
- * will execute the actual eligibility checks.
- */
 export type DiscoveryEligibilityRules = {
   enabled?: boolean;
 
@@ -332,17 +270,17 @@ export type DiscoveryEligibilityRules = {
 
   excludedIntentTypes?: DiscoveryIntentType[];
 
+  /**
+   * Every listed signal must be available.
+   */
   requiredSignals?: DiscoverySignalKey[];
+
+  /**
+   * At least one listed signal must be available.
+   */
+  anySignals?: DiscoverySignalKey[];
 };
 
-// ============================================================
-// DISCOVERY PRIORITY
-// ============================================================
-
-/**
- * Allows a group or widget to receive different priority
- * values depending on the active page.
- */
 export type DiscoveryPagePriorityMap = Partial<
   Record<
     DiscoveryPageMode,
@@ -350,10 +288,6 @@ export type DiscoveryPagePriorityMap = Partial<
   >
 >;
 
-/**
- * Allows a group or widget to receive different priority
- * values depending on the active intent.
- */
 export type DiscoveryIntentPriorityMap = Partial<
   Record<
     DiscoveryIntentType,
@@ -362,24 +296,15 @@ export type DiscoveryIntentPriorityMap = Partial<
 >;
 
 // ============================================================
-// DISCOVERY GROUP REGISTRY DEFINITION
+// DISCOVERY REGISTRY DEFINITIONS
 // ============================================================
 
-/**
- * Describes a Discovery capability available to the system.
- *
- * This is not yet a rendered tab. The resolver determines
- * whether it becomes visible in the current experience.
- */
 export type DiscoveryGroupDefinition = {
   id: DiscoveryGroupId;
 
   label: string;
   description?: string;
 
-  /**
-   * Extensible key resolved by the Discovery icon registry.
-   */
   iconKey: DiscoveryIconKey;
 
   defaultPriority: number;
@@ -388,30 +313,33 @@ export type DiscoveryGroupDefinition = {
 
   intentPriority?: DiscoveryIntentPriorityMap;
 
+  /**
+   * A pinned group may remain available even when it has
+   * no resolved widgets. Settings is the main example.
+   */
   pinned?: boolean;
 
   indicator?: HubGroupIndicator;
 
   eligibility?: DiscoveryEligibilityRules;
-
-  /**
-   * Optional explicit widget membership.
-   *
-   * Widgets can also associate themselves through groupId.
-   */
-  widgetIds?: DiscoveryWidgetId[];
 };
 
-// ============================================================
-// DISCOVERY WIDGET REGISTRY DEFINITION
-// ============================================================
 
-/**
- * Describes a widget capability available to Discovery.
- *
- * It retains the existing visual widget fields while adding
- * registry, eligibility and priority metadata.
- */
+export type DiscoveryCompactProjectionDefinition = {
+  /**
+   * Compact item kinds this widget can represent.
+   *
+   * The current compact selector supplies the item copy and live
+   * values; this metadata connects that item to its owning widget.
+   */
+  icons: CompactDiscoveryItemIcon[];
+
+  /**
+   * Optional final adjustment after page and intent priority.
+   */
+  priorityBoost?: number;
+};
+
 export type DiscoveryWidgetDefinition = Omit<
   HubWidget,
   | 'id'
@@ -423,13 +351,9 @@ export type DiscoveryWidgetDefinition = Omit<
 
   groupId: DiscoveryGroupId;
 
-  /**
-   * Key used to find a custom widget implementation.
-   *
-   * Widgets without a componentKey can continue using the
-   * generic Hub renderer.
-   */
   componentKey?: DiscoveryComponentKey;
+
+  compact?: DiscoveryCompactProjectionDefinition;
 
   defaultPriority: number;
 
@@ -440,17 +364,6 @@ export type DiscoveryWidgetDefinition = Omit<
   eligibility?: DiscoveryEligibilityRules;
 };
 
-// ============================================================
-// DISCOVERY REGISTRY
-// ============================================================
-
-/**
- * Complete set of capabilities made available by:
- *
- * RCENTZ core
- * + product blueprint
- * + business/workspace extensions
- */
 export type DiscoveryRegistry = {
   groups: DiscoveryGroupDefinition[];
 
@@ -458,13 +371,9 @@ export type DiscoveryRegistry = {
 };
 
 // ============================================================
-// DISCOVERY WORKSPACE CONFIGURATION
+// WORKSPACE CONFIGURATION
 // ============================================================
 
-/**
- * Runtime configuration can enable, disable or reprioritise
- * registered capabilities without changing their code.
- */
 export type DiscoveryWorkspaceConfiguration = {
   enabledGroupIds?: DiscoveryGroupId[];
 
@@ -490,15 +399,9 @@ export type DiscoveryWorkspaceConfiguration = {
 };
 
 // ============================================================
-// DISCOVERY RESOLUTION INPUT
+// RESOLUTION CONTRACTS
 // ============================================================
 
-/**
- * Feed and Discovery consume the same intent and context.
- *
- * The route contributes pageMode, while the shared Feed
- * experience contributes the active intent and user reality.
- */
 export type DiscoveryResolutionInput = {
   pageMode: DiscoveryPageMode;
 
@@ -513,69 +416,33 @@ export type DiscoveryResolutionInput = {
   previousActiveGroupId?: DiscoveryGroupId;
 };
 
-// ============================================================
-// RESOLVED DISCOVERY WIDGET
-// ============================================================
-
-/**
- * A widget that survived eligibility and received its final
- * contextual priority.
- */
 export type ResolvedDiscoveryWidget =
-  DiscoveryWidgetDefinition & {
+  HubWidget & {
     priority: number;
-
-    visible: boolean;
 
     reason: string;
+
+    definition: DiscoveryWidgetDefinition;
   };
 
-// ============================================================
-// RESOLVED DISCOVERY GROUP
-// ============================================================
-
-/**
- * A group that contains at least one eligible widget or was
- * explicitly retained as a pinned capability.
- */
 export type ResolvedDiscoveryGroup =
-  DiscoveryGroupDefinition & {
+  HubGroup & {
     priority: number;
-
-    visible: boolean;
 
     widgetIds: DiscoveryWidgetId[];
 
     badge?: string | number;
 
     reason: string;
-  };
 
-// ============================================================
-// RESOLVED COMPACT DISCOVERY ITEM
-// ============================================================
+    definition: DiscoveryGroupDefinition;
+  };
 
 export type ResolvedCompactDiscoveryItem =
   CompactDiscoveryItem & {
-    groupId?: DiscoveryGroupId;
-
-    widgetId?: DiscoveryWidgetId;
-
     reason?: string;
   };
 
-// ============================================================
-// FINAL DISCOVERY EXPERIENCE
-// ============================================================
-
-/**
- * The single runtime contract consumed by:
- *
- * Desktop Discovery Hub
- * Compact Discovery Rail
- * Mobile Discovery Sheet
- * Future embedded Discovery surfaces
- */
 export type ResolvedDiscoveryExperience = {
   groups: ResolvedDiscoveryGroup[];
 
