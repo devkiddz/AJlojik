@@ -12,7 +12,9 @@ import {
   Heart,
   Layers3,
   LoaderCircle,
+  Minus,
   PackageCheck,
+  Plus,
   ShoppingCart,
   Sparkles,
   Star,
@@ -40,12 +42,22 @@ function formatLabel(value: string): string {
 
 type ActiveProductWidgetProps = {
   onBackToDiscovery: () => void;
+  onRevealInFeed?: () => void;
 };
 
-export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProductWidgetProps) {
+export default function ActiveProductWidget({
+  onBackToDiscovery,
+  onRevealInFeed
+}: ActiveProductWidgetProps) {
   const { intent, context, actions, productDetailsDisclosure } = useFeedExperience();
 
-  const { items: cartItems, mutating } = useCart();
+  const {
+    items: cartItems,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    mutating
+  } = useCart();
 
   const product = useMemo(() => {
     if (intent.type !== 'product' || !intent.targetId) {
@@ -120,8 +132,14 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
 
   const categoryCover = category?.coverImages?.[0] ?? category?.image;
 
+  const selectedVariantCartItem = cartItems.find(
+    item =>
+      String(item.variantId) ===
+      String(selectedVariant?.id)
+  );
+
   const selectedVariantCartQuantity =
-    cartItems.find(item => item.variantId === selectedVariant?.id)?.quantity ?? 0;
+    selectedVariantCartItem?.quantity ?? 0;
 
   const totalProductCartQuantity = cartItems
     .filter(item => item.productId === product.id)
@@ -146,13 +164,83 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
 
   const visibleTags = (product.tags ?? []).filter(tag => !tag.includes(':')).slice(0, 12);
 
-  const handleAddToCart = () => {
-    if (!selectedVariant || isOutOfStock || mutating) {
-      return;
-    }
+  const selectedVariantReachedStockLimit =
+    Boolean(
+      selectedVariant &&
+        selectedVariantCartQuantity >=
+          selectedVariant.stockLeft
+    );
 
-    actions.addToCart(product, selectedVariant);
-  };
+  const handleIncreaseCartQuantity =
+    async (): Promise<void> => {
+      if (
+        !selectedVariant ||
+        isOutOfStock ||
+        mutating ||
+        selectedVariantReachedStockLimit
+      ) {
+        return;
+      }
+
+      if (selectedVariantCartItem) {
+        await updateQuantity({
+          itemId:
+            selectedVariantCartItem.id,
+
+          quantity:
+            selectedVariantCartItem.quantity +
+            1
+        });
+
+        return;
+      }
+
+      await addToCart({
+        product,
+        variant:
+          selectedVariant,
+        quantity: 1
+      });
+    };
+
+  const handleDecreaseCartQuantity =
+    async (): Promise<void> => {
+      if (
+        !selectedVariantCartItem ||
+        mutating
+      ) {
+        return;
+      }
+
+      if (
+        selectedVariantCartItem.quantity <=
+        1
+      ) {
+        await removeFromCart(
+          selectedVariantCartItem.id
+        );
+
+        return;
+      }
+
+      await updateQuantity({
+        itemId:
+          selectedVariantCartItem.id,
+
+        quantity:
+          selectedVariantCartItem.quantity -
+          1
+      });
+    };
+
+  const handleRevealInFeed =
+    (): void => {
+      actions.previewProduct(
+        product
+      );
+
+      onRevealInFeed?.();
+    };
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
@@ -395,19 +483,65 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
           ================================================== */}
 
           <div className="grid grid-cols-[1fr_auto] gap-2">
-            <Button
-              type="button"
-              disabled={isOutOfStock || mutating}
-              onClick={handleAddToCart}
-              className="rounded-full">
-              {mutating ? (
-                <LoaderCircle className="size-4 animate-spin" />
-              ) : (
-                <ShoppingCart className="size-4" />
-              )}
+            {selectedVariantCartQuantity > 0 ? (
+              <div className="flex h-10 items-center justify-between rounded-full border border-border bg-background px-1 shadow-sm">
+                <button
+                  type="button"
+                  aria-label={`Remove one ${selectedVariant?.label ?? 'item'} from cart`}
+                  disabled={mutating}
+                  onClick={() => {
+                    void handleDecreaseCartQuantity();
+                  }}
+                  className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45">
+                  <Minus className="size-4" />
+                </button>
 
-              {mutating ? 'Adding...' : selectedVariantCartQuantity > 0 ? 'Add another' : 'Add to cart'}
-            </Button>
+                <span
+                  aria-live="polite"
+                  className="min-w-10 text-center text-sm font-bold text-foreground">
+                  {mutating ? (
+                    <LoaderCircle className="mx-auto size-4 animate-spin" />
+                  ) : (
+                    selectedVariantCartQuantity
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  aria-label={`Add one more ${selectedVariant?.label ?? 'item'} to cart`}
+                  disabled={
+                    mutating ||
+                    selectedVariantReachedStockLimit
+                  }
+                  onClick={() => {
+                    void handleIncreaseCartQuantity();
+                  }}
+                  className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45">
+                  <Plus className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                disabled={
+                  isOutOfStock ||
+                  mutating
+                }
+                onClick={() => {
+                  void handleIncreaseCartQuantity();
+                }}
+                className="rounded-full">
+                {mutating ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <ShoppingCart className="size-4" />
+                )}
+
+                {mutating
+                  ? 'Adding...'
+                  : 'Add to cart'}
+              </Button>
+            )}
 
             <Button
               type="button"
@@ -578,7 +712,7 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
       <footer className="relative z-50 shrink-0 border-t border-border bg-background/95 p-3 shadow-[0_-18px_45px_rgba(0,0,0,0.2)] backdrop-blur-xl">
         <Button
           type="button"
-          onClick={() => actions.previewProduct(product)}
+          onClick={handleRevealInFeed}
           className="group h-auto min-h-16 w-full justify-between rounded-2xl bg-primary px-3.5 py-3 text-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-primary/30 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30">
           <span className="flex min-w-0 items-center gap-3 text-left">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-foreground/15 ring-1 ring-primary-foreground/20">

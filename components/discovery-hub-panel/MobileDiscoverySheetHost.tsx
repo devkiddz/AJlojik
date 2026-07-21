@@ -1,90 +1,143 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState
+} from 'react';
 
-import { useMobileDiscovery } from '@/components/layout/MobileApplicationShell';
+import {
+  useMobileDiscovery
+} from '@/components/layout/MobileApplicationShell';
 
-import { useFeedExperience } from '@/features/feed-experience';
+import {
+  useFeedExperience
+} from '@/features/feed-experience';
 
 import MobileDiscoverySheet from './MobileDiscoverySheet';
 
-const MOBILE_DISCOVERY_QUERY = '(max-width: 1023px)';
+const MOBILE_DISCOVERY_QUERY =
+  '(max-width: 1023px)';
 
 export default function MobileDiscoverySheetHost() {
-  const { intent } = useFeedExperience();
+  const {
+    intent
+  } = useFeedExperience();
 
-  const { discoveryOpen, openDiscovery, setDiscoveryOpen } = useMobileDiscovery();
+  const {
+    discoveryOpen,
+    setDiscoveryOpen
+  } = useMobileDiscovery();
 
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [
+    isMobileViewport,
+    setIsMobileViewport
+  ] = useState(false);
 
-  const lastAutoOpenedProductIdRef = useRef<string | null>(null);
+  const activeProductIntentId =
+    intent.type === 'product'
+      ? intent.id
+      : null;
 
-  const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
+  const lastObservedProductIntentIdRef =
+    useRef<string | null>(
+      activeProductIntentId
+    );
 
-  /**
-   * Keep the mounted mobile experience synchronized with
-   * Tailwind's `lg` breakpoint.
-   *
-   * Desktop begins at 1024px, so mobile ends at 1023px.
-   */
   useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_DISCOVERY_QUERY);
+    const mediaQuery =
+      window.matchMedia(
+        MOBILE_DISCOVERY_QUERY
+      );
 
-    const synchronizeViewport = () => {
-      const mobile = mediaQuery.matches;
+    const synchronizeViewport =
+      () => {
+        const mobile =
+          mediaQuery.matches;
 
-      setIsMobileViewport(mobile);
+        setIsMobileViewport(
+          mobile
+        );
 
-      /**
-       * A Sheet is portalled into document.body.
-       * It must be explicitly closed when entering desktop.
-       */
-      if (!mobile) {
-        setDiscoveryOpen(false);
+        if (!mobile) {
+          setDiscoveryOpen(
+            false
+          );
 
-        lastAutoOpenedProductIdRef.current = null;
-      }
-    };
+          lastObservedProductIntentIdRef.current =
+            null;
+        }
+      };
 
     synchronizeViewport();
 
-    mediaQuery.addEventListener('change', synchronizeViewport);
+    mediaQuery.addEventListener(
+      'change',
+      synchronizeViewport
+    );
 
     return () => {
-      mediaQuery.removeEventListener('change', synchronizeViewport);
+      mediaQuery.removeEventListener(
+        'change',
+        synchronizeViewport
+      );
     };
   }, [setDiscoveryOpen]);
 
   /**
-   * Automatically reveal product information only when
-   * the application is actually in its mobile layout.
+   * A newly published Product Experience belongs to the
+   * central Feed. Close the mobile Hub so the customer can
+   * immediately see that Feed transition.
+   *
+   * Reopening the Hub while already viewing the same product
+   * does not close it again because the intent id is unchanged.
    */
   useEffect(() => {
     if (!isMobileViewport) {
-      return;
-    }
-
-    if (!activeProductId) {
-      lastAutoOpenedProductIdRef.current = null;
+      lastObservedProductIntentIdRef.current =
+        activeProductIntentId;
 
       return;
     }
 
-    if (lastAutoOpenedProductIdRef.current === activeProductId) {
-      return;
+    const previousIntentId =
+      lastObservedProductIntentIdRef.current;
+
+    const newProductExperiencePublished =
+      Boolean(
+        activeProductIntentId &&
+          activeProductIntentId !==
+            previousIntentId
+      );
+
+    lastObservedProductIntentIdRef.current =
+      activeProductIntentId;
+
+    if (
+      newProductExperiencePublished &&
+      discoveryOpen
+    ) {
+      setDiscoveryOpen(
+        false
+      );
     }
+  }, [
+    activeProductIntentId,
+    discoveryOpen,
+    isMobileViewport,
+    setDiscoveryOpen
+  ]);
 
-    lastAutoOpenedProductIdRef.current = activeProductId;
-
-    openDiscovery();
-  }, [activeProductId, isMobileViewport, openDiscovery]);
-
-  /**
-   * Do not mount the portalled Sheet at all on desktop.
-   */
   if (!isMobileViewport) {
     return null;
   }
 
-  return <MobileDiscoverySheet open={discoveryOpen} onOpenChange={setDiscoveryOpen} />;
+  return (
+    <MobileDiscoverySheet
+      open={discoveryOpen}
+      onOpenChange={
+        setDiscoveryOpen
+      }
+    />
+  );
 }

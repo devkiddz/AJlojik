@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { ArrowRight, ChevronLeft, ChevronRight, LoaderCircle, ShoppingCart, Plus } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, LoaderCircle, Minus, Plus } from 'lucide-react';
 
 import { useEffect, useMemo, useState } from 'react';
 
@@ -61,7 +61,13 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
   const { products } = useCatalog();
 
-  const { items: cartItems, addToCart, mutating } = useCart();
+  const {
+    items: cartItems,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    mutating
+  } = useCart();
 
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -101,25 +107,113 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
     };
   };
 
-  const addSlideToCart = async (item: HubSlideItem): Promise<void> => {
-    const { product, selectedVariant } = getCommerceState(item);
-
-    if (!product || !selectedVariant || selectedVariant.stockLeft <= 0 || mutating) {
-      return;
-    }
-
-    setPendingVariantId(selectedVariant.id);
-
-    try {
-      await addToCart({
+  const increaseSlideCartQuantity =
+    async (
+      item: HubSlideItem
+    ): Promise<void> => {
+      const {
         product,
-        variant: selectedVariant,
-        quantity: 1
-      });
-    } finally {
-      setPendingVariantId(null);
-    }
-  };
+        selectedVariant,
+        cartItem
+      } = getCommerceState(
+        item
+      );
+
+      if (
+        !product ||
+        !selectedVariant ||
+        selectedVariant.stockLeft <=
+          0 ||
+        mutating ||
+        (
+          cartItem &&
+          cartItem.quantity >=
+            selectedVariant.stockLeft
+        )
+      ) {
+        return;
+      }
+
+      setPendingVariantId(
+        selectedVariant.id
+      );
+
+      try {
+        if (cartItem) {
+          await updateQuantity({
+            itemId:
+              cartItem.id,
+
+            quantity:
+              cartItem.quantity +
+              1
+          });
+
+          return;
+        }
+
+        await addToCart({
+          product,
+          variant:
+            selectedVariant,
+          quantity: 1
+        });
+      } finally {
+        setPendingVariantId(
+          null
+        );
+      }
+    };
+
+  const decreaseSlideCartQuantity =
+    async (
+      item: HubSlideItem
+    ): Promise<void> => {
+      const {
+        selectedVariant,
+        cartItem
+      } = getCommerceState(
+        item
+      );
+
+      if (
+        !selectedVariant ||
+        !cartItem ||
+        mutating
+      ) {
+        return;
+      }
+
+      setPendingVariantId(
+        selectedVariant.id
+      );
+
+      try {
+        if (
+          cartItem.quantity <=
+          1
+        ) {
+          await removeFromCart(
+            cartItem.id
+          );
+
+          return;
+        }
+
+        await updateQuantity({
+          itemId:
+            cartItem.id,
+
+          quantity:
+            cartItem.quantity -
+            1
+        });
+      } finally {
+        setPendingVariantId(
+          null
+        );
+      }
+    };
 
   const openItem = (item: HubSlideItem): void => {
     const product = resolveProduct(item);
@@ -146,52 +240,176 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
     }
   };
 
-  const renderCartAction = (item: HubSlideItem, options: CartActionOptions = {}) => {
-    const { product, selectedVariant, cartItem, pending } = getCommerceState(item);
+  const renderCartAction = (
+    item: HubSlideItem,
+    options:
+      CartActionOptions = {}
+  ) => {
+    const {
+      product,
+      selectedVariant,
+      cartItem,
+      pending
+    } = getCommerceState(
+      item
+    );
 
-    if (!product || !selectedVariant) {
+    if (
+      !product ||
+      !selectedVariant
+    ) {
       return null;
     }
 
-    const { containerClassName, buttonClassName, compact = false } = options;
+    const {
+      containerClassName,
+      buttonClassName,
+      compact = false
+    } = options;
 
-    const soldOut = selectedVariant.stockLeft <= 0;
+    const soldOut =
+      selectedVariant.stockLeft <=
+      0;
+
+    const reachedStockLimit =
+      Boolean(
+        cartItem &&
+          cartItem.quantity >=
+            selectedVariant.stockLeft
+      );
+
+    if (cartItem) {
+      return (
+        <div
+          className={cn(
+            'inline-flex items-center rounded-full border border-primary/12 bg-background/55 p-1 text-primary shadow-sm backdrop-blur',
+            containerClassName
+          )}
+        >
+          <button
+            type="button"
+            aria-label={`Remove one ${selectedVariant.label} from cart`}
+            disabled={
+              mutating ||
+              pending
+            }
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              void decreaseSlideCartQuantity(
+                item
+              );
+            }}
+            className={cn(
+              'grid shrink-0 place-items-center rounded-full transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-45',
+              compact
+                ? 'size-7'
+                : 'size-8'
+            )}
+          >
+            <Minus
+              className={cn(
+                compact
+                  ? 'size-3'
+                  : 'size-3.5'
+              )}
+            />
+          </button>
+
+          <span
+            aria-live="polite"
+            aria-label={`${cartItem.quantity} ${cartItem.quantity === 1 ? 'item' : 'items'} in cart`}
+            className={cn(
+              'min-w-8 text-center font-bold',
+              compact
+                ? 'text-[10px]'
+                : 'text-xs'
+            )}
+          >
+            {pending ? (
+              <LoaderCircle className="mx-auto size-3.5 animate-spin" />
+            ) : (
+              cartItem.quantity >
+              99
+                ? '99+'
+                : cartItem.quantity
+            )}
+          </span>
+
+          <button
+            type="button"
+            aria-label={`Add one more ${selectedVariant.label} to cart`}
+            disabled={
+              mutating ||
+              pending ||
+              reachedStockLimit
+            }
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              void increaseSlideCartQuantity(
+                item
+              );
+            }}
+            className={cn(
+              'grid shrink-0 place-items-center rounded-full transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-45',
+              compact
+                ? 'size-7'
+                : 'size-8'
+            )}
+          >
+            <Plus
+              className={cn(
+                compact
+                  ? 'size-3'
+                  : 'size-3.5'
+              )}
+            />
+          </button>
+        </div>
+      );
+    }
 
     return (
-      <div className={cn('inline-flex items-center gap-1.5', containerClassName)}>
-        {cartItem ? (
-          <span
-            aria-label={`${cartItem.quantity} ${cartItem.quantity === 1 ? 'item' : 'items'} in cart`}
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-2 text-[10px] font-bold text-emerald-300">
-            <ShoppingCart className="size-3.5" />
+      <button
+        type="button"
+        disabled={
+          soldOut ||
+          mutating ||
+          pending
+        }
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
 
-            <span aria-live="polite">{cartItem.quantity > 99 ? '99+' : cartItem.quantity}</span>
-          </span>
-        ) : null}
+          void increaseSlideCartQuantity(
+            item
+          );
+        }}
+        className={cn(
+          'inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-primary/12 bg-background/55 px-3 py-2 text-[10px] font-semibold text-primary transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-55',
+          containerClassName,
+          buttonClassName
+        )}
+      >
+        {pending ? (
+          <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
+        ) : (
+          <Plus className="size-3.5 shrink-0" />
+        )}
 
-        <button
-          type="button"
-          disabled={soldOut || mutating || pending}
-          onClick={event => {
-            event.stopPropagation();
-
-            void addSlideToCart(item);
-          }}
-          className={cn(
-            'inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-primary/12 bg-background/55 px-3 py-2 text-[10px] font-semibold text-primary transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-55',
-            buttonClassName
-          )}>
-          {pending ? (
-            <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
-          ) : (
-            <Plus className="size-3.5 shrink-0" />
-          )}
-
-          <span className="truncate">
-            {soldOut ? 'Sold out' : pending ? 'Adding...' : compact ? 'Add' : 'Add to cart'}
-          </span>
-        </button>
-      </div>
+        <span className="truncate">
+          {soldOut
+            ? 'Sold out'
+            : pending
+              ? 'Adding...'
+              : compact
+                ? 'Add'
+                : 'Add to cart'}
+        </span>
+      </button>
     );
   };
 

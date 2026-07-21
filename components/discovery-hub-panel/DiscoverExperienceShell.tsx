@@ -19,6 +19,10 @@ import {
 import ActiveProductWidget from '@/components/ActiveProductWidget';
 
 import {
+  useMobileDiscovery
+} from '@/components/layout/MobileApplicationShell';
+
+import {
   discoveryRegistry
 } from '@/data/discoveryHubData';
 
@@ -54,6 +58,10 @@ type MobileHubView =
 export default function DiscoverExperienceShell() {
   const pathname =
     usePathname();
+
+  const {
+    closeDiscovery
+  } = useMobileDiscovery();
 
   const {
     intent,
@@ -309,6 +317,9 @@ export default function DiscoverExperienceShell() {
                 <ActiveProductWidget
                   onBackToDiscovery={
                     handleContinueDiscovery
+                  }
+                  onRevealInFeed={
+                    closeDiscovery
                   }
                 />
               </div>
