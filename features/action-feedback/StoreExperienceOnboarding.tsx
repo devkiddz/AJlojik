@@ -44,6 +44,11 @@ type StoreExperienceOnboardingProps = {
 
 type ExperienceModeId = 'live' | 'demo' | 'practice';
 
+type OnboardingVisibility = {
+  pathname: string;
+  open: boolean;
+};
+
 type ExperienceMode = {
   id: ExperienceModeId;
 
@@ -170,7 +175,17 @@ export function StoreExperienceOnboarding({ suppressed = false }: StoreExperienc
 
   const { isAuthenticated, isPending } = useIdentity();
 
-  const [open, setOpen] = useState(false);
+  const [
+    onboardingVisibility,
+    setOnboardingVisibility
+  ] = useState<OnboardingVisibility | null>(
+    null
+  );
+
+  const open =
+    onboardingVisibility?.pathname ===
+      pathname &&
+    onboardingVisibility.open;
 
   const [activeModeId, setActiveModeId] = useState<ExperienceModeId>('live');
 
@@ -186,41 +201,55 @@ export function StoreExperienceOnboarding({ suppressed = false }: StoreExperienc
 
     if (isAuthenticated) {
       completeExperienceOnboarding();
-      setOpen(false);
 
       return;
     }
 
     if (pathname !== '/store') {
-      setOpen(false);
-
       return;
     }
 
     const timer = window.setTimeout(() => {
       const onboardingState = readExperienceOnboardingState();
 
-      setOpen(shouldShowExperienceOnboarding(onboardingState));
+      setOnboardingVisibility({
+        pathname,
+        open:
+          shouldShowExperienceOnboarding(
+            onboardingState
+          )
+      });
     }, 700);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [isAuthenticated, isPending, pathname]);
 
   const continueAsGuest = () => {
     recordExperienceOnboardingPath('guest');
-    setOpen(false);
+    setOnboardingVisibility({
+      pathname,
+      open: false
+    });
   };
 
   const goToSignIn = () => {
     recordExperienceOnboardingPath('signin');
-    setOpen(false);
+    setOnboardingVisibility({
+      pathname,
+      open: false
+    });
 
     router.push(buildAuthHref('/sign-in', '/store'));
   };
 
   const goToSignUp = () => {
     recordExperienceOnboardingPath('signup');
-    setOpen(false);
+    setOnboardingVisibility({
+      pathname,
+      open: false
+    });
 
     router.push(buildAuthHref('/sign-up', '/store'));
   };

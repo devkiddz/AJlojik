@@ -8,16 +8,11 @@ import './globals.css';
 
 import ApplicationShell from '@/components/layout/ApplicationShell';
 
-import { SidebarProvider } from '@/components/ui/sidebar';
-
 import { ActionFeedbackProvider } from '@/features/action-feedback';
 
 import { CartProvider } from '@/features/cart';
 
 import { CatalogProvider } from '@/features/catalog';
-
-import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
-
 import { WishlistProvider } from '@/features/wishlist';
 
 import { WorkspaceProvider } from '@/features/workspace';
@@ -74,11 +69,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   <WishlistProvider>
                     <CartProvider>
                       <SearchProvider>
-                        <SidebarProvider defaultOpen>
-                          <ApplicationShell>{children}</ApplicationShell>
-
-                          <SearchMobileOverlay />
-                        </SidebarProvider>
+                        <ApplicationShell>{children}</ApplicationShell>
                       </SearchProvider>
                     </CartProvider>
                   </WishlistProvider>

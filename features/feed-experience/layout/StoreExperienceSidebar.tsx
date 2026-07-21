@@ -47,7 +47,7 @@ export default function StoreExperienceSidebar({
 
   const { products } = useCatalog();
 
-  const { items: cartItems, addToCart } = useCart();
+  const { items: cartItems, addToCart: addProductToCart } = useCart();
 
   const { productIds: wishlistProductIds, toggleWishlist } = useWishlist();
 
@@ -173,11 +173,10 @@ export default function StoreExperienceSidebar({
         });
       },
 
-      addToCart: (product, variant) => {
-        void addToCart({
+      addToCart: async (product, variant): Promise<void> => {
+        await addProductToCart({
           product,
-          variant,
-          quantity: 1
+          variant
         });
       },
 
@@ -191,7 +190,7 @@ export default function StoreExperienceSidebar({
         router.push(`/promos/${promotion.slug}`);
       }
     }),
-    [addToCart, products, router, toggleWishlist]
+    [addProductToCart, products, router, toggleWishlist]
   );
 
   // ============================================================

@@ -1,5 +1,7 @@
-import type {
-  ComponentType
+import {
+  createElement,
+  type ComponentType,
+  type ReactElement
 } from 'react';
 
 import {
@@ -198,5 +200,29 @@ export function resolveDiscoveryHubIcon(
       key
     ) ??
     Compass
+  );
+}
+
+
+type DiscoveryHubIconProps = {
+  iconKey: DiscoveryIconKey;
+  className?: string;
+};
+
+/**
+ * Static React component used by renderers.
+ *
+ * The icon definition may be resolved dynamically from the
+ * registry, but the component referenced by JSX remains stable.
+ */
+export function DiscoveryHubIcon({
+  iconKey,
+  className
+}: DiscoveryHubIconProps): ReactElement {
+  return createElement(
+    resolveDiscoveryHubIcon(iconKey),
+    {
+      className
+    }
   );
 }

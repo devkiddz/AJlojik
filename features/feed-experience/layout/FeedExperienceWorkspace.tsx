@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { LoaderCircle } from 'lucide-react';
-
+import { useActionFeedback } from '@/features/action-feedback';
 import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
 import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
 import PromoModal from '@/components/promos/PromoModal';
@@ -37,6 +37,7 @@ import { FeedRenderer } from '../renderers';
 
 function FeedExperienceWorkspaceContent() {
   const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
+  const { success, error } = useActionFeedback();
 
   const { user, isAuthenticated } = useIdentity();
 
@@ -51,16 +52,29 @@ function FeedExperienceWorkspaceContent() {
   // ============================================================
 
   const handleAddToCart = useCallback(
-    (product: ProductType, variant: ProductVariantType) => {
-      void addCartItem({
+    async (product: ProductType, variant: ProductVariantType): Promise<void> => {
+      const addedItem = await addCartItem({
         product,
         variant,
         quantity: 1
       });
-    },
-    [addCartItem]
-  );
 
+      if (!addedItem) {
+        error({
+          title: 'Unable to add product',
+          description: 'AJ Logik could not add this product to your cart. Please try again.'
+        });
+
+        return;
+      }
+
+      success({
+        title: 'Added to cart',
+        description: `${product.name} — ${variant.label} is now in your cart.`
+      });
+    },
+    [addCartItem, error, success]
+  );
   const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
 
   // ============================================================

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { ArrowRight, Eye, Heart, LoaderCircle, ShoppingBag } from 'lucide-react';
+import { ArrowRight, LoaderCircle, ShoppingBag } from 'lucide-react';
 
 import type { MouseEvent } from 'react';
 
@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { useWishlist } from '@/features/wishlist';
 
 import { cn } from '@/lib/utils';
 
 import type { BaseProductCardProps } from './productCardTypes';
+
+import { openProductExperience } from './productCardPresentation';
 
 import { useProductCartQuantity } from './useProductCartQuantity';
 
@@ -31,15 +32,10 @@ export function CollectionFeatureProductCard({
 
   const { quantity, cartMutating } = useProductCartQuantity(product.id);
 
-  const { toggleWishlist, isWishlisted, isMutating } = useWishlist();
 
   if (!selectedVariant) {
     return null;
   }
-
-  const saved = isWishlisted(product.id);
-
-  const wishlistMutating = isMutating(product.id);
 
   const selectedVariantOutOfStock = selectedVariant.stockLeft <= 0;
 
@@ -51,8 +47,12 @@ export function CollectionFeatureProductCard({
       ? `${discountPercentage}% off`
       : 'Featured';
 
-  const openProductExperience = () => {
-    onOpenExperience?.(product);
+  const handleOpenProductExperience = () => {
+    openProductExperience({
+      product,
+      onOpenExperience,
+      onPreview
+    });
   };
 
   const stopActionEvent = (event: MouseEvent<HTMLElement>) => {
@@ -60,11 +60,6 @@ export function CollectionFeatureProductCard({
     event.stopPropagation();
   };
 
-  const handlePreview = (event: MouseEvent<HTMLButtonElement>) => {
-    stopActionEvent(event);
-
-    onPreview?.(product);
-  };
 
   const handleAddToCart = (event: MouseEvent<HTMLButtonElement>) => {
     stopActionEvent(event);
@@ -76,18 +71,6 @@ export function CollectionFeatureProductCard({
     onAddToCart(product, selectedVariant);
   };
 
-  const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
-    stopActionEvent(event);
-
-    if (wishlistMutating) {
-      return;
-    }
-
-    void toggleWishlist({
-      id: product.id,
-      name: product.name
-    });
-  };
 
   return (
     <article
@@ -112,7 +95,7 @@ export function CollectionFeatureProductCard({
         <button
           type="button"
           aria-label={`Open ${product.name} experience`}
-          onClick={openProductExperience}
+          onClick={handleOpenProductExperience}
           className={cn(
             'relative z-10 flex h-full min-h-64 w-full',
             'items-center justify-center overflow-hidden p-2',
@@ -175,7 +158,7 @@ export function CollectionFeatureProductCard({
         )}>
         <button
           type="button"
-          onClick={openProductExperience}
+          onClick={handleOpenProductExperience}
           className={cn(
             'min-w-0 text-left',
             'focus-visible:outline-none',
@@ -264,7 +247,7 @@ export function CollectionFeatureProductCard({
         <div className="mt-2.5 flex min-w-0 items-center gap-1.5 sm:mt-4 sm:gap-2">
           <Button
             type="button"
-            onClick={openProductExperience}
+            onClick={handleOpenProductExperience}
             className={cn(
               'h-8 min-w-0 flex-1 justify-between rounded-full px-2.5',
               'bg-foreground text-background',

@@ -1,14 +1,11 @@
 import type {
-  CompactDiscoveryItemIcon,
   DiscoveryEligibilityRules,
   DiscoveryGroupDefinition,
   DiscoveryGroupId,
   DiscoveryRegistry,
   DiscoverySignalKey,
   DiscoveryWidgetDefinition,
-  DiscoveryWidgetId,
   DiscoveryWorkspaceConfiguration,
-  HubGroup,
   HubWidget,
   ResolvedCompactDiscoveryItem,
   ResolvedDiscoveryExperience,
@@ -339,27 +336,67 @@ function resolvePriority({
 function toHubWidget(
   definition: DiscoveryWidgetDefinition
 ): HubWidget {
-  const {
-    componentKey: _componentKey,
-    compact: _compact,
-    defaultPriority: _defaultPriority,
-    pagePriority: _pagePriority,
-    intentPriority: _intentPriority,
-    eligibility: _eligibility,
-    ...presentation
-  } = definition;
-
   return {
-    ...presentation,
-
     id: definition.id,
-
     groupId:
       definition.groupId,
 
-    order: 0,
+    title:
+      definition.title,
+    description:
+      definition.description,
 
-    enabled: true
+    order: 0,
+    enabled: true,
+
+    size:
+      definition.size,
+    status:
+      definition.status,
+
+    badge:
+      definition.badge,
+    meta:
+      definition.meta,
+
+    image:
+      definition.image,
+    visual:
+      definition.visual,
+
+    accent:
+      definition.accent,
+
+    stats:
+      definition.stats,
+
+    slides:
+      definition.slides,
+    autoSlide:
+      definition.autoSlide,
+
+    progress:
+      definition.progress,
+
+    timeline:
+      definition.timeline,
+
+    conditions:
+      definition.conditions,
+
+    location:
+      definition.location,
+
+    insight:
+      definition.insight,
+
+    action:
+      definition.action,
+    actions:
+      definition.actions,
+
+    layout:
+      definition.layout
   };
 }
 

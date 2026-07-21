@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 
 import {
-  resolveDiscoveryHubIcon
+  DiscoveryHubIcon
 } from '../discoveryHubIconRegistry';
 
 import type {
@@ -44,10 +44,6 @@ export default function CompactDiscoveryCard({
   item,
   onClick
 }: CompactDiscoveryCardProps) {
-  const Icon =
-    resolveDiscoveryHubIcon(
-      item.icon
-    );
 
   return (
     <button
@@ -62,7 +58,10 @@ export default function CompactDiscoveryCard({
             toneMap[item.tone]
           )}
         >
-          <Icon className="size-4" />
+          <DiscoveryHubIcon
+            iconKey={item.icon}
+            className="size-4"
+          />
         </div>
 
         <div className="min-w-0 flex-1">

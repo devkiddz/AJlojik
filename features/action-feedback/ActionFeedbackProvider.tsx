@@ -268,11 +268,17 @@ export function ActionFeedbackProvider({ children }: ActionFeedbackProviderProps
   );
 
   useEffect(() => {
-    const storedAction = readPendingAction();
+    const hydrationTimer = window.setTimeout(() => {
+      const storedAction = readPendingAction();
 
-    if (storedAction) {
-      setPendingAction(storedAction);
-    }
+      if (storedAction) {
+        setPendingAction(storedAction);
+      }
+    }, 0);
+
+    return () => {
+      window.clearTimeout(hydrationTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -288,17 +294,23 @@ export function ActionFeedbackProvider({ children }: ActionFeedbackProviderProps
 
     const actionToResume = pendingAction;
 
-    setResumingAction(true);
+    const resumeTimer = window.setTimeout(() => {
+      setResumingAction(true);
 
-    /*
-     * Remove it before execution so a failed handler
-     * cannot enter an automatic retry loop.
-     */
-    clearPendingAction();
+      /*
+       * Remove it before execution so a failed handler
+       * cannot enter an automatic retry loop.
+       */
+      clearPendingAction();
 
-    void executeAction(actionToResume, handler).finally(() => {
-      setResumingAction(false);
-    });
+      void executeAction(actionToResume, handler).finally(() => {
+        setResumingAction(false);
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(resumeTimer);
+    };
   }, [
     clearPendingAction,
     executeAction,
@@ -310,12 +322,14 @@ export function ActionFeedbackProvider({ children }: ActionFeedbackProviderProps
   ]);
 
   useEffect(() => {
+    const timers = dismissalTimers.current;
+
     return () => {
-      dismissalTimers.current.forEach(timer => {
+      timers.forEach(timer => {
         window.clearTimeout(timer);
       });
 
-      dismissalTimers.current.clear();
+      timers.clear();
     };
   }, []);
 

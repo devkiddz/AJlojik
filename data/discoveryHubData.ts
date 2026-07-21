@@ -1022,6 +1022,55 @@ export const hubGroups: HubGroup[] = [
     })
   );
 
+function createHubWidget(
+  widget: DiscoveryWidgetDefinition,
+  order: number
+): HubWidget {
+  return {
+    id: widget.id,
+    groupId: widget.groupId,
+
+    title: widget.title,
+    description: widget.description,
+
+    order,
+    enabled:
+      widget.eligibility?.enabled !==
+      false,
+
+    size: widget.size,
+    status: widget.status,
+
+    badge: widget.badge,
+    meta: widget.meta,
+
+    image: widget.image,
+    visual: widget.visual,
+
+    accent: widget.accent,
+
+    stats: widget.stats,
+
+    slides: widget.slides,
+    autoSlide: widget.autoSlide,
+
+    progress: widget.progress,
+
+    timeline: widget.timeline,
+
+    conditions: widget.conditions,
+
+    location: widget.location,
+
+    insight: widget.insight,
+
+    action: widget.action,
+    actions: widget.actions,
+
+    layout: widget.layout
+  };
+}
+
 export const hubWidgets: HubWidget[] = [
   ...discoveryWidgets
 ]
@@ -1037,24 +1086,9 @@ export const hubWidgets: HubWidget[] = [
     (
       widget,
       index
-    ) => {
-      const {
-        componentKey: _componentKey,
-        compact: _compact,
-        defaultPriority: _defaultPriority,
-        pagePriority: _pagePriority,
-        intentPriority: _intentPriority,
-        eligibility,
-        ...presentation
-      } = widget;
-
-      return {
-        ...presentation,
-        id: widget.id,
-        groupId: widget.groupId,
-        order: index + 1,
-        enabled:
-          eligibility?.enabled !== false
-      };
-    }
+    ) =>
+      createHubWidget(
+        widget,
+        index + 1
+      )
   );

@@ -1,18 +1,13 @@
-'use client';
-
 import { Suspense, type ReactNode } from 'react';
-
-import { usePathname } from 'next/navigation';
 
 import FooterComponent from '@/components/FooterComponent';
 import NavbarComponent from '@/components/Navbar';
 
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
-import WorkspaceShell from '@/components/layout/WorkspaceShell';
 
-import { SidebarInset } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
-import { cn } from '@/lib/utils';
+import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
 
 import { AppSidebar } from '@/providers/AppSideBar';
 
@@ -21,50 +16,27 @@ type ApplicationShellProps = {
 };
 
 export default function ApplicationShell({ children }: ApplicationShellProps) {
-  const pathname = usePathname();
-
-  const isHomeRoute = pathname === '/';
-
   return (
-    <>
+    <SidebarProvider defaultOpen>
       <AppSidebar />
 
-      <SidebarInset
-        className={cn(
-          'min-w-0 overflow-x-hidden',
-
-          isHomeRoute && 'h-svh overflow-hidden'
-        )}>
-        <div
-          className={cn(
-            'flex min-w-0 flex-col',
-
-            isHomeRoute ? 'h-svh overflow-hidden' : 'min-h-svh'
-          )}>
+      <SidebarInset className="min-w-0 overflow-x-hidden">
+        <div className="flex min-h-svh min-w-0 flex-col">
           <header className="sticky top-0 z-50 shrink-0">
             <Suspense fallback={null}>
               <NavbarComponent brandName="AJ" brandSlug="Logik" />
             </Suspense>
           </header>
 
-          <main
-            className={cn(
-              'flex min-w-0 flex-1 flex-col',
-
-              isHomeRoute && 'min-h-0 overflow-hidden'
-            )}>
-            {isHomeRoute ? (
-              children
-            ) : (
-              <MobileApplicationShell>
-                <WorkspaceShell>{children}</WorkspaceShell>
-              </MobileApplicationShell>
-            )}
+          <main className="flex min-w-0 flex-1 flex-col">
+            <MobileApplicationShell>{children}</MobileApplicationShell>
           </main>
 
-          {!isHomeRoute ? <FooterComponent brandName="AJ" brandSlug="Logik" /> : null}
+          <FooterComponent brandName="AJ" brandSlug="Logik" />
         </div>
       </SidebarInset>
-    </>
+
+      <SearchMobileOverlay />
+    </SidebarProvider>
   );
 }

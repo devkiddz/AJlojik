@@ -2,7 +2,13 @@
 
 import Image from 'next/image';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 
 import {
   BadgeCheck,
@@ -20,253 +26,472 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import type { ProductDetailsModuleDefinition } from '../../contracts';
+import type {
+  ProductDetailsModuleDefinition
+} from '../../contracts';
 
-import { useFeedExperienceContext } from '../../providers/FeedExperienceProvider';
+import {
+  useFeedExperienceContext
+} from '../../providers/FeedExperienceProvider';
 
 type ProductDetailsModuleProps = {
   module: ProductDetailsModuleDefinition;
 };
 
-function formatLabel(value: string): string {
+function formatLabel(
+  value: string
+): string {
   return value
     .replace(/[-_]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/\b\w/g, letter => letter.toUpperCase());
+    .replace(
+      /\b\w/g,
+      letter =>
+        letter.toUpperCase()
+    );
 }
 
-export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
-  const { productDetailsDisclosure } = useFeedExperienceContext();
+export function ProductDetailsModule({
+  module
+}: ProductDetailsModuleProps) {
+  const {
+    productDetailsDisclosure
+  } = useFeedExperienceContext();
 
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef =
+    useRef<HTMLElement>(null);
 
-  const variantScrollerRef = useRef<HTMLDivElement>(null);
+  const variantScrollerRef =
+    useRef<HTMLDivElement>(null);
 
-  const variantScrollFrameRef = useRef<number | null>(null);
+  const variantScrollFrameRef =
+    useRef<number | null>(null);
 
-  const [activeVariantSlide, setActiveVariantSlide] = useState(0);
+  const [
+    activeVariantSlide,
+    setActiveVariantSlide
+  ] = useState(0);
 
-  const [canScrollVariantsLeft, setCanScrollVariantsLeft] = useState(false);
+  const [
+    canScrollVariantsLeft,
+    setCanScrollVariantsLeft
+  ] = useState(false);
 
-  const [canScrollVariantsRight, setCanScrollVariantsRight] = useState(false);
+  const [
+    canScrollVariantsRight,
+    setCanScrollVariantsRight
+  ] = useState(false);
 
-  const { product, category, categoryDescription, locale = 'en-NG', currency = 'NGN' } = module.data;
+  const {
+    product,
+    category,
+    categoryDescription,
+    locale = 'en-NG',
+    currency = 'NGN'
+  } = module.data;
 
-  const visible = productDetailsDisclosure.expanded && productDetailsDisclosure.productId === product.id;
+  const visible =
+    productDetailsDisclosure.expanded &&
+    productDetailsDisclosure.productId ===
+      product.id;
 
-  const priceFormatter = useMemo(() => {
-    try {
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
+  const priceFormatter =
+    useMemo(() => {
+      try {
+        return new Intl.NumberFormat(
+          locale,
+          {
+            style:
+              'currency',
 
-        currency,
+            currency,
 
-        maximumFractionDigits: 0
-      });
-    } catch {
-      return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
+            maximumFractionDigits:
+              0
+          }
+        );
+      } catch {
+        return new Intl.NumberFormat(
+          'en-NG',
+          {
+            style:
+              'currency',
 
-        currency: 'NGN',
+            currency:
+              'NGN',
 
-        maximumFractionDigits: 0
-      });
-    }
-  }, [currency, locale]);
-
-  const numberFormatter = useMemo(() => {
-    try {
-      return new Intl.NumberFormat(locale, {
-        notation: 'compact',
-
-        maximumFractionDigits: 1
-      });
-    } catch {
-      return new Intl.NumberFormat('en-NG', {
-        notation: 'compact',
-
-        maximumFractionDigits: 1
-      });
-    }
-  }, [locale]);
-
-  const updateVariantScrollerState = useCallback(() => {
-    const scroller = variantScrollerRef.current;
-
-    if (!scroller) {
-      return;
-    }
-
-    const maximumScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
-
-    setCanScrollVariantsLeft(scroller.scrollLeft > 8);
-
-    setCanScrollVariantsRight(scroller.scrollLeft < maximumScrollLeft - 8);
-
-    const slides = Array.from(scroller.querySelectorAll<HTMLElement>('[data-variant-slide]'));
-
-    if (slides.length === 0) {
-      setActiveVariantSlide(0);
-      return;
-    }
-
-    const scrollerBounds = scroller.getBoundingClientRect();
-
-    const viewportCenter = scrollerBounds.left + scrollerBounds.width / 2;
-
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    slides.forEach((slide, index) => {
-      const slideBounds = slide.getBoundingClientRect();
-
-      const slideCenter = slideBounds.left + slideBounds.width / 2;
-
-      const distance = Math.abs(viewportCenter - slideCenter);
-
-      if (distance < closestDistance) {
-        closestDistance = distance;
-
-        closestIndex = index;
+            maximumFractionDigits:
+              0
+          }
+        );
       }
-    });
+    }, [
+      currency,
+      locale
+    ]);
 
-    setActiveVariantSlide(closestIndex);
-  }, []);
+  const numberFormatter =
+    useMemo(() => {
+      try {
+        return new Intl.NumberFormat(
+          locale,
+          {
+            notation:
+              'compact',
 
-  const handleVariantScroll = useCallback(() => {
-    if (variantScrollFrameRef.current !== null) {
-      window.cancelAnimationFrame(variantScrollFrameRef.current);
-    }
+            maximumFractionDigits:
+              1
+          }
+        );
+      } catch {
+        return new Intl.NumberFormat(
+          'en-NG',
+          {
+            notation:
+              'compact',
 
-    variantScrollFrameRef.current = window.requestAnimationFrame(() => {
-      variantScrollFrameRef.current = null;
+            maximumFractionDigits:
+              1
+          }
+        );
+      }
+    }, [locale]);
 
-      updateVariantScrollerState();
-    });
-  }, [updateVariantScrollerState]);
+  const updateVariantScrollerState =
+    useCallback(() => {
+      const scroller =
+        variantScrollerRef.current;
 
-  const scrollToVariant = useCallback((requestedIndex: number) => {
-    const scroller = variantScrollerRef.current;
-
-    if (!scroller) {
-      return;
-    }
-
-    const slides = Array.from(scroller.querySelectorAll<HTMLElement>('[data-variant-slide]'));
-
-    if (slides.length === 0) {
-      return;
-    }
-
-    const nextIndex = Math.min(slides.length - 1, Math.max(0, requestedIndex));
-
-    slides[nextIndex]?.scrollIntoView({
-      behavior: 'smooth',
-
-      block: 'nearest',
-
-      inline: 'center'
-    });
-
-    setActiveVariantSlide(nextIndex);
-  }, []);
-
-  const showPreviousVariant = useCallback(() => {
-    scrollToVariant(activeVariantSlide - 1);
-  }, [activeVariantSlide, scrollToVariant]);
-
-  const showNextVariant = useCallback(() => {
-    scrollToVariant(activeVariantSlide + 1);
-  }, [activeVariantSlide, scrollToVariant]);
-
-  const handleVariantScrollerKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-
-        showPreviousVariant();
+      if (!scroller) {
+        return;
       }
 
-      if (event.key === 'ArrowRight') {
-        event.preventDefault();
+      const maximumScrollLeft =
+        Math.max(
+          0,
+          scroller.scrollWidth -
+            scroller.clientWidth
+        );
 
-        showNextVariant();
+      setCanScrollVariantsLeft(
+        scroller.scrollLeft > 8
+      );
+
+      setCanScrollVariantsRight(
+        scroller.scrollLeft <
+          maximumScrollLeft - 8
+      );
+
+      const slides =
+        Array.from(
+          scroller.querySelectorAll<HTMLElement>(
+            '[data-variant-slide]'
+          )
+        );
+
+      if (slides.length === 0) {
+        setActiveVariantSlide(0);
+        return;
       }
-    },
-    [showNextVariant, showPreviousVariant]
-  );
+
+      const scrollerBounds =
+        scroller.getBoundingClientRect();
+
+      const viewportCenter =
+        scrollerBounds.left +
+        scrollerBounds.width / 2;
+
+      let closestIndex = 0;
+      let closestDistance =
+        Number.POSITIVE_INFINITY;
+
+      slides.forEach(
+        (
+          slide,
+          index
+        ) => {
+          const slideBounds =
+            slide.getBoundingClientRect();
+
+          const slideCenter =
+            slideBounds.left +
+            slideBounds.width / 2;
+
+          const distance =
+            Math.abs(
+              viewportCenter -
+                slideCenter
+            );
+
+          if (
+            distance <
+            closestDistance
+          ) {
+            closestDistance =
+              distance;
+
+            closestIndex =
+              index;
+          }
+        }
+      );
+
+      setActiveVariantSlide(
+        closestIndex
+      );
+    }, []);
+
+  const handleVariantScroll =
+    useCallback(() => {
+      if (
+        variantScrollFrameRef.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          variantScrollFrameRef.current
+        );
+      }
+
+      variantScrollFrameRef.current =
+        window.requestAnimationFrame(
+          () => {
+            variantScrollFrameRef.current =
+              null;
+
+            updateVariantScrollerState();
+          }
+        );
+    }, [
+      updateVariantScrollerState
+    ]);
+
+  const scrollToVariant =
+    useCallback(
+      (
+        requestedIndex: number
+      ) => {
+        const scroller =
+          variantScrollerRef.current;
+
+        if (!scroller) {
+          return;
+        }
+
+        const slides =
+          Array.from(
+            scroller.querySelectorAll<HTMLElement>(
+              '[data-variant-slide]'
+            )
+          );
+
+        if (slides.length === 0) {
+          return;
+        }
+
+        const nextIndex =
+          Math.min(
+            slides.length - 1,
+            Math.max(
+              0,
+              requestedIndex
+            )
+          );
+
+        slides[nextIndex]?.scrollIntoView({
+          behavior:
+            'smooth',
+
+          block:
+            'nearest',
+
+          inline:
+            'center'
+        });
+
+        setActiveVariantSlide(
+          nextIndex
+        );
+      },
+      []
+    );
+
+  const showPreviousVariant =
+    useCallback(() => {
+      scrollToVariant(
+        activeVariantSlide - 1
+      );
+    }, [
+      activeVariantSlide,
+      scrollToVariant
+    ]);
+
+  const showNextVariant =
+    useCallback(() => {
+      scrollToVariant(
+        activeVariantSlide + 1
+      );
+    }, [
+      activeVariantSlide,
+      scrollToVariant
+    ]);
+
+  const handleVariantScrollerKeyDown =
+    useCallback(
+      (
+        event:
+          React.KeyboardEvent<HTMLDivElement>
+      ) => {
+        if (
+          event.key ===
+          'ArrowLeft'
+        ) {
+          event.preventDefault();
+
+          showPreviousVariant();
+        }
+
+        if (
+          event.key ===
+          'ArrowRight'
+        ) {
+          event.preventDefault();
+
+          showNextVariant();
+        }
+      },
+      [
+        showNextVariant,
+        showPreviousVariant
+      ]
+    );
 
   useEffect(() => {
     if (!visible) {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      sectionRef.current?.scrollIntoView({
-        behavior: 'smooth',
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          sectionRef.current?.scrollIntoView({
+            behavior:
+              'smooth',
 
-        block: 'start'
-      });
-    });
+            block:
+              'start'
+          });
+        }
+      );
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      window.cancelAnimationFrame(
+        frameId
+      );
     };
-  }, [productDetailsDisclosure.requestId, visible]);
+  }, [
+    productDetailsDisclosure.requestId,
+    visible
+  ]);
 
   useEffect(() => {
     if (!visible) {
       return;
     }
 
-    setActiveVariantSlide(0);
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          setActiveVariantSlide(0);
 
-    const frameId = window.requestAnimationFrame(() => {
-      const scroller = variantScrollerRef.current;
+          const scroller =
+            variantScrollerRef.current;
 
-      if (scroller) {
-        scroller.scrollLeft = 0;
-      }
+          if (scroller) {
+            scroller.scrollLeft =
+              0;
+          }
 
-      updateVariantScrollerState();
-    });
+          updateVariantScrollerState();
+        }
+      );
 
-    const resizeObserver = new ResizeObserver(updateVariantScrollerState);
+    const resizeObserver =
+      new ResizeObserver(
+        updateVariantScrollerState
+      );
 
-    if (variantScrollerRef.current) {
-      resizeObserver.observe(variantScrollerRef.current);
+    if (
+      variantScrollerRef.current
+    ) {
+      resizeObserver.observe(
+        variantScrollerRef.current
+      );
     }
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      window.cancelAnimationFrame(
+        frameId
+      );
 
       resizeObserver.disconnect();
 
-      if (variantScrollFrameRef.current !== null) {
-        window.cancelAnimationFrame(variantScrollFrameRef.current);
+      if (
+        variantScrollFrameRef.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          variantScrollFrameRef.current
+        );
 
-        variantScrollFrameRef.current = null;
+        variantScrollFrameRef.current =
+          null;
       }
     };
-  }, [product.id, product.variants.length, updateVariantScrollerState, visible]);
+  }, [
+    product.id,
+    product.variants.length,
+    updateVariantScrollerState,
+    visible
+  ]);
 
   if (!visible) {
     return null;
   }
 
-  const longDescription = product.longDescription?.trim() || product.shortDescription?.trim();
+  const longDescription =
+    product.longDescription
+      ?.trim() ||
+    product.shortDescription
+      ?.trim();
 
-  const visibleTags = (product.tags ?? []).filter(tag => !tag.includes(':'));
+  const visibleTags =
+    (product.tags ?? [])
+      .filter(
+        tag =>
+          !tag.includes(':')
+      );
 
-  const totalStock = product.variants.reduce(
-    (total, variant) => total + Math.max(0, variant.stockLeft),
+  const totalStock =
+    product.variants.reduce(
+      (
+        total,
+        variant
+      ) =>
+        total +
+        Math.max(
+          0,
+          variant.stockLeft
+        ),
 
-    0
-  );
+      0
+    );
 
-  const availableVariants = product.variants.filter(variant => variant.stockLeft > 0).length;
+  const availableVariants =
+    product.variants.filter(
+      variant =>
+        variant.stockLeft > 0
+    ).length;
 
   return (
     <section
@@ -278,14 +503,21 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
         overflow-hidden rounded-3xl
         border border-primary/10
         bg-card/55 shadow-sm
-      ">
+      "
+    >
       {/* ====================================================
           DETAILS INTRODUCTION
       ==================================================== */}
 
       <header className="relative overflow-hidden border-b border-primary/10 p-5 md:p-8">
         {category.coverImage ? (
-          <Image src={category.coverImage} alt="" fill sizes="100vw" className="object-cover opacity-10" />
+          <Image
+            src={category.coverImage}
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover opacity-10"
+          />
         ) : null}
 
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-primary/10" />
@@ -327,7 +559,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               Product story
             </p>
 
-            <h3 className="mt-3 text-xl font-bold tracking-tight">About this selection</h3>
+            <h3 className="mt-3 text-xl font-bold tracking-tight">
+              About this selection
+            </h3>
 
             {longDescription ? (
               <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground">
@@ -344,7 +578,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
             <article className="rounded-3xl border border-border bg-background/70 p-4">
               <Star className="size-5 fill-amber-400 text-amber-400" />
 
-              <p className="mt-4 text-2xl font-bold">{product.rating.toFixed(1)}</p>
+              <p className="mt-4 text-2xl font-bold">
+                {product.rating.toFixed(1)}
+              </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
                 {numberFormatter.format(product.reviews)} reviews
@@ -354,25 +590,35 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
             <article className="rounded-3xl border border-border bg-background/70 p-4">
               <TrendingUp className="size-5 text-primary" />
 
-              <p className="mt-4 text-2xl font-bold">{numberFormatter.format(product.soldCount)}</p>
+              <p className="mt-4 text-2xl font-bold">
+                {numberFormatter.format(product.soldCount)}
+              </p>
 
-              <p className="mt-1 text-xs text-muted-foreground">Products sold</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Products sold
+              </p>
             </article>
 
             <article className="rounded-3xl border border-border bg-background/70 p-4">
               <Layers3 className="size-5 text-primary" />
 
-              <p className="mt-4 text-2xl font-bold">{product.variants.length}</p>
+              <p className="mt-4 text-2xl font-bold">
+                {product.variants.length}
+              </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
-                {product.variants.length === 1 ? 'Available option' : 'Available options'}
+                {product.variants.length === 1
+                  ? 'Available option'
+                  : 'Available options'}
               </p>
             </article>
 
             <article className="rounded-3xl border border-border bg-background/70 p-4">
               <PackageCheck className="size-5 text-primary" />
 
-              <p className="mt-4 text-2xl font-bold">{totalStock}</p>
+              <p className="mt-4 text-2xl font-bold">
+                {totalStock}
+              </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
                 Units across {availableVariants} in-stock {availableVariants === 1 ? 'option' : 'options'}
@@ -419,7 +665,8 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
                       hover:border-slate-500 hover:bg-slate-800
                       disabled:cursor-not-allowed
                       disabled:opacity-35
-                    ">
+                    "
+                  >
                     <ChevronLeft className="size-4" />
                   </button>
 
@@ -436,7 +683,8 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
                       hover:border-slate-500 hover:bg-slate-800
                       disabled:cursor-not-allowed
                       disabled:opacity-35
-                    ">
+                    "
+                  >
                     <ChevronRight className="size-4" />
                   </button>
                 </div>
@@ -450,7 +698,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               className={cn(
                 'pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-slate-900 to-transparent transition-opacity',
 
-                canScrollVariantsLeft ? 'opacity-100' : 'opacity-0'
+                canScrollVariantsLeft
+                  ? 'opacity-100'
+                  : 'opacity-0'
               )}
             />
 
@@ -459,7 +709,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               className={cn(
                 'pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-slate-900 to-transparent transition-opacity',
 
-                canScrollVariantsRight ? 'opacity-100' : 'opacity-0'
+                canScrollVariantsRight
+                  ? 'opacity-100'
+                  : 'opacity-0'
               )}
             />
 
@@ -480,17 +732,22 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
                 focus-visible:ring-slate-500
                 focus-visible:ring-offset-2
                 focus-visible:ring-offset-slate-900
-              ">
-              {product.variants.map(variant => {
-                const outOfStock = variant.stockLeft <= 0;
+              "
+            >
+              {product.variants.map(
+                variant => {
+                  const outOfStock =
+                    variant.stockLeft <= 0;
 
-                const lowStock = variant.stockLeft > 0 && variant.stockLeft <= 5;
+                  const lowStock =
+                    variant.stockLeft > 0 &&
+                    variant.stockLeft <= 5;
 
-                return (
-                  <article
-                    key={variant.id}
-                    data-variant-slide
-                    className="
+                  return (
+                    <article
+                      key={variant.id}
+                      data-variant-slide
+                      className="
                         flex w-72 shrink-0 snap-center
                         items-center overflow-hidden
                         rounded-3xl border border-slate-700
@@ -498,76 +755,106 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
                         shadow-sm transition
                         hover:border-slate-500
                         sm:w-80
-                      ">
-                    <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-muted sm:size-28">
-                      <Image
-                        src={variant.image}
-                        alt={`${product.name} — ${variant.label}`}
-                        fill
-                        sizes="(max-width: 640px) 96px, 112px"
-                        className="object-cover"
-                      />
+                      "
+                    >
+                      <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-muted sm:size-28">
+                        <Image
+                          src={variant.image}
+                          alt={`${product.name} — ${variant.label}`}
+                          fill
+                          sizes="(max-width: 640px) 96px, 112px"
+                          className="object-cover"
+                        />
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                      <span
-                        className={cn(
-                          'absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-[9px] font-semibold backdrop-blur',
+                        <span
+                          className={cn(
+                            'absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-[9px] font-semibold backdrop-blur',
 
-                          outOfStock
-                            ? 'bg-black/60 text-white'
+                            outOfStock
+                              ? 'bg-black/60 text-white'
+                              : lowStock
+                                ? 'bg-amber-500/90 text-black'
+                                : 'bg-emerald-500/90 text-black'
+                          )}
+                        >
+                          {outOfStock
+                            ? 'Out of stock'
                             : lowStock
-                              ? 'bg-amber-500/90 text-black'
-                              : 'bg-emerald-500/90 text-black'
-                        )}>
-                        {outOfStock
-                          ? 'Out of stock'
-                          : lowStock
-                            ? `${variant.stockLeft} left`
-                            : `${variant.stockLeft} avail.`}
-                      </span>
-                    </div>
+                              ? `${variant.stockLeft} left`
+                              : `${variant.stockLeft} avail.`}
+                        </span>
+                      </div>
 
-                    <div className="flex min-w-0 flex-1 flex-col justify-center px-4">
-                      <p className="truncate text-sm font-semibold text-slate-100">{variant.label}</p>
+                      <div className="flex min-w-0 flex-1 flex-col justify-center px-4">
+                        <p className="truncate text-sm font-semibold text-slate-100">
+                          {variant.label}
+                        </p>
 
-                      <p className="mt-1 truncate text-base font-bold tracking-tight text-slate-50 sm:text-lg">
-                        {priceFormatter.format(Number(variant.price))}
-                      </p>
+                        <p className="mt-1 truncate text-base font-bold tracking-tight text-slate-50 sm:text-lg">
+                          {priceFormatter.format(Number(variant.price))}
+                        </p>
 
-                      <p
-                        className={cn(
-                          'mt-2 text-[10px] font-medium',
+                        <p
+                          className={cn(
+                            'mt-2 text-[10px] font-medium',
 
-                          outOfStock ? 'text-rose-300' : lowStock ? 'text-amber-300' : 'text-emerald-300'
-                        )}>
-                        {outOfStock ? 'Unavailable' : lowStock ? 'Limited availability' : 'Ready to order'}
-                      </p>
-                    </div>
-                  </article>
-                );
-              })}
+                            outOfStock
+                              ? 'text-rose-300'
+                              : lowStock
+                                ? 'text-amber-300'
+                                : 'text-emerald-300'
+                          )}
+                        >
+                          {outOfStock
+                            ? 'Unavailable'
+                            : lowStock
+                              ? 'Limited availability'
+                              : 'Ready to order'}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                }
+              )}
             </div>
           </div>
 
           {product.variants.length > 1 ? (
-            <div className="mt-1 flex items-center justify-center gap-2" aria-label="Product variant slides">
-              {product.variants.map((variant, index) => (
-                <button
-                  key={variant.id}
-                  type="button"
-                  aria-label={`Show ${variant.label}`}
-                  aria-current={index === activeVariantSlide ? 'true' : undefined}
-                  onClick={() => scrollToVariant(index)}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all',
+            <div
+              className="mt-1 flex items-center justify-center gap-2"
+              aria-label="Product variant slides"
+            >
+              {product.variants.map(
+                (
+                  variant,
+                  index
+                ) => (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    aria-label={`Show ${variant.label}`}
+                    aria-current={
+                      index ===
+                      activeVariantSlide
+                        ? 'true'
+                        : undefined
+                    }
+                    onClick={() =>
+                      scrollToVariant(index)
+                    }
+                    className={cn(
+                      'h-1.5 rounded-full transition-all',
 
-                    index === activeVariantSlide
-                      ? 'w-7 bg-slate-200'
-                      : 'w-1.5 bg-slate-600 hover:bg-slate-400'
-                  )}
-                />
-              ))}
+                      index ===
+                        activeVariantSlide
+                        ? 'w-7 bg-slate-200'
+                        : 'w-1.5 bg-slate-600 hover:bg-slate-400'
+                    )}
+                  />
+                )
+              )}
             </div>
           ) : null}
         </section>
@@ -581,7 +868,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
             Product information
           </p>
 
-          <h3 className="mt-2 text-xl font-bold tracking-tight">Essential facts</h3>
+          <h3 className="mt-2 text-xl font-bold tracking-tight">
+            Essential facts
+          </h3>
 
           <dl className="mt-4 grid overflow-hidden rounded-3xl border border-border bg-background/70 md:grid-cols-2">
             <div className="flex items-center justify-between gap-4 border-b border-border p-4 md:border-r">
@@ -590,7 +879,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
                 Category
               </dt>
 
-              <dd className="text-right text-sm font-semibold">{category.label}</dd>
+              <dd className="text-right text-sm font-semibold">
+                {category.label}
+              </dd>
             </div>
 
             <div className="flex items-center justify-between gap-4 border-b border-border p-4">
@@ -600,7 +891,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               </dt>
 
               <dd className="text-right text-sm font-semibold">
-                {product.subcategory ? formatLabel(product.subcategory) : 'General selection'}
+                {product.subcategory
+                  ? formatLabel(product.subcategory)
+                  : 'General selection'}
               </dd>
             </div>
 
@@ -626,7 +919,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               </dt>
 
               <dd className="text-right text-sm font-semibold">
-                {product.discountPercentage > 0 ? `${product.discountPercentage}% off` : 'Standard pricing'}
+                {product.discountPercentage > 0
+                  ? `${product.discountPercentage}% off`
+                  : 'Standard pricing'}
               </dd>
             </div>
 
@@ -666,16 +961,21 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               Characteristics
             </p>
 
-            <h3 className="mt-2 text-xl font-bold tracking-tight">Product tags</h3>
+            <h3 className="mt-2 text-xl font-bold tracking-tight">
+              Product tags
+            </h3>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {visibleTags.map(tag => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-border bg-background/70 px-3 py-2 text-xs font-medium text-muted-foreground">
-                  {formatLabel(tag)}
-                </span>
-              ))}
+              {visibleTags.map(
+                tag => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-border bg-background/70 px-3 py-2 text-xs font-medium text-muted-foreground"
+                  >
+                    {formatLabel(tag)}
+                  </span>
+                )
+              )}
             </div>
           </section>
         ) : null}
@@ -688,7 +988,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
           <article className="rounded-3xl border border-border bg-background/70 p-5">
             <PackageCheck className="size-5 text-primary" />
 
-            <h3 className="mt-4 text-sm font-semibold">Catalog availability</h3>
+            <h3 className="mt-4 text-sm font-semibold">
+              Catalog availability
+            </h3>
 
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               Variant prices and stock are resolved from the active AJ Logik catalog.
@@ -698,7 +1000,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
           <article className="rounded-3xl border border-border bg-background/70 p-5">
             <CalendarClock className="size-5 text-primary" />
 
-            <h3 className="mt-4 text-sm font-semibold">Delivery awareness</h3>
+            <h3 className="mt-4 text-sm font-semibold">
+              Delivery awareness
+            </h3>
 
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               Delivery expectations remain connected to the product and checkout experience.
@@ -708,7 +1012,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
           <article className="rounded-3xl border border-border bg-background/70 p-5">
             <ShieldCheck className="size-5 text-primary" />
 
-            <h3 className="mt-4 text-sm font-semibold">Secure shopping</h3>
+            <h3 className="mt-4 text-sm font-semibold">
+              Secure shopping
+            </h3>
 
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               Cart, wishlist and checkout actions continue through the shared commerce providers.
@@ -726,7 +1032,9 @@ export function ProductDetailsModule({ module }: ProductDetailsModuleProps) {
               About {category.label}
             </p>
 
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">{categoryDescription}</p>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+              {categoryDescription}
+            </p>
           </section>
         ) : null}
       </div>

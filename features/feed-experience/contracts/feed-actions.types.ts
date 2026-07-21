@@ -25,10 +25,10 @@ export type FeedActions = {
 
   toggleLike: (productId: string) => void;
 
-  addToCart: (
-    product: ProductType,
-    variant: ProductVariantType
-  ) => void;
+addToCart: (
+  product: ProductType,
+  variant: ProductVariantType
+) => Promise<void>;
 
   previewPromotion?: (promoId: string) => void;
 };
