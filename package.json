@@ -2,8 +2,8 @@
   "name": "aj_concepts",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": ">=20.9.0"
+ "engines": {
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",
