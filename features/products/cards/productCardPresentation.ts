@@ -34,9 +34,7 @@ export function resolvePrimaryProductStatus(
     return 'Sold out';
   }
 
-  if (
-    product.discountPercentage > 0
-  ) {
+  if (product.discountPercentage > 0) {
     return `${product.discountPercentage}% off`;
   }
 

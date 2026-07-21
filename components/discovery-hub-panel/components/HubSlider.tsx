@@ -7,7 +7,6 @@ import { ArrowRight, ChevronLeft, ChevronRight, LoaderCircle, Minus, Plus } from
 import { useEffect, useMemo, useState } from 'react';
 
 import { useCart } from '@/features/cart';
-import { useCatalog } from '@/features/catalog';
 import { useFeedExperience } from '@/features/feed-experience';
 
 import { cn } from '@/lib/utils';
@@ -57,9 +56,9 @@ function getTargetProductId(target: unknown): string | null {
 }
 
 export default function HubSlider({ items, autoSlide = false, variant = 'strip' }: HubSliderProps) {
-  const { actions } = useFeedExperience();
+  const { actions, context } = useFeedExperience();
 
-  const { products } = useCatalog();
+  const products = context.catalog.products;
 
   const {
     items: cartItems,
@@ -71,7 +70,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
+  const [pendingCommerceKey, setPendingCommerceKey] = useState<string | null>(null);
 
   const safeItems = useMemo(() => items.filter(Boolean), [items]);
 
@@ -94,16 +93,31 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
       ? (product.variants.find(variant => variant.stockLeft > 0) ?? product.variants[0])
       : undefined;
 
-    const cartItem = selectedVariant
-      ? cartItems.find(item => item.variantId === selectedVariant.id)
-      : undefined;
+    const cartItem =
+      product && selectedVariant
+        ? cartItems.find(
+            item =>
+              String(item.productId) ===
+                String(product.id) &&
+              String(item.variantId) ===
+                String(selectedVariant.id)
+          )
+        : undefined;
+
+    const commerceKey =
+      product && selectedVariant
+        ? `${product.id}:${selectedVariant.id}`
+        : null;
 
     return {
       product,
       selectedVariant,
       cartItem,
+      commerceKey,
 
-      pending: Boolean(selectedVariant) && pendingVariantId === selectedVariant?.id
+      pending:
+        Boolean(commerceKey) &&
+        pendingCommerceKey === commerceKey
     };
   };
 
@@ -114,7 +128,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
       const {
         product,
         selectedVariant,
-        cartItem
+        cartItem,
+        commerceKey
       } = getCommerceState(
         item
       );
@@ -134,8 +149,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
         return;
       }
 
-      setPendingVariantId(
-        selectedVariant.id
+      setPendingCommerceKey(
+        commerceKey
       );
 
       try {
@@ -159,7 +174,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
           quantity: 1
         });
       } finally {
-        setPendingVariantId(
+        setPendingCommerceKey(
           null
         );
       }
@@ -171,7 +186,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
     ): Promise<void> => {
       const {
         selectedVariant,
-        cartItem
+        cartItem,
+        commerceKey
       } = getCommerceState(
         item
       );
@@ -184,8 +200,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
         return;
       }
 
-      setPendingVariantId(
-        selectedVariant.id
+      setPendingCommerceKey(
+        commerceKey
       );
 
       try {
@@ -209,7 +225,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
             1
         });
       } finally {
-        setPendingVariantId(
+        setPendingCommerceKey(
           null
         );
       }
@@ -283,6 +299,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
         <div
           className={cn(
             'inline-flex items-center rounded-full border border-primary/12 bg-background/55 p-1 text-primary shadow-sm backdrop-blur',
+            compact && 'w-full justify-between',
             containerClassName
           )}
         >
@@ -389,7 +406,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
           );
         }}
         className={cn(
-          'inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-primary/12 bg-background/55 px-3 py-2 text-[10px] font-semibold text-primary transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-55',
+          'inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/12 bg-background/55 px-3 py-2 text-[10px] font-semibold text-primary shadow-sm transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-55',
+          compact ? 'w-full' : 'flex-1',
           containerClassName,
           buttonClassName
         )}
@@ -604,6 +622,11 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
           const price = formatPrice(selectedVariant?.price ?? item.price);
 
+          const cartAction = renderCartAction(item, {
+            containerClassName: 'w-full',
+            compact: true
+          });
+
           return (
             <article
               key={item.id}
@@ -642,12 +665,9 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                 </div>
               </button>
 
-              {product && selectedVariant ? (
+              {cartAction ? (
                 <div className="px-2.5 pb-2.5">
-                  {renderCartAction(item, {
-                    containerClassName: 'w-full',
-                    compact: true
-                  })}
+                  {cartAction}
                 </div>
               ) : null}
             </article>
@@ -672,6 +692,12 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
         const price = formatPrice(selectedVariant?.price ?? item.price);
 
+        const cartAction = renderCartAction(item, {
+          containerClassName: 'w-full',
+          buttonClassName: 'px-2',
+          compact: true
+        });
+
         return (
           <article key={item.id} className="w-28 shrink-0">
             <button type="button" onClick={() => openItem(item)} className="block w-full text-left">
@@ -690,13 +716,9 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
               {price ? <p className="mt-1 text-[11px] font-semibold text-primary/45">{price}</p> : null}
             </button>
 
-            {product && selectedVariant ? (
+            {cartAction ? (
               <div className="mt-2">
-                {renderCartAction(item, {
-                  containerClassName: 'w-full',
-                  buttonClassName: 'px-2',
-                  compact: true
-                })}
+                {cartAction}
               </div>
             ) : null}
           </article>

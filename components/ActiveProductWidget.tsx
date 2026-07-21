@@ -1,9 +1,7 @@
 'use client';
 
-import Image from 'next/image';
-
 import { useMemo, useState } from 'react';
-
+import Image from 'next/image';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -24,11 +22,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/features/cart';
 import { useFeedExperience } from '@/features/feed-experience';
+import { useWishlist } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
 
 function normalizeText(value?: string): string | undefined {
   const normalized = value?.trim();
-
   return normalized || undefined;
 }
 
@@ -45,19 +43,12 @@ type ActiveProductWidgetProps = {
   onRevealInFeed?: () => void;
 };
 
-export default function ActiveProductWidget({
-  onBackToDiscovery,
-  onRevealInFeed
-}: ActiveProductWidgetProps) {
-  const { intent, context, actions, productDetailsDisclosure } = useFeedExperience();
+export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed }: ActiveProductWidgetProps) {
+  const { intent, context, productDetailsDisclosure, productDetailsControls } = useFeedExperience();
 
-  const {
-    items: cartItems,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    mutating
-  } = useCart();
+  const { items: cartItems, addToCart, updateQuantity, removeFromCart, mutating } = useCart();
+
+  const { toggleWishlist, isWishlisted, isMutating: isWishlistMutating } = useWishlist();
 
   const product = useMemo(() => {
     if (intent.type !== 'product' || !intent.targetId) {
@@ -125,8 +116,7 @@ export default function ActiveProductWidget({
   }
 
   const detailsAreRevealed =
-    productDetailsDisclosure.expanded &&
-    productDetailsDisclosure.productId === product.id;
+    productDetailsDisclosure.expanded && productDetailsDisclosure.productId === product.id;
 
   const productArtwork = selectedVariant?.image ?? product.variants[0]?.image ?? category?.image;
 
@@ -134,15 +124,15 @@ export default function ActiveProductWidget({
 
   const selectedVariantCartItem = cartItems.find(
     item =>
-      String(item.variantId) ===
-      String(selectedVariant?.id)
+      String(item.productId) === String(product.id) && String(item.variantId) === String(selectedVariant?.id)
   );
 
-  const selectedVariantCartQuantity =
-    selectedVariantCartItem?.quantity ?? 0;
+  const selectedVariantCartQuantity = selectedVariantCartItem?.quantity ?? 0;
+
+  const hasSelectedVariantInCart = selectedVariantCartQuantity > 0;
 
   const totalProductCartQuantity = cartItems
-    .filter(item => item.productId === product.id)
+    .filter(item => String(item.productId) === String(product.id))
     .reduce((total, item) => total + item.quantity, 0);
 
   const isOutOfStock = !selectedVariant || selectedVariant.stockLeft <= 0;
@@ -164,90 +154,79 @@ export default function ActiveProductWidget({
 
   const visibleTags = (product.tags ?? []).filter(tag => !tag.includes(':')).slice(0, 12);
 
-  const selectedVariantReachedStockLimit =
-    Boolean(
-      selectedVariant &&
-        selectedVariantCartQuantity >=
-          selectedVariant.stockLeft
-    );
+  const selectedVariantReachedStockLimit = Boolean(
+    selectedVariant && selectedVariantCartQuantity >= selectedVariant.stockLeft
+  );
 
-  const handleIncreaseCartQuantity =
-    async (): Promise<void> => {
-      if (
-        !selectedVariant ||
-        isOutOfStock ||
-        mutating ||
-        selectedVariantReachedStockLimit
-      ) {
-        return;
-      }
+  const saved = isWishlisted(product.id);
 
-      if (selectedVariantCartItem) {
-        await updateQuantity({
-          itemId:
-            selectedVariantCartItem.id,
+  const wishlistMutating = isWishlistMutating(product.id);
 
-          quantity:
-            selectedVariantCartItem.quantity +
-            1
-        });
+  const handleIncreaseCartQuantity = async (): Promise<void> => {
+    if (!selectedVariant || isOutOfStock || mutating || selectedVariantReachedStockLimit) {
+      return;
+    }
 
-        return;
-      }
-
-      await addToCart({
-        product,
-        variant:
-          selectedVariant,
-        quantity: 1
-      });
-    };
-
-  const handleDecreaseCartQuantity =
-    async (): Promise<void> => {
-      if (
-        !selectedVariantCartItem ||
-        mutating
-      ) {
-        return;
-      }
-
-      if (
-        selectedVariantCartItem.quantity <=
-        1
-      ) {
-        await removeFromCart(
-          selectedVariantCartItem.id
-        );
-
-        return;
-      }
-
+    if (selectedVariantCartItem) {
       await updateQuantity({
-        itemId:
-          selectedVariantCartItem.id,
-
-        quantity:
-          selectedVariantCartItem.quantity -
-          1
+        itemId: selectedVariantCartItem.id,
+        quantity: selectedVariantCartItem.quantity + 1
       });
-    };
 
-  const handleRevealInFeed =
-    (): void => {
-      actions.previewProduct(
-        product
-      );
+      return;
+    }
 
-      onRevealInFeed?.();
-    };
+    await addToCart({
+      product,
+      variant: selectedVariant,
+      quantity: 1
+    });
+  };
+
+  const handleDecreaseCartQuantity = async (): Promise<void> => {
+    if (!selectedVariantCartItem || mutating) {
+      return;
+    }
+
+    if (selectedVariantCartItem.quantity <= 1) {
+      await removeFromCart(selectedVariantCartItem.id);
+
+      return;
+    }
+
+    await updateQuantity({
+      itemId: selectedVariantCartItem.id,
+      quantity: selectedVariantCartItem.quantity - 1
+    });
+  };
+
+  const handleWishlist = (): void => {
+    if (wishlistMutating) {
+      return;
+    }
+
+    void toggleWishlist({
+      id: product.id,
+      name: product.name
+    });
+  };
+
+  const handleRevealInFeed = (): void => {
+    /**
+     * Hub handoff always reveals/refocuses details.
+     * It does not toggle them closed. The Feed's own details
+     * action is the independent expand/collapse control.
+     */
+    productDetailsControls.reveal(product.id);
+
+    onRevealInFeed?.();
+  };
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       {/* ====================================================
           FIXED PRODUCT NAVIGATION
       ==================================================== */}
-
       <header className="z-30 flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/95 px-3 py-3 backdrop-blur-xl">
         <div className="min-w-0">
           <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -269,16 +248,15 @@ export default function ActiveProductWidget({
           Continue Discovery
         </Button>
       </header>
+
       {/* ====================================================
           SCROLLABLE PRODUCT INFORMATION
       ==================================================== */}
-
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="space-y-5 px-3 pb-8 pt-3">
           {/* ==================================================
               FULL-BLEED PRODUCT ARTWORK
           ================================================== */}
-
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-muted shadow-xl">
             {categoryCover ? (
               <Image
@@ -311,7 +289,6 @@ export default function ActiveProductWidget({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-black/15" />
 
             {/* Product states */}
-
             <div className="absolute left-3 top-3 flex max-w-[55%] flex-wrap gap-2">
               {product.isNew ? (
                 <span className="rounded-full border border-white/15 bg-black/50 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-xl">
@@ -334,7 +311,6 @@ export default function ActiveProductWidget({
             </div>
 
             {/* Cart state */}
-
             <div className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/60 py-1.5 pl-1.5 pr-3 text-white shadow-lg backdrop-blur-xl">
               <span className="grid size-7 place-items-center rounded-full bg-white/15">
                 <ShoppingCart className="size-3.5" />
@@ -346,7 +322,6 @@ export default function ActiveProductWidget({
             </div>
 
             {/* Artwork caption */}
-
             <div className="absolute inset-x-0 bottom-0 p-4 text-white">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/65">
                 {category?.label ?? formatLabel(product.category)}
@@ -363,7 +338,6 @@ export default function ActiveProductWidget({
           {/* ==================================================
               QUICK OVERVIEW
           ================================================== */}
-
           <section>
             {shortDescription ? (
               <p className="text-sm leading-6 text-muted-foreground">{shortDescription}</p>
@@ -372,9 +346,7 @@ export default function ActiveProductWidget({
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Star className="size-3.5 fill-amber-400 text-amber-400" />
-
                 <strong className="font-semibold text-foreground">{product.rating}</strong>
-
                 <span>({numberFormatter.format(product.reviews)} reviews)</span>
               </span>
 
@@ -387,12 +359,10 @@ export default function ActiveProductWidget({
           {/* ==================================================
               VARIANT SELECTION
           ================================================== */}
-
           {product.variants.length > 1 ? (
             <section>
               <div className="mb-2 flex items-center gap-2">
                 <Layers3 className="size-3.5 text-muted-foreground" />
-
                 <h3 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                   Choose an option
                 </h3>
@@ -401,7 +371,6 @@ export default function ActiveProductWidget({
               <div className="flex flex-wrap gap-2">
                 {product.variants.map(variant => {
                   const active = variant.id === selectedVariant?.id;
-
                   const unavailable = variant.stockLeft <= 0;
 
                   return (
@@ -418,11 +387,9 @@ export default function ActiveProductWidget({
                       }
                       className={cn(
                         'rounded-full border px-3 py-1.5 text-xs font-medium transition',
-
                         active
                           ? 'border-foreground bg-foreground text-background'
                           : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
-
                         unavailable && 'cursor-not-allowed opacity-35'
                       )}>
                       {variant.label}
@@ -436,7 +403,6 @@ export default function ActiveProductWidget({
           {/* ==================================================
               PRICE AND AVAILABILITY
           ================================================== */}
-
           <section className="rounded-2xl border border-border bg-muted/35 p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -452,7 +418,6 @@ export default function ActiveProductWidget({
               <span
                 className={cn(
                   'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold',
-
                   isOutOfStock
                     ? 'bg-destructive/10 text-destructive'
                     : isLowStock
@@ -477,94 +442,199 @@ export default function ActiveProductWidget({
               </div>
             ) : null}
           </section>
-
           {/* ==================================================
-              COMMERCE CONTROLS
-          ================================================== */}
+    COMMERCE CONTROLS
+================================================== */}
 
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            {selectedVariantCartQuantity > 0 ? (
-              <div className="flex h-10 items-center justify-between rounded-full border border-border bg-background px-1 shadow-sm">
+          <section className="rounded-2xl border border-border/70 bg-card/70 p-2 shadow-sm backdrop-blur">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+              {hasSelectedVariantInCart ? (
+                <div className="flex h-11 min-w-0 items-center justify-between rounded-xl border border-border bg-background px-1 shadow-sm">
+                  <button
+                    type="button"
+                    aria-label={`Remove one ${selectedVariant?.label ?? 'item'} from cart`}
+                    disabled={mutating}
+                    onClick={() => {
+                      void handleDecreaseCartQuantity();
+                    }}
+                    className="
+            grid size-9 shrink-0
+            place-items-center rounded-lg
+            text-muted-foreground
+            transition-colors
+            hover:bg-muted
+            hover:text-foreground
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+          ">
+                    <Minus className="size-4" />
+                  </button>
+
+                  <div className="flex min-w-0 items-center justify-center gap-2 px-2">
+                    {mutating ? (
+                      <LoaderCircle className="size-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <span
+                          aria-live="polite"
+                          className="min-w-5 text-center text-sm font-bold text-foreground">
+                          {selectedVariantCartQuantity}
+                        </span>
+
+                        <span className="hidden truncate text-[10px] font-medium text-muted-foreground sm:inline">
+                          in cart
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    aria-label={`Add one more ${selectedVariant?.label ?? 'item'} to cart`}
+                    disabled={mutating || selectedVariantReachedStockLimit}
+                    onClick={() => {
+                      void handleIncreaseCartQuantity();
+                    }}
+                    className="
+            grid size-9 shrink-0
+            place-items-center rounded-lg
+            text-muted-foreground
+            transition-colors
+            hover:bg-muted
+            hover:text-foreground
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+          ">
+                    <Plus className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                /*
+                 * Keep this as a native button.
+                 * The diagnostic confirmed that the shared Button component
+                 * was interfering with this zero-cart state.
+                 */
                 <button
                   type="button"
-                  aria-label={`Remove one ${selectedVariant?.label ?? 'item'} from cart`}
-                  disabled={mutating}
-                  onClick={() => {
-                    void handleDecreaseCartQuantity();
-                  }}
-                  className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45">
-                  <Minus className="size-4" />
-                </button>
-
-                <span
-                  aria-live="polite"
-                  className="min-w-10 text-center text-sm font-bold text-foreground">
-                  {mutating ? (
-                    <LoaderCircle className="mx-auto size-4 animate-spin" />
-                  ) : (
-                    selectedVariantCartQuantity
-                  )}
-                </span>
-
-                <button
-                  type="button"
-                  aria-label={`Add one more ${selectedVariant?.label ?? 'item'} to cart`}
-                  disabled={
-                    mutating ||
-                    selectedVariantReachedStockLimit
-                  }
+                  aria-label={`Add ${selectedVariant?.label ?? product.name} to cart`}
+                  disabled={isOutOfStock || mutating}
                   onClick={() => {
                     void handleIncreaseCartQuantity();
                   }}
-                  className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45">
-                  <Plus className="size-4" />
+                  className="
+          inline-flex h-11 w-full min-w-0
+          items-center justify-center gap-2
+          rounded-xl
+          bg-foreground px-4
+          text-sm font-semibold text-background
+          shadow-sm
+          transition-all duration-200
+          hover:-translate-y-px
+          hover:bg-foreground/90
+          hover:shadow-md
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-ring
+          focus-visible:ring-offset-2
+          focus-visible:ring-offset-background
+          disabled:cursor-not-allowed
+          disabled:opacity-45
+          disabled:hover:translate-y-0
+          disabled:hover:shadow-sm
+        ">
+                  {mutating ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="size-4" />
+                  )}
+
+                  <span className="truncate">
+                    {mutating ? 'Adding...' : isOutOfStock ? 'Out of stock' : 'Add to cart'}
+                  </span>
                 </button>
-              </div>
-            ) : (
-              <Button
+              )}
+
+              <button
                 type="button"
-                disabled={
-                  isOutOfStock ||
-                  mutating
-                }
-                onClick={() => {
-                  void handleIncreaseCartQuantity();
-                }}
-                className="rounded-full">
-                {mutating ? (
+                aria-label={saved ? 'Remove from wishlist' : 'Add to wishlist'}
+                aria-pressed={saved}
+                disabled={wishlistMutating}
+                onClick={handleWishlist}
+                className={cn(
+                  `
+          grid size-11 shrink-0 place-items-center
+          rounded-xl border
+          shadow-sm
+          transition-all duration-200
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-ring
+          focus-visible:ring-offset-2
+          focus-visible:ring-offset-background
+          disabled:cursor-not-allowed
+          disabled:opacity-45
+        `,
+
+                  saved
+                    ? `
+              border-rose-500/30
+              bg-rose-500/10
+              text-rose-500
+              hover:border-rose-500/45
+              hover:bg-rose-500/15
+            `
+                    : `
+              border-border
+              bg-background
+              text-muted-foreground
+              hover:border-foreground/20
+              hover:bg-muted
+              hover:text-foreground
+            `
+                )}>
+                {wishlistMutating ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (
-                  <ShoppingCart className="size-4" />
+                  <Heart
+                    className={cn(
+                      'size-4 transition-all duration-200',
+
+                      saved ? 'scale-105 fill-current' : 'fill-transparent'
+                    )}
+                  />
                 )}
+              </button>
+            </div>
 
-                {mutating
-                  ? 'Adding...'
-                  : 'Add to cart'}
-              </Button>
-            )}
+            <div className="mt-2 flex min-w-0 items-center justify-between gap-3 px-1">
+              <p className="truncate text-[10px] font-medium text-muted-foreground">
+                {selectedVariant?.label ?? 'Selected option'}
+              </p>
 
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              aria-label={product.liked ? 'Remove from wishlist' : 'Add to wishlist'}
-              aria-pressed={product.liked}
-              onClick={() => actions.toggleLike(product.id)}
-              className="rounded-full">
-              <Heart
+              <p
                 className={cn(
-                  'size-4',
+                  'shrink-0 text-[10px] font-medium',
 
-                  product.liked && 'fill-current text-rose-500'
-                )}
-              />
-            </Button>
-          </div>
+                  isOutOfStock
+                    ? 'text-destructive'
+                    : selectedVariantReachedStockLimit
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-muted-foreground'
+                )}>
+                {isOutOfStock
+                  ? 'Unavailable'
+                  : selectedVariantReachedStockLimit
+                    ? 'Stock limit reached'
+                    : hasSelectedVariantInCart
+                      ? `${selectedVariantCartQuantity} selected`
+                      : 'Ready to add'}
+              </p>
+            </div>
+          </section>
 
           {/* ==================================================
               FULL DESCRIPTION
           ================================================== */}
-
           {longDescription ? (
             <section className="border-t border-border pt-5">
               <h3 className="text-sm font-semibold text-foreground">About this product</h3>
@@ -586,7 +656,6 @@ export default function ActiveProductWidget({
           {/* ==================================================
               PRODUCT INFORMATION
           ================================================== */}
-
           <section className="border-t border-border pt-5">
             <h3 className="text-sm font-semibold text-foreground">Product information</h3>
 
@@ -672,7 +741,6 @@ export default function ActiveProductWidget({
           {/* ==================================================
               CHARACTERISTICS
           ================================================== */}
-
           {visibleTags.length > 0 ? (
             <section className="border-t border-border pt-5">
               <h3 className="text-sm font-semibold text-foreground">Characteristics</h3>
@@ -692,7 +760,6 @@ export default function ActiveProductWidget({
           {/* ==================================================
               CATEGORY CONTEXT
           ================================================== */}
-
           {categoryDescription ? (
             <section className="rounded-2xl border border-border bg-muted/25 p-4">
               <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -708,7 +775,6 @@ export default function ActiveProductWidget({
       {/* ====================================================
           CENTRAL FEED DETAILS CONTROL
       ==================================================== */}
-
       <footer className="relative z-50 shrink-0 border-t border-border bg-background/95 p-3 shadow-[0_-18px_45px_rgba(0,0,0,0.2)] backdrop-blur-xl">
         <Button
           type="button"
@@ -721,21 +787,19 @@ export default function ActiveProductWidget({
 
             <span className="min-w-0">
               <span className="block text-sm font-bold">
-                {detailsAreRevealed
-                  ? 'View revealed details'
-                  : 'Reveal all details in Feed'}
+                {detailsAreRevealed ? 'Refocus details in Feed' : 'View full details in Feed'}
               </span>
 
               <span className="mt-0.5 block truncate text-[10px] font-medium text-primary-foreground/75">
                 {detailsAreRevealed
-                  ? 'Jump back to the complete product information'
+                  ? 'Return to the expanded product information'
                   : 'Description, variants, availability, delivery and more'}
               </span>
             </span>
           </span>
 
           <span className="shrink-0 rounded-full bg-primary-foreground px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-primary shadow-sm">
-            {detailsAreRevealed ? 'Jump' : 'Reveal'}
+            {detailsAreRevealed ? 'Refocus' : 'View details'}
           </span>
         </Button>
       </footer>

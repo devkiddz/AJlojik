@@ -7,6 +7,10 @@ export {
 } from './FeaturedProductCard';
 
 export {
+  CollectionFeatureProductCard
+} from './CollectionFeatureProductCard';
+
+export {
   PromoProductCard
 } from './PromoProductCard';
 

@@ -33,47 +33,41 @@ export function useProductVariant(
     product.variants[0] ??
     null;
 
-  const [
-    selection,
-    setSelection
-  ] =
+  const [selection, setSelection] =
     useState<VariantSelection | null>(
       null
     );
 
-  const selectedVariantId =
-    selection?.productId ===
-    product.id
+  const requestedVariantId =
+    selection?.productId === product.id
       ? selection.variantId
-      : defaultVariant
-        ? String(
-            defaultVariant.id
-          )
-        : '';
+      : null;
 
   const selectedVariant =
     useMemo(
       () =>
         product.variants.find(
           variant =>
-            String(
-              variant.id
-            ) ===
-            selectedVariantId
+            String(variant.id) ===
+            requestedVariantId
         ) ??
         defaultVariant,
       [
         defaultVariant,
         product.variants,
-        selectedVariantId
+        requestedVariantId
       ]
     );
+
+  const selectedVariantId =
+    selectedVariant
+      ? String(selectedVariant.id)
+      : '';
 
   const setSelectedVariantId =
     useCallback(
       (
-        variantId:
-          string | null
+        variantId: string | null
       ): void => {
         if (!variantId) {
           return;
@@ -82,9 +76,7 @@ export function useProductVariant(
         const variantExists =
           product.variants.some(
             variant =>
-              String(
-                variant.id
-              ) ===
+              String(variant.id) ===
               variantId
           );
 
@@ -93,9 +85,7 @@ export function useProductVariant(
         }
 
         setSelection({
-          productId:
-            product.id,
-
+          productId: product.id,
           variantId
         });
       },

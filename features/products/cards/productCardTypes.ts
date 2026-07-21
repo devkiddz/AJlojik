@@ -32,12 +32,18 @@ export type ProductCardActions = {
    */
   onToggleLike?: (
     productId: string
-  ) => void;
+  ) => void | Promise<void>;
 
+  /**
+   * Optional compatibility adapter for callers that already
+   * route add-to-cart actions through FeedActions.
+   *
+   * Product-card quantity changes still resolve from CartProvider.
+   */
   onAddToCart?: (
     product: ProductType,
     variant: ProductVariantType
-  ) => void;
+  ) => void | Promise<void>;
 };
 
 export type BaseProductCardProps =

@@ -88,7 +88,8 @@ export default function DesktopDiscoveryRail({
 
   const {
     intent,
-    context
+    context,
+    continueDiscovery
   } = useFeedExperience();
 
   const pageMode =
@@ -308,17 +309,14 @@ export default function DesktopDiscoveryRail({
 
   const handleBackToDiscovery =
     () => {
-      setViewPreference(
-        activeProductId
-          ? {
-              productId:
-                activeProductId,
+      /**
+       * Desktop keeps the rail active while the Feed restores
+       * the exact pre-product experience captured by the
+       * provider's continuity stack.
+       */
+      setViewPreference(null);
 
-              view:
-                'discovery'
-            }
-          : null
-      );
+      continueDiscovery();
     };
 
   const handleShowProductDetails =

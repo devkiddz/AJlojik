@@ -65,7 +65,8 @@ export default function DiscoverExperienceShell() {
 
   const {
     intent,
-    context
+    context,
+    continueDiscovery
   } = useFeedExperience();
 
   const pageMode =
@@ -236,17 +237,15 @@ export default function DiscoverExperienceShell() {
 
   const handleContinueDiscovery =
     () => {
-      setViewPreference(
-        activeProductId
-          ? {
-              productId:
-                activeProductId,
+      /**
+       * Restore the captured pre-product intent rather than
+       * merely swapping the Hub's local panel. The Hub stays
+       * open on mobile and continues from its preserved group
+       * and scroll position while the Feed returns to discovery.
+       */
+      setViewPreference(null);
 
-              view:
-                'discovery'
-            }
-          : null
-      );
+      continueDiscovery();
     };
 
   const handleShowProduct =

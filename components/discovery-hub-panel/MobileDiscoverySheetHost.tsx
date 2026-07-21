@@ -26,6 +26,7 @@ export default function MobileDiscoverySheetHost() {
 
   const {
     discoveryOpen,
+    openDiscovery,
     setDiscoveryOpen
   } = useMobileDiscovery();
 
@@ -34,16 +35,18 @@ export default function MobileDiscoverySheetHost() {
     setIsMobileViewport
   ] = useState(false);
 
+  const lastOpenedProductIntentIdRef =
+    useRef<string | null>(null);
+
   const activeProductIntentId =
     intent.type === 'product'
       ? intent.id
       : null;
 
-  const lastObservedProductIntentIdRef =
-    useRef<string | null>(
-      activeProductIntentId
-    );
-
+  /**
+   * Keep the mounted mobile experience synchronized with
+   * Tailwind's `lg` breakpoint.
+   */
   useEffect(() => {
     const mediaQuery =
       window.matchMedia(
@@ -59,12 +62,14 @@ export default function MobileDiscoverySheetHost() {
           mobile
         );
 
+        /**
+         * The Sheet is portalled into document.body and must
+         * be explicitly dismissed when desktop takes over.
+         */
         if (!mobile) {
-          setDiscoveryOpen(
-            false
-          );
+          setDiscoveryOpen(false);
 
-          lastObservedProductIntentIdRef.current =
+          lastOpenedProductIntentIdRef.current =
             null;
         }
       };
@@ -85,47 +90,40 @@ export default function MobileDiscoverySheetHost() {
   }, [setDiscoveryOpen]);
 
   /**
-   * A newly published Product Experience belongs to the
-   * central Feed. Close the mobile Hub so the customer can
-   * immediately see that Feed transition.
+   * Mobile product selection is Hub-first.
    *
-   * Reopening the Hub while already viewing the same product
-   * does not close it again because the intent id is unchanged.
+   * A newly published Product Experience opens the Discovery
+   * Sheet and lets ActiveProductWidget provide the preview and
+   * commerce workspace. The Sheet closes only when that widget
+   * explicitly hands full details to the central Feed.
    */
   useEffect(() => {
     if (!isMobileViewport) {
-      lastObservedProductIntentIdRef.current =
-        activeProductIntentId;
+      return;
+    }
+
+    if (!activeProductIntentId) {
+      lastOpenedProductIntentIdRef.current =
+        null;
 
       return;
     }
 
-    const previousIntentId =
-      lastObservedProductIntentIdRef.current;
+    if (
+      lastOpenedProductIntentIdRef.current ===
+      activeProductIntentId
+    ) {
+      return;
+    }
 
-    const newProductExperiencePublished =
-      Boolean(
-        activeProductIntentId &&
-          activeProductIntentId !==
-            previousIntentId
-      );
-
-    lastObservedProductIntentIdRef.current =
+    lastOpenedProductIntentIdRef.current =
       activeProductIntentId;
 
-    if (
-      newProductExperiencePublished &&
-      discoveryOpen
-    ) {
-      setDiscoveryOpen(
-        false
-      );
-    }
+    openDiscovery();
   }, [
     activeProductIntentId,
-    discoveryOpen,
     isMobileViewport,
-    setDiscoveryOpen
+    openDiscovery
   ]);
 
   if (!isMobileViewport) {
@@ -135,9 +133,7 @@ export default function MobileDiscoverySheetHost() {
   return (
     <MobileDiscoverySheet
       open={discoveryOpen}
-      onOpenChange={
-        setDiscoveryOpen
-      }
+      onOpenChange={setDiscoveryOpen}
     />
   );
 }

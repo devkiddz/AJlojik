@@ -33,10 +33,11 @@ export type ProductDetailsDisclosure = {
   requestId: number;
 };
 
-type ProductDetailsDisclosureState =
-  ProductDetailsDisclosure & {
-    intentId: string | null;
-  };
+export type ProductDetailsControls = {
+  reveal: (productId: string) => void;
+  collapse: (productId?: string) => void;
+  toggle: (productId: string) => void;
+};
 
 // ============================================================
 // CONTEXT CONTRACT
@@ -63,6 +64,15 @@ type FeedExperienceContextValue = {
    * details does not create another page, modal or intent.
    */
   productDetailsDisclosure: ProductDetailsDisclosure;
+
+  productDetailsControls: ProductDetailsControls;
+
+  /**
+   * Restores the latest non-product experience captured before
+   * the current Product Experience. This is the runtime bridge
+   * for the Hub's Continue Discovery action.
+   */
+  continueDiscovery: () => void;
 };
 
 const FeedExperienceContext =
@@ -188,15 +198,14 @@ export function FeedExperienceProvider({
     useState<FeedIntent | null>(null);
 
   const [
-    productDetailsDisclosureState,
-    setProductDetailsDisclosureState
-  ] = useState<ProductDetailsDisclosureState>(
+    productDetailsDisclosure,
+    setProductDetailsDisclosure
+  ] = useState<ProductDetailsDisclosure>(
     {
-      intentId:
-        null,
-
       productId:
-        null,
+        initialIntent.type === 'product'
+          ? initialIntent.targetId ?? null
+          : null,
 
       expanded:
         false,
@@ -208,6 +217,15 @@ export function FeedExperienceProvider({
 
   const lastInitialIntentIdRef =
     useRef(initialIntent.id);
+
+  /**
+   * Lightweight in-memory continuity stack.
+   *
+   * The database-backed Experience Stack can replace this
+   * storage later without changing the Hub or Feed controls.
+   */
+  const intentHistoryRef =
+    useRef<FeedIntent[]>([]);
 
   const resolutionFrameRef =
     useRef<number | null>(null);
@@ -246,7 +264,10 @@ export function FeedExperienceProvider({
   const beginResolution =
     useCallback(
       (
-        nextIntent: FeedIntent
+        nextIntent: FeedIntent,
+        options: {
+          recordCurrent?: boolean;
+        } = {}
       ) => {
         cancelResolutionWork();
 
@@ -256,6 +277,31 @@ export function FeedExperienceProvider({
           setPendingIntent(null);
 
           return;
+        }
+
+        if (
+          options.recordCurrent !== false
+        ) {
+          const history =
+            intentHistoryRef.current;
+
+          const latestEntry =
+            history[
+              history.length - 1
+            ];
+
+          if (
+            latestEntry?.id !== intent.id
+          ) {
+            history.push(intent);
+
+            if (history.length > 50) {
+              history.splice(
+                0,
+                history.length - 50
+              );
+            }
+          }
         }
 
         resolutionStartedAtRef.current =
@@ -279,7 +325,7 @@ export function FeedExperienceProvider({
       },
       [
         cancelResolutionWork,
-        intent.id
+        intent
       ]
     );
 
@@ -298,23 +344,43 @@ export function FeedExperienceProvider({
     lastInitialIntentIdRef.current =
       initialIntent.id;
 
-    const synchronizationTimer =
-      window.setTimeout(() => {
-        beginResolution(
-          initialIntent
-        );
-      }, 0);
-
-    return () => {
-      window.clearTimeout(
-        synchronizationTimer
-      );
-    };
+    beginResolution(
+      initialIntent
+    );
   }, [
     beginResolution,
     initialIntent
   ]);
 
+  /**
+   * Every committed Product Experience begins in overview mode.
+   *
+   * Revealing details is presentation state inside that same
+   * experience. A different intent resets the disclosure.
+   */
+  useEffect(() => {
+    const activeProductId =
+      intent.type === 'product'
+        ? intent.targetId ?? null
+        : null;
+
+    setProductDetailsDisclosure(
+      currentDisclosure => ({
+        productId:
+          activeProductId,
+
+        expanded:
+          false,
+
+        requestId:
+          currentDisclosure.requestId
+      })
+    );
+  }, [
+    intent.id,
+    intent.targetId,
+    intent.type
+  ]);
 
   // ==========================================================
   // EXPERIENCE ACTIONS
@@ -359,11 +425,8 @@ export function FeedExperienceProvider({
       (
         productId: string
       ) => {
-        setProductDetailsDisclosureState(
+        setProductDetailsDisclosure(
           currentDisclosure => ({
-            intentId:
-              intent.id,
-
             productId,
 
             expanded:
@@ -375,9 +438,59 @@ export function FeedExperienceProvider({
           })
         );
       },
-      [
-        intent.id
-      ]
+      []
+    );
+
+  const collapseProductDetails =
+    useCallback(
+      (
+        productId?: string
+      ) => {
+        setProductDetailsDisclosure(
+          currentDisclosure => {
+            if (
+              productId &&
+              currentDisclosure.productId !==
+                productId
+            ) {
+              return currentDisclosure;
+            }
+
+            return {
+              ...currentDisclosure,
+              expanded: false
+            };
+          }
+        );
+      },
+      []
+    );
+
+  const toggleProductDetails =
+    useCallback(
+      (
+        productId: string
+      ) => {
+        setProductDetailsDisclosure(
+          currentDisclosure => {
+            const currentlyExpanded =
+              currentDisclosure.productId ===
+                productId &&
+              currentDisclosure.expanded;
+
+            return {
+              productId,
+              expanded:
+                !currentlyExpanded,
+              requestId:
+                currentlyExpanded
+                  ? currentDisclosure.requestId
+                  : currentDisclosure.requestId + 1
+            };
+          }
+        );
+      },
+      []
     );
 
   /**
@@ -387,7 +500,7 @@ export function FeedExperienceProvider({
    *   open the Product Experience.
    *
    * Inside that exact Product Experience:
-   *   reveal or refocus its complete details in the Feed.
+   *   toggle its complete Feed details open or closed.
    */
   const previewProduct =
     useCallback<
@@ -400,7 +513,7 @@ export function FeedExperienceProvider({
             product.id;
 
         if (isActiveProduct) {
-          revealProductDetails(
+          toggleProductDetails(
             product.id
           );
 
@@ -419,9 +532,90 @@ export function FeedExperienceProvider({
         intent.targetId,
         intent.type,
         openExperience,
-        revealProductDetails
+        toggleProductDetails
       ]
     );
+
+  const productDetailsControls =
+    useMemo<ProductDetailsControls>(
+      () => ({
+        reveal:
+          revealProductDetails,
+        collapse:
+          collapseProductDetails,
+        toggle:
+          toggleProductDetails
+      }),
+      [
+        collapseProductDetails,
+        revealProductDetails,
+        toggleProductDetails
+      ]
+    );
+
+  const continueDiscovery =
+    useCallback(() => {
+      const history =
+        intentHistoryRef.current;
+
+      let previousIntent:
+        FeedIntent | undefined;
+
+      while (history.length > 0) {
+        const candidate =
+          history.pop();
+
+        if (
+          candidate &&
+          candidate.id !== intent.id &&
+          candidate.type !== 'product'
+        ) {
+          previousIntent =
+            candidate;
+
+          break;
+        }
+      }
+
+      if (previousIntent) {
+        beginResolution(
+          previousIntent,
+          {
+            recordCurrent: false
+          }
+        );
+
+        return;
+      }
+
+      const activeProduct =
+        intent.type === 'product' &&
+        intent.targetId
+          ? context.catalog.products.find(
+              product =>
+                product.id ===
+                intent.targetId
+            )
+          : undefined;
+
+      beginResolution(
+        createIntent({
+          type: 'store-discovery',
+          categorySlug:
+            activeProduct?.category ??
+            'all'
+        }),
+        {
+          recordCurrent: false
+        }
+      );
+    }, [
+      beginResolution,
+      context.catalog.products,
+      intent.id,
+      intent.targetId,
+      intent.type
+    ]);
 
   const actions =
     useMemo<FeedActions>(
@@ -525,39 +719,6 @@ export function FeedExperienceProvider({
     [cancelResolutionWork]
   );
 
-  const activeProductId =
-    intent.type === 'product'
-      ? intent.targetId ?? null
-      : null;
-
-  const productDetailsDisclosure =
-    useMemo<ProductDetailsDisclosure>(
-      () => {
-        const belongsToActiveIntent =
-          productDetailsDisclosureState.intentId ===
-            intent.id &&
-          productDetailsDisclosureState.productId ===
-            activeProductId;
-
-        return {
-          productId:
-            activeProductId,
-
-          expanded:
-            belongsToActiveIntent &&
-            productDetailsDisclosureState.expanded,
-
-          requestId:
-            productDetailsDisclosureState.requestId
-        };
-      },
-      [
-        activeProductId,
-        intent.id,
-        productDetailsDisclosureState
-      ]
-    );
-
   const isResolving =
     pendingIntent !== null;
 
@@ -576,7 +737,11 @@ export function FeedExperienceProvider({
 
         pendingIntent,
 
-        productDetailsDisclosure
+        productDetailsDisclosure,
+
+        productDetailsControls,
+
+        continueDiscovery
       }),
       [
         intent,
@@ -585,7 +750,9 @@ export function FeedExperienceProvider({
         actions,
         isResolving,
         pendingIntent,
-        productDetailsDisclosure
+        productDetailsDisclosure,
+        productDetailsControls,
+        continueDiscovery
       ]
     );
 

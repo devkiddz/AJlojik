@@ -1,10 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
-
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from 'react';
 
 import type { FeedActions } from '@/features/feed-experience/contracts';
 
@@ -21,7 +17,12 @@ type ProductExperienceSliderProps = {
 
   title?: string;
   subtitle?: string;
+
+  minimumSlidesPerView?: number;
+  preferredSlideWidth?: number;
 };
+
+const CARD_GAP = 12;
 
 export default function ProductExperienceSlider({
   products,
@@ -29,78 +30,118 @@ export default function ProductExperienceSlider({
   locale,
   currency,
   title = 'More to explore',
-  subtitle = 'Continue discovering products from this experience.'
+  subtitle = 'Continue discovering products from this experience.',
+  minimumSlidesPerView = 3,
+  preferredSlideWidth = 144
 }: ProductExperienceSliderProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  if (products.length === 0) {
-    return null;
-  }
+  const [slidesPerView, setSlidesPerView] = useState(minimumSlidesPerView);
 
-  const scroll = (direction: 'left' | 'right'): void => {
+  useEffect(() => {
     const viewport = viewportRef.current;
 
     if (!viewport) {
       return;
     }
 
-    const distance = Math.max(viewport.clientWidth * 0.8, 208);
+    const updateSlidesPerView = (): void => {
+      const availableWidth = viewport.clientWidth;
 
-    viewport.scrollBy({
-      left: direction === 'right' ? distance : -distance,
-      behavior: 'smooth'
-    });
-  };
+      if (availableWidth <= 0) {
+        return;
+      }
+
+      const calculatedSlides = Math.floor((availableWidth + CARD_GAP) / (preferredSlideWidth + CARD_GAP));
+
+      setSlidesPerView(Math.max(minimumSlidesPerView, calculatedSlides));
+    };
+
+    updateSlidesPerView();
+
+    const resizeObserver = new ResizeObserver(updateSlidesPerView);
+
+    resizeObserver.observe(viewport);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [minimumSlidesPerView, preferredSlideWidth]);
+
+  if (products.length === 0) {
+    return null;
+  }
+
+  /*
+   * We cannot display more unique slides than the
+   * number of products supplied by the parent.
+   */
+  const visibleSlidesPerView = Math.min(slidesPerView, products.length);
+
+  const occupiedGapSpace = CARD_GAP * Math.max(visibleSlidesPerView - 1, 0);
+
+  const slideWidth = `calc((100% - ${occupiedGapSpace}px) / ${visibleSlidesPerView})`;
 
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm sm:p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Category collection
+    <section
+      className="
+        flex h-full min-w-0
+        flex-col rounded-2xl
+        border border-border/70
+        bg-card/60
+        p-3 shadow-sm
+        sm:p-4
+      ">
+      <header className="min-w-0">
+        <h3 className="text-base font-bold tracking-tight md:text-lg">{title}</h3>
+
+        {subtitle ? (
+          <p
+            className="
+              mt-1 line-clamp-2
+              max-w-xl text-xs
+              leading-5 text-muted-foreground
+            ">
+            {subtitle}
           </p>
-
-          <h3 className="mt-1 text-lg font-bold tracking-tight">{title}</h3>
-
-          <p className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-muted-foreground">{subtitle}</p>
-        </div>
-
-        <div className="flex shrink-0 gap-1.5">
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            onClick={() => scroll('left')}
-            aria-label="Previous products"
-            className="size-8 rounded-full">
-            <ChevronLeft className="size-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            onClick={() => scroll('right')}
-            aria-label="Next products"
-            className="size-8 rounded-full">
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      </div>
+        ) : null}
+      </header>
 
       <div
         ref={viewportRef}
-        className="mt-4 flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 scrollbar-hide">
+        role="region"
+        aria-label={`${title} products`}
+        data-product-count={products.length}
+        data-slides-per-view={visibleSlidesPerView}
+        className="
+          mt-4 flex min-w-0
+          snap-x snap-mandatory
+          items-stretch gap-3
+          overflow-x-auto
+          overscroll-x-contain
+          scroll-smooth pb-2
+          scrollbar-hide
+        ">
         {products.map(product => (
-          <ProductExperienceCard
+          <div
             key={product.id}
-            product={product}
-            actions={actions}
-            locale={locale}
-            currency={currency}
-          />
+            data-product-experience-slide
+            className="
+              min-w-0 shrink-0
+              snap-start
+              [&>*]:h-full
+              [&>*]:w-full
+              [&>*]:min-w-0
+              [&>*]:max-w-none
+            "
+            style={{
+              width: slideWidth,
+              flexBasis: slideWidth
+            }}>
+            <ProductExperienceCard product={product} actions={actions} locale={locale} currency={currency} />
+          </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

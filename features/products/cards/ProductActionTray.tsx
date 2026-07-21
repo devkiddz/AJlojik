@@ -1,136 +1,428 @@
 'use client';
 
-import { Heart, LoaderCircle, ShoppingBag } from 'lucide-react';
-import type { MouseEvent } from 'react';
+import {
+  Heart,
+  LoaderCircle,
+  Minus,
+  Plus,
+  ShoppingBag
+} from 'lucide-react';
 
-import { useWishlist } from '@/features/wishlist';
+import type {
+  MouseEvent
+} from 'react';
+
+import {
+  useWishlist
+} from '@/features/wishlist';
+
 import { cn } from '@/lib/utils';
-import type { ProductType, ProductVariantType } from '@/types/types';
 
-import { useProductCartQuantity } from './useProductCartQuantity';
-import { useProductVariant } from './useProductVariant';
+import type {
+  ProductType,
+  ProductVariantType
+} from '@/types/types';
+
+import type {
+  ProductCardActions
+} from './productCardTypes';
+
+import {
+  useProductCartQuantity
+} from './useProductCartQuantity';
+
+import {
+  useProductVariant
+} from './useProductVariant';
+
+type ProductActionTrayPresentation =
+  | 'overlay'
+  | 'inline';
 
 type ProductActionTrayProps = {
   product: ProductType;
 
   /**
-   * Featured surfaces may pass their actively selected variant.
+   * Featured surfaces pass their actively selected variant.
    * Compact cards fall back to the first purchasable variant.
    */
   variant?: ProductVariantType | null;
 
-  onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
+  onAddToCart?:
+    ProductCardActions['onAddToCart'];
+
+  presentation?:
+    ProductActionTrayPresentation;
+
+  compact?: boolean;
+  showAddLabel?: boolean;
+  showWishlist?: boolean;
 
   className?: string;
 };
 
-function stopProductActionEvent(event: MouseEvent<HTMLElement>): void {
+function stopProductActionEvent(
+  event: MouseEvent<HTMLElement>
+): void {
   event.preventDefault();
   event.stopPropagation();
 }
 
-const actionClassName = cn(
-  'pointer-events-auto relative grid size-9 shrink-0 place-items-center rounded-full',
-  'border border-white/20 bg-background/40 text-foreground shadow-md backdrop-blur-md dark:border-white/10 dark:bg-background/30',
-  'transition duration-200',
-  'hover:border-white/40 hover:bg-background/80 hover:shadow-lg dark:hover:bg-background/60',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-  'disabled:cursor-not-allowed disabled:opacity-40'
-);
+export function ProductActionTray({
+  product,
+  variant,
+  onAddToCart,
+  presentation = 'overlay',
+  compact = false,
+  showAddLabel = presentation === 'inline',
+  showWishlist = true,
+  className
+}: ProductActionTrayProps) {
+  const {
+    availableVariant
+  } = useProductVariant(product);
 
-export function ProductActionTray({ product, variant, onAddToCart, className }: ProductActionTrayProps) {
-  const { quantity, cartMutating } = useProductCartQuantity(product.id);
-  const { availableVariant } = useProductVariant(product);
-  const { toggleWishlist, isWishlisted, isMutating } = useWishlist();
+  const {
+    toggleWishlist,
+    isWishlisted,
+    isMutating
+  } = useWishlist();
 
-  const activeCommerceVariant = variant ?? availableVariant;
-  const unavailable = !activeCommerceVariant || activeCommerceVariant.stockLeft <= 0;
-  const saved = isWishlisted(product.id);
-  const wishlistMutating = isMutating(product.id);
+  const activeCommerceVariant =
+    variant ??
+    availableVariant;
 
-  const handleAddToCart = (event: MouseEvent<HTMLButtonElement>): void => {
-    stopProductActionEvent(event);
-
-    if (unavailable || !activeCommerceVariant || cartMutating || !onAddToCart) {
-      return;
+  const {
+    variantQuantity,
+    cartMutating,
+    pendingAction,
+    canIncrement,
+    canDecrement,
+    addOne,
+    removeOne
+  } = useProductCartQuantity(
+    product,
+    activeCommerceVariant,
+    {
+      onAddToCart
     }
+  );
 
-    onAddToCart(product, activeCommerceVariant);
-  };
+  const unavailable =
+    !activeCommerceVariant ||
+    activeCommerceVariant.stockLeft <= 0;
 
-  const handleWishlist = (event: MouseEvent<HTMLButtonElement>): void => {
-    stopProductActionEvent(event);
+  const reachedStockLimit =
+    Boolean(
+      activeCommerceVariant &&
+      variantQuantity >=
+        activeCommerceVariant.stockLeft
+    );
 
-    if (wishlistMutating) {
-      return;
-    }
+  const saved =
+    isWishlisted(product.id);
 
-    void toggleWishlist({
-      id: product.id,
-      name: product.name
-    });
-  };
+  const wishlistMutating =
+    isMutating(product.id);
+
+  const cartBusy =
+    cartMutating ||
+    pendingAction !== null;
+
+  const overlay =
+    presentation === 'overlay';
+
+  const buttonSizeClassName =
+    compact
+      ? 'size-8'
+      : 'size-9';
+
+  const iconSizeClassName =
+    compact
+      ? 'size-3.5'
+      : 'size-4';
+
+  const actionClassName =
+    cn(
+      'pointer-events-auto relative grid shrink-0 place-items-center rounded-full',
+      buttonSizeClassName,
+      'transition duration-200',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      'disabled:cursor-not-allowed disabled:opacity-40',
+
+      overlay
+        ? 'border border-white/20 bg-background/45 text-foreground shadow-md backdrop-blur-md hover:border-white/40 hover:bg-background/85 dark:border-white/10 dark:bg-background/30 dark:hover:bg-background/60'
+        : 'border border-border bg-background text-foreground shadow-sm hover:bg-muted'
+    );
+
+  const handleAdd =
+    (
+      event: MouseEvent<HTMLButtonElement>
+    ): void => {
+      stopProductActionEvent(event);
+
+      if (
+        unavailable ||
+        cartBusy ||
+        !canIncrement
+      ) {
+        return;
+      }
+
+      void addOne();
+    };
+
+  const handleRemove =
+    (
+      event: MouseEvent<HTMLButtonElement>
+    ): void => {
+      stopProductActionEvent(event);
+
+      if (
+        cartBusy ||
+        !canDecrement
+      ) {
+        return;
+      }
+
+      void removeOne();
+    };
+
+  const handleWishlist =
+    (
+      event: MouseEvent<HTMLButtonElement>
+    ): void => {
+      stopProductActionEvent(event);
+
+      if (wishlistMutating) {
+        return;
+      }
+
+      void toggleWishlist({
+        id: product.id,
+        name: product.name
+      });
+    };
 
   return (
     <div
       className={cn(
-        'pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 min-w-[50%] justify-center px-2',
-        'flex items-center gap-1.5 rounded-full p-1.5',
-        'border border-white/20 bg-background/20 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-background/10',
+        'pointer-events-auto hidden items-center gap-1.5 rounded-full p-1.5 lg:flex',
 
-        /**
-         * Touch devices keep actions visible.
-         * Hover-capable layouts reveal them only when the card
-         * is hovered or receives keyboard focus.
-         */
-        'opacity-100',
-        'sm:translate-y-1 sm:opacity-0',
-        'sm:transition sm:duration-200',
-        'sm:group-hover:translate-y-0 sm:group-hover:opacity-100',
-        'sm:group-focus-within:translate-y-0 sm:group-focus-within:opacity-100',
+        overlay
+          ? [
+              'absolute bottom-2 left-1/2 z-30 -translate-x-1/2',
+              'border border-white/20 bg-background/20 shadow-xl backdrop-blur-xl',
+              'dark:border-white/10 dark:bg-background/10',
+              'opacity-100 sm:translate-y-1 sm:opacity-0',
+              'sm:transition sm:duration-200',
+              'sm:group-hover:translate-y-0 sm:group-hover:opacity-100',
+              'sm:group-focus-within:translate-y-0 sm:group-focus-within:opacity-100'
+            ]
+          : 'relative border border-border/70 bg-background/80 shadow-sm backdrop-blur-md',
 
         className
-      )}>
-      <button
-        type="button"
-        title={unavailable ? 'Product is unavailable' : 'Add to cart'}
-        aria-label={unavailable ? `${product.name} is unavailable` : `Add ${product.name} to cart`}
-        disabled={unavailable || cartMutating || !onAddToCart}
-        className={actionClassName}
-        onClick={handleAddToCart}>
-        {cartMutating ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
+      )}
+    >
+      {variantQuantity > 0 ? (
+        <div
+          className={cn(
+            'flex items-center rounded-full border',
 
-        {quantity > 0 ? (
+            overlay
+              ? 'border-white/15 bg-background/35'
+              : 'border-border bg-muted/40'
+          )}
+        >
+          <button
+            type="button"
+            title={
+              variantQuantity <= 1
+                ? 'Remove from cart'
+                : 'Decrease quantity'
+            }
+            aria-label={
+              variantQuantity <= 1
+                ? `Remove ${product.name} from cart`
+                : `Decrease ${product.name} quantity`
+            }
+            disabled={
+              cartBusy ||
+              !canDecrement
+            }
+            className={cn(
+              actionClassName,
+              'border-0 bg-transparent shadow-none hover:bg-background/70'
+            )}
+            onClick={handleRemove}
+          >
+            {pendingAction === 'decrement' ||
+            pendingAction === 'remove' ? (
+              <LoaderCircle
+                className={cn(
+                  iconSizeClassName,
+                  'animate-spin'
+                )}
+              />
+            ) : (
+              <Minus
+                className={
+                  iconSizeClassName
+                }
+              />
+            )}
+          </button>
+
           <span
-            className="
-              absolute -right-1 -top-1
-              grid min-h-5 min-w-5 place-items-center
-              rounded-full bg-foreground px-1
-              text-[0.6rem] font-black text-background
-              shadow-md
-            ">
-            {quantity}
+            aria-live="polite"
+            className={cn(
+              'min-w-6 px-1 text-center font-black tabular-nums',
+              compact
+                ? 'text-[0.65rem]'
+                : 'text-xs'
+            )}
+          >
+            {variantQuantity > 99
+              ? '99+'
+              : variantQuantity}
           </span>
-        ) : null}
-      </button>
 
-      <button
-        type="button"
-        title={saved ? 'Remove from wishlist' : 'Add to wishlist'}
-        aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-        aria-pressed={saved}
-        disabled={wishlistMutating}
-        className={cn(
-          actionClassName,
-          saved && 'border-rose-500/40 text-rose-500 bg-rose-500/10 dark:bg-rose-500/20'
-        )}
-        onClick={handleWishlist}>
-        {wishlistMutating ? (
-          <LoaderCircle className="size-4 animate-spin" />
-        ) : (
-          <Heart className={cn('size-4', saved && 'fill-current')} />
-        )}
-      </button>
+          <button
+            type="button"
+            title={
+              reachedStockLimit
+                ? 'Available stock reached'
+                : 'Increase quantity'
+            }
+            aria-label={`Increase ${product.name} quantity`}
+            disabled={
+              unavailable ||
+              cartBusy ||
+              !canIncrement
+            }
+            className={cn(
+              actionClassName,
+              'border-0 bg-transparent shadow-none hover:bg-background/70'
+            )}
+            onClick={handleAdd}
+          >
+            {pendingAction === 'increment' ? (
+              <LoaderCircle
+                className={cn(
+                  iconSizeClassName,
+                  'animate-spin'
+                )}
+              />
+            ) : (
+              <Plus
+                className={
+                  iconSizeClassName
+                }
+              />
+            )}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          title={
+            unavailable
+              ? 'Product is unavailable'
+              : 'Add to cart'
+          }
+          aria-label={
+            unavailable
+              ? `${product.name} is unavailable`
+              : `Add ${product.name} to cart`
+          }
+          disabled={
+            unavailable ||
+            cartBusy ||
+            !canIncrement
+          }
+          className={cn(
+            actionClassName,
+            showAddLabel &&
+              'flex w-auto gap-1.5 px-3'
+          )}
+          onClick={handleAdd}
+        >
+          {pendingAction === 'increment' ? (
+            <LoaderCircle
+              className={cn(
+                iconSizeClassName,
+                'animate-spin'
+              )}
+            />
+          ) : (
+            <ShoppingBag
+              className={
+                iconSizeClassName
+              }
+            />
+          )}
+
+          {showAddLabel ? (
+            <span
+              className={cn(
+                'whitespace-nowrap font-semibold',
+                compact
+                  ? 'text-[0.65rem]'
+                  : 'text-xs'
+              )}
+            >
+              {unavailable
+                ? 'Unavailable'
+                : 'Add'}
+            </span>
+          ) : null}
+        </button>
+      )}
+
+      {showWishlist ? (
+        <button
+          type="button"
+          title={
+            saved
+              ? 'Remove from wishlist'
+              : 'Add to wishlist'
+          }
+          aria-label={
+            saved
+              ? `Remove ${product.name} from wishlist`
+              : `Save ${product.name} to wishlist`
+          }
+          aria-pressed={saved}
+          disabled={wishlistMutating}
+          className={cn(
+            actionClassName,
+            'transition-colors duration-200',
+            saved
+              ? 'border-rose-500/50 bg-rose-500/15 text-rose-500 hover:bg-rose-500/20 dark:bg-rose-500/20 dark:hover:bg-rose-500/25'
+              : 'text-foreground'
+          )}
+          onClick={handleWishlist}
+        >
+          {wishlistMutating ? (
+            <LoaderCircle
+              className={cn(
+                iconSizeClassName,
+                'animate-spin'
+              )}
+            />
+          ) : (
+            <Heart
+              className={cn(
+                iconSizeClassName,
+                'transition-[color,fill,transform] duration-200',
+                saved
+                  ? 'scale-110 fill-rose-500 text-rose-500'
+                  : 'fill-transparent text-current'
+              )}
+            />
+          )}
+        </button>
+      ) : null}
     </div>
   );
 }

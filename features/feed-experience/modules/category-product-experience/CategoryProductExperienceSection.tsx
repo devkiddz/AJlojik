@@ -28,7 +28,9 @@ export default function CategoryProductExperienceSection({
   const resolvedProducts = useMemo(() => {
     return uniqueProducts([
       ...(products ?? []),
+
       ...(featuredProduct ? [featuredProduct] : []),
+
       ...featuredProducts
     ]);
   }, [featuredProduct, featuredProducts, products]);
@@ -53,40 +55,89 @@ export default function CategoryProductExperienceSection({
     (categorySlug && categorySlug !== 'all' ? `Featured in ${categorySlug}` : 'Featured across AJ Logik');
 
   const resolvedSubtitle =
-    subtitle ?? 'A premium product story supported by more selections from the same experience.';
+    subtitle ?? 'A focused product story supported by more selections from the same experience.';
+
+  const sliderTitle =
+    categorySlug && categorySlug !== 'all' ? `More from ${resolvedTitle}` : 'Continue exploring';
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/60 bg-background/70 p-3 shadow-sm sm:p-4">
-      <header className="mb-4 flex items-end justify-between gap-4 px-1">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Product experience
-          </p>
+    <section
+      className="
+        min-w-0 overflow-hidden
+        rounded-2xl
+        border border-border/60
+        bg-background/70
+        p-3 shadow-sm
+        sm:p-4
+      ">
+      {/* ============================================
+          SECTION HEADER
+      ============================================ */}
 
-          <h2 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{resolvedTitle}</h2>
+      <header className="mb-4 min-w-0 px-1">
+        <p
+          className="
+            text-[10px] font-semibold
+            uppercase tracking-[0.2em]
+            text-muted-foreground
+          ">
+          Product experience
+        </p>
 
-          <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground sm:text-sm">
-            {resolvedSubtitle}
-          </p>
-        </div>
+        <h2
+          className="
+            mt-1 text-xl font-bold
+            tracking-tight
+            sm:text-2xl
+          ">
+          {resolvedTitle}
+        </h2>
+
+        <p
+          className="
+            mt-1 max-w-2xl
+            text-xs leading-5
+            text-muted-foreground
+            sm:text-sm
+          ">
+          {resolvedSubtitle}
+        </p>
       </header>
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(16rem,0.85fr)_minmax(0,1.5fr)]">
-        <FeaturedProductExperienceCard
-          product={resolvedFeaturedProduct}
-          actions={actions}
-          locale={locale}
-          currency={currency}
-        />
+      {/* ============================================
+          FEATURED EXPERIENCE LAYOUT
+      ============================================ */}
 
-        <ProductExperienceSlider
-          products={sliderProducts}
-          actions={actions}
-          locale={locale}
-          currency={currency}
-          title={categorySlug && categorySlug !== 'all' ? `More from ${resolvedTitle}` : 'Continue exploring'}
-          subtitle="Select an option, preview quickly, add to cart, or open the complete product experience."
-        />
+      <div
+        className="
+          grid min-w-0
+          items-stretch gap-4
+
+          md:grid-cols-[minmax(14rem,0.8fr)_minmax(0,1.6fr)]
+        ">
+        <div className="min-w-0">
+          <FeaturedProductExperienceCard
+            product={resolvedFeaturedProduct}
+            actions={actions}
+            locale={locale}
+            currency={currency}
+          />
+        </div>
+
+        <div className="min-w-0">
+          <ProductExperienceSlider
+            products={sliderProducts}
+            actions={actions}
+            locale={locale}
+            currency={currency}
+            title={
+              categorySlug && categorySlug !== 'all' ? `More from ${resolvedTitle}` : 'Continue exploring'
+            }
+            subtitle="Explore more selections from this experience."
+            minimumSlidesPerView={3}
+            preferredSlideWidth={144}
+          />
+        </div>
       </div>
     </section>
   );

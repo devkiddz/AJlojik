@@ -2,366 +2,142 @@
 
 import Image from 'next/image';
 
-import {
-  Star
-} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-import {
-  useMemo
-} from 'react';
+import type { BaseProductCardProps } from './productCardTypes';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { openProductExperience } from './productCardPresentation';
 
-import {
-  cn
-} from '@/lib/utils';
+import { useProductVariant } from './useProductVariant';
 
-import {
-  ProductActionTray
-} from './ProductActionTray';
+type FeaturedProductCardPresentation = 'hero' | 'collection';
 
-import type {
-  BaseProductCardProps
-} from './productCardTypes';
-
-import {
-  createProductPriceFormatter,
-  openProductExperience,
-  resolvePrimaryProductStatus
-} from './productCardPresentation';
-
-import {
-  useProductVariant
-} from './useProductVariant';
-
-type FeaturedProductCardPresentation =
-  | 'hero'
-  | 'collection';
-
-type FeaturedProductCardProps =
-  BaseProductCardProps & {
-    presentation?:
-      FeaturedProductCardPresentation;
-
-    title?: string;
-  };
+type FeaturedProductCardProps = BaseProductCardProps & {
+  presentation?: FeaturedProductCardPresentation;
+  title?: string;
+};
 
 export function FeaturedProductCard({
   product,
   className,
   presentation = 'hero',
   title,
-  locale = 'en-NG',
-  currency = 'NGN',
   onOpenExperience,
-  onPreview,
-  onAddToCart
+  onPreview
 }: FeaturedProductCardProps) {
-  const {
-    selectedVariant,
-    selectedVariantId,
-    setSelectedVariantId,
-    soldOut
-  } = useProductVariant(
-    product
-  );
-
-  const priceFormatter =
-    useMemo(
-      () =>
-        createProductPriceFormatter(
-          locale,
-          currency
-        ),
-      [
-        currency,
-        locale
-      ]
-    );
+  const { selectedVariant } = useProductVariant(product);
 
   if (!selectedVariant) {
     return null;
   }
 
-  const compact =
-    presentation === 'collection';
+  const compact = presentation === 'collection';
 
-  const displayTitle =
-    title ??
-    product.name;
+  const displayTitle = title ?? product.name;
 
-  const status =
-    resolvePrimaryProductStatus(
+  const openExperience = (): void => {
+    openProductExperience({
       product,
-      soldOut
-    );
-
-  const outOfStock =
-    selectedVariant.stockLeft <= 0;
-
-  const lowStock =
-    !outOfStock &&
-    selectedVariant.stockLeft <= 5;
-
-  const openExperience =
-    (): void => {
-      openProductExperience({
-        product,
-        onOpenExperience,
-        onPreview
-      });
-    };
+      onOpenExperience,
+      onPreview
+    });
+  };
 
   return (
     <article
       className={cn(
-        'group grid min-w-0 overflow-hidden rounded-3xl',
-        'border border-border/60 bg-card',
-        'shadow-sm transition duration-300',
+        'group relative w-full min-w-0 overflow-hidden',
+        'border border-border/60 bg-card shadow-sm',
+        'transition duration-300 ease-out',
         'hover:border-border hover:shadow-lg',
-        compact
-          ? 'grid-cols-[minmax(8rem,0.8fr)_minmax(0,1.2fr)]'
-          : 'grid-cols-1 md:min-h-[24rem] md:grid-cols-[minmax(18rem,0.95fr)_minmax(0,1.05fr)]',
+        'focus-within:border-ring/40 focus-within:shadow-md',
+
+        compact ? 'aspect-[4/3] rounded-2xl md:aspect-[16/9]' : 'aspect-[16/11] rounded-3xl md:aspect-[16/7]',
+
         className
-      )}
-    >
-      <div
-        className={cn(
-          'relative overflow-hidden bg-muted',
-          compact
-            ? 'min-h-72'
-            : 'aspect-[16/10] min-h-64 md:aspect-auto md:min-h-full'
-        )}
-      >
+      )}>
+      <button
+        type="button"
+        onClick={openExperience}
+        aria-label={`Open ${product.name}`}
+        className="
+          relative block size-full
+          overflow-hidden text-left
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-inset
+          focus-visible:ring-ring
+        ">
+        {/* ==================================================
+            PRODUCT ARTWORK
+        ================================================== */}
+
         <Image
           src={selectedVariant.image}
           alt={product.name}
           fill
           priority={!compact}
-          sizes={
-            compact
-              ? '(max-width: 640px) 42vw, 24vw'
-              : '(max-width: 768px) 100vw, 42vw'
-          }
+          sizes={compact ? '(max-width: 768px) 100vw, 48vw' : '(max-width: 768px) 100vw, 70vw'}
           className="
             object-cover object-center
-            transition duration-700 ease-out
-            group-hover:scale-[1.025]
+            transition-transform
+            duration-700 ease-out
+            md:group-hover:scale-[1.025]
           "
         />
 
-        {status ? (
-          <span
-            className="
-              pointer-events-none absolute left-3 top-3 z-30
-              rounded-full border border-border/60
-              bg-background/90 px-2.5 py-1
-              text-[10px] font-semibold text-foreground
-              shadow-sm backdrop-blur-md
-            "
-          >
-            {status}
-          </span>
-        ) : null}
+        {/* ==================================================
+            IMAGE READABILITY
+        ================================================== */}
 
-        <button
-          type="button"
-          aria-label={`Open ${product.name} experience`}
-          onClick={openExperience}
+        <span
+          aria-hidden="true"
           className="
-            absolute inset-0 z-20
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-inset
-            focus-visible:ring-ring
+            pointer-events-none
+            absolute inset-0
+            bg-gradient-to-t
+            from-black/80
+            via-black/10
+            to-black/10
           "
-        >
-          <span className="sr-only">
-            Open {product.name}
-          </span>
-        </button>
-
-        <ProductActionTray
-          product={product}
-          variant={selectedVariant}
-          onAddToCart={onAddToCart}
-          className="z-40"
         />
-      </div>
 
-      <div
-        className={cn(
-          'flex min-w-0 flex-col',
-          compact
-            ? 'p-4 sm:p-5'
-            : 'p-5 sm:p-7 lg:p-8'
-        )}
-      >
-        <button
-          type="button"
-          onClick={openExperience}
+        <span
+          aria-hidden="true"
           className="
-            min-w-0 text-left
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-ring
+            pointer-events-none
+            absolute inset-0
+            hidden
+            bg-gradient-to-r
+            from-black/55
+            via-black/10
+            to-transparent
+            md:block
           "
-        >
-          <div className="flex min-w-0 items-center gap-2 text-[10px] font-medium text-muted-foreground">
-            <span className="truncate font-semibold uppercase tracking-[0.16em]">
-              {product.category.replaceAll(
-                '-',
-                ' '
-              )}
-            </span>
+        />
 
-            <span className="size-1 rounded-full bg-border" />
+        {/* ==================================================
+            PRODUCT TITLE
+        ================================================== */}
 
-            <span className="inline-flex shrink-0 items-center gap-1">
-              <Star className="size-3 fill-amber-400 text-amber-400" />
-              {product.rating.toFixed(1)}
-            </span>
-          </div>
-
-          <h2
-            className={cn(
-              'mt-3 line-clamp-2 font-semibold leading-tight tracking-tight text-card-foreground',
-              compact
-                ? 'text-lg'
-                : 'text-2xl sm:text-3xl'
-            )}
-          >
-            {displayTitle}
-          </h2>
-
-          <p
-            className={cn(
-              'mt-3 text-muted-foreground',
-              compact
-                ? 'line-clamp-2 text-xs leading-5'
-                : 'line-clamp-3 text-sm leading-6'
-            )}
-          >
-            {product.shortDescription ||
-              product.longDescription}
-          </p>
-        </button>
-
-        <div
+        <span
           className={cn(
-            'mt-auto',
-            compact
-              ? 'pt-5'
-              : 'pt-7'
-          )}
-        >
-          <div
+            'absolute inset-x-0 bottom-0 z-10',
+            'flex min-w-0 items-end',
+            compact ? 'p-4 md:p-5' : 'p-5 md:p-7'
+          )}>
+          <span
             className={cn(
-              'grid items-end gap-4',
-              compact
-                ? 'grid-cols-1'
-                : 'sm:grid-cols-[minmax(0,1fr)_auto]'
-            )}
-          >
-            <div className="min-w-0">
-              {product.variants.length > 1 ? (
-                <>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Option
-                  </p>
+              'line-clamp-2 max-w-2xl',
+              'font-semibold leading-tight tracking-tight',
+              'text-white drop-shadow-sm',
 
-                  <Select
-                    value={selectedVariantId}
-                    onValueChange={
-                      setSelectedVariantId
-                    }
-                  >
-                    <SelectTrigger
-                      className={cn(
-                        'w-full rounded-xl bg-background',
-                        compact
-                          ? 'h-9'
-                          : 'h-10 sm:max-w-64'
-                      )}
-                    >
-                      <SelectValue placeholder="Select option" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {product.variants.map(
-                        variant => (
-                          <SelectItem
-                            key={variant.id}
-                            value={String(
-                              variant.id
-                            )}
-                            disabled={
-                              variant.stockLeft <= 0
-                            }
-                          >
-                            {variant.label}
-                          </SelectItem>
-                        )
-                      )}
-                    </SelectContent>
-                  </Select>
-                </>
-              ) : (
-                <p className="text-xs font-medium text-muted-foreground">
-                  {selectedVariant.label}
-                </p>
-              )}
-            </div>
-
-            <div
-              className={cn(
-                'min-w-0',
-                compact
-                  ? 'text-left'
-                  : 'sm:text-right'
-              )}
-            >
-              <p
-                className={cn(
-                  'font-bold tracking-tight text-card-foreground',
-                  compact
-                    ? 'text-lg'
-                    : 'text-2xl'
-                )}
-              >
-                {priceFormatter.format(
-                  Number(
-                    selectedVariant.price
-                  )
-                )}
-              </p>
-
-              <p
-                className={cn(
-                  'mt-1 text-[10px] font-medium',
-                  outOfStock
-                    ? 'text-destructive'
-                    : lowStock
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-muted-foreground'
-                )}
-              >
-                {outOfStock
-                  ? 'Unavailable'
-                  : lowStock
-                    ? `Only ${selectedVariant.stockLeft} left`
-                    : `${selectedVariant.stockLeft} available`}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+              compact ? 'text-lg md:text-xl' : 'text-2xl md:text-3xl'
+            )}>
+            {displayTitle}
+          </span>
+        </span>
+      </button>
     </article>
   );
 }
