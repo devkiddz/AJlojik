@@ -46,7 +46,6 @@ export type ResolvedCollection =
     };
   };
 
-
 export type CategoryRailModule = {
   id: string;
   type: 'category-rail';
@@ -230,8 +229,31 @@ export type ProductExperienceBannerModule = {
   };
 };
 
+/**
+ * Complete product information resolved with the Product
+ * Experience, but progressively disclosed by the Feed.
+ */
+export type ProductDetailsModuleDefinition = {
+  id: string;
+  type: 'product-details';
+  priority: number;
+
+  data: {
+    product: ProductType;
+
+    category:
+      ProductExperienceCategoryPresentation;
+
+    categoryDescription?: string;
+
+    locale?: string;
+    currency?: string;
+  };
+};
+
 export type FeedModule =
   | ProductExperienceBannerModule
+  | ProductDetailsModuleDefinition
   | CategoryRailModule
   | PromotionModule
   | CollectionFeedModule

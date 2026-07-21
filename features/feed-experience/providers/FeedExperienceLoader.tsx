@@ -1,75 +1,154 @@
 'use client';
 
-import type { FeedIntentType } from '../contracts';
+import {
+  Boxes,
+  Search,
+  ShoppingBag,
+  Sparkles
+} from 'lucide-react';
+
+import type {
+  FeedIntentType
+} from '../contracts';
 
 type FeedExperienceLoaderProps = {
   intentType?: FeedIntentType;
 };
 
-function getLoaderLabel(intentType?: FeedIntentType): string {
-  switch (intentType) {
-    case 'product':
-      return 'Preparing product experience';
+const loadingCopy: Partial<
+  Record<
+    FeedIntentType,
+    {
+      eyebrow: string;
+      title: string;
+      description: string;
+    }
+  >
+> = {
+  product: {
+    eyebrow: 'Product experience',
+    title: 'Preparing product details',
+    description:
+      'Connecting the product, related discoveries and active commerce controls.'
+  },
 
-    case 'collection':
-      return 'Opening collection';
+  category: {
+    eyebrow: 'Category experience',
+    title: 'Reassembling your feed',
+    description:
+      'Selecting the most relevant products, collections and promotions.'
+  },
 
-    case 'promotion':
-      return 'Loading promotion';
+  collection: {
+    eyebrow: 'Collection experience',
+    title: 'Opening the collection',
+    description:
+      'Preparing the collection story and its connected products.'
+  },
 
-    case 'search':
-      return 'Preparing search results';
+  promotion: {
+    eyebrow: 'Campaign experience',
+    title: 'Preparing the offer',
+    description:
+      'Resolving campaign details, eligibility and connected products.'
+  },
 
-    case 'category':
-      return 'Changing category';
+  search: {
+    eyebrow: 'Search experience',
+    title: 'Resolving your search',
+    description:
+      'Finding the strongest matches and organizing the next experience.'
+  },
 
-    default:
-      return 'Preparing your experience';
+  'store-discovery': {
+    eyebrow: 'Discovery experience',
+    title: 'Refreshing your feed',
+    description:
+      'Reordering the Store around your current purpose.'
   }
-}
+};
 
-export default function FeedExperienceLoader({ intentType }: FeedExperienceLoaderProps) {
+export default function FeedExperienceLoader({
+  intentType
+}: FeedExperienceLoaderProps) {
+  const copy =
+    (intentType
+      ? loadingCopy[intentType]
+      : undefined) ?? {
+      eyebrow: 'AJ Logik experience',
+      title: 'Preparing your next view',
+      description:
+        'Connecting the Feed and Discovery Hub to the same active experience.'
+    };
+
+  const Icon =
+    intentType === 'product'
+      ? ShoppingBag
+      : intentType === 'search'
+        ? Search
+        : intentType === 'category' ||
+            intentType ===
+              'store-discovery'
+          ? Boxes
+          : Sparkles;
+
   return (
-    <div className="space-y-6 animate-pulse" aria-busy="true" aria-live="polite">
-      <span className="sr-only">{getLoaderLabel(intentType)}</span>
+    <section
+      className="
+        relative min-h-80
+        overflow-hidden rounded-3xl
+        border border-primary/10
+        bg-card/45 p-5
+        md:p-8
+      "
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
 
-      <section className="relative overflow-hidden rounded-3xl border border-border bg-card">
-        <div className="h-56 bg-muted md:h-72" />
+      <div className="absolute -right-20 -top-20 size-56 rounded-full bg-primary/10 blur-3xl" />
 
-        <div className="relative -mt-16 flex flex-col gap-5 p-5 md:-mt-20 md:flex-row md:items-end md:p-8">
-          <div className="size-40 shrink-0 rounded-2xl bg-muted shadow-xl md:size-52" />
+      <div className="relative flex min-h-64 flex-col justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative grid size-12 place-items-center rounded-2xl border border-primary/15 bg-background/80 shadow-sm">
+            <span className="absolute inset-0 animate-ping rounded-2xl bg-primary/10" />
 
-          <div className="flex-1 space-y-4 pb-2">
-            <div className="h-4 w-24 rounded-full bg-muted" />
+            <Icon className="relative size-5 text-primary" />
+          </div>
 
-            <div className="h-9 w-3/4 rounded-lg bg-muted md:h-12 md:w-1/2" />
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/55">
+              {copy.eyebrow}
+            </p>
 
-            <div className="h-4 w-full max-w-xl rounded-full bg-muted" />
-
-            <div className="h-4 w-4/5 max-w-lg rounded-full bg-muted" />
-
-            <div className="flex gap-3 pt-2">
-              <div className="h-10 w-32 rounded-full bg-muted" />
-              <div className="h-10 w-28 rounded-full bg-muted" />
-              <div className="size-10 rounded-full bg-muted" />
-            </div>
+            <p className="mt-1 text-sm font-semibold text-foreground">
+              AJ Logik
+            </p>
           </div>
         </div>
-      </section>
 
-      <section className="space-y-4">
-        <div className="h-7 w-48 rounded-lg bg-muted" />
+        <div className="max-w-xl">
+          <h2 className="text-2xl font-black tracking-tight md:text-3xl">
+            {copy.title}
+          </h2>
 
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="w-56 shrink-0 space-y-3">
-              <div className="aspect-square rounded-2xl bg-muted" />
-              <div className="h-4 w-4/5 rounded-full bg-muted" />
-              <div className="h-4 w-1/2 rounded-full bg-muted" />
-            </div>
-          ))}
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            {copy.description}
+          </p>
+
+          <div className="mt-6 space-y-3">
+            <div className="h-2.5 w-full animate-pulse rounded-full bg-primary/10" />
+
+            <div className="h-2.5 w-4/5 animate-pulse rounded-full bg-primary/10" />
+
+            <div className="h-2.5 w-3/5 animate-pulse rounded-full bg-primary/10" />
+          </div>
         </div>
-      </section>
-    </div>
+
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
+
+          Feed and Discovery are synchronizing
+        </div>
+      </div>
+    </section>
   );
 }

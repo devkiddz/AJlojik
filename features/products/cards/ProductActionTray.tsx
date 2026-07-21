@@ -1,78 +1,64 @@
 'use client';
 
-import { Eye, Heart, LoaderCircle, ShoppingBag } from 'lucide-react';
-
-import type { MouseEvent, PointerEvent } from 'react';
+import { Heart, LoaderCircle, ShoppingBag } from 'lucide-react';
+import type { MouseEvent } from 'react';
 
 import { useWishlist } from '@/features/wishlist';
-
 import { cn } from '@/lib/utils';
-
 import type { ProductType, ProductVariantType } from '@/types/types';
 
 import { useProductCartQuantity } from './useProductCartQuantity';
+import { useProductVariant } from './useProductVariant';
 
 type ProductActionTrayProps = {
   product: ProductType;
 
-  onPreview?: (product: ProductType) => void;
+  /**
+   * Featured surfaces may pass their actively selected variant.
+   * Compact cards fall back to the first purchasable variant.
+   */
+  variant?: ProductVariantType | null;
 
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 
   className?: string;
 };
 
-function stopProductActionEvent(event: MouseEvent<HTMLElement> | PointerEvent<HTMLElement>) {
+function stopProductActionEvent(event: MouseEvent<HTMLElement>): void {
   event.preventDefault();
   event.stopPropagation();
 }
 
 const actionClassName = cn(
   'pointer-events-auto relative grid size-9 shrink-0 place-items-center rounded-full',
-  'border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur-md',
+  'border border-white/20 bg-background/40 text-foreground shadow-md backdrop-blur-md dark:border-white/10 dark:bg-background/30',
   'transition duration-200',
-  'hover:scale-105 hover:border-white/30 hover:bg-black/80',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
-  'disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:scale-100'
+  'hover:border-white/40 hover:bg-background/80 hover:shadow-lg dark:hover:bg-background/60',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+  'disabled:cursor-not-allowed disabled:opacity-40'
 );
 
-export function ProductActionTray({ product, onPreview, onAddToCart, className }: ProductActionTrayProps) {
+export function ProductActionTray({ product, variant, onAddToCart, className }: ProductActionTrayProps) {
   const { quantity, cartMutating } = useProductCartQuantity(product.id);
-
+  const { availableVariant } = useProductVariant(product);
   const { toggleWishlist, isWishlisted, isMutating } = useWishlist();
 
-  /**
-   * Compact cards do not expose variant selection.
-   *
-   * Cart uses the first purchasable variant.
-   * Quick Preview remains the place for deliberate
-   * variant inspection and selection.
-   */
-  const availableVariant = product.variants.find(variant => variant.stockLeft > 0) ?? null;
-
-  const soldOut = availableVariant === null;
-
+  const activeCommerceVariant = variant ?? availableVariant;
+  const unavailable = !activeCommerceVariant || activeCommerceVariant.stockLeft <= 0;
   const saved = isWishlisted(product.id);
-
   const wishlistMutating = isMutating(product.id);
 
-  const handlePreview = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleAddToCart = (event: MouseEvent<HTMLButtonElement>): void => {
     stopProductActionEvent(event);
 
-    onPreview?.(product);
-  };
-
-  const handleAddToCart = (event: MouseEvent<HTMLButtonElement>) => {
-    stopProductActionEvent(event);
-
-    if (!availableVariant || cartMutating || !onAddToCart) {
+    if (unavailable || !activeCommerceVariant || cartMutating || !onAddToCart) {
       return;
     }
 
-    onAddToCart(product, availableVariant);
+    onAddToCart(product, activeCommerceVariant);
   };
 
-  const handleWishlist = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleWishlist = (event: MouseEvent<HTMLButtonElement>): void => {
     stopProductActionEvent(event);
 
     if (wishlistMutating) {
@@ -88,67 +74,41 @@ export function ProductActionTray({ product, onPreview, onAddToCart, className }
   return (
     <div
       className={cn(
-        'pointer-events-none absolute inset-x-0 bottom-0 z-30',
-
-        'flex items-end justify-end gap-2',
-
-        /**
-         * The gradient grounds the actions without creating
-         * a visible shared action block.
-         */
-        'bg-gradient-to-t from-black/70 via-black/20 to-transparent',
-
-        'p-3 pt-12',
+        'pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 min-w-[50%] justify-center px-2',
+        'flex items-center gap-1.5 rounded-full p-1.5',
+        'border border-white/20 bg-background/20 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-background/10',
 
         /**
-         * Touch devices keep the icons available.
-         *
+         * Touch devices keep actions visible.
          * Hover-capable layouts reveal them only when the card
          * is hovered or receives keyboard focus.
          */
-        'translate-y-0 opacity-100',
-
-        'md:translate-y-2 md:opacity-0',
-
-        'md:transition md:duration-200',
-
-        'md:group-hover:translate-y-0',
-        'md:group-hover:opacity-100',
-
-        'md:group-focus-within:translate-y-0',
-        'md:group-focus-within:opacity-100',
+        'opacity-100',
+        'sm:translate-y-1 sm:opacity-0',
+        'sm:transition sm:duration-200',
+        'sm:group-hover:translate-y-0 sm:group-hover:opacity-100',
+        'sm:group-focus-within:translate-y-0 sm:group-focus-within:opacity-100',
 
         className
       )}>
       <button
         type="button"
-        title="Quick preview"
-        aria-label={`Quick preview ${product.name}`}
+        title={unavailable ? 'Product is unavailable' : 'Add to cart'}
+        aria-label={unavailable ? `${product.name} is unavailable` : `Add ${product.name} to cart`}
+        disabled={unavailable || cartMutating || !onAddToCart}
         className={actionClassName}
-        onPointerDown={stopProductActionEvent}
-        onClick={handlePreview}>
-        <Eye className="size-4" />
-      </button>
-
-      <button
-        type="button"
-        title={soldOut ? 'Product is sold out' : 'Add to cart'}
-        aria-label={soldOut ? `${product.name} is sold out` : `Add ${product.name} to cart`}
-        disabled={soldOut || cartMutating || !onAddToCart}
-        className={actionClassName}
-        onPointerDown={stopProductActionEvent}
         onClick={handleAddToCart}>
         {cartMutating ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
 
         {quantity > 0 ? (
           <span
-            className={cn(
-              'absolute -right-1.5 -top-1.5',
-              'grid min-h-5 min-w-5 place-items-center',
-              'rounded-full bg-primary px-1',
-              'text-[0.6rem] font-black text-primary-foreground',
-              'shadow-md'
-            )}>
+            className="
+              absolute -right-1 -top-1
+              grid min-h-5 min-w-5 place-items-center
+              rounded-full bg-foreground px-1
+              text-[0.6rem] font-black text-background
+              shadow-md
+            ">
             {quantity}
           </span>
         ) : null}
@@ -162,12 +122,8 @@ export function ProductActionTray({ product, onPreview, onAddToCart, className }
         disabled={wishlistMutating}
         className={cn(
           actionClassName,
-
-          saved && 'border-primary/40 text-primary',
-
-          wishlistMutating && 'cursor-wait opacity-60'
+          saved && 'border-rose-500/40 text-rose-500 bg-rose-500/10 dark:bg-rose-500/20'
         )}
-        onPointerDown={stopProductActionEvent}
         onClick={handleWishlist}>
         {wishlistMutating ? (
           <LoaderCircle className="size-4 animate-spin" />

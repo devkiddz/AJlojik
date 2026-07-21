@@ -5,24 +5,30 @@ import type {
 
 export type ProductCardActions = {
   /**
-   * Opens the quick modal without altering
-   * the active Feed Experience.
-   */
-  onPreview?: (
-    product: ProductType
-  ) => void;
-
-  /**
-   * Opens the assembled product experience
-   * inside the central Feed.
+   * Canonical product-card action.
+   *
+   * Every product entry surface opens the assembled Product
+   * Experience inside the central Feed.
    */
   onOpenExperience?: (
     product: ProductType
   ) => void;
 
   /**
-   * Kept temporarily for older card consumers.
-   * New premium cards use WishlistProvider directly.
+   * Temporary compatibility alias for older Feed modules.
+   *
+   * Cards no longer render a quick-preview action. When an
+   * older caller supplies only onPreview, it is treated as the
+   * Product Experience opening action.
+   */
+  onPreview?: (
+    product: ProductType
+  ) => void;
+
+  /**
+   * Temporary compatibility field for older card consumers.
+   *
+   * Current premium cards read WishlistProvider directly.
    */
   onToggleLike?: (
     productId: string
@@ -38,4 +44,7 @@ export type BaseProductCardProps =
   ProductCardActions & {
     product: ProductType;
     className?: string;
+
+    locale?: string;
+    currency?: string;
   };

@@ -18,13 +18,6 @@ type VariantSelection = {
 export function useProductVariant(
   product: ProductType
 ) {
-  /**
-   * The first variant with available stock becomes the
-   * default commerce variant.
-   *
-   * When every variant is unavailable, the first variant
-   * remains available for imagery and preview purposes.
-   */
   const availableVariant =
     useMemo(
       () =>
@@ -43,15 +36,19 @@ export function useProductVariant(
   const [
     selection,
     setSelection
-  ] = useState<VariantSelection | null>(
-    null
-  );
+  ] =
+    useState<VariantSelection | null>(
+      null
+    );
 
   const selectedVariantId =
-    selection?.productId === product.id
+    selection?.productId ===
+    product.id
       ? selection.variantId
       : defaultVariant
-        ? String(defaultVariant.id)
+        ? String(
+            defaultVariant.id
+          )
         : '';
 
   const selectedVariant =
@@ -59,7 +56,9 @@ export function useProductVariant(
       () =>
         product.variants.find(
           variant =>
-            String(variant.id) ===
+            String(
+              variant.id
+            ) ===
             selectedVariantId
         ) ??
         defaultVariant,
@@ -73,7 +72,8 @@ export function useProductVariant(
   const setSelectedVariantId =
     useCallback(
       (
-        variantId: string | null
+        variantId:
+          string | null
       ): void => {
         if (!variantId) {
           return;
@@ -82,7 +82,9 @@ export function useProductVariant(
         const variantExists =
           product.variants.some(
             variant =>
-              String(variant.id) ===
+              String(
+                variant.id
+              ) ===
               variantId
           );
 
@@ -91,7 +93,9 @@ export function useProductVariant(
         }
 
         setSelection({
-          productId: product.id,
+          productId:
+            product.id,
+
           variantId
         });
       },
@@ -106,16 +110,8 @@ export function useProductVariant(
     selectedVariantId,
     setSelectedVariantId,
 
-    /**
-     * Used by compact commerce surfaces that do not expose
-     * variant selection.
-     */
     availableVariant,
 
-    /**
-     * A product is sold out only when none of its variants
-     * has available stock.
-     */
     soldOut:
       availableVariant === null
   };

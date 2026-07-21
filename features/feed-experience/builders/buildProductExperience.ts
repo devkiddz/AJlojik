@@ -514,6 +514,13 @@ export function buildProductExperience(
         : {})
     };
 
+  const categoryDescription =
+    selectedCategory?.description
+      ?.trim() ||
+    selectedCategory?.shortDescription
+      ?.trim() ||
+    undefined;
+
   // ==========================================================
   // SUPPORTING PRODUCT RESOLUTION
   // ==========================================================
@@ -576,8 +583,9 @@ export function buildProductExperience(
   // ==========================================================
   // PRIMARY PRODUCT EXPERIENCE
   //
-  // The central feed owns the banner and supporting discovery.
-  // Full product details are owned by the Discovery Hub.
+  // The central Feed owns the banner, deferred full details
+  // and supporting discovery. The Discovery Hub remains the
+  // companion controller for product actions.
   // ==========================================================
 
   const modules: FeedModule[] = [
@@ -630,6 +638,37 @@ export function buildProductExperience(
           ? {
               eyebrow:
                 categoryPresentation.label
+            }
+          : {})
+      }
+    },
+
+    {
+      id:
+        `product-details:${selectedProduct.id}`,
+
+      type:
+        'product-details',
+
+      priority:
+        900,
+
+      data: {
+        product:
+          selectedProduct,
+
+        category:
+          categoryPresentation,
+
+        locale:
+          context.environment.locale,
+
+        currency:
+          context.environment.currency,
+
+        ...(categoryDescription
+          ? {
+              categoryDescription
             }
           : {})
       }

@@ -1,8 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import {
+  useMemo
+} from 'react';
 
-import { useCart } from '@/features/cart';
+import {
+  useCart
+} from '@/features/cart';
 
 export function useProductCartQuantity(
   productId: string
@@ -12,24 +16,34 @@ export function useProductCartQuantity(
     mutating
   } = useCart();
 
-  const quantity = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          String(item.productId) ===
-          String(productId)
-            ? total + item.quantity
-            : total,
-        0
-      ),
-    [
-      items,
-      productId
-    ]
-  );
+  const quantity =
+    useMemo(
+      () =>
+        items.reduce(
+          (
+            total,
+            item
+          ) =>
+            String(
+              item.productId
+            ) ===
+            String(
+              productId
+            )
+              ? total +
+                item.quantity
+              : total,
+          0
+        ),
+      [
+        items,
+        productId
+      ]
+    );
 
   return {
     quantity,
-    cartMutating: mutating
+    cartMutating:
+      mutating
   };
 }

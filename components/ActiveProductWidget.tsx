@@ -43,7 +43,7 @@ type ActiveProductWidgetProps = {
 };
 
 export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProductWidgetProps) {
-  const { intent, context, actions } = useFeedExperience();
+  const { intent, context, actions, productDetailsDisclosure } = useFeedExperience();
 
   const { items: cartItems, mutating } = useCart();
 
@@ -111,6 +111,10 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
   if (!product) {
     return null;
   }
+
+  const detailsAreRevealed =
+    productDetailsDisclosure.expanded &&
+    productDetailsDisclosure.productId === product.id;
 
   const productArtwork = selectedVariant?.image ?? product.variants[0]?.image ?? category?.image;
 
@@ -568,7 +572,7 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
       </div>
 
       {/* ====================================================
-          FIXED FULL PRODUCT PREVIEW
+          CENTRAL FEED DETAILS CONTROL
       ==================================================== */}
 
       <footer className="relative z-50 shrink-0 border-t border-border bg-background/95 p-3 shadow-[0_-18px_45px_rgba(0,0,0,0.2)] backdrop-blur-xl">
@@ -582,16 +586,22 @@ export default function ActiveProductWidget({ onBackToDiscovery }: ActiveProduct
             </span>
 
             <span className="min-w-0">
-              <span className="block text-sm font-bold">View full product</span>
+              <span className="block text-sm font-bold">
+                {detailsAreRevealed
+                  ? 'View revealed details'
+                  : 'Reveal all details in Feed'}
+              </span>
 
               <span className="mt-0.5 block truncate text-[10px] font-medium text-primary-foreground/75">
-                Preview images, details and actions
+                {detailsAreRevealed
+                  ? 'Jump back to the complete product information'
+                  : 'Description, variants, availability, delivery and more'}
               </span>
             </span>
           </span>
 
           <span className="shrink-0 rounded-full bg-primary-foreground px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-primary shadow-sm">
-            Open
+            {detailsAreRevealed ? 'Jump' : 'Reveal'}
           </span>
         </Button>
       </footer>

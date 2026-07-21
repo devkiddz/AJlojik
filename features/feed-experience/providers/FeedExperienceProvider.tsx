@@ -15,6 +15,18 @@ import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIn
 
 import { feedExperienceEngine } from '../engine';
 
+const MIN_RESOLUTION_DURATION_MS = 320;
+
+// ============================================================
+// PRODUCT DETAILS DISCLOSURE
+// ============================================================
+
+export type ProductDetailsDisclosure = {
+  productId: string | null;
+  expanded: boolean;
+  requestId: number;
+};
+
 // ============================================================
 // CONTEXT CONTRACT
 // ============================================================
@@ -28,23 +40,18 @@ type FeedExperienceContextValue = {
 
   actions: FeedActions;
 
-  /**
-   * True while the next experience is being committed.
-   *
-   * The renderer uses this to display the central
-   * Experience Feed loader without disturbing the
-   * Navigation Rail or Discovery Hub.
-   */
   isResolving: boolean;
 
-  /**
-   * Describes the incoming experience while the current
-   * experience is still mounted.
-   *
-   * This allows the loader to distinguish between
-   * product, collection, promotion, search, etc.
-   */
   pendingIntent: FeedIntent | null;
+
+  /**
+   * Presentation state for progressively revealing the
+   * complete Product Experience inside the central Feed.
+   *
+   * The Product Experience remains one intent. Revealing
+   * details does not create another page, modal or intent.
+   */
+  productDetailsDisclosure: ProductDetailsDisclosure;
 };
 
 const FeedExperienceContext = createContext<FeedExperienceContextValue | null>(null);
@@ -76,89 +83,62 @@ function createIntent(target: ExperienceTarget): FeedIntent {
     case 'home':
       return {
         id: `home:${nonce}`,
-
         type: 'home',
-
         source: 'user-action',
-
         createdAt
       };
 
     case 'store-discovery':
       return {
         id: `store-discovery:${target.categorySlug ?? 'all'}:${nonce}`,
-
         type: 'store-discovery',
-
         source: 'user-action',
-
         categorySlug: target.categorySlug ?? 'all',
-
         createdAt
       };
 
     case 'category':
       return {
         id: `category:${target.categorySlug}:${nonce}`,
-
         type: 'category',
-
         source: 'user-action',
-
         categorySlug: target.categorySlug,
-
         createdAt
       };
 
     case 'product':
       return {
         id: `product:${target.productId}:${nonce}`,
-
         type: 'product',
-
         source: 'user-action',
-
         targetId: target.productId,
-
         createdAt
       };
 
     case 'collection':
       return {
         id: `collection:${target.collectionId}:${nonce}`,
-
         type: 'collection',
-
         source: 'user-action',
-
         targetId: target.collectionId,
-
         createdAt
       };
 
     case 'promotion':
       return {
         id: `promotion:${target.promotionId}:${nonce}`,
-
         type: 'promotion',
-
         source: 'user-action',
-
         targetId: target.promotionId,
-
         createdAt
       };
 
     case 'search':
       return {
         id: `search:${target.query}:${nonce}`,
-
         type: 'search',
-
         source: 'search',
-
         query: target.query,
-
         createdAt
       };
   }
@@ -178,67 +158,47 @@ export function FeedExperienceProvider({
 
   const [pendingIntent, setPendingIntent] = useState<FeedIntent | null>(null);
 
-  /**
-   * Tracks the route-provided intent separately from the
-   * active Feed intent.
-   *
-   * This is important because product, collection and other
-   * internal experiences must not immediately bounce back to
-   * the route's initial Store Discovery intent.
-   */
+  const [productDetailsDisclosure, setProductDetailsDisclosure] = useState<ProductDetailsDisclosure>({
+    productId: initialIntent.type === 'product' ? (initialIntent.targetId ?? null) : null,
+
+    expanded: false,
+
+    requestId: 0
+  });
+
   const lastInitialIntentIdRef = useRef(initialIntent.id);
 
-  /**
-   * First frame:
-   * show the loader.
-   *
-   * Second frame:
-   * commit the next intent.
-   */
   const resolutionFrameRef = useRef<number | null>(null);
 
-  /**
-   * Final frame:
-   * remove the loader after the engine has produced
-   * the new experience.
-   */
-  const completionFrameRef = useRef<number | null>(null);
+  const completionTimerRef = useRef<number | null>(null);
 
-  const cancelResolutionFrames = useCallback(() => {
+  const resolutionStartedAtRef = useRef(0);
+
+  const cancelResolutionWork = useCallback(() => {
     if (resolutionFrameRef.current !== null) {
       window.cancelAnimationFrame(resolutionFrameRef.current);
 
       resolutionFrameRef.current = null;
     }
 
-    if (completionFrameRef.current !== null) {
-      window.cancelAnimationFrame(completionFrameRef.current);
+    if (completionTimerRef.current !== null) {
+      window.clearTimeout(completionTimerRef.current);
 
-      completionFrameRef.current = null;
+      completionTimerRef.current = null;
     }
   }, []);
 
-  /**
-   * Queues an intent instead of replacing the current
-   * experience immediately.
-   *
-   * This gives React one browser frame to paint the
-   * Experience Feed loader.
-   */
   const beginResolution = useCallback(
     (nextIntent: FeedIntent) => {
-      cancelResolutionFrames();
+      cancelResolutionWork();
 
-      /**
-       * Resetting to the already active intent should
-       * cancel any queued transition instead of creating
-       * a permanent loading state.
-       */
       if (nextIntent.id === intent.id) {
         setPendingIntent(null);
 
         return;
       }
+
+      resolutionStartedAtRef.current = window.performance.now();
 
       setPendingIntent(nextIntent);
 
@@ -248,26 +208,13 @@ export function FeedExperienceProvider({
         setIntent(nextIntent);
       });
     },
-    [cancelResolutionFrames, intent.id]
+    [cancelResolutionWork, intent.id]
   );
 
   // ==========================================================
   // ROUTE INTENT SYNCHRONISATION
   // ==========================================================
 
-  /**
-   * initialIntent changes when the Store route changes:
-   *
-   * /store
-   * /store?category=wines
-   * /store?category=kitchen
-   *
-   * We respond only when the route-provided intent ID changes.
-   *
-   * We must not synchronize merely because the active internal
-   * intent changed; otherwise opening a Product Experience would
-   * immediately return the user to Store Discovery.
-   */
   useEffect(() => {
     if (lastInitialIntentIdRef.current === initialIntent.id) {
       return;
@@ -278,19 +225,28 @@ export function FeedExperienceProvider({
     beginResolution(initialIntent);
   }, [beginResolution, initialIntent]);
 
+  /**
+   * Every committed Product Experience begins in overview mode.
+   *
+   * Revealing details is presentation state inside that same
+   * experience. A different intent resets the disclosure.
+   */
+  useEffect(() => {
+    const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
+
+    setProductDetailsDisclosure(currentDisclosure => ({
+      productId: activeProductId,
+
+      expanded: false,
+
+      requestId: currentDisclosure.requestId
+    }));
+  }, [intent.id, intent.targetId, intent.type]);
+
   // ==========================================================
   // EXPERIENCE ACTIONS
   // ==========================================================
 
-  /**
-   * Product, collection, promotion and search experiences are
-   * discovery actions.
-   *
-   * They remain available to guests.
-   *
-   * Authentication is enforced by protected persistence actions
-   * such as Cart, Wishlist, Checkout and Experience History.
-   */
   const openExperience = useCallback(
     (target: ExperienceTarget) => {
       beginResolution(createIntent(target));
@@ -309,9 +265,49 @@ export function FeedExperienceProvider({
     beginResolution(initialIntent);
   }, [beginResolution, initialIntent]);
 
+  const revealProductDetails = useCallback((productId: string) => {
+    setProductDetailsDisclosure(currentDisclosure => ({
+      productId,
+
+      expanded: true,
+
+      requestId: currentDisclosure.requestId + 1
+    }));
+  }, []);
+
+  /**
+   * The same product action has two contextual meanings:
+   *
+   * Outside Product Experience:
+   *   open the Product Experience.
+   *
+   * Inside that exact Product Experience:
+   *   reveal or refocus its complete details in the Feed.
+   */
+  const previewProduct = useCallback<FeedActions['previewProduct']>(
+    product => {
+      const isActiveProduct = intent.type === 'product' && intent.targetId === product.id;
+
+      if (isActiveProduct) {
+        revealProductDetails(product.id);
+
+        return;
+      }
+
+      openExperience({
+        type: 'product',
+
+        productId: product.id
+      });
+    },
+    [intent.targetId, intent.type, openExperience, revealProductDetails]
+  );
+
   const actions = useMemo<FeedActions>(
     () => ({
       ...baseActions,
+
+      previewProduct,
 
       openExperience,
 
@@ -319,7 +315,7 @@ export function FeedExperienceProvider({
 
       resetExperience
     }),
-    [baseActions, openExperience, restoreExperience, resetExperience]
+    [baseActions, previewProduct, openExperience, restoreExperience, resetExperience]
   );
 
   // ==========================================================
@@ -335,13 +331,6 @@ export function FeedExperienceProvider({
     [intent, context]
   );
 
-  /**
-   * The engine is synchronous today, but the completion
-   * frame ensures the loader is painted before it disappears.
-   *
-   * This also prepares the Provider for asynchronous
-   * experience resolvers later.
-   */
   useEffect(() => {
     if (!pendingIntent) {
       return;
@@ -351,28 +340,37 @@ export function FeedExperienceProvider({
       return;
     }
 
-    completionFrameRef.current = window.requestAnimationFrame(() => {
-      completionFrameRef.current = null;
+    const elapsed = window.performance.now() - resolutionStartedAtRef.current;
+
+    const remaining = Math.max(
+      0,
+
+      MIN_RESOLUTION_DURATION_MS - elapsed
+    );
+
+    completionTimerRef.current = window.setTimeout(() => {
+      completionTimerRef.current = null;
 
       setPendingIntent(currentPendingIntent =>
         currentPendingIntent?.id === intent.id ? null : currentPendingIntent
       );
-    });
+    }, remaining);
 
     return () => {
-      if (completionFrameRef.current !== null) {
-        window.cancelAnimationFrame(completionFrameRef.current);
+      if (completionTimerRef.current !== null) {
+        window.clearTimeout(completionTimerRef.current);
 
-        completionFrameRef.current = null;
+        completionTimerRef.current = null;
       }
     };
   }, [experience.id, intent.id, pendingIntent]);
 
-  /**
-   * Cancel pending browser frames when this provider
-   * leaves the workspace.
-   */
-  useEffect(() => cancelResolutionFrames, [cancelResolutionFrames]);
+  useEffect(
+    () => () => {
+      cancelResolutionWork();
+    },
+    [cancelResolutionWork]
+  );
 
   const isResolving = pendingIntent !== null;
 
@@ -388,9 +386,11 @@ export function FeedExperienceProvider({
 
       isResolving,
 
-      pendingIntent
+      pendingIntent,
+
+      productDetailsDisclosure
     }),
-    [intent, context, experience, actions, isResolving, pendingIntent]
+    [intent, context, experience, actions, isResolving, pendingIntent, productDetailsDisclosure]
   );
 
   return <FeedExperienceContext.Provider value={value}>{children}</FeedExperienceContext.Provider>;
