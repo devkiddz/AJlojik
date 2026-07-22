@@ -4,6 +4,7 @@ export {
 
 export type {
   SavedProductReview,
+  SavedProductReviewStatus,
   UpsertProductReviewInput,
   UpsertProductReviewResult
 } from './upsertProductReview';

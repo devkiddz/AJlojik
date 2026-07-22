@@ -5,6 +5,11 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export type SavedProductReviewStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED';
+
 export type UpsertProductReviewInput = {
   productId: string;
   rating: number;
@@ -29,9 +34,17 @@ export type SavedProductReview = {
   title?: string;
   comment: string;
 
-  verified: boolean;
+  status: SavedProductReviewStatus;
+
+  /**
+   * Temporary compatibility field for the current review UI.
+   * The database source of truth is `status`.
+   */
   approved: boolean;
 
+  moderationReason?: string;
+
+  verified: boolean;
   helpfulCount: number;
 
   createdAt: string;
@@ -58,7 +71,19 @@ export type UpsertProductReviewResult =
 function normalizeTitle(value?: string): string | null {
   const title = value?.trim();
 
-  return title ? title.slice(0, 90) : null;
+  return title
+    ? title.slice(0, 90)
+    : null;
+}
+
+function isReviewRating(
+  rating: number
+): rating is 1 | 2 | 3 | 4 | 5 {
+  return (
+    Number.isInteger(rating) &&
+    rating >= 1 &&
+    rating <= 5
+  );
 }
 
 export async function upsertProductReview(
@@ -73,12 +98,14 @@ export async function upsertProductReview(
       return {
         ok: false,
         code: 'UNAUTHENTICATED',
-        message: 'Please sign in before submitting your review.'
+        message:
+          'Please sign in before submitting your review.'
       };
     }
 
     const productId = input.productId.trim();
     const comment = input.comment.trim();
+    const title = normalizeTitle(input.title);
     const rating = input.rating;
 
     if (!productId) {
@@ -89,15 +116,12 @@ export async function upsertProductReview(
       };
     }
 
-    if (
-      !Number.isInteger(rating) ||
-      rating < 1 ||
-      rating > 5
-    ) {
+    if (!isReviewRating(rating)) {
       return {
         ok: false,
         code: 'INVALID_INPUT',
-        message: 'Select a rating between 1 and 5 stars.'
+        message:
+          'Select a rating between 1 and 5 stars.'
       };
     }
 
@@ -121,11 +145,16 @@ export async function upsertProductReview(
 
     const userId = session.user.id;
 
-    const [user, product, completedPurchase] = await Promise.all([
+    const [
+      user,
+      product,
+      completedPurchase
+    ] = await Promise.all([
       prisma.user.findUnique({
         where: {
           id: userId
         },
+
         select: {
           id: true,
           name: true,
@@ -138,6 +167,7 @@ export async function upsertProductReview(
         where: {
           id: productId
         },
+
         select: {
           id: true
         }
@@ -155,6 +185,7 @@ export async function upsertProductReview(
             }
           }
         },
+
         select: {
           id: true
         }
@@ -165,7 +196,8 @@ export async function upsertProductReview(
       return {
         ok: false,
         code: 'UNAUTHENTICATED',
-        message: 'Your account could not be resolved.'
+        message:
+          'Your account could not be resolved.'
       };
     }
 
@@ -182,49 +214,109 @@ export async function upsertProductReview(
       return {
         ok: false,
         code: 'PRODUCT_NOT_FOUND',
-        message: 'The selected product could not be found.'
+        message:
+          'The selected product could not be found.'
       };
     }
 
-    const review = await prisma.review.upsert({
-      where: {
-        userId_productId: {
-          userId,
-          productId
-        }
-      },
+    const review = await prisma.$transaction(
+      async transaction => {
+        const savedReview =
+          await transaction.review.upsert({
+            where: {
+              userId_productId: {
+                userId,
+                productId
+              }
+            },
 
-      create: {
-        userId,
-        productId,
-        rating,
-        title: normalizeTitle(input.title),
-        comment,
-        approved: false
-      },
+            create: {
+              userId,
+              productId,
+              rating,
+              title,
+              comment,
 
-      update: {
-        rating,
-        title: normalizeTitle(input.title),
-        comment,
+              status: 'PENDING',
+
+              moderationReason: null,
+              moderatedAt: null,
+              moderatedById: null
+            },
+
+            update: {
+              rating,
+              title,
+              comment,
+
+              /*
+               * Editing an approved or rejected review sends
+               * it back into the moderation queue.
+               */
+              status: 'PENDING',
+
+              moderationReason: null,
+              moderatedAt: null,
+              moderatedById: null
+            },
+
+            select: {
+              id: true,
+              productId: true,
+
+              rating: true,
+              title: true,
+              comment: true,
+
+              status: true,
+              moderationReason: true,
+
+              createdAt: true,
+              updatedAt: true
+            }
+          });
 
         /*
-         * Editing an existing review returns it to moderation.
+         * This is important when an approved review is edited.
+         * The review becomes pending and must immediately stop
+         * contributing to the public product aggregates.
          */
-        approved: false
-      },
+        const approvedReviewStats =
+          await transaction.review.aggregate({
+            where: {
+              productId,
+              status: 'APPROVED'
+            },
 
-      select: {
-        id: true,
-        productId: true,
-        rating: true,
-        title: true,
-        comment: true,
-        approved: true,
-        createdAt: true,
-        updatedAt: true
+            _avg: {
+              rating: true
+            },
+
+            _count: {
+              _all: true
+            }
+          });
+
+        await transaction.product.update({
+          where: {
+            id: productId
+          },
+
+          data: {
+            rating:
+              approvedReviewStats._avg.rating ?? 0,
+
+            reviewsCount:
+              approvedReviewStats._count._all
+          }
+        });
+
+        return savedReview;
       }
-    });
+    );
+
+    const status =
+      review.status as SavedProductReviewStatus;
 
     return {
       ok: true,
@@ -238,6 +330,7 @@ export async function upsertProductReview(
         author: {
           id: user.id,
           name: user.name,
+
           ...(user.image
             ? {
                 avatar: user.image
@@ -245,7 +338,7 @@ export async function upsertProductReview(
             : {})
         },
 
-        rating: review.rating as 1 | 2 | 3 | 4 | 5,
+        rating,
 
         ...(review.title
           ? {
@@ -255,21 +348,39 @@ export async function upsertProductReview(
 
         comment: review.comment ?? comment,
 
-        verified: Boolean(completedPurchase),
-        approved: review.approved,
+        status,
 
+        /*
+         * Kept temporarily so the current UI does not break.
+         * New UI conditions should use `status`.
+         */
+        approved: status === 'APPROVED',
+
+        ...(review.moderationReason
+          ? {
+              moderationReason:
+                review.moderationReason
+            }
+          : {}),
+
+        verified: Boolean(completedPurchase),
         helpfulCount: 0,
 
-        createdAt: review.createdAt.toISOString(),
-        updatedAt: review.updatedAt.toISOString()
+        createdAt:
+          review.createdAt.toISOString(),
+
+        updatedAt:
+          review.updatedAt.toISOString()
       },
 
-      message: review.approved
-        ? 'Your review has been saved.'
-        : 'Your review has been saved and is awaiting approval.'
+      message:
+        'Your review has been saved and is awaiting moderation.'
     };
   } catch (error) {
-    console.error('Failed to save product review:', error);
+    console.error(
+      'Failed to save product review:',
+      error
+    );
 
     return {
       ok: false,

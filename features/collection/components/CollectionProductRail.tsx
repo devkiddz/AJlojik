@@ -24,10 +24,9 @@ type CollectionProductRailProps = {
 };
 
 /**
- * Mobile displays two complete cards and part of a third.
- * This keeps discovery visible without making cards too narrow.
+ * Mobile displays 2 complete cards plus a peek (~25%) of a third card.
  */
-const MOBILE_CARDS_PER_VIEW = 2.3;
+const MOBILE_CARDS_PER_VIEW = 2.25;
 
 /**
  * Tablet and desktop rails display at least three complete cards.
@@ -35,8 +34,8 @@ const MOBILE_CARDS_PER_VIEW = 2.3;
 const MINIMUM_CARDS_PER_VIEW = 3;
 
 const MOBILE_RAIL_BREAKPOINT = 640;
-const PREFERRED_CARD_WIDTH = 180;
-const CARD_GAP = 12;
+const PREFERRED_CARD_WIDTH = 160;
+const CARD_GAP = 8;
 
 export default function CollectionProductRail({
   title,
@@ -97,6 +96,7 @@ export default function CollectionProductRail({
 
     setCardsPerView(current => (current === nextCount ? current : nextCount));
   }, []);
+
   useEffect(() => {
     const viewport = viewportRef.current;
 
@@ -206,7 +206,7 @@ export default function CollectionProductRail({
             relative z-0
             flex w-full min-w-0
             max-w-full items-stretch
-            gap-3 overflow-x-auto
+            gap-2 overflow-x-auto
             overflow-y-hidden
             overscroll-x-contain
             snap-x snap-mandatory
