@@ -47,16 +47,14 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
   return (
     <article
       className={cn(
-        'group relative h-full w-full min-w-0',
+        'group relative h-full w-full min-w-40',
         'min-h-48 overflow-hidden rounded-xl',
-        'border border-border/60 bg-card',
         'shadow-sm transition duration-300 ease-out',
         'hover:-translate-y-0.5',
-        'hover:border-border',
         'hover:shadow-md',
-        'focus-within:border-ring/40',
         'focus-within:shadow-md',
         'md:min-h-56',
+
         className
       )}>
       <button
@@ -68,7 +66,7 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
           min-h-48 overflow-hidden
           text-left
           focus-visible:outline-none
-          focus-visible:ring-2
+          focus-visible:ring-0
           focus-visible:ring-inset
           focus-visible:ring-ring
           md:min-h-56
@@ -108,7 +106,7 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
           "
           className="
             z-10 object-cover
-            object-center p-1
+            object-center
             transition-transform
             duration-500 ease-out
             group-hover:scale-[1.025]
@@ -126,7 +124,6 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
               inline-flex max-w-[75%]
               items-center gap-1
               rounded-full
-              border border-white/15
               bg-black/55
               px-2 py-1
               text-[8px] font-semibold
