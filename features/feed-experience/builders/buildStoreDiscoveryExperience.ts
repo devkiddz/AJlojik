@@ -61,6 +61,77 @@ type FeaturedProductResolution = {
   source: FeaturedProductResolutionSource;
 };
 
+const COLLECTION_PRODUCT_LIMIT = 10;
+const CATEGORY_PRODUCT_LIMIT = 16;
+const MORE_DISCOVERY_PRODUCT_LIMIT = 12;
+const RECENT_PRODUCT_LIMIT = 8;
+const SPECIAL_PICK_PRODUCT_LIMIT = 8;
+const CATEGORY_SHELF_PRODUCT_LIMIT = 12;
+
+const CATEGORY_SHELF_ORDER = [
+  'wines',
+  'spirits',
+  'kitchen',
+  'confectioneries',
+  'party-plans'
+] as const;
+
+function uniqueProducts(
+  products: ProductType[]
+): ProductType[] {
+  return Array.from(
+    new Map(
+      products.map(product => [
+        product.id,
+        product
+      ])
+    ).values()
+  );
+}
+
+function resolveProductsInIdOrder(
+  productIds: string[],
+  products: ProductType[]
+): ProductType[] {
+  const productMap = new Map(
+    products.map(product => [
+      String(product.id),
+      product
+    ])
+  );
+
+  return uniqueProducts(
+    productIds
+      .map(productId =>
+        productMap.get(
+          String(productId)
+        )
+      )
+      .filter(
+        (
+          product
+        ): product is ProductType =>
+          Boolean(product)
+      )
+  );
+
+}
+
+
+  function formatCategoryLabel(
+  categorySlug: string
+): string {
+  return categorySlug
+    .split('-')
+    .filter(Boolean)
+    .map(
+      word =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1)
+    )
+    .join(' ');
+}
+
 function resolveStableFallbackProduct(
   collectionId: string,
   products: ProductType[]
@@ -70,9 +141,8 @@ function resolveStableFallbackProduct(
   }
 
   const seed = Array.from(collectionId).reduce(
-    (total, character) => {
-      return total + character.charCodeAt(0);
-    },
+    (total, character) =>
+      total + character.charCodeAt(0),
     0
   );
 
@@ -88,11 +158,6 @@ function resolveCollectionFeaturedProduct({
   products: ProductType[];
   enabled: boolean;
 }): FeaturedProductResolution {
-  /**
-   * An explicit manager decision must always win.
-   *
-   * When disabled, no fallback featured product is created.
-   */
   if (!enabled) {
     return {
       source: 'disabled'
@@ -105,10 +170,6 @@ function resolveCollectionFeaturedProduct({
     };
   }
 
-  /**
-   * First preference:
-   * the product deliberately selected by the manager.
-   */
   const explicitProduct = collection.featuredProductId
     ? products.find(
         product =>
@@ -123,10 +184,6 @@ function resolveCollectionFeaturedProduct({
     };
   }
 
-  /**
-   * Second preference:
-   * the strongest-selling eligible product.
-   */
   const bestSellingProduct = [...products]
     .filter(product => product.soldCount > 0)
     .sort((firstProduct, secondProduct) => {
@@ -150,10 +207,6 @@ function resolveCollectionFeaturedProduct({
     };
   }
 
-  /**
-   * Third preference:
-   * an existing catalog-level featured flag.
-   */
   const flaggedProduct = products.find(
     product => product.featured
   );
@@ -165,10 +218,6 @@ function resolveCollectionFeaturedProduct({
     };
   }
 
-  /**
-   * Fourth preference:
-   * the first product with at least one purchasable variant.
-   */
   const inStockProduct = products.find(
     product =>
       product.variants.some(
@@ -183,12 +232,6 @@ function resolveCollectionFeaturedProduct({
     };
   }
 
-  /**
-   * Final forgiving fallback:
-   * use a deterministic selection instead of Math.random().
-   *
-   * This keeps the assembled experience stable between renders.
-   */
   const stableFallback =
     resolveStableFallbackProduct(
       collection.id,
@@ -249,15 +292,6 @@ export function buildStoreDiscoveryExperience(
       catalog.products
     );
 
-  /**
-   * Each collection is converted into a resolved experience column.
-   *
-   * The engine decides:
-   * - whether the banner role is visible;
-   * - whether the featured role is enabled;
-   * - which product forgives a missing featured selection;
-   * - whether the rail occupies partial or full width.
-   */
   const resolvedCollections =
     allResolvedCollections
       .map(resolvedCollection => {
@@ -274,6 +308,34 @@ export function buildStoreDiscoveryExperience(
                   )
               );
 
+        const collectionCategorySlugs =
+          new Set(
+            scopedProducts.map(
+              product => product.category
+            )
+          );
+
+        const enrichmentPool =
+          scopedProducts.length === 0
+            ? []
+            : selectedCategory === 'all'
+              ? catalog.products.filter(
+                  product =>
+                    collectionCategorySlugs.has(
+                      product.category
+                    )
+                )
+              : filteredProducts;
+
+        const collectionProducts =
+          uniqueProducts([
+            ...scopedProducts,
+            ...enrichmentPool
+          ]).slice(
+            0,
+            COLLECTION_PRODUCT_LIMIT
+          );
+
         const controlledCollection =
           collection as CollectionWithPresentationControls;
 
@@ -286,7 +348,7 @@ export function buildStoreDiscoveryExperience(
         const featuredResolution =
           resolveCollectionFeaturedProduct({
             collection,
-            products: scopedProducts,
+            products: collectionProducts,
             enabled: featuredEnabled
           });
 
@@ -301,7 +363,7 @@ export function buildStoreDiscoveryExperience(
         return {
           collection,
 
-          products: scopedProducts,
+          products: collectionProducts,
 
           featuredProduct:
             featuredResolution.product,
@@ -331,13 +393,6 @@ export function buildStoreDiscoveryExperience(
           resolvedCollection.products.length > 0
       );
 
-  /**
-   * Once at least one collection is resolved, the collection feed
-   * owns the composite product-experience layout.
-   *
-   * This avoids rendering a second standalone featured-products
-   * section beneath the collections.
-   */
   const collectionFeedOwnsProductExperience =
     resolvedCollections.length > 0;
 
@@ -352,8 +407,7 @@ export function buildStoreDiscoveryExperience(
   const selectedCategoryRecord =
     catalog.categories.find(
       category =>
-        category.slug ===
-        selectedCategory
+        category.slug === selectedCategory
     );
 
   const categoryExperienceTitle =
@@ -398,10 +452,374 @@ export function buildStoreDiscoveryExperience(
       limit: 8
     });
 
+  const recentlyViewedProducts =
+    resolveProductsInIdOrder(
+      context.user.recentProductIds,
+      catalog.products
+    )
+      .filter(
+        product =>
+          selectedCategory === 'all' ||
+          product.category === selectedCategory
+      )
+      .slice(
+        0,
+        RECENT_PRODUCT_LIMIT
+      );
+
+  const collectionProductIds =
+    new Set(
+      resolvedCollections.flatMap(
+        resolvedCollection =>
+          resolvedCollection.products.map(
+            product => product.id
+          )
+      )
+    );
+
+  const recentProductIds =
+    new Set(
+      recentlyViewedProducts.map(
+        product => product.id
+      )
+    );
+
+  const categoryProducts =
+    selectedCategory === 'all'
+      ? []
+      : uniqueProducts([
+          ...filteredProducts.filter(
+            product =>
+              !collectionProductIds.has(
+                product.id
+              ) &&
+              !recentProductIds.has(
+                product.id
+              ) &&
+              product.id !== featuredProduct?.id
+          ),
+
+          ...filteredProducts
+        ]).slice(
+          0,
+          CATEGORY_PRODUCT_LIMIT
+        );
+
+  const categoryProductIds =
+    new Set(
+      categoryProducts.map(
+        product => product.id
+      )
+    );
+
+  const primaryDiscoveryProducts =
+    filteredProducts.filter(
+      product =>
+        !collectionProductIds.has(
+          product.id
+        ) &&
+        !categoryProductIds.has(
+          product.id
+        ) &&
+        !recentProductIds.has(
+          product.id
+        ) &&
+        product.id !== featuredProduct?.id
+    );
+
+  const moreDiscoveryProducts =
+    uniqueProducts([
+      ...primaryDiscoveryProducts,
+
+      ...filteredProducts.filter(
+        product =>
+          !categoryProductIds.has(
+            product.id
+          ) &&
+          !recentProductIds.has(
+            product.id
+          )
+      ),
+
+      ...filteredProducts.filter(
+        product =>
+          !recentProductIds.has(
+            product.id
+          )
+      )
+    ]).slice(
+      0,
+      MORE_DISCOVERY_PRODUCT_LIMIT
+    );
+
+  const moreDiscoveryProductIds =
+    new Set(
+      moreDiscoveryProducts.map(
+        product => product.id
+      )
+    );
+
+  const specialPickPreferredCategories =
+    selectedCategory === 'all'
+      ? context.activity.viewedCategorySlugs
+      : [
+          selectedCategory,
+          ...context.activity.viewedCategorySlugs
+        ];
+
+  const specialRecommendationPool =
+    selectRecommendedProducts({
+      products:
+        selectedCategory === 'all'
+          ? catalog.products
+          : filteredProducts,
+
+      preferredCategorySlugs:
+        specialPickPreferredCategories,
+
+      excludedProductIds: [
+        ...excludedRecommendationIds,
+        ...categoryProductIds,
+        ...moreDiscoveryProductIds
+      ],
+
+      limit:
+        SPECIAL_PICK_PRODUCT_LIMIT * 2
+    });
+
+  const strictSpecialPicks =
+    uniqueProducts([
+      ...specialRecommendationPool,
+      ...featuredProducts,
+      ...filteredProducts
+    ]).filter(
+      product =>
+        !collectionProductIds.has(
+          product.id
+        ) &&
+        !categoryProductIds.has(
+          product.id
+        ) &&
+        !recentProductIds.has(
+          product.id
+        ) &&
+        !moreDiscoveryProductIds.has(
+          product.id
+        )
+    );
+
+  const specialPickProducts =
+    uniqueProducts([
+      ...strictSpecialPicks,
+
+      ...specialRecommendationPool.filter(
+        product =>
+          !categoryProductIds.has(
+            product.id
+          ) &&
+          !recentProductIds.has(
+            product.id
+          )
+      ),
+
+      ...recommendedProducts.filter(
+        product =>
+          (selectedCategory === 'all' ||
+            product.category === selectedCategory) &&
+          !categoryProductIds.has(
+            product.id
+          ) &&
+          !recentProductIds.has(
+            product.id
+          )
+      ),
+
+      ...specialRecommendationPool.filter(
+        product =>
+          !recentProductIds.has(
+            product.id
+          )
+      )
+    ]).slice(
+      0,
+      SPECIAL_PICK_PRODUCT_LIMIT
+    );
+
+  const discoverySectionTitle =
+    selectedCategory === 'all'
+      ? 'More Discoveries'
+      : `More in ${categoryExperienceTitle}`;
+
+  const discoverySectionSubtitle =
+    selectedCategory === 'all'
+      ? 'More products and moments from across the AJ Logik experience.'
+      : `Continue exploring products selected from ${categoryExperienceTitle}.`;
+
+  const specialPickTitle =
+    context.user.tier === 'premium'
+      ? 'Premium Special Picks'
+      : 'Special Picks for You';
+
+  const specialPickSubtitle =
+    selectedCategory === 'all'
+      ? 'A considered mix shaped by your activity and the strongest products in the catalog.'
+      : `A more personal selection from ${categoryExperienceTitle}.`;
+
   const journeyTone =
     context.user.tier === 'guest'
       ? ('default' as const)
       : context.user.tier;
+
+  const categoryExperienceCandidate:
+    ExperienceModuleCandidate | null =
+    selectedCategory !== 'all' &&
+    selectedCategoryRecord &&
+    categoryProducts.length > 0
+      ? {
+          module: {
+            id:
+              `store-category-experience-${selectedCategory}`,
+
+            type:
+              'category-experience',
+
+            priority:
+              75,
+
+            data: {
+              category:
+                selectedCategoryRecord,
+
+              title:
+                `Explore ${categoryExperienceTitle}`,
+
+              subtitle:
+                categoryExperienceSubtitle,
+
+              products:
+                categoryProducts
+            }
+          },
+
+          reason:
+            'Category Experience requires a selected category and resolved category products.'
+        }
+      : null;
+
+
+      const previouslySurfacedProductIds =
+  new Set<string>([
+    ...(featuredProduct
+      ? [featuredProduct.id]
+      : []),
+
+    ...collectionProductIds,
+    ...categoryProductIds,
+    ...recentProductIds,
+    ...moreDiscoveryProductIds,
+
+    ...specialPickProducts.map(
+      product => product.id
+    )
+  ]);
+
+const catalogCategorySlugs =
+  Array.from(
+    new Set([
+      ...CATEGORY_SHELF_ORDER,
+
+      ...catalog.products.map(
+        product => product.category
+      )
+    ])
+  );
+
+const categoryShelfCandidates:
+  ExperienceModuleCandidate[] =
+  selectedCategory === 'all'
+    ? catalogCategorySlugs
+        .map(categorySlug => {
+          const categoryRecord =
+            catalog.categories.find(
+              category =>
+                category.slug ===
+                categorySlug
+            );
+
+          const categoryProducts =
+            catalog.products.filter(
+              product =>
+                product.category ===
+                categorySlug
+            );
+
+          /**
+           * Spotify-style shelves may reintroduce products,
+           * but unseen products are presented first.
+           */
+          const shelfProducts =
+            uniqueProducts([
+              ...categoryProducts.filter(
+                product =>
+                  !previouslySurfacedProductIds.has(
+                    product.id
+                  )
+              ),
+
+              ...categoryProducts
+            ]).slice(
+              0,
+              CATEGORY_SHELF_PRODUCT_LIMIT
+            );
+
+          const categoryLabel =
+            categoryRecord?.label ??
+            formatCategoryLabel(
+              categorySlug
+            );
+
+          return {
+            module: {
+              id:
+                `store-category-shelf-${categorySlug}`,
+
+              type:
+                'product-rail',
+
+              priority:
+                30,
+
+              data: {
+                title:
+                  categoryLabel,
+
+                subtitle:
+                  categoryRecord
+                    ?.shortDescription ??
+                  categoryRecord
+                    ?.description ??
+                  `Explore more from ${categoryLabel}.`,
+
+                products:
+                  shelfProducts,
+
+                source:
+                  'continue-discovery'
+              }
+            },
+
+            enabled:
+              shelfProducts.length > 0,
+
+            reason:
+              `Category shelf requires products from "${categorySlug}".`
+          } satisfies ExperienceModuleCandidate;
+        })
+        .filter(
+          candidate =>
+            candidate.enabled !== false
+        )
+    : [];
 
   // ============================================================
   // EXPERIENCE MODULE CANDIDATES
@@ -411,9 +829,7 @@ export function buildStoreDiscoveryExperience(
     {
       module: {
         id: 'store-category-rail',
-
         type: 'category-rail',
-
         priority: 100,
 
         data: {
@@ -431,9 +847,7 @@ export function buildStoreDiscoveryExperience(
     {
       module: {
         id: 'shopping-journey',
-
         type: 'shopping-journey',
-
         priority: 98,
 
         data: {
@@ -460,47 +874,8 @@ export function buildStoreDiscoveryExperience(
 
     {
       module: {
-        id: 'user-recommendations',
-
-        type: 'product-rail',
-
-        priority: 92,
-
-        data: {
-          title:
-            context.user.tier === 'premium'
-              ? 'Premium Picks for You'
-              : 'Recommended for You',
-
-          subtitle:
-            context.user.tier === 'premium'
-              ? 'Luxury selections inspired by your recent activity.'
-              : 'Selected from the categories you explore most.',
-
-          products:
-            recommendedProducts,
-
-          source:
-            context.user.tier === 'premium'
-              ? 'premium'
-              : 'recommended'
-        }
-      },
-
-      enabled:
-        context.user.tier !== 'guest' &&
-        recommendedProducts.length > 0,
-
-      reason:
-        'Recommendations require an identified customer and resolved products.'
-    },
-
-    {
-      module: {
         id: 'store-promotions',
-
         type: 'promotion',
-
         priority: 90,
 
         data: {
@@ -522,9 +897,7 @@ export function buildStoreDiscoveryExperience(
     {
       module: {
         id: 'store-collections',
-
         type: 'collection-feed',
-
         priority: 80,
 
         data: {
@@ -543,12 +916,10 @@ export function buildStoreDiscoveryExperience(
         'Collection feed requires resolved collections containing products from the active category.'
     },
 
-    /**
-     * The standalone category experience is a true fallback.
-     *
-     * It appears only when no collection can own the composite
-     * banner, featured-product and product-slider experience.
-     */
+    ...(categoryExperienceCandidate
+      ? [categoryExperienceCandidate]
+      : []),
+
     {
       module: {
         id:
@@ -557,7 +928,8 @@ export function buildStoreDiscoveryExperience(
         type:
           'featured-products',
 
-        priority: 70,
+        priority:
+          70,
 
         data: {
           title:
@@ -592,7 +964,109 @@ export function buildStoreDiscoveryExperience(
         collectionFeedOwnsProductExperience
           ? 'The collection feed owns the complete product-experience layout.'
           : 'Category Product Experience provides a fallback when no resolved collection is available.'
+    },
+
+    {
+      module: {
+        id:
+          `store-more-discoveries-${selectedCategory}`,
+
+        type:
+          'product-rail',
+
+        priority:
+          60,
+
+        data: {
+          title:
+            discoverySectionTitle,
+
+          subtitle:
+            discoverySectionSubtitle,
+
+          products:
+            moreDiscoveryProducts,
+
+          source:
+            'recommended'
+        }
+      },
+
+      enabled:
+        moreDiscoveryProducts.length > 0,
+
+      reason:
+        'More Discoveries requires products from the active category or catalog fallback pool.'
+    },
+
+    {
+      module: {
+        id:
+          `store-recently-viewed-${selectedCategory}`,
+
+        type:
+          'recently-viewed',
+
+        priority:
+          50,
+
+        data: {
+          title:
+            'Recently Viewed',
+
+          subtitle:
+            'Return to products you explored earlier.',
+
+          products:
+            recentlyViewedProducts
+        }
+      },
+
+      enabled:
+        recentlyViewedProducts.length > 0,
+
+      reason:
+        'Recently Viewed requires resolved product activity for the active category.'
+    },
+
+
+     {
+  module: {
+    id:
+      `store-special-picks-${selectedCategory}`,
+
+    type:
+      'product-rail',
+
+    priority:
+      40,
+
+    data: {
+      title:
+        specialPickTitle,
+
+      subtitle:
+        specialPickSubtitle,
+
+      products:
+        specialPickProducts,
+
+      source:
+        context.user.tier ===
+        'premium'
+          ? 'premium'
+          : 'recommended'
     }
+  },
+
+  enabled:
+    specialPickProducts.length > 0,
+
+  reason:
+    'Special Picks requires recommended, featured or category-compatible products.'
+},
+
+...categoryShelfCandidates
   ];
 
   // ============================================================

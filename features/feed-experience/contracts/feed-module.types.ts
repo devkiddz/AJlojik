@@ -57,6 +57,23 @@ export type CategoryRailModule = {
   };
 };
 
+export type CategoryExperienceModuleDefinition = {
+  id: string;
+  type: 'category-experience';
+  priority: number;
+
+  data: {
+    category:
+      CategoriesType[number];
+
+    title: string;
+
+    subtitle?: string;
+
+    products: ProductType[];
+  };
+};
+
 export type PromotionModule = {
   id: string;
   type: 'promotion';
@@ -255,6 +272,7 @@ export type FeedModule =
   | ProductExperienceBannerModule
   | ProductDetailsModuleDefinition
   | CategoryRailModule
+  | CategoryExperienceModuleDefinition
   | PromotionModule
   | CollectionFeedModule
   | FeaturedProductsModule

@@ -23,6 +23,19 @@ type CollectionProductRailProps = {
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
 
+/**
+ * Mobile must expose at least three products.
+ */
+const MINIMUM_CARDS_PER_VIEW = 3;
+
+/**
+ * Wider containers receive additional cards instead
+ * of stretching a fixed number of cards.
+ */
+const PREFERRED_CARD_WIDTH = 160;
+
+const CARD_GAP = 12;
+
 export default function CollectionProductRail({
   title,
   subtitle,
@@ -36,7 +49,7 @@ export default function CollectionProductRail({
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
-  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [cardsPerView, setCardsPerView] = useState(MINIMUM_CARDS_PER_VIEW);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
@@ -44,24 +57,14 @@ export default function CollectionProductRail({
 
   const [controlsVisible, setControlsVisible] = useState(false);
 
-  const updateScrollState = useCallback(() => {
+  const updateScrollState = useCallback((): void => {
     const viewport = viewportRef.current;
 
-    const track = trackRef.current;
-
-    if (!viewport || !track) {
+    if (!viewport) {
       return;
     }
 
-    const viewportWidth = viewport.clientWidth;
-
-    const contentWidth = Math.max(
-      viewport.scrollWidth,
-      track.scrollWidth,
-      track.getBoundingClientRect().width
-    );
-
-    const maximumScroll = Math.max(0, contentWidth - viewportWidth);
+    const maximumScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
 
     const currentScroll = Math.max(0, viewport.scrollLeft);
 
@@ -70,50 +73,66 @@ export default function CollectionProductRail({
     setCanScrollRight(maximumScroll - currentScroll > 2);
   }, []);
 
-  useEffect(() => {
+  const updateCardsPerView = useCallback((): void => {
     const viewport = viewportRef.current;
 
-    const track = trackRef.current;
-
-    if (!viewport || !track) {
+    if (!viewport) {
       return;
     }
 
-    let secondFrame = 0;
+    const availableWidth = viewport.clientWidth;
 
-    const firstFrame = window.requestAnimationFrame(() => {
+    if (availableWidth <= 0) {
+      return;
+    }
+
+    const calculatedCount = Math.floor((availableWidth + CARD_GAP) / (PREFERRED_CARD_WIDTH + CARD_GAP));
+
+    const nextCount = Math.max(MINIMUM_CARDS_PER_VIEW, calculatedCount);
+
+    setCardsPerView(current => (current === nextCount ? current : nextCount));
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const updateRail = (): void => {
+      updateCardsPerView();
       updateScrollState();
+    };
 
-      secondFrame = window.requestAnimationFrame(updateScrollState);
-    });
+    updateRail();
 
-    const resizeObserver = new ResizeObserver(() => {
-      updateScrollState();
-    });
+    const resizeObserver = new ResizeObserver(updateRail);
 
     resizeObserver.observe(viewport);
-    resizeObserver.observe(track);
 
     viewport.addEventListener('scroll', updateScrollState, {
       passive: true
     });
 
-    window.addEventListener('resize', updateScrollState);
-
     return () => {
-      window.cancelAnimationFrame(firstFrame);
-
-      window.cancelAnimationFrame(secondFrame);
-
       resizeObserver.disconnect();
 
       viewport.removeEventListener('scroll', updateScrollState);
-
-      window.removeEventListener('resize', updateScrollState);
     };
-  }, [products.length, updateScrollState]);
+  }, [products.length, updateCardsPerView, updateScrollState]);
 
-  const scrollRail = (direction: 'left' | 'right') => {
+  if (products.length === 0) {
+    return null;
+  }
+
+  const visibleCardCount = Math.max(1, Math.min(cardsPerView, products.length));
+
+  const occupiedGapSpace = CARD_GAP * Math.max(visibleCardCount - 1, 0);
+
+  const productSlideWidth = `calc((100% - ${occupiedGapSpace}px) / ${visibleCardCount})`;
+
+  const scrollRail = (direction: 'left' | 'right'): void => {
     const viewport = viewportRef.current;
 
     if (!viewport) {
@@ -122,27 +141,19 @@ export default function CollectionProductRail({
 
     const firstProduct = viewport.querySelector<HTMLElement>('[data-collection-product]');
 
-    const productWidth = firstProduct?.getBoundingClientRect().width ?? 192;
+    const productWidth = firstProduct?.getBoundingClientRect().width ?? PREFERRED_CARD_WIDTH;
 
-    const gap = 12;
+    const distance = productWidth + CARD_GAP;
 
     viewport.scrollBy({
-      left: direction === 'left' ? -(productWidth + gap) : productWidth + gap,
+      left: direction === 'left' ? -distance : distance,
 
       behavior: 'smooth'
     });
   };
 
-  if (products.length === 0) {
-    return null;
-  }
-
   return (
     <div className="w-full min-w-0 max-w-full">
-      {/* ============================================
-          OPTIONAL INTERNAL HEADER
-      ============================================ */}
-
       {showHeader ? (
         <header className="mb-3 min-w-0">
           <h3 className="truncate text-sm font-semibold tracking-tight text-card-foreground">{title}</h3>
@@ -151,12 +162,12 @@ export default function CollectionProductRail({
         </header>
       ) : null}
 
-      {/* ============================================
-          SLIDER CONTAINER
-      ============================================ */}
-
       <div
-        className={cn('relative isolate w-full min-w-0 max-w-full', 'overflow-hidden rounded-2xl')}
+        className="
+          relative isolate
+          w-full min-w-0 max-w-full
+          overflow-hidden rounded-2xl
+        "
         onPointerEnter={event => {
           if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
             setControlsVisible(true);
@@ -178,74 +189,85 @@ export default function CollectionProductRail({
             setControlsVisible(false);
           }
         }}>
-        {/* ==========================================
-            SCROLLABLE VIEWPORT
-        ========================================== */}
-
         <div
           id={railId}
           ref={viewportRef}
           role="region"
           aria-label={`${title} products`}
           tabIndex={0}
-          className={cn(
-            'relative z-0 w-full min-w-0 max-w-full',
-            'overflow-x-auto overflow-y-hidden',
-            'overscroll-x-contain',
-            'snap-x snap-mandatory',
-            'scroll-smooth scrollbar-none',
-            'focus-visible:outline-none'
-          )}>
-          <div ref={trackRef} className={cn('flex w-max min-w-full items-start gap-3', 'pb-1 pr-8')}>
-            {products.map(product => (
-              <div
-                key={product.id}
-                data-collection-product
-                className={cn('shrink-0 snap-start', 'w-48 sm:w-52 lg:w-52 xl:w-56')}>
-                <ProductCard
-                  product={product}
-                  onPreview={onPreview}
-                  onOpenExperience={onOpenExperience}
-                  onAddToCart={onAddToCart}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+          data-cards-per-view={visibleCardCount}
+          className="
+            relative z-0
+            flex w-full min-w-0
+            max-w-full items-stretch
+            gap-3 overflow-x-auto
+            overflow-y-hidden
+            overscroll-x-contain
+            snap-x snap-mandatory
+            scroll-smooth
+            pb-1 pr-6
+            scrollbar-none
+            focus-visible:outline-none
+          ">
+          {products.map(product => (
+            <div
+              key={product.id}
+              data-collection-product
+              className="
+                min-w-0 shrink-0
+                snap-start
+              "
+              style={{
+                width: productSlideWidth,
 
-        {/* ==========================================
-            LEFT EDGE OVERLAY
-        ========================================== */}
+                flexBasis: productSlideWidth
+              }}>
+              <ProductCard
+                product={product}
+                onPreview={onPreview}
+                onOpenExperience={onOpenExperience}
+                onAddToCart={onAddToCart}
+                className="h-full"
+              />
+            </div>
+          ))}
+        </div>
 
         <div
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute inset-y-0 left-0 z-40 w-16',
-            'bg-gradient-to-r from-background/95 via-background/55 to-transparent',
-            'transition-opacity duration-200',
+            `
+              pointer-events-none
+              absolute inset-y-0
+              left-0 z-40 w-12
+              bg-gradient-to-r
+              from-background/90
+              to-transparent
+              transition-opacity
+              duration-200
+            `,
 
             controlsVisible && canScrollLeft ? 'opacity-100' : 'opacity-0'
           )}
         />
 
-        {/* ==========================================
-            RIGHT EDGE OVERLAY
-        ========================================== */}
-
         <div
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute inset-y-0 right-0 z-40 w-16',
-            'bg-gradient-to-l from-background/95 via-background/55 to-transparent',
-            'transition-opacity duration-200',
+            `
+              pointer-events-none
+              absolute inset-y-0
+              right-0 z-40 w-12
+              bg-gradient-to-l
+              from-background/90
+              to-transparent
+              transition-opacity
+              duration-200
+            `,
 
             controlsVisible && canScrollRight ? 'opacity-100' : 'opacity-0'
           )}
         />
-
-        {/* ==========================================
-            LEFT CONTROL
-        ========================================== */}
 
         <RailControl
           direction="left"
@@ -257,10 +279,6 @@ export default function CollectionProductRail({
           }}
           className="left-2"
         />
-
-        {/* ==========================================
-            RIGHT CONTROL
-        ========================================== */}
 
         <RailControl
           direction="right"
@@ -299,28 +317,46 @@ function RailControl({ direction, railId, available, visible, onClick, className
       disabled={!available}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-[100]',
-        'grid size-10 -translate-y-1/2 place-items-center',
-        'rounded-full border border-white/20',
-        'bg-black/75 text-white',
-        'shadow-xl backdrop-blur-md',
-        'transition-all duration-200',
+        `
+          absolute top-1/2
+          z-[100]
+          grid size-9
+          -translate-y-1/2
+          place-items-center
+          rounded-full
+          border border-white/20
+          bg-black/75
+          text-white
+          shadow-xl
+          backdrop-blur-md
+          transition-all
+          duration-200
+        `,
 
         controlIsVisible
-          ? 'pointer-events-auto scale-100 opacity-100'
-          : 'pointer-events-none scale-95 opacity-0',
+          ? `
+              pointer-events-auto
+              scale-100 opacity-100
+            `
+          : `
+              pointer-events-none
+              scale-95 opacity-0
+            `,
 
-        'hover:scale-105 hover:bg-black/90',
-        'focus-visible:pointer-events-auto',
-        'focus-visible:scale-100',
-        'focus-visible:opacity-100',
-        'focus-visible:outline-none',
-        'focus-visible:ring-2',
-        'focus-visible:ring-white/70',
+        `
+          hover:scale-105
+          hover:bg-black/90
+          focus-visible:pointer-events-auto
+          focus-visible:scale-100
+          focus-visible:opacity-100
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-white/70
+        `,
 
         className
       )}>
-      <Icon className="size-5" />
+      <Icon className="size-4" />
     </button>
   );
 }

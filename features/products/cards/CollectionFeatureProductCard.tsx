@@ -2,44 +2,19 @@
 
 import Image from 'next/image';
 
-import {
-  ArrowRight
-} from 'lucide-react';
+import { useMemo } from 'react';
 
-import {
-  useMemo
-} from 'react';
+import { ArrowRight } from 'lucide-react';
 
-import {
-  Button
-} from '@/components/ui/button';
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 import { cn } from '@/lib/utils';
 
-import {
-  ProductActionTray
-} from './ProductActionTray';
+import type { BaseProductCardProps } from './productCardTypes';
 
-import type {
-  BaseProductCardProps
-} from './productCardTypes';
+import { createProductPriceFormatter, openProductExperience } from './productCardPresentation';
 
-import {
-  createProductPriceFormatter,
-  openProductExperience
-} from './productCardPresentation';
-
-import {
-  useProductVariant
-} from './useProductVariant';
+import { useProductVariant } from './useProductVariant';
 
 export function CollectionFeatureProductCard({
   product,
@@ -47,35 +22,17 @@ export function CollectionFeatureProductCard({
   locale = 'en-NG',
   currency = 'NGN',
   onPreview,
-  onOpenExperience,
-  onAddToCart
+  onOpenExperience
 }: BaseProductCardProps) {
-  const {
-    selectedVariant,
-    selectedVariantId,
-    setSelectedVariantId,
-    soldOut
-  } = useProductVariant(product);
+  const { selectedVariant, soldOut } = useProductVariant(product);
 
-  const priceFormatter =
-    useMemo(
-      () =>
-        createProductPriceFormatter(
-          locale,
-          currency
-        ),
-      [currency, locale]
-    );
+  const priceFormatter = useMemo(() => createProductPriceFormatter(locale, currency), [currency, locale]);
 
   if (!selectedVariant) {
     return null;
   }
 
-  const selectedVariantOutOfStock =
-    selectedVariant.stockLeft <= 0;
-
-  const discountPercentage =
-    product.discountPercentage ?? 0;
+  const discountPercentage = product.discountPercentage ?? 0;
 
   const badgeLabel = soldOut
     ? 'Sold out'
@@ -83,170 +40,214 @@ export function CollectionFeatureProductCard({
       ? `${discountPercentage}% off`
       : 'Featured';
 
-  const handleOpenProductExperience =
-    (): void => {
-      openProductExperience({
-        product,
-        onOpenExperience,
-        onPreview
-      });
-    };
+  const handleOpenProductExperience = (): void => {
+    openProductExperience({
+      product,
+      onOpenExperience,
+      onPreview
+    });
+  };
 
   return (
     <article
       className={cn(
-        'group grid h-full min-h-64 min-w-0 items-stretch overflow-hidden rounded-3xl',
-        'lg:h-96 lg:min-h-96',
-        'border border-border/60 bg-card shadow-lg',
+        'group grid h-full min-h-72 min-w-0 items-stretch overflow-hidden',
+        'grid-cols-[minmax(7.5rem,0.9fr)_minmax(0,1.1fr)]',
+        'rounded-3xl border border-border/60 bg-card',
+        'shadow-lg transition duration-300',
+        'hover:border-border hover:shadow-xl',
         className
-      )}
-      style={{
-        gridTemplateColumns:
-          'minmax(0, 5fr) minmax(0, 7fr)'
-      }}
-    >
-      <div className="relative min-h-64 min-w-0 overflow-hidden bg-muted/50">
+      )}>
+      {/* ============================================
+          PRODUCT IMAGE COLUMN
+      ============================================ */}
+
+      <div
+        className="
+          flex min-w-0
+          items-center
+          p-2
+          sm:p-3
+        ">
         <button
           type="button"
           aria-label={`Open ${product.name} experience`}
           onClick={handleOpenProductExperience}
-          className={cn(
-            'relative z-10 flex h-full min-h-64 w-full items-center justify-center overflow-hidden p-2 sm:p-3',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'
-          )}
-        >
+          className="
+            relative h-56 w-full min-w-0
+            overflow-hidden rounded-l-2xl
+            bg-muted/40
+            shadow-md
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-ring
+            sm:h-64
+            md:h-64
+          ">
+          {/* Ambient image */}
+
+          <Image
+            src={selectedVariant.image}
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 768px) 42vw, 24vw"
+            className="
+              scale-125 object-cover
+              opacity-25 blur-xl
+              saturate-150
+            "
+          />
+
+          {/* Ambient glow */}
+
+          <span
+            aria-hidden="true"
+            className="
+              pointer-events-none
+              absolute inset-0
+              bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.22),transparent_62%)]
+            "
+          />
+
+          {/* Main product image */}
+
           <Image
             src={selectedVariant.image}
             alt={product.name}
-            width={720}
-            height={720}
+            fill
             priority
-            className="h-full max-h-72 w-full object-contain transition-transform duration-700 group-hover:scale-[1.035]"
+            quality={95}
+            sizes="(max-width: 768px) 42vw, 24vw"
+            className="
+              z-10 scale-105
+              object-cover object-center
+              drop-shadow-[0_24px_30px_rgba(0,0,0,0.48)]
+              transition-transform
+              duration-700 ease-out
+              group-hover:scale-110
+            "
           />
+
+          {/* Bottom depth */}
+
+          <span
+            aria-hidden="true"
+            className="
+              pointer-events-none
+              absolute inset-x-0 bottom-0 z-10
+              h-20
+              bg-gradient-to-t
+              from-black/30
+              to-transparent
+            "
+          />
+
+          {/* Product status */}
+
+          <span
+            className="
+              pointer-events-none
+              absolute left-2 top-2 z-20
+              rounded-full
+              border border-white/15
+              bg-black/50
+              px-2 py-1
+              text-[0.55rem] font-bold
+              uppercase tracking-wide
+              text-white
+              shadow-md backdrop-blur-md
+            ">
+            {badgeLabel}
+          </span>
         </button>
-
-        <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
-
-        <span
-          className={cn(
-            'pointer-events-none absolute left-2 top-2 z-20 rounded-full px-2 py-1',
-            'text-[0.55rem] font-black uppercase tracking-wide shadow-lg backdrop-blur-md',
-            'sm:left-3 sm:top-3 sm:px-2.5 sm:text-[0.62rem]',
-            soldOut
-              ? 'border border-white/15 bg-black/75 text-white'
-              : 'border border-white/10 bg-black/55 text-white'
-          )}
-        >
-          {badgeLabel}
-        </span>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-col justify-center overflow-hidden bg-card p-2.5 sm:p-4">
+      {/* ============================================
+          PRODUCT DETAILS
+      ============================================ */}
+
+      <div
+        className="
+          flex min-h-0 min-w-0
+          flex-col justify-center
+          overflow-hidden
+          px-2 py-4
+          sm:px-4
+        ">
+        <p
+          className="
+            truncate
+            text-[0.55rem] font-semibold
+            uppercase tracking-[0.16em]
+            text-muted-foreground
+          ">
+          Featured product
+        </p>
+
         <button
           type="button"
           onClick={handleOpenProductExperience}
-          className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="h-px w-4 shrink-0 bg-border sm:w-7" />
-
-            <p className="truncate text-[0.5rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-[0.62rem] sm:tracking-[0.2em]">
-              Featured product
-            </p>
-          </div>
-
-          <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-tight tracking-tight text-card-foreground sm:mt-3 sm:text-xl">
+          className="
+            mt-2 min-w-0 text-left
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-ring
+          ">
+          <h3
+            className="
+              line-clamp-2
+              text-base font-bold
+              leading-tight tracking-tight
+              text-card-foreground
+              sm:text-xl
+            ">
             {product.name}
-          </h2>
+          </h3>
 
-          <p className="mt-1 line-clamp-2 text-[0.65rem] leading-4 text-muted-foreground sm:mt-2 sm:text-xs sm:leading-5">
-            {product.shortDescription}
-          </p>
+          {product.shortDescription ? (
+            <p
+              className="
+                mt-2 line-clamp-2
+                text-[0.65rem] leading-4
+                text-muted-foreground
+                sm:text-xs
+                sm:leading-5
+              ">
+              {product.shortDescription}
+            </p>
+          ) : null}
         </button>
 
-        <div className="mt-2.5 grid min-w-0 grid-cols-1 gap-2 sm:mt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-3">
-          <div className="hidden min-w-0 lg:block">
-            <p className="mb-1 text-[0.5rem] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[0.58rem]">
-              Product option
-            </p>
+        <p
+          className="
+            mt-3 truncate
+            text-lg font-bold
+            tracking-tight
+            text-card-foreground
+          ">
+          {priceFormatter.format(Number(selectedVariant.price))}
+        </p>
 
-            <Select
-              value={selectedVariantId}
-              onValueChange={setSelectedVariantId}
-            >
-              <SelectTrigger className="h-8 w-full rounded-lg px-2 text-[0.65rem] sm:h-9 sm:rounded-xl sm:px-3 sm:text-xs">
-                <SelectValue placeholder="Select option" />
-              </SelectTrigger>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleOpenProductExperience}
+          className="
+            mt-3 h-9 w-full
+            justify-between rounded-xl
+            border-border/70
+            bg-background/70
+            px-3
+            text-xs font-semibold
+            shadow-sm
+            transition-colors
+            hover:bg-muted
+          ">
+          <span className="truncate">View product</span>
 
-              <SelectContent>
-                {product.variants.map(variant => (
-                  <SelectItem
-                    key={variant.id}
-                    value={String(variant.id)}
-                    disabled={variant.stockLeft <= 0}
-                  >
-                    {variant.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="min-w-0 sm:shrink-0 sm:text-right">
-            <p className="hidden text-[0.58rem] font-semibold uppercase tracking-wide text-muted-foreground sm:block">
-              Price
-            </p>
-
-            <p className="truncate text-sm font-bold tracking-tight text-card-foreground sm:mt-1 sm:text-lg">
-              {priceFormatter.format(
-                Number(selectedVariant.price)
-              )}
-            </p>
-
-            <p
-              className={cn(
-                'mt-0.5 text-[0.55rem] font-medium sm:text-[0.62rem]',
-                selectedVariantOutOfStock
-                  ? 'text-destructive'
-                  : 'text-muted-foreground'
-              )}
-            >
-              {selectedVariantOutOfStock
-                ? 'Unavailable'
-                : `${selectedVariant.stockLeft} available`}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-2.5 hidden min-w-0 items-center gap-1.5 sm:mt-4 sm:gap-2 lg:flex">
-          <Button
-            type="button"
-            onClick={handleOpenProductExperience}
-            className={cn(
-              'h-8 min-w-0 flex-1 justify-between rounded-full px-2.5',
-              'bg-foreground text-background hover:bg-foreground/90',
-              'sm:h-10 sm:px-4'
-            )}
-          >
-            <span className="truncate text-[0.65rem] font-medium sm:text-xs">
-              Explore
-              <span className="hidden sm:inline">
-                {' '}product
-              </span>
-            </span>
-
-            <ArrowRight className="size-3.5 shrink-0 sm:size-4" />
-          </Button>
-
-          <ProductActionTray
-            product={product}
-            variant={selectedVariant}
-            onAddToCart={onAddToCart}
-            presentation="inline"
-            compact
-            showAddLabel={false}
-          />
-        </div>
+          <ArrowRight className="size-3.5 shrink-0" />
+        </Button>
       </div>
     </article>
   );

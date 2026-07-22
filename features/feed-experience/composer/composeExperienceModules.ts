@@ -13,11 +13,11 @@ import type {
 // ============================================================
 
 /**
- * Determines whether a resolved module contains enough data
+ * Confirms that a resolved module contains enough data
  * to produce a meaningful visual section.
  *
  * Business selection belongs to builders and selectors.
- * This check only prevents empty module shells from reaching
+ * This guard only prevents empty module shells from reaching
  * the renderer.
  */
 function hasRenderableData(
@@ -25,64 +25,52 @@ function hasRenderableData(
 ): boolean {
   switch (module.type) {
     case 'category-rail':
-      return (
-        module.data.categories.length >
-        0
-      );
+      return module.data.categories.length > 0;
+
+    case 'category-experience':
+      return module.data.products.length > 0;
 
     case 'shopping-journey':
-      return (
-        module.data.items.length >
-        0
-      );
+      return module.data.items.length > 0;
 
     case 'product-experience-banner':
       return Boolean(
         module.data.product
       );
 
-    case 'promotion':
-      return (
-        module.data.promotions.length >
-        0
+    case 'product-details':
+      return Boolean(
+        module.data.product
       );
+
+    case 'promotion':
+      return module.data.promotions.length > 0;
 
     case 'collection-feed':
-      return (
-        module.data.collections.length >
-        0
-      );
+      return module.data.collections.length > 0;
 
-   case 'featured-products':
-  return Boolean(
-    module.data.featuredProduct ||
-      module.data.featuredProducts.length > 0
-  );
+    case 'featured-products':
+      return Boolean(
+        module.data.featuredProduct ||
+          module.data.featuredProducts.length > 0 ||
+          module.data.products?.length
+      );
 
     case 'product-grid':
-      return (
-        module.data.products.length >
-        0
-      );
+      return module.data.products.length > 0;
 
     case 'product-rail':
-      return (
-        module.data.products.length >
-        0
-      );
+      return module.data.products.length > 0;
 
     case 'recently-viewed':
-      return (
-        module.data.products.length >
-        0
-      );
+      return module.data.products.length > 0;
 
     default:
       /**
-       * Unknown future module types are allowed through.
+       * Future module types are allowed through.
        *
-       * Their own renderer remains responsible for deciding
-       * whether it can render its contract.
+       * Their dedicated renderer remains responsible for
+       * deciding whether the contract can be displayed.
        */
       return true;
   }
@@ -95,9 +83,7 @@ function hasRenderableData(
 function resolveRejectionReason(
   candidate: ExperienceModuleCandidate
 ): string | null {
-  if (
-    candidate.enabled === false
-  ) {
+  if (candidate.enabled === false) {
     return (
       candidate.reason ??
       'Module candidate was disabled.'
@@ -130,13 +116,14 @@ type OrderedCandidate = {
 /**
  * Orders candidates before duplicate detection.
  *
- * This guarantees that when two candidates accidentally use
- * the same module ID, the candidate with the higher priority
- * becomes the accepted definition.
+ * If two candidates accidentally share the same module ID,
+ * the higher-priority candidate becomes the accepted one.
+ *
+ * Candidates with equal priority preserve their original
+ * builder order.
  */
 function orderCandidates(
-  candidates:
-    ExperienceModuleCandidate[]
+  candidates: ExperienceModuleCandidate[]
 ): OrderedCandidate[] {
   return candidates
     .map(
@@ -154,14 +141,10 @@ function orderCandidates(
         second
       ) => {
         const priorityDifference =
-          second.candidate.module
-            .priority -
-          first.candidate.module
-            .priority;
+          second.candidate.module.priority -
+          first.candidate.module.priority;
 
-        if (
-          priorityDifference !== 0
-        ) {
+        if (priorityDifference !== 0) {
           return priorityDifference;
         }
 
@@ -171,6 +154,59 @@ function orderCandidates(
         );
       }
     );
+}
+
+// ============================================================
+// LIMIT
+// ============================================================
+
+function resolveModuleLimit(
+  limit: number | undefined
+): number | null {
+  if (
+    typeof limit !== 'number' ||
+    !Number.isFinite(limit)
+  ) {
+    return null;
+  }
+
+  return Math.max(
+    0,
+    Math.floor(limit)
+  );
+}
+
+// ============================================================
+// DEVELOPMENT DIAGNOSTICS
+// ============================================================
+
+function logCompositionDiagnostics(
+  diagnostics: ComposeExperienceModulesResult['diagnostics']
+): void {
+  if (
+    process.env.NODE_ENV !==
+    'development'
+  ) {
+    return;
+  }
+
+  console.table([
+    ...diagnostics.accepted.map(
+      moduleId => ({
+        moduleId,
+        status: 'accepted',
+        reason: ''
+      })
+    ),
+
+    ...diagnostics.rejected.map(
+      rejection => ({
+        moduleId: rejection.id,
+        status: 'rejected',
+        reason: rejection.reason
+      })
+    )
+  ]);
 }
 
 // ============================================================
@@ -189,23 +225,22 @@ function orderCandidates(
  * 5. Apply an optional module limit.
  *
  * The composer does not decide business ownership.
- * Builders determine which candidates should be enabled.
+ * Builders determine which candidates should exist and
+ * whether they should be enabled.
  */
 export function composeExperienceModules({
   candidates,
   limit
 }: ComposeExperienceModulesInput): ComposeExperienceModulesResult {
-  const acceptedModules:
-    FeedModule[] = [];
+  const acceptedModules: FeedModule[] = [];
 
   const acceptedIds =
     new Set<string>();
 
-  const diagnostics: ComposeExperienceModulesResult['diagnostics'] =
-    {
-      accepted: [],
-      rejected: []
-    };
+  const diagnostics: ComposeExperienceModulesResult['diagnostics'] = {
+    accepted: [],
+    rejected: []
+  };
 
   const orderedCandidates =
     orderCandidates(candidates);
@@ -225,19 +260,19 @@ export function composeExperienceModules({
     if (rejectionReason) {
       diagnostics.rejected.push({
         id: module.id,
-        reason:
-          rejectionReason
+        reason: rejectionReason
       });
 
       continue;
     }
 
     if (
-      acceptedIds.has(module.id)
+      acceptedIds.has(
+        module.id
+      )
     ) {
       diagnostics.rejected.push({
         id: module.id,
-
         reason:
           `Duplicate module ID "${module.id}".`
       });
@@ -245,9 +280,13 @@ export function composeExperienceModules({
       continue;
     }
 
-    acceptedIds.add(module.id);
+    acceptedIds.add(
+      module.id
+    );
 
-    acceptedModules.push(module);
+    acceptedModules.push(
+      module
+    );
 
     diagnostics.accepted.push(
       module.id
@@ -255,13 +294,7 @@ export function composeExperienceModules({
   }
 
   const resolvedLimit =
-    typeof limit === 'number' &&
-    Number.isFinite(limit)
-      ? Math.max(
-          0,
-          Math.floor(limit)
-        )
-      : null;
+    resolveModuleLimit(limit);
 
   const modules =
     resolvedLimit === null
@@ -271,33 +304,9 @@ export function composeExperienceModules({
           resolvedLimit
         );
 
-  if (
-    process.env.NODE_ENV ===
-    'development'
-  ) {
-    console.table([
-      ...diagnostics.accepted.map(
-        id => ({
-          moduleId: id,
-          status: 'accepted',
-          reason: ''
-        })
-      ),
-
-      ...diagnostics.rejected.map(
-        rejection => ({
-          moduleId:
-            rejection.id,
-
-          status:
-            'rejected',
-
-          reason:
-            rejection.reason
-        })
-      )
-    ]);
-  }
+  logCompositionDiagnostics(
+    diagnostics
+  );
 
   return {
     modules,
