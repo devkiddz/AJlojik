@@ -37,7 +37,7 @@ import { FeedRenderer } from '../renderers';
 
 function FeedExperienceWorkspaceContent() {
   const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
-  const { success, error } = useActionFeedback();
+  const { error } = useActionFeedback();
 
   const { user, isAuthenticated } = useIdentity();
 
@@ -67,13 +67,8 @@ function FeedExperienceWorkspaceContent() {
 
         return;
       }
-
-      success({
-        title: 'Added to cart',
-        description: `${product.name} — ${variant.label} is now in your cart.`
-      });
     },
-    [addCartItem, error, success]
+    [addCartItem, error]
   );
   const cartProductIds = useMemo(() => [...new Set(cartItems.map(item => item.productId))], [cartItems]);
 

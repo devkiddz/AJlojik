@@ -1,19 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+
+import { useActionFeedback } from '@/features/action-feedback';
 import { useWorkspace } from '@/features/workspace';
 
 import { CartEngine } from './cartEngine';
-
-import {
-  calculateCartItemCount,
-  calculateCartQuantity,
-  calculateCartSubtotal
-} from './utils/cartCalculations';
-
 import { CartContext } from './cartContext';
-
-import { getCartErrorMessage } from './utils/cartErrors';
 
 import type {
   AddToCartInput,
@@ -23,12 +16,26 @@ import type {
   UpdateCartQuantityInput
 } from './cartTypes';
 
+import {
+  calculateCartItemCount,
+  calculateCartQuantity,
+  calculateCartSubtotal
+} from './utils/cartCalculations';
+
+import { getCartErrorMessage } from './utils/cartErrors';
+
 type CartProviderProps = {
   children: ReactNode;
 };
 
+const CART_ACTIVITY_GROUP_KEY = 'cart-activity';
+
+const CART_ACTIVITY_DURATION = 5000;
+
 export function CartProvider({ children }: CartProviderProps) {
   const { activeWorkspace } = useWorkspace();
+
+  const { success } = useActionFeedback();
 
   const runtime = useMemo<CartRuntime>(
     () => ({
@@ -51,7 +58,7 @@ export function CartProvider({ children }: CartProviderProps) {
     setError(null);
   }, []);
 
-  const refreshCart = useCallback(async () => {
+  const refreshCart = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
 
@@ -86,7 +93,83 @@ export function CartProvider({ children }: CartProviderProps) {
 
         setItems(result.items);
 
-        return result.affectedItem ?? null;
+        /*
+         * Some cart adapters may update the complete cart
+         * without explicitly returning affectedItem.
+         *
+         * Resolve it from the updated cart as a fallback.
+         */
+        const affectedItem =
+          result.affectedItem ??
+          result.items.find(item => String(item.variantId) === String(input.variant.id)) ??
+          null;
+
+        const addedQuantity = Math.max(1, input.quantity ?? 1);
+
+        const feedbackImage =
+          input.variant.image || input.product.variants.find(variant => Boolean(variant.image))?.image;
+
+        const unitPrice = Number(input.variant.price);
+
+        const hasValidPrice = Number.isFinite(unitPrice);
+
+        /*
+         * A successful CartEngine.add operation is enough
+         * to show feedback. It must not depend on
+         * result.affectedItem being present.
+         */
+        success({
+          groupKey: CART_ACTIVITY_GROUP_KEY,
+          duration: CART_ACTIVITY_DURATION,
+
+          title: addedQuantity > 1 ? 'Items added to your cart' : 'Added to your cart',
+
+          banner: {
+            label: 'AJ Logik',
+            detail: 'Your shopping cart',
+            badge: 'Cart updated'
+          },
+
+          ...(feedbackImage
+            ? {
+                cartPreview: {
+                  items: [
+                    {
+                      id: `${input.product.id}:${input.variant.id}`,
+
+                      productId: input.product.id,
+
+                      variantId: input.variant.id,
+
+                      name: input.product.name,
+
+                      variantLabel: input.variant.label,
+
+                      image: feedbackImage,
+
+                      quantity: addedQuantity,
+
+                      ...(hasValidPrice
+                        ? {
+                            price: unitPrice
+                          }
+                        : {})
+                    }
+                  ],
+
+                  locale: 'en-NG',
+                  currency: 'NGN'
+                }
+              }
+            : {
+                description:
+                  addedQuantity > 1
+                    ? `${addedQuantity} × ${input.product.name} · ${input.variant.label}`
+                    : `${input.product.name} · ${input.variant.label}`
+              })
+        });
+
+        return affectedItem;
       } catch (addError) {
         setError(getCartErrorMessage(addError, 'Unable to add this product.'));
 
@@ -95,11 +178,11 @@ export function CartProvider({ children }: CartProviderProps) {
         setMutating(false);
       }
     },
-    [runtime]
+    [runtime, success]
   );
 
   const updateQuantity = useCallback(
-    async (input: UpdateCartQuantityInput) => {
+    async (input: UpdateCartQuantityInput): Promise<void> => {
       setMutating(true);
       setError(null);
 
@@ -117,7 +200,7 @@ export function CartProvider({ children }: CartProviderProps) {
   );
 
   const removeFromCart = useCallback(
-    async (itemId: string) => {
+    async (itemId: string): Promise<void> => {
       setMutating(true);
       setError(null);
 
@@ -134,7 +217,7 @@ export function CartProvider({ children }: CartProviderProps) {
     [runtime]
   );
 
-  const clearCart = useCallback(async () => {
+  const clearCart = useCallback(async (): Promise<void> => {
     setMutating(true);
     setError(null);
 
@@ -156,7 +239,7 @@ export function CartProvider({ children }: CartProviderProps) {
   const subtotal = useMemo(() => calculateCartSubtotal(items), [items]);
 
   const containsVariant = useCallback(
-    (variantId: string) => items.some(item => item.variantId === variantId),
+    (variantId: string): boolean => items.some(item => item.variantId === variantId),
     [items]
   );
 

@@ -15,6 +15,60 @@ export type ActionFeedbackBanner = {
   badge?: string;
 };
 
+// ============================================================
+// RICH CART FEEDBACK
+// ============================================================
+
+export type ActionFeedbackCartItem = {
+  /**
+   * Stable identity used when repeated additions are merged.
+   *
+   * Recommended:
+   * `${productId}:${variantId}`
+   */
+  id: string;
+
+  productId: string;
+  variantId: string;
+
+  name: string;
+  variantLabel?: string;
+  image: string;
+
+  quantity: number;
+
+  /**
+   * Unit price, not quantity-adjusted line total.
+   */
+  price?: number;
+};
+
+export type ActionFeedbackCartPreview = {
+  /**
+   * Products added during the current cart-notification burst.
+   */
+  items: ActionFeedbackCartItem[];
+
+  /**
+   * Total quantity represented by the current notification.
+   *
+   * When omitted, the viewport may derive it from `items`.
+   */
+  totalQuantity?: number;
+
+  /**
+   * Combined monetary value represented by the notification.
+   */
+  totalAmount?: number;
+
+  locale?: string;
+  currency?: string;
+};
+
+// ============================================================
+// FEEDBACK INPUT AND MESSAGE
+// ============================================================
+
 export type ActionFeedbackInput = {
   tone?: ActionFeedbackTone;
 
@@ -25,6 +79,22 @@ export type ActionFeedbackInput = {
 
   banner?: ActionFeedbackBanner;
   action?: ActionFeedbackAction;
+
+  /**
+   * Optional rich cart presentation.
+   *
+   * Existing feedback messages remain unaffected when omitted.
+   */
+  cartPreview?: ActionFeedbackCartPreview;
+
+  /**
+   * Messages sharing the same group key may be merged by the
+   * provider instead of creating separate notification cards.
+   *
+   * Example:
+   * `cart-activity`
+   */
+  groupKey?: string;
 };
 
 export type ActionFeedbackMessage = {
@@ -40,7 +110,25 @@ export type ActionFeedbackMessage = {
 
   banner?: ActionFeedbackBanner;
   action?: ActionFeedbackAction;
+
+  cartPreview?: ActionFeedbackCartPreview;
+
+  /**
+   * Identifies a notification that may be updated in place.
+   */
+  groupKey?: string;
+
+  /**
+   * Incremented whenever an existing message is updated.
+   *
+   * The viewport uses this to restart the progress animation.
+   */
+  revision: number;
 };
+
+// ============================================================
+// SERIALIZABLE PROTECTED ACTIONS
+// ============================================================
 
 export type JsonPrimitive =
   | string
@@ -108,6 +196,10 @@ export type RunProtectedActionInput = {
   gate?: AuthenticationGateCopy;
 };
 
+// ============================================================
+// CONTEXT CONTRACT
+// ============================================================
+
 export type ActionFeedbackContextValue = {
   success: (
     input: Omit<ActionFeedbackInput, 'tone'>
@@ -153,6 +245,10 @@ export type ActionFeedbackContextValue = {
   authenticationGateOpen: boolean;
   resumingAction: boolean;
 };
+
+// ============================================================
+// EXPERIENCE ONBOARDING
+// ============================================================
 
 export type ExperienceOnboardingPath =
   | 'signup'

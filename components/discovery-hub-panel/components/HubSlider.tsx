@@ -58,15 +58,9 @@ function getTargetProductId(target: unknown): string | null {
 export default function HubSlider({ items, autoSlide = false, variant = 'strip' }: HubSliderProps) {
   const { actions, context } = useFeedExperience();
 
-  const products = context.catalog.products;
+  const { items: cartItems, addToCart, updateQuantity, removeFromCart, mutating } = useCart();
 
-  const {
-    items: cartItems,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    mutating
-  } = useCart();
+  const products = context.catalog.products;
 
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -74,7 +68,10 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
 
   const safeItems = useMemo(() => items.filter(Boolean), [items]);
 
-  const productById = useMemo(() => new Map(products.map(product => [product.id, product])), [products]);
+  const productById = useMemo(
+    () => new Map(products.map(product => [String(product.id), product])),
+    [products]
+  );
 
   const currentActiveIndex = safeItems.length > 0 ? Math.min(activeIndex, safeItems.length - 1) : 0;
 
@@ -83,31 +80,27 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
   const resolveProduct = (item: HubSlideItem) => {
     const targetProductId = getTargetProductId(item.target);
 
-    return productById.get(targetProductId ?? item.id);
+    const productId = targetProductId ?? String(item.id);
+
+    return productById.get(String(productId));
   };
 
-  const getCommerceState = (item: HubSlideItem) => {
-    const product = resolveProduct(item);
+  const getCommerceState = (slideItem: HubSlideItem) => {
+    const product = resolveProduct(slideItem);
 
-    const selectedVariant = product
-      ? (product.variants.find(variant => variant.stockLeft > 0) ?? product.variants[0])
-      : undefined;
+    const selectedVariant =
+      product?.variants.find(productVariant => productVariant.stockLeft > 0) ?? product?.variants[0];
 
     const cartItem =
       product && selectedVariant
         ? cartItems.find(
-            item =>
-              String(item.productId) ===
-                String(product.id) &&
-              String(item.variantId) ===
-                String(selectedVariant.id)
+            currentCartItem =>
+              String(currentCartItem.productId) === String(product.id) &&
+              String(currentCartItem.variantId) === String(selectedVariant.id)
           )
         : undefined;
 
-    const commerceKey =
-      product && selectedVariant
-        ? `${product.id}:${selectedVariant.id}`
-        : null;
+    const commerceKey = product && selectedVariant ? `${product.id}:${selectedVariant.id}` : null;
 
     return {
       product,
@@ -115,129 +108,71 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
       cartItem,
       commerceKey,
 
-      pending:
-        Boolean(commerceKey) &&
-        pendingCommerceKey === commerceKey
+      pending: Boolean(commerceKey) && pendingCommerceKey === commerceKey
     };
   };
 
-  const increaseSlideCartQuantity =
-    async (
-      item: HubSlideItem
-    ): Promise<void> => {
-      const {
+  const increaseSlideCartQuantity = async (item: HubSlideItem): Promise<void> => {
+    const { product, selectedVariant, cartItem, commerceKey } = getCommerceState(item);
+
+    if (
+      !product ||
+      !selectedVariant ||
+      selectedVariant.stockLeft <= 0 ||
+      mutating ||
+      (cartItem && cartItem.quantity >= selectedVariant.stockLeft)
+    ) {
+      return;
+    }
+
+    setPendingCommerceKey(commerceKey);
+
+    try {
+      /*
+       * Every addition passes through addToCart.
+       *
+       * CartEngine.add merges an existing variant,
+       * while CartProvider displays and updates
+       * the grouped rich cart notification.
+       */
+      await addToCart({
         product,
-        selectedVariant,
-        cartItem,
-        commerceKey
-      } = getCommerceState(
-        item
-      );
+        variant: selectedVariant,
+        quantity: 1
+      });
+    } finally {
+      setPendingCommerceKey(null);
+    }
+  };
 
-      if (
-        !product ||
-        !selectedVariant ||
-        selectedVariant.stockLeft <=
-          0 ||
-        mutating ||
-        (
-          cartItem &&
-          cartItem.quantity >=
-            selectedVariant.stockLeft
-        )
-      ) {
+  const decreaseSlideCartQuantity = async (item: HubSlideItem): Promise<void> => {
+    const { cartItem, commerceKey } = getCommerceState(item);
+
+    if (!cartItem || mutating) {
+      return;
+    }
+
+    setPendingCommerceKey(commerceKey);
+
+    try {
+      if (cartItem.quantity <= 1) {
+        await removeFromCart(cartItem.id);
+
         return;
       }
 
-      setPendingCommerceKey(
-        commerceKey
-      );
-
-      try {
-        if (cartItem) {
-          await updateQuantity({
-            itemId:
-              cartItem.id,
-
-            quantity:
-              cartItem.quantity +
-              1
-          });
-
-          return;
-        }
-
-        await addToCart({
-          product,
-          variant:
-            selectedVariant,
-          quantity: 1
-        });
-      } finally {
-        setPendingCommerceKey(
-          null
-        );
-      }
-    };
-
-  const decreaseSlideCartQuantity =
-    async (
-      item: HubSlideItem
-    ): Promise<void> => {
-      const {
-        selectedVariant,
-        cartItem,
-        commerceKey
-      } = getCommerceState(
-        item
-      );
-
-      if (
-        !selectedVariant ||
-        !cartItem ||
-        mutating
-      ) {
-        return;
-      }
-
-      setPendingCommerceKey(
-        commerceKey
-      );
-
-      try {
-        if (
-          cartItem.quantity <=
-          1
-        ) {
-          await removeFromCart(
-            cartItem.id
-          );
-
-          return;
-        }
-
-        await updateQuantity({
-          itemId:
-            cartItem.id,
-
-          quantity:
-            cartItem.quantity -
-            1
-        });
-      } finally {
-        setPendingCommerceKey(
-          null
-        );
-      }
-    };
+      await updateQuantity({
+        itemId: cartItem.id,
+        quantity: cartItem.quantity - 1
+      });
+    } finally {
+      setPendingCommerceKey(null);
+    }
+  };
 
   const openItem = (item: HubSlideItem): void => {
     const product = resolveProduct(item);
 
-    /*
-     * Real catalog products always launch the complete
-     * Product Experience inside the active feed.
-     */
     if (product) {
       actions.openExperience({
         type: 'product',
@@ -247,52 +182,23 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
       return;
     }
 
-    /*
-     * Promotions, coupons and other Hub items may
-     * publish their own experience targets.
-     */
     if (item.target) {
       actions.openExperience(item.target);
     }
   };
 
-  const renderCartAction = (
-    item: HubSlideItem,
-    options:
-      CartActionOptions = {}
-  ) => {
-    const {
-      product,
-      selectedVariant,
-      cartItem,
-      pending
-    } = getCommerceState(
-      item
-    );
+  const renderCartAction = (item: HubSlideItem, options: CartActionOptions = {}) => {
+    const { product, selectedVariant, cartItem, pending } = getCommerceState(item);
 
-    if (
-      !product ||
-      !selectedVariant
-    ) {
+    if (!product || !selectedVariant) {
       return null;
     }
 
-    const {
-      containerClassName,
-      buttonClassName,
-      compact = false
-    } = options;
+    const { containerClassName, buttonClassName, compact = false } = options;
 
-    const soldOut =
-      selectedVariant.stockLeft <=
-      0;
+    const soldOut = selectedVariant.stockLeft <= 0;
 
-    const reachedStockLimit =
-      Boolean(
-        cartItem &&
-          cartItem.quantity >=
-            selectedVariant.stockLeft
-      );
+    const reachedStockLimit = Boolean(cartItem && cartItem.quantity >= selectedVariant.stockLeft);
 
     if (cartItem) {
       return (
@@ -301,89 +207,52 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
             'inline-flex items-center rounded-full border border-primary/12 bg-background/55 p-1 text-primary shadow-sm backdrop-blur',
             compact && 'w-full justify-between',
             containerClassName
-          )}
-        >
+          )}>
           <button
             type="button"
             aria-label={`Remove one ${selectedVariant.label} from cart`}
-            disabled={
-              mutating ||
-              pending
-            }
+            disabled={mutating || pending}
             onClick={event => {
               event.preventDefault();
               event.stopPropagation();
 
-              void decreaseSlideCartQuantity(
-                item
-              );
+              void decreaseSlideCartQuantity(item);
             }}
             className={cn(
               'grid shrink-0 place-items-center rounded-full transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-45',
-              compact
-                ? 'size-7'
-                : 'size-8'
-            )}
-          >
-            <Minus
-              className={cn(
-                compact
-                  ? 'size-3'
-                  : 'size-3.5'
-              )}
-            />
+              compact ? 'size-7' : 'size-8'
+            )}>
+            <Minus className={cn(compact ? 'size-3' : 'size-3.5')} />
           </button>
 
           <span
             aria-live="polite"
             aria-label={`${cartItem.quantity} ${cartItem.quantity === 1 ? 'item' : 'items'} in cart`}
-            className={cn(
-              'min-w-8 text-center font-bold',
-              compact
-                ? 'text-[10px]'
-                : 'text-xs'
-            )}
-          >
+            className={cn('min-w-8 text-center font-bold', compact ? 'text-[10px]' : 'text-xs')}>
             {pending ? (
               <LoaderCircle className="mx-auto size-3.5 animate-spin" />
+            ) : cartItem.quantity > 99 ? (
+              '99+'
             ) : (
-              cartItem.quantity >
-              99
-                ? '99+'
-                : cartItem.quantity
+              cartItem.quantity
             )}
           </span>
 
           <button
             type="button"
             aria-label={`Add one more ${selectedVariant.label} to cart`}
-            disabled={
-              mutating ||
-              pending ||
-              reachedStockLimit
-            }
+            disabled={mutating || pending || reachedStockLimit}
             onClick={event => {
               event.preventDefault();
               event.stopPropagation();
 
-              void increaseSlideCartQuantity(
-                item
-              );
+              void increaseSlideCartQuantity(item);
             }}
             className={cn(
               'grid shrink-0 place-items-center rounded-full transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-45',
-              compact
-                ? 'size-7'
-                : 'size-8'
-            )}
-          >
-            <Plus
-              className={cn(
-                compact
-                  ? 'size-3'
-                  : 'size-3.5'
-              )}
-            />
+              compact ? 'size-7' : 'size-8'
+            )}>
+            <Plus className={cn(compact ? 'size-3' : 'size-3.5')} />
           </button>
         </div>
       );
@@ -392,26 +261,19 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
     return (
       <button
         type="button"
-        disabled={
-          soldOut ||
-          mutating ||
-          pending
-        }
+        disabled={soldOut || mutating || pending}
         onClick={event => {
           event.preventDefault();
           event.stopPropagation();
 
-          void increaseSlideCartQuantity(
-            item
-          );
+          void increaseSlideCartQuantity(item);
         }}
         className={cn(
           'inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/12 bg-background/55 px-3 py-2 text-[10px] font-semibold text-primary shadow-sm transition hover:bg-primary hover:text-background disabled:cursor-not-allowed disabled:opacity-55',
           compact ? 'w-full' : 'flex-1',
           containerClassName,
           buttonClassName
-        )}
-      >
+        )}>
         {pending ? (
           <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
         ) : (
@@ -419,23 +281,25 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
         )}
 
         <span className="truncate">
-          {soldOut
-            ? 'Sold out'
-            : pending
-              ? 'Adding...'
-              : compact
-                ? 'Add'
-                : 'Add to cart'}
+          {soldOut ? 'Sold out' : pending ? 'Adding...' : compact ? 'Add' : 'Add to cart'}
         </span>
       </button>
     );
   };
 
   const showPrevious = (): void => {
+    if (safeItems.length <= 1) {
+      return;
+    }
+
     setActiveIndex(currentActiveIndex === 0 ? safeItems.length - 1 : currentActiveIndex - 1);
   };
 
   const showNext = (): void => {
+    if (safeItems.length <= 1) {
+      return;
+    }
+
     setActiveIndex((currentActiveIndex + 1) % safeItems.length);
   };
 
@@ -445,10 +309,12 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
     }
 
     const interval = window.setInterval(() => {
-      setActiveIndex(current => (current + 1) % safeItems.length);
+      setActiveIndex(currentIndex => (currentIndex + 1) % safeItems.length);
     }, 4500);
 
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+    };
   }, [autoSlide, safeItems.length]);
 
   if (!safeItems.length) {
@@ -529,6 +395,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                           key={item.id}
                           type="button"
                           title={`Show ${item.title}`}
+                          aria-label={`Show ${item.title}`}
+                          aria-current={index === currentActiveIndex ? 'true' : undefined}
                           onClick={() => setActiveIndex(index)}
                           className={cn(
                             'h-1.5 rounded-full transition-all duration-300',
@@ -542,7 +410,8 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                     </div>
 
                     <span className="shrink-0 text-[10px] font-medium text-primary/35">
-                      {String(currentActiveIndex + 1).padStart(2, '0')} / {String(safeItems.length).padStart(2, '0')}
+                      {String(currentActiveIndex + 1).padStart(2, '0')} /{' '}
+                      {String(safeItems.length).padStart(2, '0')}
                     </span>
                   </div>
                 ) : null}
@@ -665,11 +534,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
                 </div>
               </button>
 
-              {cartAction ? (
-                <div className="px-2.5 pb-2.5">
-                  {cartAction}
-                </div>
-              ) : null}
+              {cartAction ? <div className="px-2.5 pb-2.5">{cartAction}</div> : null}
             </article>
           );
         })}
@@ -716,11 +581,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
               {price ? <p className="mt-1 text-[11px] font-semibold text-primary/45">{price}</p> : null}
             </button>
 
-            {cartAction ? (
-              <div className="mt-2">
-                {cartAction}
-              </div>
-            ) : null}
+            {cartAction ? <div className="mt-2">{cartAction}</div> : null}
           </article>
         );
       })}

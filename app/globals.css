@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   TAILWIND THEME BRIDGE
+============================================================ */
+
 @theme inline {
   /* Typography */
   --font-base: var(--font-inter);
@@ -11,7 +15,7 @@
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 
-  /* Application colours */
+  /* Semantic colours */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -39,14 +43,19 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Chart colours */
+  /* Glass surfaces */
+  --color-glass: var(--glass-surface);
+  --color-glass-strong: var(--glass-surface-strong);
+  --color-glass-border: var(--glass-border);
+
+  /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* Sidebar colours */
+  /* Sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -65,7 +74,14 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+
+/* ============================================================
+   LIGHT THEME
+============================================================ */
+
 :root {
+  color-scheme: light;
+
   --background: #fbf7ef;
   --foreground: #0b1220;
 
@@ -89,10 +105,27 @@
 
   --destructive: #dc2626;
 
-  --border: #e5d8c5;
-  --input: #e5d8c5;
+  --border: rgb(11 18 32 / 0.1);
+  --input: rgb(11 18 32 / 0.14);
   --ring: #c9a45c;
 
+  /* Consistent surface hierarchy */
+  --surface-subtle: rgb(255 250 242 / 0.55);
+  --surface-soft: rgb(255 250 242 / 0.72);
+  --surface-strong: rgb(255 250 242 / 0.9);
+
+  /* Glass system */
+  --glass-surface: rgb(255 250 242 / 0.58);
+  --glass-surface-strong: rgb(255 250 242 / 0.78);
+  --glass-border: rgb(11 18 32 / 0.1);
+  --glass-highlight: rgb(255 255 255 / 0.68);
+
+  /* Shadows */
+  --shadow-soft: 0 10px 30px rgb(5 8 20 / 0.08);
+  --shadow-medium: 0 18px 50px rgb(5 8 20 / 0.12);
+  --shadow-strong: 0 28px 80px rgb(5 8 20 / 0.18);
+
+  /* Charts */
   --chart-1: #0b1220;
   --chart-2: #a31621;
   --chart-3: #c9a45c;
@@ -101,15 +134,17 @@
 
   --radius: 0.85rem;
 
+  /* Sidebar */
   --sidebar: #fffaf2;
   --sidebar-foreground: #0b1220;
   --sidebar-primary: #0b1220;
   --sidebar-primary-foreground: #fffaf2;
   --sidebar-accent: #f1eadf;
   --sidebar-accent-foreground: #0b1220;
-  --sidebar-border: #e5d8c5;
+  --sidebar-border: rgb(11 18 32 / 0.1);
   --sidebar-ring: #c9a45c;
 
+  /* Brand */
   --brand-navy: #0b1220;
   --brand-navy-light: #17213a;
   --brand-navy-deep: #050814;
@@ -122,23 +157,37 @@
   --brand-gold-light: #e3c57b;
   --brand-gold-soft: #f4dfae;
 
+  /* Gradients */
   --gradient-brand: linear-gradient(135deg, #050814 0%, #0b1220 55%, #17213a 100%);
+
   --gradient-premium: linear-gradient(135deg, #0b1220 0%, #17213a 45%, #c9a45c 120%);
+
   --gradient-royal: linear-gradient(135deg, #5f0b12 0%, #a31621 48%, #c9a45c 120%);
+
   --gradient-wine: linear-gradient(135deg, #3f070c 0%, #7e1018 50%, #a31621 100%);
 }
 
+/* ============================================================
+   DARK THEME
+============================================================ */
+
 .dark {
+  color-scheme: dark;
+
   --background: #050814;
   --foreground: #f8efe2;
 
   --card: #0b1220;
   --card-foreground: #f8efe2;
 
-  --popover: #0b1220;
+  --popover: #0d1628;
   --popover-foreground: #f8efe2;
 
-  --primary: #bfc0c2;
+  /*
+   * Primary is the principal readable colour in dark mode.
+   * This keeps text-primary consistent throughout the app.
+   */
+  --primary: #f8efe2;
   --primary-foreground: #050814;
 
   --secondary: #b9202c;
@@ -156,15 +205,33 @@
   --input: rgb(248 239 226 / 0.14);
   --ring: #d7b86f;
 
+  /* Consistent surface hierarchy */
+  --surface-subtle: rgb(11 18 32 / 0.38);
+  --surface-soft: rgb(11 18 32 / 0.58);
+  --surface-strong: rgb(11 18 32 / 0.82);
+
+  /* Glass system */
+  --glass-surface: rgb(11 18 32 / 0.52);
+  --glass-surface-strong: rgb(11 18 32 / 0.74);
+  --glass-border: rgb(248 239 226 / 0.1);
+  --glass-highlight: rgb(255 255 255 / 0.07);
+
+  /* Shadows */
+  --shadow-soft: 0 12px 35px rgb(0 0 0 / 0.22);
+  --shadow-medium: 0 22px 60px rgb(0 0 0 / 0.32);
+  --shadow-strong: 0 32px 90px rgb(0 0 0 / 0.44);
+
+  /* Charts */
   --chart-1: #d7b86f;
   --chart-2: #b9202c;
   --chart-3: #f8efe2;
   --chart-4: #9aa4b2;
   --chart-5: #4d5870;
 
-  --sidebar: #0b1220;
+  /* Sidebar */
+  --sidebar: #08101e;
   --sidebar-foreground: #f8efe2;
-  --sidebar-primary: #c9a45c;
+  --sidebar-primary: #d7b86f;
   --sidebar-primary-foreground: #050814;
   --sidebar-accent: #111a2e;
   --sidebar-accent-foreground: #f8efe2;
@@ -172,21 +239,76 @@
   --sidebar-ring: #d7b86f;
 }
 
+/* ============================================================
+   BASE
+============================================================ */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
 
   html {
+    min-width: 320px;
+
     @apply font-sans;
+
+    background-color: var(--background);
+
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
+    min-width: 320px;
+    min-height: 100svh;
+    overflow-x: hidden;
+
     @apply bg-background text-foreground;
+
+    background-color: var(--background);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 34%, transparent);
+
+    color: var(--foreground);
+  }
+
+  :where(
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']),
+    a[href],
+    input[type='button']:not(:disabled),
+    input[type='submit']:not(:disabled),
+    input[type='reset']:not(:disabled),
+    select:not(:disabled),
+    summary
+  ) {
+    cursor: pointer;
+  }
+
+  :where(button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled='true']) {
+    cursor: not-allowed;
   }
 }
 
+/* ============================================================
+   UTILITIES
+============================================================ */
+
 @layer utilities {
+  /* Brand gradients */
+
   .bg-gradient-brand {
     background: var(--gradient-brand);
   }
@@ -203,88 +325,161 @@
     background: var(--gradient-wine);
   }
 
+  /* Glass system */
+
+  .glass-surface {
+    border: 1px solid var(--glass-border);
+
+    background: linear-gradient(180deg, var(--glass-highlight), transparent 48%), var(--glass-surface);
+
+    box-shadow:
+      var(--shadow-soft),
+      inset 0 1px 0 var(--glass-highlight);
+
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    backdrop-filter: blur(18px) saturate(125%);
+  }
+
+  .glass-surface-strong {
+    border: 1px solid var(--glass-border);
+
+    background: linear-gradient(180deg, var(--glass-highlight), transparent 52%), var(--glass-surface-strong);
+
+    box-shadow:
+      var(--shadow-medium),
+      inset 0 1px 0 var(--glass-highlight);
+
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    backdrop-filter: blur(24px) saturate(135%);
+  }
+
+  /* Premium cards */
+
   .premium-card {
     position: relative;
     isolation: isolate;
     overflow: hidden;
 
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0)), var(--card);
+    border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--glass-border));
 
-    border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
+    background: linear-gradient(180deg, var(--glass-highlight), transparent 48%), var(--glass-surface);
 
     box-shadow:
-      0 10px 30px rgb(5 8 20 / 0.08),
-      inset 0 1px 0 rgb(255 255 255 / 0.08);
+      var(--shadow-soft),
+      inset 0 1px 0 var(--glass-highlight);
+
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    backdrop-filter: blur(18px) saturate(125%);
 
     transition:
       transform 300ms ease,
       border-color 300ms ease,
+      background-color 300ms ease,
       box-shadow 300ms ease;
-  }
-
-  .premium-card:hover {
-    transform: translateY(-4px);
-
-    border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
-
-    box-shadow:
-      0 24px 60px rgb(5 8 20 / 0.18),
-      0 0 40px color-mix(in oklab, var(--accent) 18%, transparent);
   }
 
   .premium-card::before {
     content: '';
+
     position: absolute;
     inset: 0;
+
     border-radius: inherit;
+
     pointer-events: none;
+
     opacity: 0;
 
     background: radial-gradient(
       420px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      color-mix(in oklab, var(--accent) 18%, transparent),
+      color-mix(in oklab, var(--accent) 16%, transparent),
       transparent 48%
     );
 
     transition: opacity 300ms ease;
   }
 
+  .premium-card:hover {
+    transform: translateY(-3px);
+
+    border-color: color-mix(in oklab, var(--accent) 38%, var(--glass-border));
+
+    box-shadow:
+      var(--shadow-medium),
+      0 0 38px color-mix(in oklab, var(--accent) 12%, transparent),
+      inset 0 1px 0 var(--glass-highlight);
+  }
+
   .premium-card:hover::before {
     opacity: 1;
   }
 
+  /* Glows */
+
   .gold-glow {
     box-shadow:
-      0 0 20px color-mix(in oklab, var(--accent) 25%, transparent),
-      0 0 44px color-mix(in oklab, var(--accent) 12%, transparent);
+      0 0 20px color-mix(in oklab, var(--accent) 22%, transparent),
+      0 0 44px color-mix(in oklab, var(--accent) 10%, transparent);
   }
 
   .wine-glow {
     box-shadow:
-      0 0 24px color-mix(in oklab, var(--secondary) 24%, transparent),
-      0 0 48px color-mix(in oklab, var(--secondary) 12%, transparent);
+      0 0 24px color-mix(in oklab, var(--secondary) 22%, transparent),
+      0 0 48px color-mix(in oklab, var(--secondary) 10%, transparent);
   }
+
+  /* Gradient text */
 
   .text-gradient-gold {
     background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-light));
+
+    background-clip: text;
+
+    color: transparent;
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .text-gradient-brand {
     background: linear-gradient(135deg, var(--brand-navy), var(--brand-navy-light));
+
+    background-clip: text;
+
+    color: transparent;
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .dark .text-gradient-brand {
     background: linear-gradient(135deg, var(--brand-gold-light), var(--brand-gold));
+
+    background-clip: text;
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  /* Unified hidden-scrollbar utilities */
+
+  .scrollbar-none,
+  .scrollbar-hide,
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* Embla Carousel */
+/* ============================================================
+   EMBLA CAROUSEL
+============================================================ */
 
 .embla__viewport {
   overflow: hidden;
@@ -292,6 +487,7 @@
 
 .embla__container {
   display: flex;
+
   touch-action: pan-y pinch-zoom;
 }
 
@@ -300,36 +496,29 @@
   min-width: 0;
 }
 
-/* Scrollbar */
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Premium Store Button */
+/* ============================================================
+   PREMIUM STORE BUTTON
+============================================================ */
 
 .premium-store {
-  --radius: 999px;
-
-  --gold: var(--brand-gold);
-  --gold-light: var(--brand-gold-light);
-  --gold-bright: var(--brand-gold-soft);
-  --amber: #fd8c3a;
-  --surface: var(--brand-navy);
-  --transition: 300ms ease;
+  --store-radius: 999px;
+  --store-gold: var(--brand-gold);
+  --store-gold-light: var(--brand-gold-light);
+  --store-gold-bright: var(--brand-gold-soft);
+  --store-amber: #fd8c3a;
+  --store-surface: var(--brand-navy);
+  --store-transition: 300ms ease;
 
   position: relative;
-  display: inline-flex;
-  padding: 2px;
-  border-radius: var(--radius);
   isolation: isolate;
 
-  transition: transform var(--transition);
+  display: inline-flex;
+
+  padding: 2px;
+
+  border-radius: var(--store-radius);
+
+  transition: transform var(--store-transition);
 }
 
 .premium-store:hover {
@@ -361,7 +550,13 @@
 
   border-radius: inherit;
 
-  background: linear-gradient(135deg, var(--gold-bright), var(--gold), var(--gold-light), var(--gold));
+  background: linear-gradient(
+    135deg,
+    var(--store-gold-bright),
+    var(--store-gold),
+    var(--store-gold-light),
+    var(--store-gold)
+  );
 
   opacity: 0.95;
 }
@@ -373,12 +568,13 @@
   align-items: center;
   gap: 0.6rem;
 
+  overflow: hidden;
+
   padding: 0.65rem 1.25rem;
 
-  overflow: hidden;
   border-radius: inherit;
 
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02)), var(--surface);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02)), var(--store-surface);
 
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.18),
@@ -390,7 +586,6 @@
 
 .store-gloss {
   position: absolute;
-
   top: 0;
   left: 10%;
 
@@ -405,6 +600,7 @@
 .store-shimmer {
   position: absolute;
   inset: 0;
+
   overflow: hidden;
 }
 
@@ -432,17 +628,105 @@
   align-items: center;
   gap: 0.55rem;
 
-  color: var(--gold-light);
+  color: var(--store-gold-light);
 
   transition: color 300ms ease;
 }
 
 .store-icon {
   color: currentColor;
+
   animation: store-float 2.2s ease-in-out infinite;
 }
 
-/* Animations */
+/* ============================================================
+   PROMOTIONS
+============================================================ */
+
+.promo-border {
+  background: linear-gradient(
+    120deg,
+    rgb(255 255 255 / 0.2),
+    rgb(212 175 55 / 0.9),
+    rgb(225 29 72 / 0.8),
+    rgb(255 255 255 / 0.2)
+  );
+
+  background-size: 300% 300%;
+
+  animation: promo-border-run 4s linear infinite;
+}
+
+.promo-button {
+  animation: promo-breathe 1.8s ease-in-out infinite;
+}
+
+.promo-spotlight {
+  background: radial-gradient(
+    circle at var(--x, 50%) var(--y, 50%),
+    rgb(255 255 255 / 0.22),
+    rgb(255 255 255 / 0.08) 18%,
+    transparent 45%
+  );
+}
+
+/* ============================================================
+   COUNTDOWN
+============================================================ */
+
+.countdown-glow {
+  position: relative;
+
+  overflow: hidden;
+}
+
+.countdown-glow::before {
+  content: '';
+
+  position: absolute;
+  inset: -1px;
+
+  border: 1px solid color-mix(in oklab, var(--accent) 55%, white);
+
+  border-radius: inherit;
+
+  pointer-events: none;
+
+  box-shadow:
+    0 0 12px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 0 28px color-mix(in oklab, var(--accent) 10%, transparent);
+
+  animation: countdown-breathe 2.8s ease-in-out infinite;
+}
+
+/* ============================================================
+   HEADER AMBIENT LIGHT
+============================================================ */
+
+.header-ambient-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 48% -80%,
+      color-mix(in oklab, var(--brand-gold) 42%, transparent) 0%,
+      color-mix(in oklab, var(--brand-wine) 18%, transparent) 38%,
+      transparent 72%
+    ),
+    linear-gradient(180deg, color-mix(in oklab, var(--brand-gold) 7%, transparent), transparent 70%);
+
+  opacity: 0.5;
+
+  animation: header-light-breathe 7s ease-in-out infinite;
+}
+
+/* ============================================================
+   ANIMATIONS
+============================================================ */
 
 @keyframes store-breathe {
   0%,
@@ -464,10 +748,7 @@
     transform: translateX(-260%) skewX(-20deg);
   }
 
-  15% {
-    transform: translateX(620%) skewX(-20deg);
-  }
-
+  15%,
   100% {
     transform: translateX(620%) skewX(-20deg);
   }
@@ -482,22 +763,6 @@
   50% {
     transform: translateY(-2px);
   }
-}
-
-.promo-border {
-  background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.2),
-    rgba(212, 175, 55, 0.9),
-    rgba(225, 29, 72, 0.8),
-    rgba(255, 255, 255, 0.2)
-  );
-  background-size: 300% 300%;
-  animation: promo-border-run 4s linear infinite;
-}
-
-.promo-button {
-  animation: promo-breathe 1.8s ease-in-out infinite;
 }
 
 @keyframes promo-border-run {
@@ -521,38 +786,6 @@
   }
 }
 
-.promo-spotlight {
-  background: radial-gradient(
-    circle at var(--x, 50%) var(--y, 50%),
-    rgba(255, 255, 255, 0.22),
-    rgba(255, 255, 255, 0.08) 18%,
-    transparent 45%
-  );
-}
-
-.countdown-glow {
-  position: relative;
-  overflow: hidden;
-}
-
-.countdown-glow::before {
-  content: '';
-
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-
-  pointer-events: none;
-
-  border: 1px solid color-mix(in oklab, var(--accent) 55%, white);
-
-  box-shadow:
-    0 0 12px color-mix(in oklab, var(--accent) 18%, transparent),
-    0 0 28px color-mix(in oklab, var(--accent) 10%, transparent);
-
-  animation: countdown-breathe 2.8s ease-in-out infinite;
-}
-
 @keyframes countdown-breathe {
   0%,
   100% {
@@ -574,77 +807,32 @@
   }
 }
 
-/* Header Breating Lights Effects */
-.header-ambient-light {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-
-  pointer-events: none;
-
-  background:
-    radial-gradient(
-      circle at 50% -80%,
-      color-mix(in oklab, var(--color-blue-500) 70%, transparent) 0%,
-      color-mix(in oklab, var(--color-green-500) 45%, transparent) 38%,
-      transparent 72%
-    ),
-    linear-gradient(180deg, color-mix(in oklab, var(--brand-gold) 8%, transparent), transparent 70%);
-
-  opacity: 0.55;
-
-  animation: header-light-breathe 7s ease-in-out infinite;
-}
-
 @keyframes header-light-breathe {
   0%,
   100% {
-    opacity: 0.38;
+    opacity: 0.36;
   }
 
   50% {
-    opacity: 0.62;
+    opacity: 0.58;
   }
 }
 
-/* scroll bar hide */
+/* ============================================================
+   ACCESSIBILITY
+============================================================ */
 
-@layer utilities {
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .no-scrollbar {
-    -ms-overflow-style: none !important; /* IE and Edge */
-    scrollbar-width: none !important; /* Firefox */
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-}
-
-body::-webkit-scrollbar {
-  display: none !important;
-}
-
-/* Hide scrollbar for Firefox */
-body {
-  scrollbar-width: none !important;
-}
-
-/* Hide scrollbar for IE and Edge */
-body {
-  -ms-overflow-style: none !important;
-}
-
-::-webkit-scrollbar {
-  display: none;
-}
-
-/* Consistent desktop affordance for every interactive control. */
-:where(button:not(:disabled), [role='button']:not([aria-disabled='true']), a[href], input[type='button']:not(:disabled), input[type='submit']:not(:disabled), input[type='reset']:not(:disabled), select:not(:disabled), summary) {
-  cursor: pointer;
-}
-
-:where(button:disabled, input:disabled, select:disabled, [aria-disabled='true']) {
-  cursor: not-allowed;
 }
