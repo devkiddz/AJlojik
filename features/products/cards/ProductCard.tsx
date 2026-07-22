@@ -47,7 +47,7 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
   return (
     <article
       className={cn(
-        'group relative h-full w-full min-w-40',
+        'group relative h-full w-full min-w-0',
         'min-h-48 overflow-hidden rounded-xl',
         'shadow-sm transition duration-300 ease-out',
         'hover:-translate-y-0.5',
@@ -67,8 +67,6 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
           text-left
           focus-visible:outline-none
           focus-visible:ring-0
-          focus-visible:ring-inset
-          focus-visible:ring-ring
           md:min-h-56
         ">
         {/* ==========================================
