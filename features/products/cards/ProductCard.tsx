@@ -66,7 +66,9 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
           min-h-48 overflow-hidden
           text-left
           focus-visible:outline-none
-          focus-visible:ring-0
+          focus-visible:ring-1
+          focus-visible:ring-inset
+        focus-visible:ring-white/70 
           md:min-h-56
         ">
         {/* ==========================================
@@ -78,7 +80,7 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
           alt=""
           fill
           sizes="
-            (max-width: 640px) 33vw,
+            (max-width: 640px) 45vw,
             (max-width: 768px) 25vw,
             176px
           "
@@ -98,7 +100,7 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
           alt={product.name}
           fill
           sizes="
-            (max-width: 640px) 33vw,
+            (max-width: 640px) 45vw,
             (max-width: 768px) 25vw,
             176px
           "

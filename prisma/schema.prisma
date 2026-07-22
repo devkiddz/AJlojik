@@ -15,18 +15,18 @@ datasource db {
 // ============================================================
 
 model User {
-  id            String   @id
-  name          String
-  email         String
-  emailVerified Boolean  @default(false)
-  image         String?
-  tier          String?  @default("member")
-  accountState  String   @default("ACTIVE")
-  lockedUntil   DateTime?
+  id                String    @id
+  name              String
+  email             String
+  emailVerified     Boolean   @default(false)
+  image             String?
+  tier              String?   @default("member")
+  accountState      String    @default("ACTIVE")
+  lockedUntil       DateTime?
   restrictionReason String?
-  isGhostDeveloper Boolean @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isGhostDeveloper  Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   sessions Session[]
   accounts Account[]
@@ -137,11 +137,11 @@ model ExperienceProfile {
   onboardingCompleted    Boolean @default(false)
   personalizationEnabled Boolean @default(true)
 
-  shoppingLists Json?
-  experienceDensity String  @default("immersive")
-  autoplayPreviews  Boolean @default(true)
-  discoveryEnabled  Boolean @default(true)
-  recommendationMode String @default("balanced")
+  shoppingLists         Json?
+  experienceDensity     String  @default("immersive")
+  autoplayPreviews      Boolean @default(true)
+  discoveryEnabled      Boolean @default(true)
+  recommendationMode    String  @default("balanced")
   shoppingNotifications Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -696,6 +696,12 @@ model Address {
   @@map("address")
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Review {
   id String @id @default(cuid())
 
@@ -705,16 +711,23 @@ model Review {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  rating   Int
-  title    String?
-  comment  String?
-  approved Boolean @default(false)
+  rating  Int
+  title   String?
+  comment String?
+
+  status ReviewStatus @default(PENDING)
+
+  moderationReason String?
+  moderatedAt      DateTime?
+  moderatedById    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, productId])
-  @@index([productId])
+  @@index([productId, status])
+  @@index([status, createdAt])
+  @@index([moderatedById])
   @@map("review")
 }
 
@@ -781,21 +794,21 @@ model Workspace {
 model StorefrontHero {
   id String @id @default(cuid())
 
-  workspaceId String @unique
+  workspaceId String    @unique
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  enabled       Boolean @default(true)
-  mediaType     String  @default("VIDEO")
-  mediaUrl      String? @default("https://www.youtube.com/watch?v=WN_fa23hasc")
-  posterUrl     String? @default("https://images.unsplash.com/photo-1575444758702-4a6b9222336e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
-  eyebrow       String  @default("Your personal shopping experience")
-  title         String  @default("Every beautiful moment starts here.")
-  summary       String?
-  primaryLabel  String  @default("Create your experience")
-  primaryHref   String  @default("/sign-up")
-  secondaryLabel String @default("Sign in")
-  secondaryHref  String @default("/sign-in")
-  autoplay      Boolean @default(true)
+  enabled        Boolean @default(true)
+  mediaType      String  @default("VIDEO")
+  mediaUrl       String? @default("https://www.youtube.com/watch?v=WN_fa23hasc")
+  posterUrl      String? @default("https://images.unsplash.com/photo-1575444758702-4a6b9222336e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
+  eyebrow        String  @default("Your personal shopping experience")
+  title          String  @default("Every beautiful moment starts here.")
+  summary        String?
+  primaryLabel   String  @default("Create your experience")
+  primaryHref    String  @default("/sign-up")
+  secondaryLabel String  @default("Sign in")
+  secondaryHref  String  @default("/sign-in")
+  autoplay       Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

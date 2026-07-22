@@ -3,15 +3,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { BadgeCheck, MessageSquareText, Star, UserRound } from 'lucide-react';
-import { getMyProductReview } from '@/features/reviews/actions/getMyProductReview';
 
 import { Button } from '@/components/ui/button';
+
 import type {
   ExperienceReview,
   ReviewRating,
   ReviewsModuleDefinition
 } from '@/features/feed-experience/contracts';
+
+import { getMyProductReview } from '@/features/reviews/actions/getMyProductReview';
+
 import { upsertProductReview, type SavedProductReview } from '@/features/reviews/actions/upsertProductReview';
+
 import { cn } from '@/lib/utils';
 
 type ProductReviewsSectionProps = {
@@ -25,6 +29,7 @@ type RatingStarsProps = {
 };
 
 const REVIEW_RATINGS: ReviewRating[] = [5, 4, 3, 2, 1];
+
 const REVIEW_PREVIEW_LIMIT = 3;
 
 function getInitials(name: string): string {
@@ -46,6 +51,7 @@ function RatingStars({ rating, size = 'default' }: RatingStarsProps) {
           key={star}
           className={cn(
             size === 'large' ? 'size-5' : 'size-3.5',
+
             star <= roundedRating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'
           )}
         />
@@ -56,7 +62,7 @@ function RatingStars({ rating, size = 'default' }: RatingStarsProps) {
 
 export function ProductReviewsSection({ productId, data }: ProductReviewsSectionProps) {
   const [reviews, setReviews] = useState<ExperienceReview[]>(data.reviews);
-  const [loadingMyReview, setLoadingMyReview] = useState(true);
+
   const [averageRating, setAverageRating] = useState(data.averageRating);
 
   const [reviewCount, setReviewCount] = useState(data.reviewCount);
@@ -67,14 +73,22 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
 
   const [pendingReview, setPendingReview] = useState<SavedProductReview | null>(null);
 
+  const [loadingMyReview, setLoadingMyReview] = useState(true);
+
+  const [myReviewError, setMyReviewError] = useState<string | null>(null);
+
   const [showAllReviews, setShowAllReviews] = useState(false);
+
   const [reviewFormOpen, setReviewFormOpen] = useState(false);
+
   const [submittingReview, setSubmittingReview] = useState(false);
 
   const [draftRating, setDraftRating] = useState<ReviewRating | 0>(0);
 
   const [draftTitle, setDraftTitle] = useState('');
+
   const [draftComment, setDraftComment] = useState('');
+
   const [formError, setFormError] = useState<string | null>(null);
 
   const numberFormatter = useMemo(() => {
@@ -105,6 +119,16 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
 
   const visibleReviews = showAllReviews ? reviews : reviews.slice(0, REVIEW_PREVIEW_LIMIT);
 
+  const pendingReviewIsRejected = pendingReview?.status === 'REJECTED';
+
+  const reviewButtonLabel = reviewFormOpen
+    ? 'Close review form'
+    : pendingReviewIsRejected
+      ? 'Edit rejected review'
+      : pendingReview
+        ? 'Edit pending review'
+        : 'Write a review';
+
   useEffect(() => {
     setReviews(data.reviews);
     setAverageRating(data.averageRating);
@@ -120,18 +144,22 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
     setReviewFormOpen(false);
     setPendingReview(null);
     setSubmittingReview(false);
+    setLoadingMyReview(true);
 
     setDraftRating(0);
     setDraftTitle('');
     setDraftComment('');
+
     setFormError(null);
-  }, [data.targetId]);
+    setMyReviewError(null);
+  }, [productId]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadMyReview(): Promise<void> {
       setLoadingMyReview(true);
+      setMyReviewError(null);
 
       try {
         const result = await getMyProductReview(productId);
@@ -141,22 +169,25 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
         }
 
         if (!result.ok) {
-          console.error(result.message);
           setPendingReview(null);
+          setMyReviewError(result.message);
 
           return;
         }
 
-        /*
-         * Approved reviews belong in the public collection.
-         * Only an unapproved review is shown privately here.
-         */
-        setPendingReview(result.review && !result.review.approved ? result.review : null);
-      } catch (error) {
-        if (!cancelled) {
-          console.error('Failed to load pending review:', error);
+        const privateReview = result.review && result.review.status !== 'APPROVED' ? result.review : null;
 
+        setPendingReview(privateReview);
+      } catch {
+        if (!cancelled) {
+          /*
+           * This is presented inside the interface instead
+           * of using console.error, which would trigger the
+           * Next.js development console overlay.
+           */
           setPendingReview(null);
+
+          setMyReviewError('Your review status could not be loaded.');
         }
       } finally {
         if (!cancelled) {
@@ -193,6 +224,10 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
       setDraftComment(pendingReview.comment);
     }
 
+    if (!openingForm) {
+      resetReviewForm();
+    }
+
     setReviewFormOpen(openingForm);
     setFormError(null);
   }
@@ -220,6 +255,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
 
     setSubmittingReview(true);
     setFormError(null);
+    setMyReviewError(null);
 
     try {
       const result = await upsertProductReview({
@@ -236,22 +272,20 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
       }
 
       /*
-       * The review is stored in the database but remains outside
-       * the public review collection until moderation is completed.
+       * The review is stored permanently but remains private
+       * until moderation has approved it.
        */
       setPendingReview(result.review);
 
       /*
-       * Editing an approved review returns it to moderation.
-       * Remove the approved version from this local presentation.
+       * Editing an approved review sends it back to moderation.
+       * Remove its previously approved local presentation.
        */
       setReviews(currentReviews => currentReviews.filter(review => review.id !== result.review.id));
 
       setReviewFormOpen(false);
       resetReviewForm();
-    } catch (error) {
-      console.error('Review submission failed:', error);
-
+    } catch {
       setFormError('Your review could not be saved. Please try again.');
     } finally {
       setSubmittingReview(false);
@@ -312,7 +346,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
           ">
           <MessageSquareText className="size-4" />
 
-          {reviewFormOpen ? 'Close review form' : pendingReview ? 'Edit pending review' : 'Write a review'}
+          {reviewButtonLabel}
         </Button>
       </header>
 
@@ -360,6 +394,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
               <div className="mt-3 flex flex-wrap gap-2">
                 {[1, 2, 3, 4, 5].map(star => {
                   const rating = star as ReviewRating;
+
                   const selected = rating <= draftRating;
 
                   return (
@@ -387,6 +422,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
                       <Star
                         className={cn(
                           'size-5',
+
                           selected ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'
                         )}
                       />
@@ -493,7 +529,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
                 ">
                 <MessageSquareText className="size-4" />
 
-                {submittingReview ? 'Saving review...' : 'Submit review'}
+                {submittingReview ? 'Saving review...' : pendingReview ? 'Resubmit review' : 'Submit review'}
               </Button>
             </div>
           </form>
@@ -505,8 +541,6 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
       ==================================================== */}
 
       <div className="grid items-start gap-6 p-5 md:p-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        {/* Overall rating */}
-
         <aside className="h-fit self-start rounded-3xl border border-border bg-card p-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Overall rating
@@ -530,7 +564,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
 
           <div className="mt-6 space-y-3">
             {REVIEW_RATINGS.map(rating => {
-              const ratingCount = ratingDistribution[rating];
+              const ratingCount = ratingDistribution[rating] ?? 0;
 
               const percentage = reviewCount > 0 ? Math.round((ratingCount / reviewCount) * 100) : 0;
 
@@ -558,28 +592,48 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
           </div>
         </aside>
 
-        {/* Pending and approved reviews */}
-
         <div className="min-w-0 space-y-4">
           {loadingMyReview ? (
             <div className="rounded-3xl border border-border bg-muted/20 p-4">
               <p className="text-xs text-muted-foreground">Checking your review status...</p>
             </div>
           ) : null}
+
+          {!loadingMyReview && myReviewError ? (
+            <div
+              role="status"
+              className="
+                rounded-3xl border border-amber-400/20
+                bg-amber-400/5 p-4
+              ">
+              <p className="text-xs leading-5 text-amber-700 dark:text-amber-300">{myReviewError}</p>
+            </div>
+          ) : null}
+
           {pendingReview ? (
             <article
-              aria-label="Your pending review"
-              className="
-                rounded-3xl border border-amber-400/25
-                bg-amber-400/5 p-5
-              ">
+              aria-label={pendingReviewIsRejected ? 'Your rejected review' : 'Your pending review'}
+              className={cn(
+                'rounded-3xl border p-5',
+
+                pendingReviewIsRejected
+                  ? 'border-rose-500/25 bg-rose-500/5'
+                  : 'border-amber-400/25 bg-amber-400/5'
+              )}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h4 className="font-semibold">{pendingReview.author.name}</h4>
 
-                    <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
-                      Pending approval
+                    <span
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-[10px] font-semibold',
+
+                        pendingReviewIsRejected
+                          ? 'border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                          : 'border-amber-400/25 bg-amber-400/10 text-amber-700 dark:text-amber-300'
+                      )}>
+                      {pendingReviewIsRejected ? 'Changes requested' : 'Pending approval'}
                     </span>
 
                     {pendingReview.verified ? (
@@ -595,7 +649,9 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
                   </div>
                 </div>
 
-                <p className="text-[10px] text-muted-foreground">Awaiting moderation</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {pendingReviewIsRejected ? 'Review requires an update' : 'Awaiting moderation'}
+                </p>
               </div>
 
               {pendingReview.title ? <h5 className="mt-4 text-sm font-bold">{pendingReview.title}</h5> : null}
@@ -604,8 +660,29 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
                 {pendingReview.comment}
               </p>
 
-              <p className="mt-4 text-xs leading-5 text-amber-700 dark:text-amber-300">
-                Your review has been saved. It will become public after approval.
+              {pendingReviewIsRejected && pendingReview.moderationReason ? (
+                <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-rose-700 dark:text-rose-300">
+                    Moderation note
+                  </p>
+
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    {pendingReview.moderationReason}
+                  </p>
+                </div>
+              ) : null}
+
+              <p
+                className={cn(
+                  'mt-4 text-xs leading-5',
+
+                  pendingReviewIsRejected
+                    ? 'text-rose-700 dark:text-rose-300'
+                    : 'text-amber-700 dark:text-amber-300'
+                )}>
+                {pendingReviewIsRejected
+                  ? 'Update this review and resubmit it for moderation.'
+                  : 'Your review has been saved. It will become public after approval.'}
               </p>
             </article>
           ) : null}
@@ -669,7 +746,7 @@ export function ProductReviewsSection({ productId, data }: ProductReviewsSection
                 </div>
               ) : null}
             </div>
-          ) : pendingReview ? null : (
+          ) : pendingReview || loadingMyReview ? null : (
             <div className="grid min-h-56 place-items-center rounded-3xl border border-dashed border-border bg-muted/20 p-6 text-center">
               <div>
                 <MessageSquareText className="mx-auto size-8 text-muted-foreground/50" />

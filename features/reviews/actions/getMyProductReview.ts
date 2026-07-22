@@ -14,17 +14,35 @@ export type GetMyProductReviewResult =
     }
   | {
       ok: false;
+      code:
+        | 'INVALID_INPUT'
+        | 'ACCOUNT_UNAVAILABLE'
+        | 'LOAD_FAILED';
       message: string;
     };
 
 export async function getMyProductReview(
-  productId: string
+  productIdInput: string
 ): Promise<GetMyProductReviewResult> {
   try {
+    const productId = productIdInput.trim();
+
+    if (!productId) {
+      return {
+        ok: false,
+        code: 'INVALID_INPUT',
+        message: 'A valid product is required.'
+      };
+    }
+
     const session = await auth.api.getSession({
       headers: await headers()
     });
 
+    /*
+     * Being signed out is a normal state.
+     * It does not mean review loading failed.
+     */
     if (!session?.user?.id) {
       return {
         ok: true,
@@ -32,42 +50,50 @@ export async function getMyProductReview(
       };
     }
 
-    const normalizedProductId = productId.trim();
+    const userId = session.user.id;
 
-    if (!normalizedProductId) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      },
+
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        accountState: true
+      }
+    });
+
+    if (!user || user.accountState !== 'ACTIVE') {
       return {
         ok: false,
-        message: 'A valid product is required.'
+        code: 'ACCOUNT_UNAVAILABLE',
+        message: 'Your account is currently unavailable.'
       };
     }
-
-    const userId = session.user.id;
 
     const review = await prisma.review.findUnique({
       where: {
         userId_productId: {
           userId,
-          productId: normalizedProductId
+          productId
         }
       },
 
       select: {
         id: true,
         productId: true,
+
         rating: true,
         title: true,
         comment: true,
-        approved: true,
-        createdAt: true,
-        updatedAt: true,
 
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true
-          }
-        }
+        status: true,
+        moderationReason: true,
+
+        createdAt: true,
+        updatedAt: true
       }
     });
 
@@ -86,7 +112,7 @@ export async function getMyProductReview(
 
         items: {
           some: {
-            productId: normalizedProductId
+            productId
           }
         }
       },
@@ -95,6 +121,8 @@ export async function getMyProductReview(
         id: true
       }
     });
+
+    const status = review.status;
 
     return {
       ok: true,
@@ -106,12 +134,12 @@ export async function getMyProductReview(
         targetId: review.productId,
 
         author: {
-          id: review.user.id,
-          name: review.user.name,
+          id: user.id,
+          name: user.name,
 
-          ...(review.user.image
+          ...(user.image
             ? {
-                avatar: review.user.image
+                avatar: user.image
               }
             : {})
         },
@@ -126,9 +154,20 @@ export async function getMyProductReview(
 
         comment: review.comment ?? '',
 
-        verified: Boolean(completedPurchase),
-        approved: review.approved,
+        status,
 
+        /*
+         * Temporary compatibility with the current UI.
+         */
+        approved: status === 'APPROVED',
+
+        ...(review.moderationReason
+          ? {
+              moderationReason: review.moderationReason
+            }
+          : {}),
+
+        verified: Boolean(completedPurchase),
         helpfulCount: 0,
 
         createdAt: review.createdAt.toISOString(),
@@ -136,10 +175,11 @@ export async function getMyProductReview(
       }
     };
   } catch (error) {
-    console.error('Failed to load customer review:', error);
+    console.error('Failed to load current user review:', error);
 
     return {
       ok: false,
+      code: 'LOAD_FAILED',
       message: 'Your review status could not be loaded.'
     };
   }

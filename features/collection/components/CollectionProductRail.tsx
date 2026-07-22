@@ -182,9 +182,6 @@ export default function CollectionProductRail({
         onPointerLeave={() => {
           setControlsVisible(false);
         }}
-        onPointerDown={() => {
-          setControlsVisible(true);
-        }}
         onFocusCapture={() => {
           setControlsVisible(true);
         }}
@@ -202,19 +199,22 @@ export default function CollectionProductRail({
           aria-label={`${title} products`}
           tabIndex={0}
           data-cards-per-view={visibleCardCount}
-          className="
-            relative z-0
-            flex w-full min-w-0
-            max-w-full items-stretch
-            gap-2 overflow-x-auto
-            overflow-y-hidden
-            overscroll-x-contain
-            snap-x snap-mandatory
-            scroll-smooth
-            pb-1 pr-6
-            scrollbar-none
-            focus-visible:outline-none
-          ">
+          className={cn(
+            `
+                relative z-0
+                flex w-full min-w-0
+                max-w-full items-stretch
+                gap-2 overflow-x-auto
+                overflow-y-hidden
+                overscroll-x-contain
+                snap-x snap-mandatory
+                scroll-smooth
+                pb-1
+                scrollbar-none
+                focus-visible:outline-none
+              `,
+            products.length > visibleCardCount ? 'pr-6' : 'pr-0'
+          )}>
           {products.map(product => (
             <div
               key={product.id}
