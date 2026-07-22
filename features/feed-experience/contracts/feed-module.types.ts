@@ -1,15 +1,14 @@
-import type {
-  CollectionType
-} from '@/data/collections';
-
-import type {
-  Promo
-} from '@/data/promos';
+import type { CollectionType } from '@/data/collections';
+import type { Promo } from '@/data/promos';
 
 import type {
   CategoriesType,
   ProductType
 } from '@/types/types';
+
+// ============================================================
+// COLLECTION CONTRACTS
+// ============================================================
 
 export type ResolvedCollectionSource = {
   collection: CollectionType;
@@ -46,6 +45,10 @@ export type ResolvedCollection =
     };
   };
 
+// ============================================================
+// CATEGORY MODULES
+// ============================================================
+
 export type CategoryRailModule = {
   id: string;
   type: 'category-rail';
@@ -63,16 +66,18 @@ export type CategoryExperienceModuleDefinition = {
   priority: number;
 
   data: {
-    category:
-      CategoriesType[number];
+    category: CategoriesType[number];
 
     title: string;
-
     subtitle?: string;
 
     products: ProductType[];
   };
 };
+
+// ============================================================
+// PROMOTION AND COLLECTION MODULES
+// ============================================================
 
 export type PromotionModule = {
   id: string;
@@ -96,6 +101,10 @@ export type CollectionFeedModule = {
   };
 };
 
+// ============================================================
+// PRODUCT DISCOVERY MODULES
+// ============================================================
+
 export type FeaturedProductsModule = {
   id: string;
   type: 'featured-products';
@@ -116,7 +125,7 @@ export type FeaturedProductsModule = {
     featuredProducts: ProductType[];
 
     /**
-     * Complete category product set used by the new
+     * Complete category product set used by the
      * Category Product Experience.
      */
     products?: ProductType[];
@@ -170,6 +179,10 @@ export type ProductRailModuleDefinition = {
   };
 };
 
+// ============================================================
+// SHOPPING JOURNEY MODULE
+// ============================================================
+
 export type ShoppingJourneyItemId =
   | 'cart'
   | 'wishlist'
@@ -216,6 +229,10 @@ export type ShoppingJourneyModuleDefinition = {
   };
 };
 
+// ============================================================
+// PRODUCT EXPERIENCE MODULES
+// ============================================================
+
 export type ProductExperienceCategoryPresentation = {
   slug: string;
   label: string;
@@ -257,20 +274,155 @@ export type ProductDetailsModuleDefinition = {
 
   data: {
     product: ProductType;
-
-    category:
-      ProductExperienceCategoryPresentation;
-
+    category: ProductExperienceCategoryPresentation;
     categoryDescription?: string;
+
+    reviews: ReviewsModuleDefinition['data'];
 
     locale?: string;
     currency?: string;
   };
 };
 
+// ============================================================
+// MULTIPURPOSE REVIEW CONTRACTS
+// ============================================================
+
+/**
+ * Reviews are connected to a target rather than being limited
+ * to products. This allows the same Reviews Engine to support
+ * retail, hospitality, food, events and professional services.
+ */
+export type ReviewTargetType =
+  | 'product'
+  | 'service'
+  | 'meal'
+  | 'party-plan'
+  | 'stay'
+  | 'event'
+  | 'experience'
+  | 'vendor';
+
+export type ReviewRating =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5;
+
+export type ReviewMediaType =
+  | 'image'
+  | 'video';
+
+export type ReviewMedia = {
+  id: string;
+  type: ReviewMediaType;
+
+  url: string;
+  alt?: string;
+};
+
+export type ReviewAuthor = {
+  id?: string;
+
+  name: string;
+  avatar?: string;
+};
+
+export type ExperienceReview = {
+  id: string;
+
+  workspaceId?: string;
+
+  targetType: ReviewTargetType;
+  targetId: string;
+
+  author: ReviewAuthor;
+
+  rating: ReviewRating;
+
+  title?: string;
+  comment: string;
+
+  media?: ReviewMedia[];
+
+  verified: boolean;
+
+  helpfulCount: number;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type ReviewRatingDistribution = Record<
+  ReviewRating,
+  number
+>;
+
+export type ReviewSortOption =
+  | 'most-helpful'
+  | 'most-recent'
+  | 'highest-rated'
+  | 'lowest-rated';
+
+export type ReviewFilterOption =
+  | 'all'
+  | 'with-media'
+  | 'verified';
+
+export type ReviewsModuleDefinition = {
+  id: string;
+  type: 'reviews';
+  priority: number;
+
+  data: {
+    targetType: ReviewTargetType;
+    targetId: string;
+
+    /**
+     * Human-readable name of the reviewed product, service,
+     * stay, event or other experience.
+     */
+    targetName: string;
+
+    title: string;
+    subtitle?: string;
+
+    /**
+     * Catalog-level aggregate rating.
+     */
+    averageRating: number;
+
+    /**
+     * Complete review count. The preview array may contain
+     * fewer reviews than this number.
+     */
+    reviewCount: number;
+
+    /**
+     * Number of reviews received for each star level.
+     */
+    ratingDistribution: ReviewRatingDistribution;
+
+    /**
+     * Reviews currently resolved for presentation.
+     */
+    reviews: ExperienceReview[];
+
+    locale?: string;
+
+    canWriteReview: boolean;
+  };
+};
+
+// ============================================================
+// COMPLETE FEED MODULE UNION
+// ============================================================
+
 export type FeedModule =
   | ProductExperienceBannerModule
   | ProductDetailsModuleDefinition
+  | ReviewsModuleDefinition
   | CategoryRailModule
   | CategoryExperienceModuleDefinition
   | PromotionModule

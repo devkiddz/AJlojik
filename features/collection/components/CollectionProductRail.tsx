@@ -24,16 +24,18 @@ type CollectionProductRailProps = {
 };
 
 /**
- * Mobile must expose at least three products.
+ * Mobile displays two complete cards and part of a third.
+ * This keeps discovery visible without making cards too narrow.
+ */
+const MOBILE_CARDS_PER_VIEW = 2.5;
+
+/**
+ * Tablet and desktop rails display at least three complete cards.
  */
 const MINIMUM_CARDS_PER_VIEW = 3;
 
-/**
- * Wider containers receive additional cards instead
- * of stretching a fixed number of cards.
- */
+const MOBILE_RAIL_BREAKPOINT = 640;
 const PREFERRED_CARD_WIDTH = 160;
-
 const CARD_GAP = 12;
 
 export default function CollectionProductRail({
@@ -49,7 +51,7 @@ export default function CollectionProductRail({
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
-  const [cardsPerView, setCardsPerView] = useState(MINIMUM_CARDS_PER_VIEW);
+  const [cardsPerView, setCardsPerView] = useState(MOBILE_CARDS_PER_VIEW);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
@@ -88,11 +90,13 @@ export default function CollectionProductRail({
 
     const calculatedCount = Math.floor((availableWidth + CARD_GAP) / (PREFERRED_CARD_WIDTH + CARD_GAP));
 
-    const nextCount = Math.max(MINIMUM_CARDS_PER_VIEW, calculatedCount);
+    const nextCount =
+      availableWidth < MOBILE_RAIL_BREAKPOINT
+        ? MOBILE_CARDS_PER_VIEW
+        : Math.max(MINIMUM_CARDS_PER_VIEW, calculatedCount);
 
     setCardsPerView(current => (current === nextCount ? current : nextCount));
   }, []);
-
   useEffect(() => {
     const viewport = viewportRef.current;
 
@@ -128,7 +132,9 @@ export default function CollectionProductRail({
 
   const visibleCardCount = Math.max(1, Math.min(cardsPerView, products.length));
 
-  const occupiedGapSpace = CARD_GAP * Math.max(visibleCardCount - 1, 0);
+  const visibleGapCount = Math.max(Math.ceil(visibleCardCount) - 1, 0);
+
+  const occupiedGapSpace = CARD_GAP * visibleGapCount;
 
   const productSlideWidth = `calc((100% - ${occupiedGapSpace}px) / ${visibleCardCount})`;
 

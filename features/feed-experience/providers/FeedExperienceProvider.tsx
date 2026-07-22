@@ -11,13 +11,7 @@ import {
   type ReactNode
 } from 'react';
 
-import type {
-  ExperienceTarget,
-  FeedActions,
-  FeedContext,
-  FeedExperience,
-  FeedIntent
-} from '../contracts';
+import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIntent } from '../contracts';
 
 import { feedExperienceEngine } from '../engine';
 
@@ -75,8 +69,7 @@ type FeedExperienceContextValue = {
   continueDiscovery: () => void;
 };
 
-const FeedExperienceContext =
-  createContext<FeedExperienceContextValue | null>(null);
+const FeedExperienceContext = createContext<FeedExperienceContextValue | null>(null);
 
 // ============================================================
 // PROVIDER PROPS
@@ -89,24 +82,17 @@ type FeedExperienceProviderProps = {
 
   context: FeedContext;
 
-  baseActions: Omit<
-    FeedActions,
-    'openExperience' | 'restoreExperience' | 'resetExperience'
-  >;
+  baseActions: Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>;
 };
 
 // ============================================================
 // INTENT FACTORY
 // ============================================================
 
-function createIntent(
-  target: ExperienceTarget
-): FeedIntent {
-  const createdAt =
-    new Date().toISOString();
+function createIntent(target: ExperienceTarget): FeedIntent {
+  const createdAt = new Date().toISOString();
 
-  const nonce =
-    `${Date.now()}-${crypto.randomUUID()}`;
+  const nonce = `${Date.now()}-${crypto.randomUUID()}`;
 
   switch (target.type) {
     case 'home':
@@ -122,8 +108,7 @@ function createIntent(
         id: `store-discovery:${target.categorySlug ?? 'all'}:${nonce}`,
         type: 'store-discovery',
         source: 'user-action',
-        categorySlug:
-          target.categorySlug ?? 'all',
+        categorySlug: target.categorySlug ?? 'all',
         createdAt
       };
 
@@ -132,8 +117,7 @@ function createIntent(
         id: `category:${target.categorySlug}:${nonce}`,
         type: 'category',
         source: 'user-action',
-        categorySlug:
-          target.categorySlug,
+        categorySlug: target.categorySlug,
         createdAt
       };
 
@@ -142,8 +126,7 @@ function createIntent(
         id: `product:${target.productId}:${nonce}`,
         type: 'product',
         source: 'user-action',
-        targetId:
-          target.productId,
+        targetId: target.productId,
         createdAt
       };
 
@@ -152,8 +135,7 @@ function createIntent(
         id: `collection:${target.collectionId}:${nonce}`,
         type: 'collection',
         source: 'user-action',
-        targetId:
-          target.collectionId,
+        targetId: target.collectionId,
         createdAt
       };
 
@@ -162,8 +144,7 @@ function createIntent(
         id: `promotion:${target.promotionId}:${nonce}`,
         type: 'promotion',
         source: 'user-action',
-        targetId:
-          target.promotionId,
+        targetId: target.promotionId,
         createdAt
       };
 
@@ -172,8 +153,7 @@ function createIntent(
         id: `search:${target.query}:${nonce}`,
         type: 'search',
         source: 'search',
-        query:
-          target.query,
+        query: target.query,
         createdAt
       };
   }
@@ -189,34 +169,19 @@ export function FeedExperienceProvider({
   context,
   baseActions
 }: FeedExperienceProviderProps) {
-  const [intent, setIntent] =
-    useState<FeedIntent>(
-      initialIntent
-    );
+  const [intent, setIntent] = useState<FeedIntent>(initialIntent);
 
-  const [pendingIntent, setPendingIntent] =
-    useState<FeedIntent | null>(null);
+  const [pendingIntent, setPendingIntent] = useState<FeedIntent | null>(null);
 
-  const [
-    productDetailsDisclosure,
-    setProductDetailsDisclosure
-  ] = useState<ProductDetailsDisclosure>(
-    {
-      productId:
-        initialIntent.type === 'product'
-          ? initialIntent.targetId ?? null
-          : null,
+  const [productDetailsDisclosure, setProductDetailsDisclosure] = useState<ProductDetailsDisclosure>({
+    productId: initialIntent.type === 'product' ? (initialIntent.targetId ?? null) : null,
 
-      expanded:
-        false,
+    expanded: false,
 
-      requestId:
-        0
-    }
-  );
+    requestId: 0
+  });
 
-  const lastInitialIntentIdRef =
-    useRef(initialIntent.id);
+  const lastInitialIntentIdRef = useRef(initialIntent.id);
 
   /**
    * Lightweight in-memory continuity stack.
@@ -224,133 +189,83 @@ export function FeedExperienceProvider({
    * The database-backed Experience Stack can replace this
    * storage later without changing the Hub or Feed controls.
    */
-  const intentHistoryRef =
-    useRef<FeedIntent[]>([]);
+  const intentHistoryRef = useRef<FeedIntent[]>([]);
 
-  const resolutionFrameRef =
-    useRef<number | null>(null);
+  const resolutionFrameRef = useRef<number | null>(null);
 
-  const completionTimerRef =
-    useRef<number | null>(null);
+  const completionTimerRef = useRef<number | null>(null);
 
-  const resolutionStartedAtRef =
-    useRef(0);
+  const resolutionStartedAtRef = useRef(0);
 
-  const cancelResolutionWork =
-    useCallback(() => {
-      if (
-        resolutionFrameRef.current !== null
-      ) {
-        window.cancelAnimationFrame(
-          resolutionFrameRef.current
-        );
+  const cancelResolutionWork = useCallback(() => {
+    if (resolutionFrameRef.current !== null) {
+      window.cancelAnimationFrame(resolutionFrameRef.current);
 
-        resolutionFrameRef.current =
-          null;
+      resolutionFrameRef.current = null;
+    }
+
+    if (completionTimerRef.current !== null) {
+      window.clearTimeout(completionTimerRef.current);
+
+      completionTimerRef.current = null;
+    }
+  }, []);
+
+  const beginResolution = useCallback(
+    (
+      nextIntent: FeedIntent,
+      options: {
+        recordCurrent?: boolean;
+      } = {}
+    ) => {
+      cancelResolutionWork();
+
+      if (nextIntent.id === intent.id) {
+        setPendingIntent(null);
+
+        return;
       }
 
-      if (
-        completionTimerRef.current !== null
-      ) {
-        window.clearTimeout(
-          completionTimerRef.current
-        );
+      if (options.recordCurrent !== false) {
+        const history = intentHistoryRef.current;
 
-        completionTimerRef.current =
-          null;
-      }
-    }, []);
+        const latestEntry = history[history.length - 1];
 
-  const beginResolution =
-    useCallback(
-      (
-        nextIntent: FeedIntent,
-        options: {
-          recordCurrent?: boolean;
-        } = {}
-      ) => {
-        cancelResolutionWork();
+        if (latestEntry?.id !== intent.id) {
+          history.push(intent);
 
-        if (
-          nextIntent.id === intent.id
-        ) {
-          setPendingIntent(null);
-
-          return;
-        }
-
-        if (
-          options.recordCurrent !== false
-        ) {
-          const history =
-            intentHistoryRef.current;
-
-          const latestEntry =
-            history[
-              history.length - 1
-            ];
-
-          if (
-            latestEntry?.id !== intent.id
-          ) {
-            history.push(intent);
-
-            if (history.length > 50) {
-              history.splice(
-                0,
-                history.length - 50
-              );
-            }
+          if (history.length > 50) {
+            history.splice(0, history.length - 50);
           }
         }
+      }
 
-        resolutionStartedAtRef.current =
-          window.performance.now();
+      resolutionStartedAtRef.current = window.performance.now();
 
-        setPendingIntent(
-          nextIntent
-        );
+      setPendingIntent(nextIntent);
 
-        resolutionFrameRef.current =
-          window.requestAnimationFrame(
-            () => {
-              resolutionFrameRef.current =
-                null;
+      resolutionFrameRef.current = window.requestAnimationFrame(() => {
+        resolutionFrameRef.current = null;
 
-              setIntent(
-                nextIntent
-              );
-            }
-          );
-      },
-      [
-        cancelResolutionWork,
-        intent
-      ]
-    );
+        setIntent(nextIntent);
+      });
+    },
+    [cancelResolutionWork, intent]
+  );
 
   // ==========================================================
   // ROUTE INTENT SYNCHRONISATION
   // ==========================================================
 
   useEffect(() => {
-    if (
-      lastInitialIntentIdRef.current ===
-      initialIntent.id
-    ) {
+    if (lastInitialIntentIdRef.current === initialIntent.id) {
       return;
     }
 
-    lastInitialIntentIdRef.current =
-      initialIntent.id;
+    lastInitialIntentIdRef.current = initialIntent.id;
 
-    beginResolution(
-      initialIntent
-    );
-  }, [
-    beginResolution,
-    initialIntent
-  ]);
+    beginResolution(initialIntent);
+  }, [beginResolution, initialIntent]);
 
   /**
    * Every committed Product Experience begins in overview mode.
@@ -359,139 +274,73 @@ export function FeedExperienceProvider({
    * experience. A different intent resets the disclosure.
    */
   useEffect(() => {
-    const activeProductId =
-      intent.type === 'product'
-        ? intent.targetId ?? null
-        : null;
+    const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
 
-    setProductDetailsDisclosure(
-      currentDisclosure => ({
-        productId:
-          activeProductId,
+    setProductDetailsDisclosure(currentDisclosure => ({
+      productId: activeProductId,
 
-        expanded:
-          false,
+      expanded: false,
 
-        requestId:
-          currentDisclosure.requestId
-      })
-    );
-  }, [
-    intent.id,
-    intent.targetId,
-    intent.type
-  ]);
+      requestId: currentDisclosure.requestId
+    }));
+  }, [intent.id, intent.targetId, intent.type]);
 
   // ==========================================================
   // EXPERIENCE ACTIONS
   // ==========================================================
 
-  const openExperience =
-    useCallback(
-      (
-        target: ExperienceTarget
-      ) => {
-        beginResolution(
-          createIntent(target)
-        );
-      },
-      [beginResolution]
-    );
+  const openExperience = useCallback(
+    (target: ExperienceTarget) => {
+      beginResolution(createIntent(target));
+    },
+    [beginResolution]
+  );
 
-  const restoreExperience =
-    useCallback(
-      (
-        restoredIntent: FeedIntent
-      ) => {
-        beginResolution(
-          restoredIntent
-        );
-      },
-      [beginResolution]
-    );
+  const restoreExperience = useCallback(
+    (restoredIntent: FeedIntent) => {
+      beginResolution(restoredIntent);
+    },
+    [beginResolution]
+  );
 
-  const resetExperience =
-    useCallback(() => {
-      beginResolution(
-        initialIntent
-      );
-    }, [
-      beginResolution,
-      initialIntent
-    ]);
+  const resetExperience = useCallback(() => {
+    beginResolution(initialIntent);
+  }, [beginResolution, initialIntent]);
 
-  const revealProductDetails =
-    useCallback(
-      (
-        productId: string
-      ) => {
-        setProductDetailsDisclosure(
-          currentDisclosure => ({
-            productId,
+  const revealProductDetails = useCallback((productId: string) => {
+    setProductDetailsDisclosure(currentDisclosure => ({
+      productId,
 
-            expanded:
-              true,
+      expanded: true,
 
-            requestId:
-              currentDisclosure.requestId +
-              1
-          })
-        );
-      },
-      []
-    );
+      requestId: currentDisclosure.requestId + 1
+    }));
+  }, []);
 
-  const collapseProductDetails =
-    useCallback(
-      (
-        productId?: string
-      ) => {
-        setProductDetailsDisclosure(
-          currentDisclosure => {
-            if (
-              productId &&
-              currentDisclosure.productId !==
-                productId
-            ) {
-              return currentDisclosure;
-            }
+  const collapseProductDetails = useCallback((productId?: string) => {
+    setProductDetailsDisclosure(currentDisclosure => {
+      if (productId && currentDisclosure.productId !== productId) {
+        return currentDisclosure;
+      }
 
-            return {
-              ...currentDisclosure,
-              expanded: false
-            };
-          }
-        );
-      },
-      []
-    );
+      return {
+        ...currentDisclosure,
+        expanded: false
+      };
+    });
+  }, []);
 
-  const toggleProductDetails =
-    useCallback(
-      (
-        productId: string
-      ) => {
-        setProductDetailsDisclosure(
-          currentDisclosure => {
-            const currentlyExpanded =
-              currentDisclosure.productId ===
-                productId &&
-              currentDisclosure.expanded;
+  const toggleProductDetails = useCallback((productId: string) => {
+    setProductDetailsDisclosure(currentDisclosure => {
+      const currentlyExpanded = currentDisclosure.productId === productId && currentDisclosure.expanded;
 
-            return {
-              productId,
-              expanded:
-                !currentlyExpanded,
-              requestId:
-                currentlyExpanded
-                  ? currentDisclosure.requestId
-                  : currentDisclosure.requestId + 1
-            };
-          }
-        );
-      },
-      []
-    );
+      return {
+        productId,
+        expanded: !currentlyExpanded,
+        requestId: currentlyExpanded ? currentDisclosure.requestId : currentDisclosure.requestId + 1
+      };
+    });
+  }, []);
 
   /**
    * The same product action has two contextual meanings:
@@ -502,215 +351,134 @@ export function FeedExperienceProvider({
    * Inside that exact Product Experience:
    *   toggle its complete Feed details open or closed.
    */
-  const previewProduct =
-    useCallback<
-      FeedActions['previewProduct']
-    >(
-      product => {
-        const isActiveProduct =
-          intent.type === 'product' &&
-          intent.targetId ===
-            product.id;
+  const previewProduct = useCallback<FeedActions['previewProduct']>(
+    product => {
+      const isActiveProduct = intent.type === 'product' && intent.targetId === product.id;
 
-        if (isActiveProduct) {
-          toggleProductDetails(
-            product.id
-          );
-
-          return;
-        }
-
-        openExperience({
-          type:
-            'product',
-
-          productId:
-            product.id
-        });
-      },
-      [
-        intent.targetId,
-        intent.type,
-        openExperience,
-        toggleProductDetails
-      ]
-    );
-
-  const productDetailsControls =
-    useMemo<ProductDetailsControls>(
-      () => ({
-        reveal:
-          revealProductDetails,
-        collapse:
-          collapseProductDetails,
-        toggle:
-          toggleProductDetails
-      }),
-      [
-        collapseProductDetails,
-        revealProductDetails,
-        toggleProductDetails
-      ]
-    );
-
-  const continueDiscovery =
-    useCallback(() => {
-      const history =
-        intentHistoryRef.current;
-
-      let previousIntent:
-        FeedIntent | undefined;
-
-      while (history.length > 0) {
-        const candidate =
-          history.pop();
-
-        if (
-          candidate &&
-          candidate.id !== intent.id &&
-          candidate.type !== 'product'
-        ) {
-          previousIntent =
-            candidate;
-
-          break;
-        }
-      }
-
-      if (previousIntent) {
-        beginResolution(
-          previousIntent,
-          {
-            recordCurrent: false
-          }
-        );
+      if (isActiveProduct) {
+        toggleProductDetails(product.id);
 
         return;
       }
 
-      const activeProduct =
-        intent.type === 'product' &&
-        intent.targetId
-          ? context.catalog.products.find(
-              product =>
-                product.id ===
-                intent.targetId
-            )
-          : undefined;
+      openExperience({
+        type: 'product',
 
-      beginResolution(
-        createIntent({
-          type: 'store-discovery',
-          categorySlug:
-            activeProduct?.category ??
-            'all'
-        }),
-        {
-          recordCurrent: false
-        }
-      );
-    }, [
-      beginResolution,
-      context.catalog.products,
-      intent.id,
-      intent.targetId,
-      intent.type
-    ]);
+        productId: product.id
+      });
+    },
+    [intent.targetId, intent.type, openExperience, toggleProductDetails]
+  );
 
-  const actions =
-    useMemo<FeedActions>(
-      () => ({
-        ...baseActions,
+  const productDetailsControls = useMemo<ProductDetailsControls>(
+    () => ({
+      reveal: revealProductDetails,
+      collapse: collapseProductDetails,
+      toggle: toggleProductDetails
+    }),
+    [collapseProductDetails, revealProductDetails, toggleProductDetails]
+  );
 
-        previewProduct,
+  const continueDiscovery = useCallback(() => {
+    const history = intentHistoryRef.current;
 
-        openExperience,
+    let previousIntent: FeedIntent | undefined;
 
-        restoreExperience,
+    while (history.length > 0) {
+      const candidate = history.pop();
 
-        resetExperience
+      if (candidate && candidate.id !== intent.id && candidate.type !== 'product') {
+        previousIntent = candidate;
+
+        break;
+      }
+    }
+
+    if (previousIntent) {
+      beginResolution(previousIntent, {
+        recordCurrent: false
+      });
+
+      return;
+    }
+
+    const activeProduct =
+      intent.type === 'product' && intent.targetId
+        ? context.catalog.products.find(product => product.id === intent.targetId)
+        : undefined;
+
+    beginResolution(
+      createIntent({
+        type: 'store-discovery',
+        categorySlug: activeProduct?.category ?? 'all'
       }),
-      [
-        baseActions,
-        previewProduct,
-        openExperience,
-        restoreExperience,
-        resetExperience
-      ]
+      {
+        recordCurrent: false
+      }
     );
+  }, [beginResolution, context.catalog.products, intent.id, intent.targetId, intent.type]);
+
+  const actions = useMemo<FeedActions>(
+    () => ({
+      ...baseActions,
+
+      previewProduct,
+
+      openExperience,
+
+      restoreExperience,
+
+      resetExperience
+    }),
+    [baseActions, previewProduct, openExperience, restoreExperience, resetExperience]
+  );
 
   // ==========================================================
   // EXPERIENCE RESOLUTION
   // ==========================================================
 
-  const experience =
-    useMemo(
-      () =>
-        feedExperienceEngine.resolve({
-          intent,
-          context
-        }),
-      [
+  const experience = useMemo(
+    () =>
+      feedExperienceEngine.resolve({
         intent,
         context
-      ]
-    );
+      }),
+    [intent, context]
+  );
 
   useEffect(() => {
     if (!pendingIntent) {
       return;
     }
 
-    if (
-      pendingIntent.id !== intent.id
-    ) {
+    if (pendingIntent.id !== intent.id) {
       return;
     }
 
-    const elapsed =
-      window.performance.now() -
-      resolutionStartedAtRef.current;
+    const elapsed = window.performance.now() - resolutionStartedAtRef.current;
 
-    const remaining =
-      Math.max(
-        0,
+    const remaining = Math.max(
+      0,
 
-        MIN_RESOLUTION_DURATION_MS -
-          elapsed
+      MIN_RESOLUTION_DURATION_MS - elapsed
+    );
+
+    completionTimerRef.current = window.setTimeout(() => {
+      completionTimerRef.current = null;
+
+      setPendingIntent(currentPendingIntent =>
+        currentPendingIntent?.id === intent.id ? null : currentPendingIntent
       );
-
-    completionTimerRef.current =
-      window.setTimeout(() => {
-        completionTimerRef.current =
-          null;
-
-        setPendingIntent(
-          currentPendingIntent =>
-            currentPendingIntent?.id ===
-            intent.id
-              ? null
-              : currentPendingIntent
-        );
-      }, remaining);
+    }, remaining);
 
     return () => {
-      if (
-        completionTimerRef.current !==
-        null
-      ) {
-        window.clearTimeout(
-          completionTimerRef.current
-        );
+      if (completionTimerRef.current !== null) {
+        window.clearTimeout(completionTimerRef.current);
 
-        completionTimerRef.current =
-          null;
+        completionTimerRef.current = null;
       }
     };
-  }, [
-    experience.id,
-    intent.id,
-    pendingIntent
-  ]);
+  }, [experience.id, intent.id, pendingIntent]);
 
   useEffect(
     () => () => {
@@ -719,50 +487,42 @@ export function FeedExperienceProvider({
     [cancelResolutionWork]
   );
 
-  const isResolving =
-    pendingIntent !== null;
+  const isResolving = pendingIntent !== null;
 
-  const value =
-    useMemo<FeedExperienceContextValue>(
-      () => ({
-        intent,
+  const value = useMemo<FeedExperienceContextValue>(
+    () => ({
+      intent,
 
-        context,
+      context,
 
-        experience,
+      experience,
 
-        actions,
+      actions,
 
-        isResolving,
+      isResolving,
 
-        pendingIntent,
+      pendingIntent,
 
-        productDetailsDisclosure,
+      productDetailsDisclosure,
 
-        productDetailsControls,
+      productDetailsControls,
 
-        continueDiscovery
-      }),
-      [
-        intent,
-        context,
-        experience,
-        actions,
-        isResolving,
-        pendingIntent,
-        productDetailsDisclosure,
-        productDetailsControls,
-        continueDiscovery
-      ]
-    );
-
-  return (
-    <FeedExperienceContext.Provider
-      value={value}
-    >
-      {children}
-    </FeedExperienceContext.Provider>
+      continueDiscovery
+    }),
+    [
+      intent,
+      context,
+      experience,
+      actions,
+      isResolving,
+      pendingIntent,
+      productDetailsDisclosure,
+      productDetailsControls,
+      continueDiscovery
+    ]
   );
+
+  return <FeedExperienceContext.Provider value={value}>{children}</FeedExperienceContext.Provider>;
 }
 
 // ============================================================
@@ -770,15 +530,10 @@ export function FeedExperienceProvider({
 // ============================================================
 
 export function useFeedExperienceContext() {
-  const value =
-    useContext(
-      FeedExperienceContext
-    );
+  const value = useContext(FeedExperienceContext);
 
   if (!value) {
-    throw new Error(
-      'useFeedExperienceContext must be used inside FeedExperienceProvider.'
-    );
+    throw new Error('useFeedExperienceContext must be used inside FeedExperienceProvider.');
   }
 
   return value;
