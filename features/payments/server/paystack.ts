@@ -18,6 +18,8 @@ export type PaystackTransaction = {
   status: string;
   reference: string;
   amount: number;
+  requested_amount?: number | null;
+  fees?: number | null;
   currency: string;
   paid_at?: string | null;
   paidAt?: string | null;

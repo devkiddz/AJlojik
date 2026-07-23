@@ -3,14 +3,26 @@ import { prisma } from '@/lib/prisma';
 
 import type { PaystackTransaction } from './paystack';
 
-function providerMetadata(transaction: PaystackTransaction): Prisma.InputJsonValue {
+function providerMetadata(
+  transaction: PaystackTransaction
+): Prisma.InputJsonValue {
+  const chargedAmountKobo = Number(transaction.amount);
+
+  const requestedAmountKobo =
+    transaction.requested_amount == null
+      ? chargedAmountKobo
+      : Number(transaction.requested_amount);
+
   return {
     transactionId: String(transaction.id),
     domain: transaction.domain,
     channel: transaction.channel ?? null,
     gatewayResponse: transaction.gateway_response ?? null,
     currency: transaction.currency,
-    verifiedAt: new Date().toISOString()
+    verifiedAt: new Date().toISOString(),
+    chargedAmountKobo,
+    requestedAmountKobo,
+    feesKobo: transaction.fees ?? null
   };
 }
 
@@ -31,29 +43,57 @@ export async function settleVerifiedPayment(reference: string, transaction: Pays
   }
 
   const expectedAmountKobo = Math.round(Number(payment.amount) * 100);
+  const chargedAmountKobo = Number(transaction.amount);
+
+  const requestedAmountKobo =
+    transaction.requested_amount == null
+      ? chargedAmountKobo
+      : Number(transaction.requested_amount);
+
   const successful = transaction.status === 'success';
-  const correctAmount = transaction.amount === expectedAmountKobo;
+
+  const correctAmount =
+  Number.isInteger(chargedAmountKobo) &&
+  Number.isInteger(requestedAmountKobo) &&
+  requestedAmountKobo === expectedAmountKobo &&
+  chargedAmountKobo >= expectedAmountKobo;
   const correctCurrency = transaction.currency === 'NGN';
   const correctReference = transaction.reference === payment.reference;
 
-  if (!successful || !correctAmount || !correctCurrency || !correctReference) {
-    await prisma.payment.updateMany({
-      where: {
-        id: payment.id,
-        status: { not: 'PAID' }
-      },
-      data: {
-        status: successful ? 'FAILED' : transaction.status === 'failed' ? 'FAILED' : 'PROCESSING',
-        metadata: providerMetadata(transaction)
-      }
-    });
+ if (!successful || !correctAmount || !correctCurrency || !correctReference) {
+  await prisma.payment.updateMany({
+    where: {
+      id: payment.id,
+      status: { not: 'PAID' }
+    },
+    data: {
+      status: transaction.status === 'failed' ? 'FAILED' : 'PROCESSING',
+      metadata: providerMetadata(transaction)
+    }
+  });
 
+  if (successful && !correctAmount) {
     throw new Error(
-      successful && !correctAmount
-        ? 'The verified payment amount does not match this order.'
-        : 'Paystack has not confirmed this payment as successful.'
+      'The verified payment amount does not match this order.'
     );
   }
+
+  if (successful && !correctCurrency) {
+    throw new Error(
+      'The verified payment currency does not match this order.'
+    );
+  }
+
+  if (successful && !correctReference) {
+    throw new Error(
+      'The verified payment reference does not match this order.'
+    );
+  }
+
+  throw new Error(
+    'Paystack has not confirmed this payment as successful.'
+  );
+}
 
   const paidAtValue = transaction.paid_at ?? transaction.paidAt;
   const paidAt = paidAtValue ? new Date(paidAtValue) : new Date();
