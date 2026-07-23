@@ -2,10 +2,18 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError } from 'better-auth/api';
 
+import {
+  buildEmailVerificationTemplate,
+  buildPasswordResetTemplate,
+  isAuthEmailEnabled,
+  queueTransactionalEmail,
+  sendTransactionalEmail
+} from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const authEmailEnabled = isAuthEmailEnabled();
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
@@ -15,7 +23,53 @@ export const auth = betterAuth({
   }),
 
   emailAndPassword: {
-    enabled: true
+    enabled: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+    requireEmailVerification: authEmailEnabled,
+    revokeSessionsOnPasswordReset: true,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    sendResetPassword: async ({ user, url, token }) => {
+      if (!authEmailEnabled) return;
+
+      const template = buildPasswordResetTemplate({
+        name: user.name,
+        actionUrl: url
+      });
+
+      queueTransactionalEmail(() =>
+        sendTransactionalEmail({
+          to: user.email,
+          ...template,
+          category: 'password_reset',
+          idempotencyKey: `password-reset-${token}`
+        })
+      );
+    }
+  },
+
+  emailVerification: {
+    sendOnSignUp: authEmailEnabled,
+    sendOnSignIn: authEmailEnabled,
+    autoSignInAfterVerification: true,
+    expiresIn: 60 * 60,
+    sendVerificationEmail: async ({ user, url, token }) => {
+      if (!authEmailEnabled) return;
+
+      const template = buildEmailVerificationTemplate({
+        name: user.name,
+        actionUrl: url
+      });
+
+      queueTransactionalEmail(() =>
+        sendTransactionalEmail({
+          to: user.email,
+          ...template,
+          category: 'email_verification',
+          idempotencyKey: `email-verification-${token}`
+        })
+      );
+    }
   },
 
   socialProviders: googleClientId && googleClientSecret ? {
