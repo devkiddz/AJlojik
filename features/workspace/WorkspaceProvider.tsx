@@ -1,10 +1,10 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+
 import { useRouter } from 'next/navigation';
 
 import type { Workspace, WorkspaceRuntime } from './workspaceTypes';
-const ACTIVE_WORKSPACE_STORAGE_KEY = 'rcentz_active_workspace_id';
 
 type WorkspaceContextValue = WorkspaceRuntime & {
   loading: boolean;
@@ -63,31 +63,24 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return data;
 }
 
-function createRuntime(
-  availableWorkspaces: Workspace[],
-  activeWorkspace: Workspace | null,
-  options?: {
-    switchingWorkspace?: boolean;
-    error?: string | null;
-  }
-): WorkspaceRuntime {
+function createGuestRuntime(): WorkspaceRuntime {
   return {
-    activeWorkspace,
-    availableWorkspaces,
+    activeWorkspace: guestWorkspace,
+    availableWorkspaces: [guestWorkspace],
 
-    isLive: activeWorkspace?.mode === 'LIVE',
-    isDemo: activeWorkspace?.mode === 'DEMO',
-    isPractice: activeWorkspace?.mode === 'PRACTICE',
-    isSandbox: activeWorkspace?.mode === 'SANDBOX',
+    isLive: true,
+    isDemo: false,
+    isPractice: false,
+    isSandbox: false,
 
-    switchingWorkspace: options?.switchingWorkspace ?? false,
-
-    error: options?.error ?? null
+    switchingWorkspace: false,
+    error: null
   };
 }
 
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const router = useRouter();
+
   const [runtime, setRuntime] = useState<WorkspaceRuntime>(defaultRuntime);
 
   const [loading, setLoading] = useState(true);
@@ -98,49 +91,41 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     try {
       const response = await fetch('/api/workspaces', {
         method: 'GET',
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'same-origin'
       });
 
       if (response.status === 401) {
-        window.localStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY);
+        setRuntime(createGuestRuntime());
 
-        setRuntime(createRuntime([guestWorkspace], guestWorkspace));
         return;
       }
 
       const serverRuntime = await readJsonResponse<WorkspaceRuntime>(response);
 
-      const savedWorkspaceId = window.localStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY);
-
-      const restoredWorkspace =
-        serverRuntime.availableWorkspaces.find(workspace => workspace.id === savedWorkspaceId) ??
-        serverRuntime.activeWorkspace ??
-        serverRuntime.availableWorkspaces[0] ??
-        null;
-
-      setRuntime(createRuntime(serverRuntime.availableWorkspaces, restoredWorkspace));
+      setRuntime(serverRuntime);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load AJ Logik.';
 
-      setRuntime(current =>
-        createRuntime(current.availableWorkspaces, current.activeWorkspace, {
-          error: message
-        })
-      );
+      setRuntime(current => ({
+        ...current,
+        switchingWorkspace: false,
+        error: message
+      }));
     } finally {
       setLoading(false);
     }
   }, []);
+
   const switchWorkspace = useCallback(
     async (workspaceId: string) => {
       const nextWorkspace = runtime.availableWorkspaces.find(workspace => workspace.id === workspaceId);
 
       if (!nextWorkspace) {
-        setRuntime(current =>
-          createRuntime(current.availableWorkspaces, current.activeWorkspace, {
-            error: 'The selected workspace is unavailable.'
-          })
-        );
+        setRuntime(current => ({
+          ...current,
+          error: 'The selected workspace is unavailable.'
+        }));
 
         return;
       }
@@ -149,40 +134,65 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
         return;
       }
 
-      setRuntime(current =>
-        createRuntime(current.availableWorkspaces, current.activeWorkspace, {
-          switchingWorkspace: true
-        })
-      );
-
-      window.localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, nextWorkspace.id);
-
-      setRuntime(createRuntime(runtime.availableWorkspaces, nextWorkspace));
-
-      window.dispatchEvent(new CustomEvent('aj:workspace-switched', {
-        detail: {
-          workspaceId: nextWorkspace.id,
-          mode: nextWorkspace.mode
-        }
+      setRuntime(current => ({
+        ...current,
+        switchingWorkspace: true,
+        error: null
       }));
 
-      router.refresh();
+      try {
+        const response = await fetch('/api/workspaces', {
+          method: 'POST',
+          cache: 'no-store',
+          credentials: 'same-origin',
+
+          headers: {
+            'Content-Type': 'application/json'
+          },
+
+          body: JSON.stringify({
+            workspaceId
+          })
+        });
+
+        const serverRuntime = await readJsonResponse<WorkspaceRuntime>(response);
+
+        setRuntime(serverRuntime);
+
+        window.dispatchEvent(
+          new CustomEvent('aj:workspace-switched', {
+            detail: {
+              workspaceId: serverRuntime.activeWorkspace?.id ?? workspaceId,
+
+              mode: serverRuntime.activeWorkspace?.mode ?? nextWorkspace.mode
+            }
+          })
+        );
+
+        router.refresh();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unable to switch workspace.';
+
+        setRuntime(current => ({
+          ...current,
+          switchingWorkspace: false,
+          error: message
+        }));
+      }
     },
     [router, runtime.activeWorkspace?.id, runtime.availableWorkspaces]
   );
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void refreshWorkspaces();
-    }, 0);
-
-    return () => window.clearTimeout(timer);
+    void refreshWorkspaces();
   }, [refreshWorkspaces]);
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       ...runtime,
+
       loading,
+
       refreshWorkspaces,
       switchWorkspace
     }),

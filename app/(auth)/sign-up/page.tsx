@@ -4,13 +4,14 @@ import SignUpForm from '@/components/auth/SignUpForm';
 
 export default function SignUpPage() {
   const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const emailVerificationEnabled = process.env.AUTH_EMAIL_ENABLED?.trim().toLowerCase() === 'true';
   return (
     <AuthExperienceShell>
       <AuthCard
         eyebrow="AJ Logik Membership"
         title="Create your account"
         description="Save products, continue your cart, track orders and receive a personal AJ Logik experience.">
-        <SignUpForm googleEnabled={googleEnabled} />
+        <SignUpForm googleEnabled={googleEnabled} emailVerificationEnabled={emailVerificationEnabled} />
       </AuthCard>
     </AuthExperienceShell>
   );

@@ -6,7 +6,8 @@ import type {
 } from '../workspaceTypes';
 
 export async function getUserWorkspaces(
-  userId: string
+  userId: string,
+  preferredWorkspaceId?: string | null
 ): Promise<WorkspaceRuntime> {
   const coreWorkspaces = await prisma.workspace.findMany({
     where: {
@@ -24,27 +25,9 @@ export async function getUserWorkspaces(
     }
   });
 
-  for (const workspace of coreWorkspaces) {
-    await prisma.workspaceMembership.upsert({
-      where: {
-        workspaceId_userId: {
-          workspaceId: workspace.id,
-          userId
-        }
-      },
-      update: {
-        active: true
-      },
-      create: {
-        workspaceId: workspace.id,
-        userId,
-        role: 'MEMBER',
-        active: true
-      }
-    });
-
-    if (workspace.mode === 'DEMO' || workspace.mode === 'PRACTICE') {
-      await prisma.demoWallet.upsert({
+  await Promise.all(
+    coreWorkspaces.map(async workspace => {
+      await prisma.workspaceMembership.upsert({
         where: {
           workspaceId_userId: {
             workspaceId: workspace.id,
@@ -57,13 +40,39 @@ export async function getUserWorkspaces(
         create: {
           workspaceId: workspace.id,
           userId,
-          currency: 'NGN',
-          balance: workspace.mode === 'DEMO' ? 1_000_000 : 500_000,
+          role: 'MEMBER',
           active: true
         }
       });
-    }
-  }
+
+      if (
+        workspace.mode === 'DEMO' ||
+        workspace.mode === 'PRACTICE'
+      ) {
+        await prisma.demoWallet.upsert({
+          where: {
+            workspaceId_userId: {
+              workspaceId: workspace.id,
+              userId
+            }
+          },
+          update: {
+            active: true
+          },
+          create: {
+            workspaceId: workspace.id,
+            userId,
+            currency: 'NGN',
+            balance:
+              workspace.mode === 'DEMO'
+                ? 1_000_000
+                : 500_000,
+            active: true
+          }
+        });
+      }
+    })
+  );
 
   const memberships =
     await prisma.workspaceMembership.findMany({
@@ -74,7 +83,6 @@ export async function getUserWorkspaces(
           active: true
         }
       },
-
       include: {
         workspace: {
           include: {
@@ -88,7 +96,6 @@ export async function getUserWorkspaces(
           }
         }
       },
-
       orderBy: {
         joinedAt: 'asc'
       }
@@ -125,6 +132,10 @@ export async function getUserWorkspaces(
 
   const activeWorkspace =
     availableWorkspaces.find(
+      workspace =>
+        workspace.id === preferredWorkspaceId
+    ) ??
+    availableWorkspaces.find(
       workspace => workspace.mode === 'LIVE'
     ) ??
     availableWorkspaces[0] ??
@@ -136,8 +147,10 @@ export async function getUserWorkspaces(
 
     isLive: activeWorkspace?.mode === 'LIVE',
     isDemo: activeWorkspace?.mode === 'DEMO',
-    isPractice: activeWorkspace?.mode === 'PRACTICE',
-    isSandbox: activeWorkspace?.mode === 'SANDBOX',
+    isPractice:
+      activeWorkspace?.mode === 'PRACTICE',
+    isSandbox:
+      activeWorkspace?.mode === 'SANDBOX',
 
     switchingWorkspace: false,
     error: null

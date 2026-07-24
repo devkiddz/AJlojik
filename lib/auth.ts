@@ -37,14 +37,14 @@ export const auth = betterAuth({
         actionUrl: url
       });
 
-      queueTransactionalEmail(() =>
-        sendTransactionalEmail({
-          to: user.email,
-          ...template,
-          category: 'password_reset',
-          idempotencyKey: `password-reset-${token}`
-        })
-      );
+      console.info('[auth-email] Sending verification email to:', user.email);
+
+      await sendTransactionalEmail({
+        to: user.email,
+        ...template,
+        category: 'email_verification',
+        idempotencyKey: `email-verification-${token}`
+      });
     }
   },
 
