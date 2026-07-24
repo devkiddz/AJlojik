@@ -243,46 +243,47 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
       href: '/store?category=deals'
     }
   },
-  {
-    id: 'cart-summary',
-    groupId: 'home',
-    compact: {
-      icons: ['cart']
-    },
-    layout: 'slider',
-    title: 'Cart Summary',
-    description: 'Your current cart is ready for checkout.',
-    defaultPriority: 110,
-    pagePriority: {
-      cart: 240,
-      checkout: 230,
-      store: 220,
-      account: 130,
-      orders: 90,
-      tracking: 70,
-      default: 110
-    },
-    status: 'active',
-    badge: '3 items',
-    meta: 'Cart',
-    stats: [
-      {
-        label: 'Subtotal',
-        value: '₦174,000'
-      },
-      {
-        label: 'Delivery',
-        value: 'Today',
-        helper: '2:30 PM - 4:30 PM'
-      }
-    ],
-    slides: champagneSlides,
-    insight: 'Spend ₦20,000 more to unlock free delivery.',
-    action: {
-      label: 'View cart',
-      href: '/cart'
-    }
+ {
+  id: 'cart-summary',
+
+  groupId: 'home',
+
+  componentKey:
+    'cart-summary',
+
+  compact: {
+    icons: ['cart'],
+    priorityBoost: 20
   },
+
+  layout: 'summary',
+
+  title: 'Cart Summary',
+
+  description:
+    'Your current selections and shopping subtotal.',
+
+  defaultPriority: 110,
+
+  pagePriority: {
+    cart: 240,
+    checkout: 230,
+    store: 220,
+    account: 180,
+    orders: 90,
+    tracking: 70,
+    default: 110
+  },
+
+  status: 'active',
+
+  meta: 'Cart',
+
+  action: {
+    label: 'View cart',
+    href: '/cart'
+  }
+},
   {
     id: 'delivery-tracker',
     groupId: 'home',
@@ -423,37 +424,24 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
       href: '/rewards'
     }
   },
-  {
-    id: 'wishlist-alert',
-    groupId: 'home',
-    compact: {
-      icons: ['wishlist']
-    },
-    layout: 'grid',
-    title: 'Wishlist Alert',
-    description: 'Some saved products are back in stock.',
-    defaultPriority: 85,
-    pagePriority: {
-      wishlist: 240,
-      store: 155,
-      account: 140,
-      default: 85
-    },
-    eligibility: {
-      requiredSignals: [
-        'wishlist'
-      ]
-    },
-    status: 'warning',
-    badge: '4 saved',
-    meta: 'Wishlist',
-    slides: spiritSlides,
-    insight: '2 wishlist items are now available for delivery.',
-    action: {
-      label: 'Open wishlist',
-      href: '/wishlist'
-    }
-  },
+{
+  id: 'wishlist-alert',
+
+  groupId: 'home',
+
+  layout: 'summary',
+
+  title: 'Wishlist Activity',
+
+  description:
+    'Saved-product alerts will appear when a verified catalogue event requires attention.',
+
+  defaultPriority: 85,
+
+  eligibility: {
+    enabled: false
+  }
+},
   {
     id: 'continue-shopping',
     groupId: 'shopping',
@@ -573,32 +561,52 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
       ...champagneSlides.slice(1, 2)
     ]
   },
-  {
-    id: 'wishlisted-products',
-    groupId: 'shopping',
-    compact: {
-      icons: ['wishlist']
-    },
-    layout: 'grid',
-    title: 'Wishlisted',
-    description: 'Saved products you may want to revisit.',
-    defaultPriority: 90,
-    pagePriority: {
-      wishlist: 250,
-      store: 170,
-      account: 145,
-      default: 90
-    },
-    eligibility: {
-      requiredSignals: [
-        'wishlist'
-      ]
-    },
-    status: 'warning',
-    badge: '4 saved',
-    meta: 'Saved',
-    slides: spiritSlides
+ {
+  id: 'wishlisted-products',
+
+  groupId: 'shopping',
+
+  componentKey:
+    'wishlist-products',
+
+  compact: {
+    icons: ['wishlist'],
+    priorityBoost: 15
   },
+
+  layout: 'grid',
+
+  title: 'Wishlist',
+
+  description:
+    'Products you have saved for later.',
+
+  defaultPriority: 100,
+
+  pagePriority: {
+    wishlist: 250,
+    store: 170,
+    account: 175,
+    cart: 120,
+    default: 100
+  },
+
+  eligibility: {
+    requiresAuthentication: true,
+    requiredSignals: [
+      'wishlist'
+    ]
+  },
+
+  status: 'active',
+
+  meta: 'Saved',
+
+  action: {
+    label: 'Open wishlist',
+    href: '/wishlist'
+  }
+},
   {
     id: 'shopping-promos',
     groupId: 'shopping',
@@ -1028,15 +1036,26 @@ function createHubWidget(
 ): HubWidget {
   return {
     id: widget.id,
-    groupId: widget.groupId,
 
-    title: widget.title,
-    description: widget.description,
+    groupId:
+      widget.groupId,
+
+    componentKey:
+      widget.componentKey,
+
+    title:
+      widget.title,
+
+    description:
+      widget.description,
 
     order,
+
     enabled:
       widget.eligibility?.enabled !==
       false,
+
+    // Keep the remaining fields unchanged.
 
     size: widget.size,
     status: widget.status,

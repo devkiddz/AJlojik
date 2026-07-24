@@ -1,0 +1,307 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
+
+import { usePathname, useRouter } from 'next/navigation';
+
+import { categories } from '@/data/categories';
+
+import { collections } from '@/data/collections';
+
+import { promos } from '@/data/promos';
+
+import { useCart } from '@/features/cart';
+
+import { useCatalog } from '@/features/catalog';
+
+import { useWishlist } from '@/features/wishlist';
+
+import { useWorkspace } from '@/features/workspace';
+
+import { useIdentity } from '@/providers/IdentityProvider';
+
+import type { ProductType, ProductVariantType } from '@/types/types';
+
+import type { FeedActions, FeedContext, FeedIntent } from '../contracts';
+
+import { FeedExperienceProvider } from '../providers';
+
+type GlobalExperienceRuntimeProps = {
+  children: ReactNode;
+};
+
+type FeedDevice = FeedContext['environment']['device'];
+
+type FeedTier = FeedContext['user']['tier'];
+
+function resolveTier({ authenticated, tier }: { authenticated: boolean; tier?: string | null }): FeedTier {
+  if (!authenticated) {
+    return 'guest';
+  }
+
+  const normalizedTier = tier?.trim().toLowerCase();
+
+  if (normalizedTier === 'premium') {
+    return 'premium';
+  }
+
+  if (normalizedTier === 'returning') {
+    return 'returning';
+  }
+
+  return 'member';
+}
+
+function resolveDevice(): FeedDevice {
+  if (typeof window === 'undefined') {
+    return 'desktop';
+  }
+
+  if (window.matchMedia('(max-width: 639px)').matches) {
+    return 'mobile';
+  }
+
+  if (window.matchMedia('(max-width: 1023px)').matches) {
+    return 'tablet';
+  }
+
+  return 'desktop';
+}
+
+function createRouteIntent(pathname: string): FeedIntent {
+  return {
+    id: `route:${pathname}`,
+
+    type: 'home',
+
+    source: 'route',
+
+    createdAt: new Date().toISOString()
+  };
+}
+
+export default function GlobalExperienceRuntime({
+  children
+}: GlobalExperienceRuntimeProps): ReactElement | null {
+  const router = useRouter();
+
+  const pathname = usePathname();
+
+  const { user, isAuthenticated } = useIdentity();
+
+  const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
+
+  const { products, loading: catalogLoading } = useCatalog();
+
+  const { items: cartItems, addToCart } = useCart();
+
+  const { productIds: wishlistProductIds, toggleWishlist } = useWishlist();
+
+  const [device, setDevice] = useState<FeedDevice>('desktop');
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 639px)');
+
+    const tabletQuery = window.matchMedia('(max-width: 1023px)');
+
+    const synchronizeDevice = () => {
+      setDevice(resolveDevice());
+    };
+
+    synchronizeDevice();
+
+    mobileQuery.addEventListener('change', synchronizeDevice);
+
+    tabletQuery.addEventListener('change', synchronizeDevice);
+
+    return () => {
+      mobileQuery.removeEventListener('change', synchronizeDevice);
+
+      tabletQuery.removeEventListener('change', synchronizeDevice);
+    };
+  }, []);
+
+  const cartProductIds = useMemo(
+    () => [...new Set(cartItems.map(item => String(item.productId)))],
+    [cartItems]
+  );
+
+  const initialIntent = useMemo<FeedIntent>(() => createRouteIntent(pathname), [pathname]);
+
+  const handleCategoryChange = useCallback<FeedActions['changeCategory']>(
+    updates => {
+      const categorySlug = updates.category;
+
+      const destination =
+        categorySlug && categorySlug !== 'all'
+          ? `/store?category=${encodeURIComponent(categorySlug)}`
+          : '/store';
+
+      router.push(destination, {
+        scroll: false
+      });
+    },
+    [router]
+  );
+
+  /**
+   * FeedExperienceProvider replaces this with its own
+   * intent-aware product experience action.
+   *
+   * This remains a safe route fallback for the base
+   * FeedActions contract.
+   */
+  const handleProductPreview = useCallback<FeedActions['previewProduct']>(
+    product => {
+      router.push(`/products/${encodeURIComponent(String(product.id))}`);
+    },
+    [router]
+  );
+
+  const handleToggleLike = useCallback<FeedActions['toggleLike']>(
+    productId => {
+      const product = products.find(item => String(item.id) === String(productId));
+
+      void toggleWishlist({
+        id: String(productId),
+
+        name: product?.name
+      });
+    },
+    [products, toggleWishlist]
+  );
+
+  const handleAddToCart = useCallback(
+    async (product: ProductType, variant: ProductVariantType): Promise<void> => {
+      await addToCart({
+        product,
+
+        variant,
+
+        quantity: 1
+      });
+    },
+    [addToCart]
+  );
+
+  const handlePromotionPreview = useCallback(
+    (_promoId: string): void => {
+      router.push('/promos');
+    },
+    [router]
+  );
+
+  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
+    () => ({
+      changeCategory: handleCategoryChange,
+
+      previewProduct: handleProductPreview,
+
+      toggleLike: handleToggleLike,
+
+      addToCart: handleAddToCart,
+
+      previewPromotion: handlePromotionPreview
+    }),
+    [handleAddToCart, handleCategoryChange, handleProductPreview, handlePromotionPreview, handleToggleLike]
+  );
+
+  const userId = user?.id ? String(user.id) : undefined;
+
+  const userTier = typeof user?.tier === 'string' ? user.tier : null;
+
+  const context = useMemo<FeedContext | null>(() => {
+    if (!activeWorkspace) {
+      return null;
+    }
+
+    const normalizedTier = resolveTier({
+      authenticated: isAuthenticated,
+
+      tier: userTier
+    });
+
+    return {
+      catalog: {
+        products,
+
+        categories,
+
+        collections,
+
+        promotions: promos
+      },
+
+      user: {
+        ...(userId
+          ? {
+              id: userId
+            }
+          : {}),
+
+        sessionId: `${activeWorkspace.id}:${userId ?? 'guest'}`,
+
+        authenticated: isAuthenticated,
+
+        tier: normalizedTier,
+
+        wishlistProductIds: wishlistProductIds.map(productId => String(productId)),
+
+        cartProductIds,
+
+        recentProductIds: []
+      },
+
+      activity: {
+        viewedProductIds: [],
+
+        viewedCategorySlugs: [],
+
+        searchedTerms: [],
+
+        clickedCollectionIds: []
+      },
+
+      /**
+       * Deliberately omitted:
+       *
+       * experience.orders
+       * experience.delivery
+       * experience.rewards
+       * experience.intelligence
+       *
+       * Those values must come from the workspace-scoped
+       * server projection—not mock customer profiles.
+       */
+
+      environment: {
+        locale: 'en-NG',
+
+        currency: activeWorkspace.wallet?.currency ?? 'NGN',
+
+        device,
+
+        now: new Date().toISOString()
+      }
+    };
+  }, [
+    activeWorkspace,
+    cartProductIds,
+    device,
+    isAuthenticated,
+    products,
+    userId,
+    userTier,
+    wishlistProductIds
+  ]);
+
+  if (workspaceLoading || catalogLoading || !context) {
+    return null;
+  }
+
+  return (
+    <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
+      {children}
+    </FeedExperienceProvider>
+  );
+}

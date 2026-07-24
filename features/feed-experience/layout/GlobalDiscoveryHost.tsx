@@ -4,31 +4,36 @@ import { useEffect, useState } from 'react';
 
 import { usePathname } from 'next/navigation';
 
+import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
+
+import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
+
+import { discoveryRegistry } from '@/data/discoveryHubData';
+
+import { GlobalExperienceRuntime } from '@/features/feed-experience/runtime';
+
 import { cn } from '@/lib/utils';
 
 import { useIdentity } from '@/providers/IdentityProvider';
 
-import StoreExperienceSidebar from './StoreExperienceSidebar';
-
 const DESKTOP_DISCOVERY_QUERY = '(min-width: 1024px)';
 
-function routeUsesIntegratedDiscovery(pathname: string): boolean {
-  return pathname === '/store' || pathname.startsWith('/store/');
-}
-
-function routeHidesDiscovery(pathname: string): boolean {
+function routeOwnsIntegratedDiscovery(pathname: string): boolean {
   return (
-    pathname === '/' ||
+    pathname === '/store' ||
+    pathname.startsWith('/store/') ||
     pathname === '/sign-in' ||
     pathname === '/sign-up' ||
-    pathname.startsWith('/adminlogin')
+    pathname === '/adminlogin/login' ||
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/')
   );
 }
 
 export default function GlobalDiscoveryHost() {
   const pathname = usePathname();
 
-  const { user, isAuthenticated } = useIdentity();
+  const { isAuthenticated } = useIdentity();
 
   const [collapsed, setCollapsed] = useState(() => !pathname.startsWith('/account'));
 
@@ -52,8 +57,21 @@ export default function GlobalDiscoveryHost() {
     };
   }, []);
 
+  /**
+   * Account is the customer's full commerce workspace,
+   * so its Hub opens by default.
+   *
+   * Other customer routes start compact and remain
+   * available without dominating the primary surface.
+   */
+  useEffect(() => {
+    setCollapsed(!pathname.startsWith('/account'));
+  }, [pathname]);
+
   useEffect(() => {
     if (!isAuthenticated) {
+      setDiscoveryEnabled(true);
+
       return;
     }
 
@@ -65,6 +83,15 @@ export default function GlobalDiscoveryHost() {
         if (active && data?.profile) {
           setDiscoveryEnabled(data.profile.discoveryEnabled !== false);
         }
+      })
+      .catch(() => {
+        /**
+         * A settings request failure must not remove the
+         * customer's primary Discovery capability.
+         */
+        if (active) {
+          setDiscoveryEnabled(true);
+        }
       });
 
     return () => {
@@ -72,69 +99,35 @@ export default function GlobalDiscoveryHost() {
     };
   }, [isAuthenticated]);
 
-  const usesIntegratedDiscovery = routeUsesIntegratedDiscovery(pathname);
+  const ownsIntegratedDiscovery = routeOwnsIntegratedDiscovery(pathname);
 
-  const hidesDiscovery = routeHidesDiscovery(pathname);
-
-  /*
-   * Home and authentication surfaces do not
-   * render a Discovery Hub.
-   *
-   * Store owns its richer Feed-connected Hub,
-   * so the shared host must not mount there.
-   */
-  if (hidesDiscovery || usesIntegratedDiscovery || !discoveryEnabled || desktopViewport === null) {
+  if (pathname === '/' || ownsIntegratedDiscovery || !discoveryEnabled || desktopViewport === null) {
     return null;
   }
 
-  /*
-   * Mobile does not reserve a visible column.
-   * StoreExperienceSidebar mounts only the
-   * portalled mobile sheet host.
-   */
   if (!desktopViewport) {
     return (
-      <StoreExperienceSidebar
-        tier={user?.tier ?? 'guest'}
-        authenticated={isAuthenticated}
-        collapsed={collapsed}
-        onCollapsedChange={setCollapsed}
-        mobileOnly
-      />
+      <GlobalExperienceRuntime>
+        <MobileDiscoverySheetHost />
+      </GlobalExperienceRuntime>
     );
   }
 
-  /*
-   * Desktop Hub now occupies a real grid
-   * column. It is sticky, not fixed, so it
-   * cannot cover Account, Cart, Checkout,
-   * Tracking or Dashboard content.
-   */
   return (
-    <aside
-      aria-label="Discovery Hub"
-      className={cn(
-        'sticky top-[5.75rem]',
-        'mr-3 mt-3',
-        'hidden shrink-0',
-        'overflow-hidden',
-        'rounded-3xl',
-        'border border-border/60',
-        'bg-background',
-        'shadow-xl',
-        'transition-[width] duration-300',
-        'lg:block',
-        'lg:h-[calc(100dvh-6.5rem)]',
+    <GlobalExperienceRuntime>
+      <div
+        className={cn(
+          'fixed bottom-3 right-3 top-[5.75rem] z-40 overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl',
+          'transition-[width] duration-300',
 
-        collapsed ? 'w-64' : 'w-[28rem] xl:w-[31rem]'
-      )}>
-      <StoreExperienceSidebar
-        tier={user?.tier ?? 'guest'}
-        authenticated={isAuthenticated}
-        collapsed={collapsed}
-        onCollapsedChange={setCollapsed}
-        desktopOnly
-      />
-    </aside>
+          collapsed ? 'w-[5.5rem]' : 'w-[28rem] xl:w-[31rem]'
+        )}>
+        <DesktopDiscoveryRail
+          registry={discoveryRegistry}
+          collapsed={collapsed}
+          onCollapsedChange={setCollapsed}
+        />
+      </div>
+    </GlobalExperienceRuntime>
   );
 }

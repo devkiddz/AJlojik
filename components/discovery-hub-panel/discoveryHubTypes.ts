@@ -123,6 +123,14 @@ export type HubWidget = {
   id: HubWidgetId;
   groupId: HubGroupId;
 
+  /**
+   * Connects a resolved widget to a custom runtime component.
+   *
+   * The widget ID describes the experience capability.
+   * The component key describes how that capability is rendered.
+   */
+  componentKey?: DiscoveryComponentKey;
+
   title: string;
   description?: string;
 
@@ -344,6 +352,7 @@ export type DiscoveryWidgetDefinition = Omit<
   HubWidget,
   | 'id'
   | 'groupId'
+  | 'componentKey'
   | 'order'
   | 'enabled'
 > & {
@@ -363,7 +372,6 @@ export type DiscoveryWidgetDefinition = Omit<
 
   eligibility?: DiscoveryEligibilityRules;
 };
-
 export type DiscoveryRegistry = {
   groups: DiscoveryGroupDefinition[];
 

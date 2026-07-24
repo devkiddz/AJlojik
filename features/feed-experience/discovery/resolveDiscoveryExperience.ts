@@ -338,11 +338,16 @@ function toHubWidget(
 ): HubWidget {
   return {
     id: definition.id,
+
     groupId:
       definition.groupId,
 
+    componentKey:
+      definition.componentKey,
+
     title:
       definition.title,
+
     description:
       definition.description,
 
@@ -351,16 +356,19 @@ function toHubWidget(
 
     size:
       definition.size,
+
     status:
       definition.status,
 
     badge:
       definition.badge,
+
     meta:
       definition.meta,
 
     image:
       definition.image,
+
     visual:
       definition.visual,
 
@@ -372,6 +380,7 @@ function toHubWidget(
 
     slides:
       definition.slides,
+
     autoSlide:
       definition.autoSlide,
 
@@ -392,6 +401,7 @@ function toHubWidget(
 
     action:
       definition.action,
+
     actions:
       definition.actions,
 
@@ -452,6 +462,31 @@ function resolveGroupReason(
   return 'Group retained because it contains eligible widgets.';
 }
 
+function selectHighestPriorityGroup(
+  groups: ResolvedDiscoveryGroup[]
+): ResolvedDiscoveryGroup | undefined {
+  return groups.reduce<
+    ResolvedDiscoveryGroup | undefined
+  >(
+    (
+      selectedGroup,
+      currentGroup
+    ) => {
+      if (!selectedGroup) {
+        return currentGroup;
+      }
+
+      return (
+        currentGroup.priority >
+        selectedGroup.priority
+      )
+        ? currentGroup
+        : selectedGroup;
+    },
+    undefined
+  );
+}
+
 function findPrimaryGroupId(
   groups: ResolvedDiscoveryGroup[],
   registry: DiscoveryRegistry,
@@ -468,8 +503,8 @@ function findPrimaryGroupId(
       )
     );
 
-  const intentPrimary =
-    groups.find(group => {
+  const intentCandidates =
+    groups.filter(group => {
       const definition =
         groupById.get(
           group.id
@@ -483,12 +518,17 @@ function findPrimaryGroupId(
       );
     });
 
+  const intentPrimary =
+    selectHighestPriorityGroup(
+      intentCandidates
+    );
+
   if (intentPrimary) {
     return intentPrimary.id;
   }
 
-  const pagePrimary =
-    groups.find(group => {
+  const pageCandidates =
+    groups.filter(group => {
       const definition =
         groupById.get(
           group.id
@@ -502,8 +542,16 @@ function findPrimaryGroupId(
       );
     });
 
+  const pagePrimary =
+    selectHighestPriorityGroup(
+      pageCandidates
+    );
+
   return (
     pagePrimary?.id ??
+    selectHighestPriorityGroup(
+      groups
+    )?.id ??
     groups[0]?.id
   );
 }
@@ -796,6 +844,16 @@ export function resolveDiscoveryExperience({
     }
   );
 
+  const navigationOrderByGroupId =
+  new Map(
+    registry.groups.map(
+      (group, index) => [
+        group.id,
+        index
+      ]
+    )
+  );
+
   const resolvedGroups =
     eligibleGroupDefinitions
       .map(definition => {
@@ -879,13 +937,28 @@ export function resolveDiscoveryExperience({
           Boolean(group)
       )
       .sort(
-        (
-          firstGroup,
-          secondGroup
-        ) =>
-          secondGroup.priority -
-          firstGroup.priority
-      )
+  (
+    firstGroup,
+    secondGroup
+  ) => {
+    const firstOrder =
+      navigationOrderByGroupId.get(
+        firstGroup.id
+      ) ??
+      Number.MAX_SAFE_INTEGER;
+
+    const secondOrder =
+      navigationOrderByGroupId.get(
+        secondGroup.id
+      ) ??
+      Number.MAX_SAFE_INTEGER;
+
+    return (
+      firstOrder -
+      secondOrder
+    );
+  }
+)
       .map(
         (
           group,
