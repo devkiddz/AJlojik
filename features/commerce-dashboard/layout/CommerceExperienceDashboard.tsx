@@ -9,15 +9,11 @@ import {
   Bot,
   ChevronRight,
   Clock3,
-  Heart,
   MessageCircle,
   PackageCheck,
-  ReceiptText,
-  ShoppingBag,
   Sparkles,
   Star,
   Truck,
-  WalletCards,
   X
 } from 'lucide-react';
 
@@ -26,6 +22,8 @@ import type { ReactNode } from 'react';
 import SignOutButton from '@/components/auth/SignOutButton';
 import { WorkspaceSwitcher } from '@/features/workspace';
 import { cn } from '@/lib/utils';
+
+import { DashboardCommercePulse, DashboardPriorityExperience } from '../components';
 
 import type {
   CommerceJourneyItem,
@@ -50,51 +48,6 @@ const compactCurrencyFormatter = new Intl.NumberFormat('en-NG', {
   notation: 'compact',
   maximumFractionDigits: 1
 });
-
-const priorityToneStyles = {
-  navy: {
-    shell: 'bg-slate-950 text-white',
-    glow: 'bg-sky-400/20',
-    badge: 'border-sky-300/20 bg-sky-300/10 text-sky-100',
-    action: 'bg-white text-slate-950 hover:bg-white/90'
-  },
-
-  wine: {
-    shell: 'bg-gradient-to-br from-rose-950 via-slate-950 to-slate-950 text-white',
-    glow: 'bg-rose-400/20',
-    badge: 'border-rose-300/20 bg-rose-300/10 text-rose-100',
-    action: 'bg-white text-rose-950 hover:bg-white/90'
-  },
-
-  gold: {
-    shell: 'bg-gradient-to-br from-amber-950 via-slate-950 to-slate-950 text-white',
-    glow: 'bg-amber-300/20',
-    badge: 'border-amber-200/20 bg-amber-200/10 text-amber-100',
-    action: 'bg-amber-100 text-amber-950 hover:bg-amber-50'
-  },
-
-  emerald: {
-    shell: 'bg-gradient-to-br from-emerald-950 via-slate-950 to-slate-950 text-white',
-    glow: 'bg-emerald-300/20',
-    badge: 'border-emerald-200/20 bg-emerald-200/10 text-emerald-100',
-    action: 'bg-emerald-100 text-emerald-950 hover:bg-emerald-50'
-  },
-
-  violet: {
-    shell: 'bg-gradient-to-br from-violet-950 via-slate-950 to-slate-950 text-white',
-    glow: 'bg-violet-300/20',
-    badge: 'border-violet-200/20 bg-violet-200/10 text-violet-100',
-    action: 'bg-violet-100 text-violet-950 hover:bg-violet-50'
-  }
-} satisfies Record<
-  CommercePriorityExperience['tone'],
-  {
-    shell: string;
-    glow: string;
-    badge: string;
-    action: string;
-  }
->;
 
 const journeyToneStyles = {
   navy: 'from-sky-500/15 via-slate-950/5 to-transparent',
@@ -139,10 +92,10 @@ export default function CommerceExperienceDashboard() {
       <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
         <CommerceIdentityHeader greeting={greeting} />
 
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.75fr)]">
-          <PriorityExperienceCard priority={priority} />
+        <section className="grid items-stretch gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,0.75fr)]">
+          <DashboardPriorityExperience priority={priority} />
 
-          <CommercePulse items={pulse} totalSpent={data.pulse.totalSpent} />
+          <DashboardCommercePulse items={pulse} totalSpent={data.pulse.totalSpent} />
         </section>
 
         {journeys.length > 0 ? <JourneySection journeys={journeys} /> : null}
@@ -169,22 +122,27 @@ function CommerceIdentityHeader({ greeting }: { greeting: string }) {
   const { data } = experience;
 
   return (
-    <header className="glass-surface-strong relative z-40 rounded-3xl border border-border/60 p-4 shadow-xl sm:p-6 lg:p-7">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
-        <div className="absolute -right-20 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
+    <header className="glass-surface-strong relative z-30 isolate overflow-visible rounded-2xl border border-border/60 p-4 shadow-sm sm:p-5">
+      {/* Decorative effects remain clipped without clipping dropdowns */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+        <div className="absolute -right-20 -top-24 size-64 rounded-full bg-primary/10 blur-3xl" />
 
-        <div className="absolute bottom-0 left-1/3 size-48 rounded-full bg-amber-400/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 size-40 rounded-full bg-amber-400/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-slate-950 text-lg font-black text-white shadow-xl sm:size-16">
+      <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* ======================================================
+            IDENTITY
+        ====================================================== */}
+
+        <div className="flex min-w-0 items-center gap-3.5">
+          <div className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-border/60 bg-slate-950 text-base font-bold text-white shadow-sm sm:size-14">
             {data.identity.image ? (
               <Image
                 src={data.identity.image}
                 alt={data.identity.name}
                 fill
-                sizes="64px"
+                sizes="56px"
                 className="object-cover"
               />
             ) : (
@@ -193,191 +151,80 @@ function CommerceIdentityHeader({ greeting }: { greeting: string }) {
           </div>
 
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                Personal commerce world
-              </p>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-xs font-semibold text-primary">Commerce workspace</p>
 
-              {data.identity.emailVerified ? <BadgeCheck className="size-4 text-emerald-500" /> : null}
+              {data.identity.emailVerified ? (
+                <BadgeCheck className="size-4 shrink-0 text-emerald-500" />
+              ) : null}
             </div>
 
-            <h1 className="mt-1 truncate text-2xl font-black tracking-tight sm:text-4xl">
+            <h1 className="mt-1 truncate text-2xl font-bold leading-tight sm:text-3xl">
               {greeting}, {data.identity.firstName}
             </h1>
 
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground sm:text-sm">
-              Your purchases, plans, discoveries and active moments are assembled here.
+            <p className="mt-1 line-clamp-2 max-w-2xl text-sm leading-5 text-muted-foreground">
+              Manage your orders, saved products, recommendations and active shopping journeys from one place.
             </p>
           </div>
         </div>
 
-        <div className="relative z-50 flex flex-wrap items-center gap-2">
-          <WorkspaceSwitcher />
+        {/* ======================================================
+            WORKSPACE CONTROLS
+        ====================================================== */}
 
-          <StatusChip label="Experience" value={data.profile.persona.replaceAll('-', ' ')} />
+        <div className="relative z-40 grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
+          <div
+            className="
+              relative z-50
+              col-span-2
+              min-w-0
+              sm:col-span-1
 
-          <StatusChip label="Tier" value={data.identity.tier} />
+              [&_button]:h-10
+              [&_button]:w-full
+              [&_button]:max-w-full
+              [&_button]:rounded-xl
+              [&_button]:border
+              [&_button]:border-border/60
+              [&_button]:bg-background/70
+              [&_button]:px-3.5
+              [&_button]:text-xs
+              [&_button]:font-semibold
+              [&_button]:shadow-none
+              [&_button]:backdrop-blur
+              sm:[&_button]:w-auto
+            ">
+            <WorkspaceSwitcher />
+          </div>
 
-          <SignOutButton />
-        </div>
-      </div>
-    </header>
-  );
-}
+          <StatusChip label="Profile" value={data.profile.persona.replaceAll('-', ' ')} />
 
-function PriorityExperienceCard({ priority }: { priority: CommercePriorityExperience }) {
-  const tone = priorityToneStyles[priority.tone];
+          <StatusChip label="Membership" value={data.identity.tier} />
 
-  return (
-    <article
-      className={cn(
-        'group relative min-h-96 overflow-hidden rounded-3xl border border-white/10 shadow-2xl',
-        tone.shell
-      )}>
-      {priority.image ? (
-        <Image
-          src={priority.image}
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 1280px) 100vw, 70vw"
-          className="object-cover opacity-35 transition duration-700 group-hover:scale-105"
-        />
-      ) : null}
+          <div
+            className="
+              col-span-2
+              sm:col-span-1
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/25" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
-
-      <div className={cn('absolute -right-20 -top-20 size-72 rounded-full blur-3xl', tone.glow)} />
-
-      <div className="relative flex min-h-96 flex-col justify-between p-5 sm:p-7 lg:p-9">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span
-            className={cn(
-              'rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em]',
-              tone.badge
-            )}>
-            {priority.statusLabel ?? 'YOUR MOMENT'}
-          </span>
-
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
-            Priority experience
-          </span>
-        </div>
-
-        <div className="max-w-3xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">
-            {priority.eyebrow}
-          </p>
-
-          <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-            {priority.title}
-          </h2>
-
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-white/65 sm:text-base">
-            {priority.description}
-          </p>
-
-          {priority.progress != null ? (
-            <div className="mt-6 max-w-xl">
-              <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-white/55">
-                <span>Journey progress</span>
-                <span>{priority.progress}%</span>
-              </div>
-
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-white transition-all duration-700"
-                  style={{
-                    width: `${priority.progress}%`
-                  }}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href={priority.href}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full px-5 py-3 text-xs font-black transition hover:-translate-y-0.5',
-                tone.action
-              )}>
-              {priority.actionLabel}
-              <ArrowRight className="size-4" />
-            </Link>
-
-            {priority.secondaryHref && priority.secondaryActionLabel ? (
-              <Link
-                href={priority.secondaryHref}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">
-                {priority.secondaryActionLabel}
-              </Link>
-            ) : null}
+              [&_button]:h-10
+              [&_button]:w-full
+              [&_button]:rounded-xl
+              [&_button]:border
+              [&_button]:border-border/60
+              [&_button]:bg-background/70
+              [&_button]:px-4
+              [&_button]:text-xs
+              [&_button]:font-semibold
+              [&_button]:shadow-none
+              [&_button]:backdrop-blur
+              sm:[&_button]:w-auto
+            ">
+            <SignOutButton />
           </div>
         </div>
       </div>
-    </article>
-  );
-}
-
-function CommercePulse({ items, totalSpent }: { items: CommercePulseItem[]; totalSpent: number }) {
-  const icons: Record<CommercePulseItem['id'], ReactNode> = {
-    purchases: <ReceiptText className="size-4" />,
-    saved: <Heart className="size-4" />,
-    cart: <ShoppingBag className="size-4" />,
-    reviews: <Star className="size-4" />
-  };
-
-  return (
-    <aside className="premium-card flex min-h-96 flex-col rounded-3xl border border-border/60 p-5 shadow-xl sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Commerce pulse</p>
-
-          <h2 className="mt-2 text-2xl font-black tracking-tight">Your world at a glance</h2>
-        </div>
-
-        <span className="grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary">
-          <WalletCards className="size-5" />
-        </span>
-      </div>
-
-      <div className="mt-6 rounded-3xl bg-foreground p-5 text-background shadow-lg">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-background/55">Recorded purchases</p>
-
-        <p className="mt-2 text-3xl font-black tracking-tight">
-          {compactCurrencyFormatter.format(totalSpent)}
-        </p>
-
-        <p className="mt-2 text-[10px] leading-4 text-background/55">
-          Paid commerce inside the active workspace.
-        </p>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {items.map(item => (
-          <Link
-            key={item.id}
-            href={item.href}
-            className="group rounded-2xl border border-border/60 bg-background/70 p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="grid size-9 place-items-center rounded-xl bg-muted text-primary">
-                {icons[item.id]}
-              </span>
-
-              <ChevronRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" />
-            </div>
-
-            <p className="mt-4 text-2xl font-black">{item.value}</p>
-
-            <p className="mt-1 text-xs font-bold">{item.label}</p>
-
-            <p className="mt-1 truncate text-[9px] text-muted-foreground">{item.helper}</p>
-          </Link>
-        ))}
-      </div>
-    </aside>
+    </header>
   );
 }
 
@@ -434,7 +281,7 @@ function JourneyCard({ journey }: { journey: CommerceJourneyItem }) {
         <div>
           <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">{journey.eyebrow}</p>
 
-          <h3 className="mt-2 text-xl font-black tracking-tight">{journey.title}</h3>
+          <h3 className="mt-2 text-xl font-black">{journey.title}</h3>
 
           <p className="mt-2 text-xs leading-5 text-muted-foreground">{journey.description}</p>
 
@@ -490,11 +337,11 @@ function CommerceProductCard({ product }: { product: CommerceProduct }) {
 
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {product.isNew ? (
-            <span className="rounded-full bg-white/90 px-2 py-1 text-[8px] font-black text-black">NEW</span>
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-black text-black">NEW</span>
           ) : null}
 
           {product.featured ? (
-            <span className="rounded-full bg-amber-200/90 px-2 py-1 text-[8px] font-black text-amber-950">
+            <span className="rounded-full bg-amber-200/90 px-2 py-1 text-[10px] font-black text-amber-950">
               FEATURED
             </span>
           ) : null}
@@ -584,7 +431,7 @@ function OrderCard({ order }: { order: CommerceOrder }) {
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[9px] font-black uppercase tracking-wider text-primary">{order.orderNumber}</p>
 
-          <span className="rounded-full bg-muted px-2 py-1 text-[8px] font-black uppercase">
+          <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-black uppercase">
             {formatStatus(order.status)}
           </span>
         </div>
@@ -625,9 +472,7 @@ function CommerceClosingPanel() {
             RCENTZ commerce experience
           </p>
 
-          <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">
-            Your shopping life should remember where you stopped.
-          </h2>
+          <h2 className="mt-3 text-3xl sm:text-5xl">Your shopping life should remember where you stopped.</h2>
 
           <p className="mt-4 max-w-2xl text-sm leading-6 text-white/60">
             Keep discovering, return to meaningful moments, or let AJ Companion guide the next move.
@@ -793,7 +638,7 @@ function SectionHeader({
       <div>
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">{eyebrow}</p>
 
-        <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{title}</h2>
+        <h2 className="mt-1 text-2xl font-black sm:text-3xl">{title}</h2>
 
         <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">{description}</p>
 
@@ -818,7 +663,9 @@ function SectionHeader({
 function StatusChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-full border border-border/60 bg-background/65 px-3 py-2 backdrop-blur">
-      <span className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
 
       <span className="ml-2 text-[9px] font-black uppercase">{value}</span>
     </div>

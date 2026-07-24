@@ -9,6 +9,12 @@ export { resolveCommerceDashboard } from './resolvers/resolve-commerce-dashboard
 
 export { default as CommerceExperienceDashboard } from './layout/CommerceExperienceDashboard';
 
+export {
+  DashboardCommercePulse,
+  DashboardPriorityExperience,
+  DashboardPulseTile
+} from './components';
+
 export type {
   CommerceAssistantAction,
   CommerceAssistantContext,
