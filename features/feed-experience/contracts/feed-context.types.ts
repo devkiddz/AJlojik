@@ -1,6 +1,9 @@
 import type { CollectionType } from "@/data/collections";
 import type { Promo } from "@/data/promos";
 import type { CategoriesType, ProductType } from "@/types/types";
+import type {
+  WorkspaceCommerceProjection
+} from '../runtime/commerceProjectionTypes';
 
 export type FeedCatalogContext = {
   products: ProductType[];
@@ -35,10 +38,25 @@ export type FeedEnvironmentContext = {
 
 export type FeedContext = {
   catalog: FeedCatalogContext;
+
   user: FeedUserContext;
+
   activity: FeedActivityContext;
+
   environment: FeedEnvironmentContext;
 
+  /**
+   * Canonical database-backed, workspace-scoped
+   * commerce runtime.
+   */
+  commerce?: WorkspaceCommerceProjection;
+
+  /**
+   * Temporary legacy compatibility bridge.
+   *
+   * Existing Store mock profiles still consume this
+   * contract until their migration is completed.
+   */
   experience?: FeedExperienceData;
 };
 

@@ -1,6 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import type {
+  WorkspaceCommerceProjection,
+  WorkspaceCommerceProjectionResponse
+} from './commerceProjectionTypes';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -88,8 +92,12 @@ export default function GlobalExperienceRuntime({
   const pathname = usePathname();
 
   const { user, isAuthenticated } = useIdentity();
+  const userId = user?.id ? String(user.id) : undefined;
+
+  const userTier = typeof user?.tier === 'string' ? user.tier : null;
 
   const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
+  const activeWorkspaceId = activeWorkspace?.id ?? null;
 
   const { products, loading: catalogLoading } = useCatalog();
 
@@ -98,6 +106,7 @@ export default function GlobalExperienceRuntime({
   const { productIds: wishlistProductIds, toggleWishlist } = useWishlist();
 
   const [device, setDevice] = useState<FeedDevice>('desktop');
+  const [commerceProjection, setCommerceProjection] = useState<WorkspaceCommerceProjection | null>(null);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia('(max-width: 639px)');
@@ -120,6 +129,43 @@ export default function GlobalExperienceRuntime({
       tabletQuery.removeEventListener('change', synchronizeDevice);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userId || !activeWorkspaceId) {
+      setCommerceProjection(null);
+
+      return;
+    }
+
+    const controller = new AbortController();
+
+    void fetch(`/api/experience/runtime?workspaceId=${encodeURIComponent(activeWorkspaceId)}`, {
+      cache: 'no-store',
+
+      signal: controller.signal
+    })
+      .then(async response => {
+        if (!response.ok) {
+          throw new Error('Commerce projection request failed.');
+        }
+
+        return response.json() as Promise<WorkspaceCommerceProjectionResponse>;
+      })
+      .then(response => {
+        if (!controller.signal.aborted) {
+          setCommerceProjection(response.projection);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setCommerceProjection(null);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [activeWorkspaceId, isAuthenticated, pathname, userId]);
 
   const cartProductIds = useMemo(
     () => [...new Set(cartItems.map(item => String(item.productId)))],
@@ -206,10 +252,6 @@ export default function GlobalExperienceRuntime({
     [handleAddToCart, handleCategoryChange, handleProductPreview, handlePromotionPreview, handleToggleLike]
   );
 
-  const userId = user?.id ? String(user.id) : undefined;
-
-  const userTier = typeof user?.tier === 'string' ? user.tier : null;
-
   const context = useMemo<FeedContext | null>(() => {
     if (!activeWorkspace) {
       return null;
@@ -262,6 +304,12 @@ export default function GlobalExperienceRuntime({
         clickedCollectionIds: []
       },
 
+      ...(commerceProjection
+        ? {
+            commerce: commerceProjection
+          }
+        : {}),
+
       /**
        * Deliberately omitted:
        *
@@ -287,6 +335,7 @@ export default function GlobalExperienceRuntime({
   }, [
     activeWorkspace,
     cartProductIds,
+    commerceProjection,
     device,
     isAuthenticated,
     products,
