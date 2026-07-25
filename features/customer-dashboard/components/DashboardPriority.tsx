@@ -1,15 +1,15 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRight } from 'lucide-react';
+import {
+  ArrowRight
+} from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
 import type {
   CommercePriorityExperience
-} from '../contracts/commerceDashboardTypes';
+} from '../contracts/customerDashboardTypes';
 
 const priorityToneStyles = {
   navy: {
@@ -18,20 +18,27 @@ const priorityToneStyles = {
     badge: 'border-sky-300/20 bg-sky-300/10 text-sky-100',
     action: 'bg-white text-slate-950 hover:bg-white/90'
   },
+
   wine: {
     shell:
       'bg-gradient-to-br from-rose-950 via-slate-950 to-slate-950 text-white',
     glow: 'bg-rose-400/20',
-    badge: 'border-rose-300/20 bg-rose-300/10 text-rose-100',
-    action: 'bg-white text-rose-950 hover:bg-white/90'
+    badge:
+      'border-rose-300/20 bg-rose-300/10 text-rose-100',
+    action:
+      'bg-white text-rose-950 hover:bg-white/90'
   },
+
   gold: {
     shell:
       'bg-gradient-to-br from-amber-950 via-slate-950 to-slate-950 text-white',
     glow: 'bg-amber-300/20',
-    badge: 'border-amber-200/20 bg-amber-200/10 text-amber-100',
-    action: 'bg-amber-100 text-amber-950 hover:bg-amber-50'
+    badge:
+      'border-amber-200/20 bg-amber-200/10 text-amber-100',
+    action:
+      'bg-amber-100 text-amber-950 hover:bg-amber-50'
   },
+
   emerald: {
     shell:
       'bg-gradient-to-br from-emerald-950 via-slate-950 to-slate-950 text-white',
@@ -41,12 +48,15 @@ const priorityToneStyles = {
     action:
       'bg-emerald-100 text-emerald-950 hover:bg-emerald-50'
   },
+
   violet: {
     shell:
       'bg-gradient-to-br from-violet-950 via-slate-950 to-slate-950 text-white',
     glow: 'bg-violet-300/20',
-    badge: 'border-violet-200/20 bg-violet-200/10 text-violet-100',
-    action: 'bg-violet-100 text-violet-950 hover:bg-violet-50'
+    badge:
+      'border-violet-200/20 bg-violet-200/10 text-violet-100',
+    action:
+      'bg-violet-100 text-violet-950 hover:bg-violet-50'
   }
 } satisfies Record<
   CommercePriorityExperience['tone'],
@@ -58,14 +68,15 @@ const priorityToneStyles = {
   }
 >;
 
-type DashboardPriorityExperienceProps = {
+type DashboardPriorityProps = {
   priority: CommercePriorityExperience;
 };
 
-export function DashboardPriorityExperience({
+export function DashboardPriority({
   priority
-}: DashboardPriorityExperienceProps) {
-  const tone = priorityToneStyles[priority.tone];
+}: DashboardPriorityProps) {
+  const tone =
+    priorityToneStyles[priority.tone];
 
   return (
     <article
@@ -84,77 +95,84 @@ export function DashboardPriorityExperience({
         />
       ) : null}
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/25" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/20" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
 
       <div
         className={cn(
-          'absolute -right-16 -top-16 size-48 rounded-full blur-3xl',
+          'absolute -right-16 -top-16 size-52 rounded-full blur-3xl',
           tone.glow
         )}
       />
 
-      <div className="relative flex min-h-72 flex-col justify-between p-4 lg:p-5">
+      <div className="relative flex min-h-72 flex-col justify-between p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span
             className={cn(
-              'rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em]',
+              'rounded-full border px-3 py-1.5 text-xs font-semibold',
               tone.badge
             )}>
-            {priority.statusLabel ?? 'YOUR MOMENT'}
+            {priority.statusLabel ??
+              'Current priority'}
           </span>
 
-          <span className="text-[8px] font-semibold uppercase tracking-[0.16em] text-white/50">
-            Priority experience
+          <span className="text-xs font-medium text-white/55">
+            Priority
           </span>
         </div>
 
         <div className="max-w-3xl">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/55">
+          <p className="text-sm font-semibold text-white/65">
             {priority.eyebrow}
           </p>
 
-          <h2 className="mt-1.5 max-w-2xl text-2xl font-black tracking-tight sm:text-3xl xl:text-4xl">
+          <h2 className="mt-2 max-w-2xl text-2xl font-bold leading-tight sm:text-3xl xl:text-4xl">
             {priority.title}
           </h2>
 
-          <p className="mt-2.5 max-w-2xl text-xs leading-5 text-white/65 sm:text-sm">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
             {priority.description}
           </p>
 
           {priority.progress != null ? (
-            <div className="mt-3.5 max-w-lg">
-              <div className="flex items-center justify-between text-[8px] font-semibold uppercase tracking-wider text-white/50">
-                <span>Journey progress</span>
-                <span>{priority.progress}%</span>
+            <div className="mt-5 max-w-lg">
+              <div className="flex items-center justify-between text-xs text-white/60">
+                <span>Progress</span>
+                <span>
+                  {priority.progress}%
+                </span>
               </div>
 
-              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                 <div
                   className="h-full rounded-full bg-white transition-all duration-700"
-                  style={{ width: `${priority.progress}%` }}
+                  style={{
+                    width: `${priority.progress}%`
+                  }}
                 />
               </div>
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2.5">
             <Link
               href={priority.href}
               className={cn(
-                'inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-[11px] font-black transition hover:-translate-y-0.5',
+                'inline-flex h-10 items-center gap-2 rounded-xl px-4 text-xs font-semibold transition hover:-translate-y-0.5',
                 tone.action
               )}>
               {priority.actionLabel}
-              <ArrowRight className="size-3.5" />
+              <ArrowRight className="size-4" />
             </Link>
 
             {priority.secondaryHref &&
             priority.secondaryActionLabel ? (
               <Link
                 href={priority.secondaryHref}
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 text-[11px] font-bold text-white transition hover:bg-white/10">
-                {priority.secondaryActionLabel}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-xs font-semibold text-white transition hover:bg-white/10">
+                {
+                  priority.secondaryActionLabel
+                }
               </Link>
             ) : null}
           </div>

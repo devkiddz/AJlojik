@@ -18,10 +18,13 @@ type WorkspaceSwitcherProps = {
 };
 
 const workspaceDescriptions: Record<WorkspaceMode, string> = {
-  LIVE: 'Shop with real products, orders and payments.',
-  DEMO: 'Explore AJ Logik with synthetic commerce data.',
-  PRACTICE: 'Practise shopping safely with paper money.',
-  SANDBOX: 'Isolated environment for system testing.'
+  LIVE: 'Use real products, orders and payments.',
+
+  DEMO: 'Explore AJ Logik with prepared sample commerce data.',
+
+  PRACTICE: 'Practise shopping safely using paper money.',
+
+  SANDBOX: 'Use an isolated environment for system testing.'
 };
 
 function WorkspaceModeIcon({ mode }: { mode: WorkspaceMode }) {
@@ -36,8 +39,14 @@ function WorkspaceModeIcon({ mode }: { mode: WorkspaceMode }) {
   }
 }
 
-function formatWallet(workspace: Workspace) {
-  if (!workspace.wallet) return null;
+function formatWorkspaceMode(mode: WorkspaceMode): string {
+  return mode.toLowerCase().replace(/\b\w/g, character => character.toUpperCase());
+}
+
+function formatWallet(workspace: Workspace): string | null {
+  if (!workspace.wallet) {
+    return null;
+  }
 
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
@@ -60,10 +69,20 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
       }
     }
 
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+    }
+
     document.addEventListener('pointerdown', handlePointerDown);
+
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown);
+
+      document.removeEventListener('keydown', handleEscape);
     };
   }, []);
 
@@ -91,21 +110,21 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
     'disabled:cursor-not-allowed disabled:opacity-60',
 
     variant === 'compact' && [
-      'h-10 gap-2 rounded-full',
-      'bg-background/80 px-2 shadow-sm backdrop-blur-xl',
-      'hover:border-primary/20 hover:bg-primary/5'
+      'h-10 gap-2 rounded-xl',
+      'border-border/60 bg-background/80 px-2.5 shadow-sm backdrop-blur-xl',
+      'hover:border-primary/25 hover:bg-muted/70'
     ],
 
     variant === 'account-sheet' && [
       'w-full gap-3 rounded-2xl p-3',
       'border-border/70 bg-gradient-to-br from-card via-card to-muted/40',
-      'shadow-sm hover:border-primary/20 hover:shadow-md'
+      'shadow-sm hover:border-primary/25 hover:shadow-md'
     ],
 
     variant === 'sidebar' && [
       'w-full gap-3 rounded-xl p-2.5',
       'border-sidebar-border/70 bg-sidebar-accent/40',
-      'hover:border-primary/20 hover:bg-sidebar-accent'
+      'hover:border-primary/25 hover:bg-sidebar-accent'
     ]
   );
 
@@ -118,7 +137,6 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
         disabled={switchingWorkspace}
         onClick={() => setOpen(current => !current)}
         className={triggerClassName}>
-        {/* Experience icon */}
         <span
           className={cn(
             'relative grid shrink-0 place-items-center rounded-xl border',
@@ -138,40 +156,37 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
           )}
         </span>
 
-        {/* Experience details */}
         <span className="min-w-0 flex-1">
-          {variant !== 'compact' && (
-            <span className="block text-[0.68rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Current experience
-            </span>
-          )}
+          {variant !== 'compact' ? (
+            <span className="block text-xs font-medium text-muted-foreground">Current experience</span>
+          ) : null}
 
           <span
             className={cn(
               'block truncate font-semibold',
-              variant === 'compact' ? 'text-xs tracking-wide' : 'mt-0.5 text-sm'
+
+              variant === 'compact' ? 'text-xs' : 'mt-0.5 text-sm'
             )}>
-            {activeWorkspace.mode}
+            {formatWorkspaceMode(activeWorkspace.mode)}
           </span>
 
-          {variant !== 'compact' && (
+          {variant !== 'compact' ? (
             <span className="mt-1 block truncate text-xs text-muted-foreground">
               {wallet ?? workspaceDescriptions[activeWorkspace.mode]}
             </span>
-          )}
+          ) : null}
 
-          {variant === 'compact' && wallet && (
+          {variant === 'compact' && wallet ? (
             <span className="hidden text-xs text-muted-foreground sm:inline">{wallet}</span>
-          )}
+          ) : null}
         </span>
 
-        {/* Caret control box */}
         <span
           className={cn(
             'grid shrink-0 place-items-center border',
             'bg-background/60 text-muted-foreground shadow-sm',
             'transition duration-200',
-            'group-hover:border-primary/20 group-hover:bg-primary/5 group-hover:text-foreground',
+            'group-hover:border-primary/25 group-hover:bg-primary/5 group-hover:text-foreground',
 
             variant === 'compact' ? 'size-7 rounded-lg' : 'size-9 rounded-xl'
           )}>
@@ -179,29 +194,27 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
         </span>
       </button>
 
-      {open && (
+      {open ? (
         <div
           role="menu"
           className={cn(
-            'absolute mt-2 overflow-hidden rounded-2xl border',
-            'border-border/70 bg-popover/95 shadow-2xl backdrop-blur-xl',
+            'absolute z-[200] mt-2 flex max-h-[min(34rem,calc(100dvh-2rem))] flex-col overflow-hidden rounded-2xl border',
+            'border-border/70 bg-popover/98 shadow-2xl backdrop-blur-xl',
             'animate-in fade-in-0 zoom-in-95 duration-150',
 
-            variant === 'compact' && ['right-0', 'w-[min(22rem,calc(100vw-1.5rem))]'],
+            variant === 'compact' && ['right-0', 'w-[min(24rem,calc(100vw-2rem))]'],
 
             variant === 'account-sheet' && ['left-0 right-0', 'w-full'],
 
-            variant === 'sidebar' && [
-              'bottom-[calc(100%+0.5rem)] left-0',
-              'w-[min(21rem,calc(100vw-1.5rem))]'
-            ]
+            variant === 'sidebar' && ['bottom-[calc(100%+0.5rem)] left-0', 'w-[min(22rem,calc(100vw-2rem))]']
           )}>
-          {/* Menu header */}
-          <div className="flex items-start justify-between border-b border-border/60 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold">Choose experience</p>
+          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border/60 p-4">
+            <div className="min-w-0">
+              <p className="text-base font-semibold">Choose experience</p>
 
-              <p className="mt-1 text-xs text-muted-foreground">Switch between Live, Demo and Practice.</p>
+              <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                Select how you want to use AJ Logik.
+              </p>
             </div>
 
             <button
@@ -209,16 +222,15 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
               aria-label="Close experience switcher"
               onClick={() => setOpen(false)}
               className={cn(
-                'grid size-8 place-items-center rounded-xl border',
-                'bg-background/50 text-muted-foreground',
-                'transition hover:border-primary/20 hover:bg-primary/5 hover:text-foreground'
+                '!grid !size-9 !h-9 !w-9 shrink-0 place-items-center rounded-xl border !p-0',
+                'border-border/60 bg-background/60 text-muted-foreground',
+                'transition hover:border-primary/25 hover:bg-primary/5 hover:text-foreground'
               )}>
               <X className="size-4" />
             </button>
           </div>
 
-          {/* Workspace options */}
-          <div className="space-y-1.5 p-2">
+          <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain p-3">
             {availableWorkspaces.map(workspace => {
               const selected = workspace.id === activeWorkspace.id;
 
@@ -232,57 +244,68 @@ export function WorkspaceSwitcher({ variant = 'compact', className }: WorkspaceS
                   disabled={switchingWorkspace || !workspace.active}
                   onClick={() => void handleSwitch(workspace.id)}
                   className={cn(
-                    'group/item flex w-full items-start gap-3 rounded-xl border border-transparent p-3 text-left',
+                    '!flex !h-auto min-h-20 !w-full items-start gap-3 rounded-xl border !p-3.5 text-left',
+                    'border-border/60 bg-background/55',
                     'transition duration-200',
-                    'hover:border-primary/10 hover:bg-primary/5',
+                    'hover:border-primary/25 hover:bg-primary/5',
                     'disabled:cursor-not-allowed disabled:opacity-50',
 
                     selected && [
-                      'border-primary/15 bg-primary/10',
+                      'border-primary/25 bg-primary/10',
                       'shadow-[inset_3px_0_0_hsl(var(--primary))]'
                     ]
                   )}>
                   <span
                     className={cn(
-                      'mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl border',
-                      'bg-background/60 text-muted-foreground transition',
+                      'grid size-10 shrink-0 place-items-center rounded-xl border',
+                      'bg-background/70 text-muted-foreground transition',
 
                       selected
-                        ? 'border-primary/20 bg-primary/10 text-primary'
-                        : 'border-border/70 group-hover/item:border-primary/15 group-hover/item:text-foreground'
+                        ? 'border-primary/25 bg-primary/10 text-primary'
+                        : 'border-border/70 group-hover:border-primary/20 group-hover:text-foreground'
                     )}>
                     <WorkspaceModeIcon mode={workspace.mode} />
                   </span>
 
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold">{workspace.mode}</span>
-
-                      {selected && (
-                        <span className="grid size-5 place-items-center rounded-full bg-primary text-primary-foreground">
-                          <Check className="size-3" />
+                    <span className="flex items-start justify-between gap-3">
+                      <span>
+                        <span className="block text-sm font-semibold leading-5">
+                          {formatWorkspaceMode(workspace.mode)}
                         </span>
-                      )}
+
+                        {selected ? (
+                          <span className="mt-0.5 block text-xs font-medium text-primary">
+                            Current experience
+                          </span>
+                        ) : null}
+                      </span>
+
+                      {selected ? (
+                        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="size-3.5" />
+                        </span>
+                      ) : null}
                     </span>
 
-                    <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                    <span className="mt-1.5 block text-sm leading-5 text-muted-foreground">
                       {workspaceDescriptions[workspace.mode]}
                     </span>
 
-                    {workspaceWallet && (
-                      <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2 py-1 text-xs font-medium">
+                    {workspaceWallet ? (
+                      <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/70 px-2.5 py-1.5 text-xs font-medium">
                         <WalletCards className="size-3.5 text-primary" />
 
                         {workspaceWallet}
                       </span>
-                    )}
+                    ) : null}
                   </span>
                 </button>
               );
             })}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

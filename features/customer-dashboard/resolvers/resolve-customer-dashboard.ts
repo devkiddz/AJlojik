@@ -9,8 +9,8 @@ import type {
   CommercePriorityExperience,
   CommerceProduct,
   CommercePulseItem,
-  ResolvedCommerceDashboard
-} from '../contracts/commerceDashboardTypes';
+  ResolvedCustomerDashboard
+} from '../contracts/customerDashboardTypes';
 
 const activeDeliveryStatuses = new Set([
   'PENDING',
@@ -1210,9 +1210,9 @@ function resolveHubProjection(
   };
 }
 
-export function resolveCommerceDashboard(
+export function resolveCustomerDashboard(
   data: CommerceDashboardData
-): ResolvedCommerceDashboard {
+): ResolvedCustomerDashboard {
   const greeting = getGreeting(
     data.generatedAt
   );

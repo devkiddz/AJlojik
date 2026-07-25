@@ -8,7 +8,7 @@ import type {
   CommerceHistoryEntry,
   CommerceOrder,
   CommerceProduct
-} from '../contracts/commerceDashboardTypes';
+} from '../contracts/customerDashboardTypes';
 
 type DashboardProductRecord = {
   id: string;
@@ -65,28 +65,50 @@ function uniqueStrings(values: Array<string | null | undefined>): string[] {
   );
 }
 
-function extractShoppingListProductIds(value: unknown): string[] {
+function extractShoppingListProductIds(
+  value: unknown
+): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
-  const productIds = value.flatMap(item => {
-    if (
-      !item ||
-      typeof item !== 'object' ||
-      !('productIds' in item) ||
-      !Array.isArray(item.productIds)
-    ) {
-      return [];
-    }
+  const productIds =
+    value.flatMap(
+      (
+        item: unknown
+      ): string[] => {
+        if (
+          !item ||
+          typeof item !== 'object' ||
+          !('productIds' in item)
+        ) {
+          return [];
+        }
 
-    return item.productIds.filter(
-      (productId): productId is string =>
-        typeof productId === 'string'
+        const rawProductIds =
+          item.productIds;
+
+        if (
+          !Array.isArray(
+            rawProductIds
+          )
+        ) {
+          return [];
+        }
+
+        return rawProductIds.filter(
+          (
+            productId: unknown
+          ): productId is string =>
+            typeof productId ===
+            'string'
+        );
+      }
     );
-  });
 
-  return uniqueStrings(productIds);
+  return uniqueStrings(
+    productIds
+  );
 }
 
 function mapProduct(
@@ -164,7 +186,7 @@ function createProductMap(
   );
 }
 
-export async function getCommerceDashboardData(
+export async function getCustomerDashboardData(
   userId: string,
   workspace: Workspace
 ): Promise<CommerceDashboardData> {

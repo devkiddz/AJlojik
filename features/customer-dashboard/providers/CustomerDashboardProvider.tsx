@@ -12,11 +12,11 @@ import {
 
 import type {
   CommerceAssistantAction,
-  ResolvedCommerceDashboard
-} from '../contracts/commerceDashboardTypes';
+  ResolvedCustomerDashboard
+} from '../contracts/customerDashboardTypes';
 
-type CommerceExperienceContextValue = {
-  experience: ResolvedCommerceDashboard;
+type CustomerDashboardContextValue = {
+  dashboard: ResolvedCustomerDashboard;
 
   assistantOpen: boolean;
   activeAssistantAction: CommerceAssistantAction | null;
@@ -32,20 +32,20 @@ type CommerceExperienceContextValue = {
   ) => void;
 };
 
-type CommerceExperienceProviderProps = {
-  initialExperience: ResolvedCommerceDashboard;
+type CustomerDashboardProviderProps = {
+  initialDashboard: ResolvedCustomerDashboard;
   children: ReactNode;
 };
 
-const CommerceExperienceContext =
-  createContext<CommerceExperienceContextValue | null>(
+const CustomerDashboardContext =
+  createContext<CustomerDashboardContextValue | null>(
     null
   );
 
-export function CommerceExperienceProvider({
-  initialExperience,
+export function CustomerDashboardProvider({
+  initialDashboard,
   children
-}: CommerceExperienceProviderProps) {
+}: CustomerDashboardProviderProps) {
   const [assistantOpen, setAssistantOpen] =
     useState(false);
 
@@ -91,41 +91,49 @@ export function CommerceExperienceProvider({
                 prompt: action.prompt,
                 action,
                 context:
-                  initialExperience.assistant
+                  initialDashboard.assistant
               }
             }
           )
         );
       },
-      [initialExperience.assistant]
+      [initialDashboard.assistant]
     );
 
   useEffect(() => {
+    const detail = {
+      dashboard: {
+        priority:
+          initialDashboard.priority,
+        pulse:
+          initialDashboard.pulse,
+        journeys:
+          initialDashboard.journeys,
+        mixes:
+          initialDashboard.mixes
+      },
+
+      hub: initialDashboard.hub,
+
+      assistant:
+        initialDashboard.assistant
+    };
+
+    window.dispatchEvent(
+      new CustomEvent(
+        'rcentz:customer-dashboard-resolved',
+        { detail }
+      )
+    );
+
+    // Temporary V1 compatibility for existing Hub listeners.
     window.dispatchEvent(
       new CustomEvent(
         'rcentz:commerce-experience-resolved',
-        {
-          detail: {
-            dashboard: {
-              priority:
-                initialExperience.priority,
-              pulse:
-                initialExperience.pulse,
-              journeys:
-                initialExperience.journeys,
-              mixes:
-                initialExperience.mixes
-            },
-
-            hub: initialExperience.hub,
-
-            assistant:
-              initialExperience.assistant
-          }
-        }
+        { detail }
       )
     );
-  }, [initialExperience]);
+  }, [initialDashboard]);
 
   useEffect(() => {
     const handleOpenAssistant = (
@@ -155,10 +163,10 @@ export function CommerceExperienceProvider({
   }, [openAssistant]);
 
   const value =
-    useMemo<CommerceExperienceContextValue>(
+    useMemo<CustomerDashboardContextValue>(
       () => ({
-        experience:
-          initialExperience,
+        dashboard:
+          initialDashboard,
 
         assistantOpen,
         activeAssistantAction,
@@ -169,7 +177,7 @@ export function CommerceExperienceProvider({
         selectAssistantAction
       }),
       [
-        initialExperience,
+        initialDashboard,
         assistantOpen,
         activeAssistantAction,
         openAssistant,
@@ -179,21 +187,21 @@ export function CommerceExperienceProvider({
     );
 
   return (
-    <CommerceExperienceContext.Provider
+    <CustomerDashboardContext.Provider
       value={value}>
       {children}
-    </CommerceExperienceContext.Provider>
+    </CustomerDashboardContext.Provider>
   );
 }
 
-export function useCommerceExperience() {
+export function useCustomerDashboard() {
   const context = useContext(
-    CommerceExperienceContext
+    CustomerDashboardContext
   );
 
   if (!context) {
     throw new Error(
-      'useCommerceExperience must be used within CommerceExperienceProvider.'
+      'useCustomerDashboard must be used within CustomerDashboardProvider.'
     );
   }
 

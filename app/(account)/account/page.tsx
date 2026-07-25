@@ -3,14 +3,16 @@ import {
   headers
 } from 'next/headers';
 
-import { redirect } from 'next/navigation';
+import {
+  redirect
+} from 'next/navigation';
 
 import {
-  CommerceExperienceDashboard,
-  CommerceExperienceProvider,
-  getCommerceDashboardData,
-  resolveCommerceDashboard
-} from '@/features/commerce-dashboard';
+  CustomerDashboard,
+  CustomerDashboardProvider,
+  getCustomerDashboardData,
+  resolveCustomerDashboard
+} from '@/features/customer-dashboard';
 
 import {
   ACTIVE_WORKSPACE_COOKIE
@@ -20,7 +22,9 @@ import {
   getUserWorkspaces
 } from '@/features/workspace/services/get-user-workspaces';
 
-import { auth } from '@/lib/auth';
+import {
+  auth
+} from '@/lib/auth';
 
 export default async function AccountPage() {
   const session =
@@ -53,27 +57,27 @@ export default async function AccountPage() {
 
   if (!activeWorkspace) {
     throw new Error(
-      'AJ Logik could not resolve an active workspace for this account.'
+      'AJ Logik could not resolve an active workspace for this dashboard.'
     );
   }
 
   const dashboardData =
-    await getCommerceDashboardData(
+    await getCustomerDashboardData(
       session.user.id,
       activeWorkspace
     );
 
-  const dashboardExperience =
-    resolveCommerceDashboard(
+  const resolvedDashboard =
+    resolveCustomerDashboard(
       dashboardData
     );
 
   return (
-    <CommerceExperienceProvider
-      initialExperience={
-        dashboardExperience
+    <CustomerDashboardProvider
+      initialDashboard={
+        resolvedDashboard
       }>
-      <CommerceExperienceDashboard />
-    </CommerceExperienceProvider>
+      <CustomerDashboard />
+    </CustomerDashboardProvider>
   );
 }

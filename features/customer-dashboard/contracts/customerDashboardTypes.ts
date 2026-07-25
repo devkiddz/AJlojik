@@ -400,3 +400,12 @@ export type ResolvedCommerceDashboard = {
   hub: CommerceHubProjection;
   assistant: CommerceAssistantContext;
 };
+
+
+// Customer-dashboard aggregate aliases.
+//
+// CommerceProduct, CommerceOrder and the other Commerce* contracts remain
+// domain-level names. The aliases below make the feature ownership explicit
+// without renaming every commerce entity.
+export type CustomerDashboardData = CommerceDashboardData;
+export type ResolvedCustomerDashboard = ResolvedCommerceDashboard;
