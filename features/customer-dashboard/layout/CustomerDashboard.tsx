@@ -181,8 +181,10 @@ export default function CustomerDashboard() {
       <div className="mx-auto w-full max-w-[92rem] space-y-4 px-3 py-4 sm:px-5 sm:py-5 lg:px-6">
         <WelcomeBar />
 
-        <section id="experience-journey" className="space-y-3">
-          <header className="flex items-center justify-between gap-3 px-1">
+        <section
+          id="experience-journey"
+          className="overflow-hidden rounded-2xl border border-border/60 bg-card/70 shadow-sm">
+          <header className="flex items-center justify-between gap-3 border-b border-border/50 px-4 py-3.5 sm:px-5">
             <div className="flex min-w-0 items-center gap-3">
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 <History className="size-4" />
@@ -196,58 +198,58 @@ export default function CustomerDashboard() {
             </span>
           </header>
 
-          <div className="grid items-start gap-3 xl:grid-cols-2">
-            <JourneyGroup code="BM" title="Browsing Memory">
-              <JourneyListCard
-                code="RV"
-                title="Recent Views"
-                count={data.recentProducts.length}
-                href="/store?view=recent"
-                icon={<Clock3 />}
-                tone="slate">
-                <RecentViewRows products={data.recentProducts} />
-              </JourneyListCard>
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 py-4 scrollbar-hide sm:px-5">
+            <JourneyListCard
+              code="RV"
+              title="Recent Views"
+              count={data.recentProducts.length}
+              href="/store?view=recent"
+              icon={<Clock3 />}
+              tone="slate">
+              <RecentViewRows products={data.recentProducts} />
+            </JourneyListCard>
 
-              <JourneyListCard
-                id="activity-archive"
-                code="AA"
-                title="Activity Archive"
-                count={data.history.length}
-                href="/store?view=history"
-                icon={<History />}
-                tone="rose">
-                <ActivityRows history={data.history} />
-              </JourneyListCard>
-            </JourneyGroup>
+            <JourneyListCard
+              id="activity-archive"
+              code="AA"
+              title="Activity Archive"
+              count={data.history.length}
+              href="/store?view=history"
+              icon={<History />}
+              tone="rose">
+              <ActivityRows history={data.history} />
+            </JourneyListCard>
 
-            <JourneyGroup code="OL" title="Order Lifecycle">
-              <JourneyListCard
-                code="OH"
-                title="Order History"
-                count={data.orders.length}
-                href="/orders"
-                icon={<ReceiptText />}
-                tone="violet">
-                <OrderRows orders={data.orders} />
-              </JourneyListCard>
+            <JourneyListCard
+              code="OH"
+              title="Order History"
+              count={data.orders.length}
+              href="/orders"
+              icon={<ReceiptText />}
+              tone="violet">
+              <OrderRows orders={data.orders} />
+            </JourneyListCard>
 
-              <JourneyListCard
-                code="OD"
-                title="On Delivery"
-                count={activeDeliveries.length}
-                href="/orders?status=active"
-                icon={<Truck />}
-                tone="emerald">
-                <DeliveryRows orders={activeDeliveries} />
-              </JourneyListCard>
-            </JourneyGroup>
+            <JourneyListCard
+              code="OD"
+              title="On Delivery"
+              count={activeDeliveries.length}
+              href="/orders?status=active"
+              icon={<Truck />}
+              tone="emerald">
+              <DeliveryRows orders={activeDeliveries} />
+            </JourneyListCard>
+
+            <JourneyListCard
+              code="CT"
+              title="Cart"
+              count={data.pulse.cartQuantity}
+              href="/cart"
+              icon={<ShoppingBag />}
+              tone="amber">
+              <CartRows items={data.cartItems} subtotal={data.pulse.cartSubtotal} />
+            </JourneyListCard>
           </div>
-
-          <CartJourneyCard
-            items={data.cartItems}
-            quantity={data.pulse.cartQuantity}
-            subtotal={data.pulse.cartSubtotal}
-          />
         </section>
 
         <section className="grid items-start gap-4 xl:grid-cols-2">
@@ -413,7 +415,7 @@ function JourneyListCard({
     <article
       id={id}
       className={cn(
-        'relative flex w-64 shrink-0 snap-start flex-col overflow-hidden rounded-xl border p-3.5 shadow-sm sm:w-auto',
+        'relative flex min-h-64 w-72 shrink-0 snap-start flex-col overflow-hidden rounded-xl border p-3.5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg',
         style.shell
       )}>
       <span className={cn('absolute inset-x-0 top-0 h-0.5', style.accent)} />
@@ -631,6 +633,35 @@ function CartJourneyCard({
         </Link>
       </div>
     </section>
+  );
+}
+
+function CartRows({ items, subtotal }: { items: CommerceDashboardData['cartItems']; subtotal: number }) {
+  const visibleItems = items.slice(0, 3);
+
+  if (visibleItems.length === 0) {
+    return <EmptyJourneyRows label="Your cart is empty" />;
+  }
+
+  return (
+    <>
+      {visibleItems.map(item => (
+        <MiniRecord
+          key={item.product.id}
+          href={`/products/${item.product.slug}`}
+          leading={<ProductAvatar product={item.product} />}
+          title={item.product.name}
+          subtitle={`Qty ${resolveCartItemQuantity(item)}`}
+          trailing={compactMoneyFormatter.format(item.product.price)}
+        />
+      ))}
+
+      <div className="flex items-center justify-between rounded-lg border border-amber-500/15 bg-background/70 px-2.5 py-2 text-xs">
+        <span className="font-medium text-muted-foreground">Total</span>
+
+        <span className="font-bold">{compactMoneyFormatter.format(subtotal)}</span>
+      </div>
+    </>
   );
 }
 
