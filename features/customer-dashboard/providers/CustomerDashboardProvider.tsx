@@ -107,6 +107,14 @@ export function CustomerDashboardProvider({
           initialDashboard.priority,
         pulse:
           initialDashboard.pulse,
+        actions:
+          initialDashboard.actions,
+        summary:
+          initialDashboard.summary,
+        quickActions:
+          initialDashboard.quickActions,
+        activity:
+          initialDashboard.activity,
         journeys:
           initialDashboard.journeys,
         mixes:

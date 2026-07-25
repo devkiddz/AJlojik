@@ -9,6 +9,10 @@ import type {
   CommercePriorityExperience,
   CommerceProduct,
   CommercePulseItem,
+  DashboardActionItem,
+  DashboardActivityItem,
+  DashboardQuickAction,
+  DashboardSummaryItem,
   ResolvedCustomerDashboard
 } from '../contracts/customerDashboardTypes';
 
@@ -421,6 +425,726 @@ function resolvePriorityExperience(
     statusLabel: 'WELCOME',
     progress: null
   };
+}
+
+
+function formatCurrency(
+  value: number
+): string {
+  return new Intl.NumberFormat(
+    'en-NG',
+    {
+      style: 'currency',
+      currency: 'NGN',
+      maximumFractionDigits: 0
+    }
+  ).format(value);
+}
+
+function formatCompactCurrency(
+  value: number
+): string {
+  return new Intl.NumberFormat(
+    'en-NG',
+    {
+      style: 'currency',
+      currency: 'NGN',
+      notation: 'compact',
+      maximumFractionDigits: 1
+    }
+  ).format(value);
+}
+
+function formatLabel(
+  value: string
+): string {
+  return value
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .toLowerCase()
+    .replace(
+      /\b\w/g,
+      character =>
+        character.toUpperCase()
+    );
+}
+
+function resolveDashboardActions(
+  data: CommerceDashboardData,
+  priority: CommercePriorityExperience
+): DashboardActionItem[] {
+  const actions:
+    DashboardActionItem[] = [];
+
+  const paymentAttentionOrder =
+    data.orders.find(
+      order =>
+        order.paymentStatus ===
+          'FAILED' ||
+        (
+          order.paymentStatus ===
+            'PENDING' &&
+          order.status === 'PENDING'
+        )
+    );
+
+  if (paymentAttentionOrder) {
+    actions.push({
+      id: `action-payment-${paymentAttentionOrder.id}`,
+      kind: 'payment',
+
+      title:
+        paymentAttentionOrder.paymentStatus ===
+        'FAILED'
+          ? 'Payment needs attention'
+          : 'Payment is still pending',
+
+      description: `Order ${paymentAttentionOrder.orderNumber} is waiting for you to complete the transaction.`,
+
+      value: formatCurrency(
+        paymentAttentionOrder.total
+      ),
+
+      helper:
+        formatLabel(
+          paymentAttentionOrder.paymentStatus
+        ),
+
+      actionLabel: 'Review order',
+      href: `/orders?order=${paymentAttentionOrder.id}`,
+
+      badge: 'Attention',
+
+      icon: 'wallet',
+      tone: 'wine',
+
+      priority: 100,
+      requiresAttention: true
+    });
+  }
+
+  const activeDeliveryOrder =
+    data.orders.find(
+      order =>
+        order.delivery &&
+        activeDeliveryStatuses.has(
+          order.delivery.status
+        )
+    );
+
+  if (
+    activeDeliveryOrder?.delivery
+  ) {
+    actions.push({
+      id: `action-delivery-${activeDeliveryOrder.id}`,
+      kind: 'delivery',
+
+      title: 'Delivery in progress',
+      description: `Track order ${activeDeliveryOrder.orderNumber} as it moves toward arrival.`,
+
+      value:
+        formatLabel(
+          activeDeliveryOrder.delivery.status
+        ),
+
+      helper:
+        activeDeliveryOrder.delivery
+          .estimatedArrival
+          ? `Estimated ${new Date(
+              activeDeliveryOrder.delivery
+                .estimatedArrival
+            ).toLocaleDateString(
+              'en-NG',
+              {
+                day: 'numeric',
+                month: 'short'
+              }
+            )}`
+          : 'Tracking is available',
+
+      actionLabel: 'Track delivery',
+      href: `/orders?order=${activeDeliveryOrder.id}`,
+
+      badge: 'Active',
+
+      icon: 'truck',
+      tone: 'emerald',
+
+      priority: 94,
+      requiresAttention: false
+    });
+  }
+
+  const activeOrder =
+    data.orders.find(
+      order =>
+        activeOrderStatuses.has(
+          order.status
+        ) &&
+        order.id !==
+          activeDeliveryOrder?.id &&
+        order.id !==
+          paymentAttentionOrder?.id
+    );
+
+  if (activeOrder) {
+    actions.push({
+      id: `action-order-${activeOrder.id}`,
+      kind: 'order',
+
+      title: 'Order in progress',
+      description: `Order ${activeOrder.orderNumber} is currently ${formatLabel(
+        activeOrder.status
+      ).toLowerCase()}.`,
+
+      value:
+        formatLabel(
+          activeOrder.status
+        ),
+
+      helper: formatCurrency(
+        activeOrder.total
+      ),
+
+      actionLabel: 'View progress',
+      href: `/orders?order=${activeOrder.id}`,
+
+      badge: 'Order',
+
+      icon: 'package',
+      tone: 'navy',
+
+      priority: 88,
+      requiresAttention: false
+    });
+  }
+
+  if (data.pulse.cartQuantity > 0) {
+    actions.push({
+      id: 'action-cart',
+      kind: 'cart',
+
+      title: 'Cart waiting',
+      description: `${data.pulse.cartQuantity} product${
+        data.pulse.cartQuantity === 1
+          ? ''
+          : 's'
+      } remain ready for checkout.`,
+
+      value: String(
+        data.pulse.cartQuantity
+      ),
+
+      helper:
+        formatCurrency(
+          data.pulse.cartSubtotal
+        ),
+
+      actionLabel: 'Continue checkout',
+      href: '/cart',
+
+      badge: 'Cart',
+
+      icon: 'cart',
+      tone: 'gold',
+
+      priority: 80,
+      requiresAttention: false
+    });
+  }
+
+  if (
+    data.pendingReviewProducts.length >
+    0
+  ) {
+    const product =
+      data.pendingReviewProducts[0];
+
+    actions.push({
+      id: `action-review-${product.id}`,
+      kind: 'review',
+
+      title:
+        data.pendingReviewProducts
+          .length === 1
+          ? 'One review is waiting'
+          : `${data.pendingReviewProducts.length} reviews are waiting`,
+
+      description: `Share your experience with ${product.name}.`,
+
+      value: String(
+        data.pendingReviewProducts
+          .length
+      ),
+
+      helper: 'Delivered products',
+
+      actionLabel: 'Write a review',
+      href: `/products/${product.slug}`,
+
+      badge: 'Review',
+
+      icon: 'review',
+      tone: 'violet',
+
+      priority: 72,
+      requiresAttention: false
+    });
+  }
+
+  if (
+    data.wishlistProducts.length > 0
+  ) {
+    actions.push({
+      id: 'action-wishlist',
+      kind: 'wishlist',
+
+      title: 'Saved products',
+      description: `${data.wishlistProducts.length} product${
+        data.wishlistProducts.length ===
+        1
+          ? ''
+          : 's'
+      } remain connected to this workspace.`,
+
+      value: String(
+        data.wishlistProducts.length
+      ),
+
+      helper: 'Available in wishlist',
+
+      actionLabel: 'Open wishlist',
+      href: '/wishlist',
+
+      badge: null,
+
+      icon: 'wishlist',
+      tone: 'wine',
+
+      priority: 60,
+      requiresAttention: false
+    });
+  }
+
+  const latestHistory =
+    data.history[0];
+
+  if (latestHistory) {
+    actions.push({
+      id: `action-history-${latestHistory.id}`,
+      kind: 'history',
+
+      title: 'Continue a recent experience',
+      description:
+        latestHistory.subtitle ??
+        `Return to ${latestHistory.label}.`,
+
+      value:
+        latestHistory.label,
+
+      helper:
+        formatLabel(
+          latestHistory.source
+        ),
+
+      actionLabel: 'Continue',
+      href:
+        latestHistory.productId
+          ? (() => {
+              const product =
+                data.catalog.find(
+                  item =>
+                    item.id ===
+                    latestHistory.productId
+                );
+
+              return product
+                ? `/products/${product.slug}`
+                : `/store?category=${encodeURIComponent(
+                    latestHistory.categorySlug
+                  )}`;
+            })()
+          : `/store?category=${encodeURIComponent(
+              latestHistory.categorySlug
+            )}`,
+
+      badge: null,
+
+      icon: 'history',
+      tone: 'neutral',
+
+      priority: 50,
+      requiresAttention: false
+    });
+  }
+
+  actions.push({
+    id: 'action-discovery',
+    kind: 'discovery',
+
+    title: 'Start a new shopping journey',
+    description:
+      'Explore the store and shape the next experience around what matters now.',
+
+    value: 'Discover',
+    helper: 'Personalized store',
+
+    actionLabel: 'Open store',
+    href: '/store',
+
+    badge: null,
+
+    icon: 'store',
+    tone: 'navy',
+
+    priority: 20,
+    requiresAttention: false
+  });
+
+  const priorityKindMap:
+    Partial<
+      Record<
+        CommercePriorityExperience['kind'],
+        DashboardActionItem['kind']
+      >
+    > = {
+    'active-delivery': 'delivery',
+    'payment-attention': 'payment',
+    'order-progress': 'order',
+    'cart-continuation': 'cart',
+    'pending-review': 'review',
+    'history-continuation': 'history',
+    'personal-discovery': 'discovery',
+    welcome: 'discovery'
+  };
+
+  const duplicateKind =
+    priorityKindMap[priority.kind];
+
+  const variedActions =
+    actions.filter(
+      action =>
+        action.kind !== duplicateKind
+    );
+
+  const selectedActions =
+    variedActions.length >= 3
+      ? variedActions
+      : actions;
+
+  return selectedActions
+    .sort(
+      (first, second) =>
+        second.priority -
+        first.priority
+    )
+    .slice(0, 4);
+}
+
+function resolveDashboardSummary(
+  data: CommerceDashboardData
+): DashboardSummaryItem[] {
+  return [
+    {
+      id: 'orders',
+
+      label: 'Paid orders',
+      value: String(
+        data.pulse.paidOrderCount
+      ),
+
+      helper:
+        data.pulse.activeOrderCount > 0
+          ? `${data.pulse.activeOrderCount} currently active`
+          : `${data.pulse.deliveredOrderCount} delivered`,
+
+      href: '/orders',
+
+      icon: 'orders',
+      tone: 'navy'
+    },
+
+    {
+      id: 'spend',
+
+      label: 'Recorded purchases',
+      value:
+        formatCompactCurrency(
+          data.pulse.totalSpent
+        ),
+
+      helper: 'Paid order value',
+
+      href: '/orders',
+
+      icon: 'spend',
+      tone: 'violet'
+    },
+
+    {
+      id: 'cart',
+
+      label: 'Current cart',
+      value: String(
+        data.pulse.cartQuantity
+      ),
+
+      helper:
+        data.pulse.cartQuantity > 0
+          ? formatCurrency(
+              data.pulse.cartSubtotal
+            )
+          : 'Nothing waiting',
+
+      href: '/cart',
+
+      icon: 'cart',
+      tone: 'gold'
+    },
+
+    {
+      id: 'saved',
+
+      label: 'Saved products',
+      value: String(
+        data.pulse.wishlistCount
+      ),
+
+      helper:
+        data.pulse.wishlistCount > 0
+          ? 'Available in wishlist'
+          : 'Start saving products',
+
+      href: '/wishlist',
+
+      icon: 'saved',
+      tone: 'wine'
+    }
+  ];
+}
+
+function resolveQuickActions(
+  data: CommerceDashboardData
+): DashboardQuickAction[] {
+  return [
+    {
+      id: 'store',
+
+      label: 'Continue shopping',
+      description:
+        'Open the live store experience.',
+
+      href: '/store',
+
+      icon: 'store',
+      badge: null
+    },
+
+    {
+      id: 'cart',
+
+      label: 'Open cart',
+      description:
+        data.pulse.cartQuantity > 0
+          ? `${data.pulse.cartQuantity} product${
+              data.pulse.cartQuantity ===
+              1
+                ? ''
+                : 's'
+            } waiting`
+          : 'Your cart is ready',
+
+      href: '/cart',
+
+      icon: 'cart',
+      badge:
+        data.pulse.cartQuantity > 0
+          ? String(
+              data.pulse.cartQuantity
+            )
+          : null
+    },
+
+    {
+      id: 'orders',
+
+      label: 'Track orders',
+      description:
+        data.pulse.activeOrderCount > 0
+          ? `${data.pulse.activeOrderCount} active now`
+          : 'Review purchase history',
+
+      href: '/orders',
+
+      icon: 'orders',
+      badge:
+        data.pulse.activeOrderCount > 0
+          ? String(
+              data.pulse.activeOrderCount
+            )
+          : null
+    },
+
+    {
+      id: 'wishlist',
+
+      label: 'View wishlist',
+      description:
+        data.pulse.wishlistCount > 0
+          ? `${data.pulse.wishlistCount} saved product${
+              data.pulse.wishlistCount ===
+              1
+                ? ''
+                : 's'
+            }`
+          : 'Build a saved collection',
+
+      href: '/wishlist',
+
+      icon: 'wishlist',
+      badge:
+        data.pulse.wishlistCount > 0
+          ? String(
+              data.pulse.wishlistCount
+            )
+          : null
+    },
+
+    {
+      id: 'lists',
+
+      label: 'Shopping lists',
+      description:
+        data.shoppingListProducts
+          .length > 0
+          ? `${data.shoppingListProducts.length} planned product${
+              data.shoppingListProducts
+                .length === 1
+                ? ''
+                : 's'
+            }`
+          : 'Create a shopping plan',
+
+      href: '/settings',
+
+      icon: 'list',
+      badge:
+        data.shoppingListProducts
+          .length > 0
+          ? String(
+              data.shoppingListProducts
+                .length
+            )
+          : null
+    },
+
+    {
+      id: 'settings',
+
+      label: 'Preferences',
+      description:
+        'Manage your dashboard experience.',
+
+      href: '/settings',
+
+      icon: 'settings',
+      badge: null
+    }
+  ];
+}
+
+function resolveDashboardActivity(
+  data: CommerceDashboardData
+): DashboardActivityItem[] {
+  const orderActivity:
+    DashboardActivityItem[] =
+    data.orders.slice(0, 5).map(
+      order => ({
+        id: `activity-order-${order.id}`,
+        kind: 'order',
+
+        title: `Order ${order.orderNumber}`,
+        description: `${formatLabel(
+          order.status
+        )} · ${formatCurrency(
+          order.total
+        )}`,
+
+        occurredAt:
+          order.createdAt,
+
+        href: `/orders?order=${order.id}`,
+
+        badge:
+          formatLabel(
+            order.paymentStatus
+          ),
+
+        image:
+          firstOrderImage(order)
+      })
+    );
+
+  const historyActivity:
+    DashboardActivityItem[] =
+    data.history.slice(0, 5).map(
+      entry => ({
+        id: `activity-history-${entry.id}`,
+        kind: 'history',
+
+        title: entry.label,
+        description:
+          entry.subtitle ??
+          `Visited ${formatLabel(
+            entry.categorySlug
+          )}`,
+
+        occurredAt:
+          entry.visitedAt,
+
+        href:
+          entry.productId
+            ? (() => {
+                const product =
+                  data.catalog.find(
+                    item =>
+                      item.id ===
+                      entry.productId
+                  );
+
+                return product
+                  ? `/products/${product.slug}`
+                  : `/store?category=${encodeURIComponent(
+                      entry.categorySlug
+                    )}`;
+              })()
+            : `/store?category=${encodeURIComponent(
+                entry.categorySlug
+              )}`,
+
+        badge:
+          formatLabel(
+            entry.source
+          ),
+
+        image: null
+      })
+    );
+
+  return [
+    ...orderActivity,
+    ...historyActivity
+  ]
+    .sort(
+      (first, second) =>
+        new Date(
+          second.occurredAt
+        ).getTime() -
+        new Date(
+          first.occurredAt
+        ).getTime()
+    )
+    .slice(0, 6);
 }
 
 function resolvePulse(
@@ -1221,8 +1945,25 @@ export function resolveCustomerDashboard(
     resolvePriorityExperience(data);
 
   const pulse = resolvePulse(data);
+
+  const actions =
+    resolveDashboardActions(
+      data,
+      priority
+    );
+
+  const summary =
+    resolveDashboardSummary(data);
+
+  const quickActions =
+    resolveQuickActions(data);
+
+  const activity =
+    resolveDashboardActivity(data);
+
   const journeys =
     resolveJourneys(data);
+
   const mixes = resolveMixes(data);
 
   const assistantActions =
@@ -1283,6 +2024,11 @@ export function resolveCustomerDashboard(
 
     priority,
     pulse,
+
+    actions,
+    summary,
+    quickActions,
+    activity,
 
     journeys,
     mixes,

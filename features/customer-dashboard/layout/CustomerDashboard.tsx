@@ -3,30 +3,56 @@
 import Link from 'next/link';
 
 import {
-  ArrowRight,
-  PackageCheck
+  ArrowRight
 } from 'lucide-react';
 
 import {
+  DashboardActivityCard,
+  DashboardAttentionCard,
   DashboardAssistant,
+  DashboardCanvasSection,
+  DashboardCommerceOverviewCard,
+  DashboardCompanionCard,
   DashboardHeader,
   DashboardJourneyCard,
-  DashboardOrderCard,
-  DashboardOverview,
+  DashboardOrdersCard,
   DashboardPriority,
-  DashboardProductCard,
-  DashboardSectionHeader
+  DashboardProductModule,
+  DashboardQuickLinksCard
 } from '../components';
-
-import type {
-  CommerceJourneyItem,
-  CommerceMix,
-  CommerceOrder
-} from '../contracts/customerDashboardTypes';
 
 import {
   useCustomerDashboard
 } from '../providers/CustomerDashboardProvider';
+
+const mobileRailClassName = [
+  '-mx-3',
+  'flex',
+  'snap-x',
+  'snap-mandatory',
+  'items-start',
+  'gap-3',
+  'overflow-x-auto',
+  'overscroll-x-contain',
+  'px-3',
+  'pb-2',
+  'scroll-px-3',
+  'scrollbar-hide',
+
+  'lg:mx-0',
+  'lg:overflow-visible',
+  'lg:px-0',
+  'lg:pb-0'
+].join(' ');
+
+const mobileCardClassName = [
+  'w-[86vw]',
+  'shrink-0',
+  'snap-center',
+
+  'lg:w-full',
+  'lg:min-w-0'
+].join(' ');
 
 export default function CustomerDashboard() {
   const { dashboard } =
@@ -35,10 +61,25 @@ export default function CustomerDashboard() {
   const {
     data,
     priority,
-    pulse,
+    actions,
+    summary,
+    quickActions,
+    activity,
     journeys,
     mixes
   } = dashboard;
+
+  const primaryActions =
+    actions.slice(0, 2);
+
+  const firstMix =
+    mixes[0];
+
+  const secondMix =
+    mixes[1];
+
+  const remainingMixes =
+    mixes.slice(2);
 
   return (
     <main className="relative h-[calc(100dvh-5rem)] min-h-0 overflow-y-auto overscroll-contain bg-muted/20">
@@ -48,38 +89,202 @@ export default function CustomerDashboard() {
         <div className="absolute bottom-0 right-1/3 size-80 rounded-full bg-amber-500/8 blur-3xl" />
       </div>
 
-      <div className="mx-auto w-full max-w-[92rem] space-y-4 px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+      <div className="mx-auto w-full max-w-[92rem] space-y-7 px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
         <DashboardHeader />
 
-        <section className="grid items-stretch gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(20rem,0.75fr)]">
-          <DashboardPriority
-            priority={priority}
-          />
+        <DashboardCanvasSection
+          eyebrow="Right now"
+          title="Needs your attention"
+          description="Only the commerce moments that are useful now—nothing noisy or intimidating.">
+          <div
+            className={`${mobileRailClassName} lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)] lg:items-start lg:gap-3`}>
+            <div
+              className={
+                mobileCardClassName
+              }>
+              <DashboardPriority
+                priority={priority}
+              />
+            </div>
 
-          <DashboardOverview
-            items={pulse}
-            totalSpent={
-              data.pulse.totalSpent
-            }
-          />
-        </section>
+            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+              {primaryActions.map(
+                item => (
+                  <div
+                    key={item.id}
+                    className={
+                      mobileCardClassName
+                    }>
+                    <DashboardAttentionCard
+                      item={item}
+                    />
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </DashboardCanvasSection>
 
-        {journeys.length > 0 ? (
-          <DashboardJourneySection
-            journeys={journeys}
-          />
+        <DashboardCanvasSection
+          eyebrow="Workspace"
+          title="Your commerce"
+          description="Orders, shortcuts and activity arranged as a calm professional canvas.">
+          <div
+            className={`${mobileRailClassName} lg:grid lg:grid-cols-3 lg:items-start lg:gap-3`}>
+            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+              <div
+                className={
+                  mobileCardClassName
+                }>
+                <DashboardCommerceOverviewCard
+                  items={summary}
+                />
+              </div>
+
+              <div
+                className={
+                  mobileCardClassName
+                }>
+                <DashboardActivityCard
+                  items={activity}
+                />
+              </div>
+            </div>
+
+            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+              <div
+                className={
+                  mobileCardClassName
+                }>
+                <DashboardQuickLinksCard
+                  items={quickActions}
+                />
+              </div>
+
+              <div
+                className={
+                  mobileCardClassName
+                }>
+                <DashboardOrdersCard
+                  orders={data.orders}
+                />
+              </div>
+            </div>
+
+            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+              <div
+                className={
+                  mobileCardClassName
+                }>
+                <DashboardCompanionCard />
+              </div>
+            </div>
+          </div>
+        </DashboardCanvasSection>
+
+        {mixes.length > 0 ||
+        journeys.length > 0 ? (
+          <DashboardCanvasSection
+            eyebrow="Personal commerce"
+            title="Continue your experience"
+            description="Product worlds are previewed through stacked product headers, then opened only when you need more."
+            href="/store"
+            actionLabel="Open store">
+            <div
+              className={`${mobileRailClassName} lg:grid lg:grid-cols-3 lg:items-start lg:gap-3`}>
+              <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+                {firstMix ? (
+                  <div
+                    className={
+                      mobileCardClassName
+                    }>
+                    <DashboardProductModule
+                      mix={firstMix}
+                      variant="spotlight"
+                    />
+                  </div>
+                ) : null}
+
+                {journeys[0] ? (
+                  <div
+                    className={
+                      mobileCardClassName
+                    }>
+                    <DashboardJourneyCard
+                      journey={
+                        journeys[0]
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+                {secondMix ? (
+                  <div
+                    className={
+                      mobileCardClassName
+                    }>
+                    <DashboardProductModule
+                      mix={secondMix}
+                      variant="list"
+                    />
+                  </div>
+                ) : null}
+
+                {journeys[1] ? (
+                  <div
+                    className={
+                      mobileCardClassName
+                    }>
+                    <DashboardJourneyCard
+                      journey={
+                        journeys[1]
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
+                {remainingMixes.map(
+                  mix => (
+                    <div
+                      key={mix.id}
+                      className={
+                        mobileCardClassName
+                      }>
+                      <DashboardProductModule
+                        mix={mix}
+                        variant="compact"
+                      />
+                    </div>
+                  )
+                )}
+
+                {journeys
+                  .slice(2, 3)
+                  .map(
+                    journey => (
+                      <div
+                        key={
+                          journey.id
+                        }
+                        className={
+                          mobileCardClassName
+                        }>
+                        <DashboardJourneyCard
+                          journey={
+                            journey
+                          }
+                        />
+                      </div>
+                    )
+                  )}
+              </div>
+            </div>
+          </DashboardCanvasSection>
         ) : null}
-
-        {mixes.map(mix => (
-          <DashboardMixSection
-            key={mix.id}
-            mix={mix}
-          />
-        ))}
-
-        <DashboardOrdersSection
-          orders={data.orders}
-        />
 
         <DashboardFooter />
 
@@ -91,136 +296,22 @@ export default function CustomerDashboard() {
   );
 }
 
-function DashboardJourneySection({
-  journeys
-}: {
-  journeys: CommerceJourneyItem[];
-}) {
-  return (
-    <section className="rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm sm:p-5">
-      <DashboardSectionHeader
-        eyebrow="Continue"
-        title="Pick up where you stopped"
-        description="Return to active orders, saved decisions and recent shopping moments."
-        href="/store"
-        actionLabel="Open store"
-      />
-
-      <div className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-6 scrollbar-hide">
-        {journeys.map(journey => (
-          <DashboardJourneyCard
-            key={journey.id}
-            journey={journey}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DashboardMixSection({
-  mix
-}: {
-  mix: CommerceMix;
-}) {
-  return (
-    <section className="rounded-2xl border border-border/60 bg-card/55 p-4 shadow-sm sm:p-5">
-      <DashboardSectionHeader
-        eyebrow={mix.eyebrow}
-        title={mix.title}
-        description={mix.description}
-        helper={mix.reason}
-        href={mix.href}
-        actionLabel="View all"
-      />
-
-      <div className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-6 scrollbar-hide">
-        {mix.products.map(
-          product => (
-            <DashboardProductCard
-              key={product.id}
-              product={product}
-            />
-          )
-        )}
-      </div>
-    </section>
-  );
-}
-
-function DashboardOrdersSection({
-  orders
-}: {
-  orders: CommerceOrder[];
-}) {
-  const visibleOrders =
-    orders.slice(0, 4);
-
-  return (
-    <section className="rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm sm:p-5">
-      <DashboardSectionHeader
-        eyebrow="Orders"
-        title="Recent purchases"
-        description="Review payment, product and delivery details from your latest orders."
-        href="/orders"
-        actionLabel="View all orders"
-      />
-
-      {visibleOrders.length > 0 ? (
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {visibleOrders.map(
-            order => (
-              <DashboardOrderCard
-                key={order.id}
-                order={order}
-              />
-            )
-          )}
-        </div>
-      ) : (
-        <div className="mt-4 grid min-h-48 place-items-center rounded-2xl border border-dashed border-border/70 bg-muted/25 p-6 text-center">
-          <div>
-            <span className="mx-auto grid size-12 place-items-center rounded-xl bg-background text-primary shadow-sm">
-              <PackageCheck className="size-6" />
-            </span>
-
-            <h3 className="mt-4 text-lg font-semibold">
-              No orders yet
-            </h3>
-
-            <p className="mx-auto mt-1.5 max-w-md text-sm leading-5 text-muted-foreground">
-              Active and completed purchases will appear here.
-            </p>
-
-            <Link
-              href="/store"
-              className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-foreground px-4 text-xs font-semibold text-background">
-              Explore the store
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
 function DashboardFooter() {
   return (
-    <footer className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+    <footer className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/70 p-4 text-sm shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="font-semibold">
           AJ Logik customer dashboard
         </p>
 
         <p className="mt-0.5 text-muted-foreground">
-          Your workspace keeps commerce activity connected across visits.
+          Simple, personal and connected across every workspace visit.
         </p>
       </div>
 
       <Link
         href="/settings"
-        className="inline-flex h-10 items-center gap-2 self-start rounded-xl border border-border/60 bg-background/70 px-4 text-xs font-semibold transition hover:border-primary/30 hover:bg-muted sm:self-auto">
+        className="inline-flex h-10 items-center gap-2 self-start rounded-xl border border-border/60 bg-background/75 px-4 text-xs font-semibold transition hover:border-primary/30 hover:bg-muted sm:self-auto">
         Dashboard settings
         <ArrowRight className="size-4" />
       </Link>

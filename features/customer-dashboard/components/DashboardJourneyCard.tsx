@@ -41,7 +41,7 @@ export function DashboardJourneyCard({
   return (
     <Link
       href={journey.href}
-      className="group relative min-h-52 w-[84vw] max-w-sm shrink-0 snap-start overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:w-80">
+      className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
       {journey.image ? (
         <Image
           src={journey.image}
@@ -63,7 +63,7 @@ export function DashboardJourneyCard({
 
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/25" />
 
-      <div className="relative flex min-h-52 flex-col justify-between p-4">
+      <div className="relative flex flex-col gap-12 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold backdrop-blur">
             {journey.badge ??

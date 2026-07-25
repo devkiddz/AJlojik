@@ -81,7 +81,7 @@ export function DashboardPriority({
   return (
     <article
       className={cn(
-        'group relative h-full min-h-72 overflow-hidden rounded-2xl border border-white/10 shadow-sm',
+        'group relative overflow-hidden rounded-2xl border border-white/10 shadow-sm',
         tone.shell
       )}>
       {priority.image ? (
@@ -105,7 +105,7 @@ export function DashboardPriority({
         )}
       />
 
-      <div className="relative flex min-h-72 flex-col justify-between p-5 sm:p-6">
+      <div className="relative flex flex-col gap-10 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span
             className={cn(

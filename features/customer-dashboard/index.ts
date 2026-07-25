@@ -35,5 +35,15 @@ export type {
   CommerceProduct,
   CommercePulseItem,
   CustomerDashboardData,
+  DashboardActionIcon,
+  DashboardActionItem,
+  DashboardActionKind,
+  DashboardActivityItem,
+  DashboardActivityKind,
+  DashboardCommandTone,
+  DashboardQuickAction,
+  DashboardQuickActionIcon,
+  DashboardSummaryIcon,
+  DashboardSummaryItem,
   ResolvedCustomerDashboard
 } from './contracts/customerDashboardTypes';

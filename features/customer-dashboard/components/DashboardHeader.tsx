@@ -2,27 +2,43 @@
 
 import Image from 'next/image';
 
-import { BadgeCheck } from 'lucide-react';
+import {
+  BadgeCheck
+} from 'lucide-react';
 
 import SignOutButton from '@/components/auth/SignOutButton';
 import { WorkspaceSwitcher } from '@/features/workspace';
 
 import { useCustomerDashboard } from '../providers/CustomerDashboardProvider';
 
-function DashboardStatus({ label, value }: { label: string; value: string }) {
+function DashboardStatus({
+  label,
+  value
+}: {
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex h-10 min-w-0 items-center rounded-xl border border-border/60 bg-background/70 px-3.5">
-      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {label}
+      </span>
 
-      <span className="ml-2 max-w-28 truncate text-xs font-semibold capitalize text-foreground">{value}</span>
+      <span className="ml-2 max-w-28 truncate text-xs font-semibold capitalize text-foreground">
+        {value}
+      </span>
     </div>
   );
 }
 
 export function DashboardHeader() {
-  const { dashboard } = useCustomerDashboard();
+  const { dashboard } =
+    useCustomerDashboard();
 
-  const { data, greeting } = dashboard;
+  const {
+    data,
+    greeting
+  } = dashboard;
 
   return (
     <header className="relative z-30 isolate overflow-visible rounded-2xl border border-border/60 bg-card/85 p-4 shadow-sm backdrop-blur-xl sm:p-5">
@@ -43,13 +59,17 @@ export function DashboardHeader() {
                 className="object-cover"
               />
             ) : (
-              data.identity.name.charAt(0).toUpperCase()
+              data.identity.name
+                .charAt(0)
+                .toUpperCase()
             )}
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="truncate text-sm font-semibold text-primary">Customer dashboard</p>
+              <p className="truncate text-sm font-semibold text-primary">
+                Customer dashboard
+              </p>
 
               {data.identity.emailVerified ? (
                 <BadgeCheck className="size-4 shrink-0 text-emerald-500" />
@@ -57,7 +77,8 @@ export function DashboardHeader() {
             </div>
 
             <h1 className="mt-0.5 truncate text-2xl font-bold leading-tight sm:text-3xl">
-              {greeting}, {data.identity.firstName}
+              {greeting},{' '}
+              {data.identity.firstName}
             </h1>
 
             <p className="mt-1 line-clamp-2 max-w-2xl text-sm leading-5 text-muted-foreground">
@@ -69,30 +90,39 @@ export function DashboardHeader() {
         <div className="relative z-40 grid min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
           <div
             className="
-                relative z-50
-                col-span-2
-                min-w-0
-                sm:col-span-1
+              relative z-50
+              col-span-2
+              min-w-0
+              sm:col-span-1
 
-                [&>button]:h-10
-                [&>button]:w-full
-                [&>button]:max-w-full
-                [&>button]:rounded-xl
-                [&>button]:border
-                [&>button]:border-border/60
-                [&>button]:bg-background/70
-                [&>button]:px-3.5
-                [&>button]:text-xs
-                [&>button]:font-semibold
-                [&>button]:shadow-none
-                sm:[&>button]:w-auto
+              [&>button]:h-10
+              [&>button]:w-full
+              [&>button]:max-w-full
+              [&>button]:rounded-xl
+              [&>button]:border
+              [&>button]:border-border/60
+              [&>button]:bg-background/70
+              [&>button]:px-3.5
+              [&>button]:text-xs
+              [&>button]:font-semibold
+              [&>button]:shadow-none
+              sm:[&>button]:w-auto
             ">
             <WorkspaceSwitcher />
           </div>
 
-          <DashboardStatus label="Profile" value={data.profile.persona.replaceAll('-', ' ')} />
+          <DashboardStatus
+            label="Profile"
+            value={data.profile.persona.replaceAll(
+              '-',
+              ' '
+            )}
+          />
 
-          <DashboardStatus label="Membership" value={data.identity.tier} />
+          <DashboardStatus
+            label="Membership"
+            value={data.identity.tier}
+          />
 
           <div
             className="

@@ -319,6 +319,125 @@ export type CommercePulseItem = {
   href: string;
 };
 
+
+export type DashboardCommandTone =
+  | 'navy'
+  | 'wine'
+  | 'gold'
+  | 'emerald'
+  | 'violet'
+  | 'neutral';
+
+export type DashboardActionKind =
+  | 'payment'
+  | 'delivery'
+  | 'order'
+  | 'cart'
+  | 'review'
+  | 'wishlist'
+  | 'history'
+  | 'discovery';
+
+export type DashboardActionIcon =
+  | 'wallet'
+  | 'truck'
+  | 'package'
+  | 'cart'
+  | 'review'
+  | 'wishlist'
+  | 'history'
+  | 'store';
+
+export type DashboardActionItem = {
+  id: string;
+  kind: DashboardActionKind;
+
+  title: string;
+  description: string;
+
+  value: string;
+  helper: string;
+
+  actionLabel: string;
+  href: string;
+
+  badge: string | null;
+
+  icon: DashboardActionIcon;
+  tone: DashboardCommandTone;
+
+  priority: number;
+  requiresAttention: boolean;
+};
+
+export type DashboardSummaryIcon =
+  | 'orders'
+  | 'spend'
+  | 'cart'
+  | 'saved';
+
+export type DashboardSummaryItem = {
+  id:
+    | 'orders'
+    | 'spend'
+    | 'cart'
+    | 'saved';
+
+  label: string;
+  value: string;
+  helper: string;
+
+  href: string;
+
+  icon: DashboardSummaryIcon;
+  tone: DashboardCommandTone;
+};
+
+export type DashboardQuickActionIcon =
+  | 'store'
+  | 'cart'
+  | 'orders'
+  | 'wishlist'
+  | 'list'
+  | 'settings';
+
+export type DashboardQuickAction = {
+  id:
+    | 'store'
+    | 'cart'
+    | 'orders'
+    | 'wishlist'
+    | 'lists'
+    | 'settings';
+
+  label: string;
+  description: string;
+
+  href: string;
+
+  icon: DashboardQuickActionIcon;
+  badge: string | null;
+};
+
+export type DashboardActivityKind =
+  | 'order'
+  | 'history';
+
+export type DashboardActivityItem = {
+  id: string;
+  kind: DashboardActivityKind;
+
+  title: string;
+  description: string;
+
+  occurredAt: string;
+
+  href: string;
+
+  badge: string | null;
+  image: string | null;
+};
+
 export type CommerceHubSignal = {
   id: string;
 
@@ -392,7 +511,16 @@ export type ResolvedCommerceDashboard = {
   greeting: string;
 
   priority: CommercePriorityExperience;
+
+  /**
+   * Retained for V1 Hub and component compatibility.
+   */
   pulse: CommercePulseItem[];
+
+  actions: DashboardActionItem[];
+  summary: DashboardSummaryItem[];
+  quickActions: DashboardQuickAction[];
+  activity: DashboardActivityItem[];
 
   journeys: CommerceJourneyItem[];
   mixes: CommerceMix[];
