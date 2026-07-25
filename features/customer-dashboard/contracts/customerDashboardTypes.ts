@@ -438,6 +438,41 @@ export type DashboardActivityItem = {
   image: string | null;
 };
 
+
+export type DashboardSectionCopy = {
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+export type DashboardOrchestration = {
+  budgets: {
+    attention: number;
+    summary: number;
+    quickActions: number;
+    activity: number;
+    orders: number;
+    mixes: number;
+    journeys: number;
+  };
+
+  visibility: {
+    overview: boolean;
+    quickActions: boolean;
+    activity: boolean;
+    orders: boolean;
+    companion: boolean;
+    commerce: boolean;
+    personalCommerce: boolean;
+  };
+
+  sections: {
+    attention: DashboardSectionCopy;
+    commerce: DashboardSectionCopy;
+    personalCommerce: DashboardSectionCopy;
+  };
+};
+
 export type CommerceHubSignal = {
   id: string;
 
@@ -524,6 +559,8 @@ export type ResolvedCommerceDashboard = {
 
   journeys: CommerceJourneyItem[];
   mixes: CommerceMix[];
+
+  orchestration: DashboardOrchestration;
 
   hub: CommerceHubProjection;
   assistant: CommerceAssistantContext;

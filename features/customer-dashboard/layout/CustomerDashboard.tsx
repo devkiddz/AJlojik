@@ -7,50 +7,27 @@ import {
 } from 'lucide-react';
 
 import {
-  DashboardActivityCard,
-  DashboardAttentionCard,
   DashboardAssistant,
+  DashboardAttentionCard,
   DashboardCanvasSection,
-  DashboardCommerceOverviewCard,
-  DashboardCompanionCard,
-  DashboardHeader,
-  DashboardJourneyCard,
-  DashboardOrdersCard,
-  DashboardPriority,
-  DashboardProductModule,
-  DashboardQuickLinksCard
+  DashboardCommerceBoard,
+  DashboardHero,
+  DashboardPersonalCommerceBoard,
+  DashboardSnapRail
 } from '../components';
 
 import {
   useCustomerDashboard
 } from '../providers/CustomerDashboardProvider';
 
-const mobileRailClassName = [
-  '-mx-3',
-  'flex',
-  'snap-x',
-  'snap-mandatory',
-  'items-start',
-  'gap-3',
-  'overflow-x-auto',
-  'overscroll-x-contain',
-  'px-3',
-  'pb-2',
-  'scroll-px-3',
-  'scrollbar-hide',
-
-  'lg:mx-0',
-  'lg:overflow-visible',
-  'lg:px-0',
-  'lg:pb-0'
-].join(' ');
-
 const mobileCardClassName = [
-  'w-[86vw]',
+  'w-[84vw]',
+  'max-w-[26rem]',
   'shrink-0',
-  'snap-center',
+  'snap-start',
 
   'lg:w-full',
+  'lg:max-w-none',
   'lg:min-w-0'
 ].join(' ');
 
@@ -66,20 +43,27 @@ export default function CustomerDashboard() {
     quickActions,
     activity,
     journeys,
-    mixes
+    mixes,
+    orchestration
   } = dashboard;
 
-  const primaryActions =
-    actions.slice(0, 2);
+  const {
+    budgets,
+    visibility,
+    sections
+  } = orchestration;
 
-  const firstMix =
-    mixes[0];
+  const commerceCardCount = [
+    visibility.overview,
+    visibility.quickActions,
+    visibility.activity,
+    visibility.orders,
+    visibility.companion
+  ].filter(Boolean).length;
 
-  const secondMix =
-    mixes[1];
-
-  const remainingMixes =
-    mixes.slice(2);
+  const personalCardCount =
+    mixes.length +
+    journeys.length;
 
   return (
     <main className="relative h-[calc(100dvh-5rem)] min-h-0 overflow-y-auto overscroll-contain bg-muted/20">
@@ -90,28 +74,30 @@ export default function CustomerDashboard() {
       </div>
 
       <div className="mx-auto w-full max-w-[92rem] space-y-7 px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
-        <DashboardHeader />
+        <section
+          aria-label={
+            sections.attention.title
+          }
+          className="space-y-3">
+          <DashboardHero
+            priority={priority}
+            section={
+              sections.attention
+            }
+          />
 
-        <DashboardCanvasSection
-          eyebrow="Right now"
-          title="Needs your attention"
-          description="Only the commerce moments that are useful now—nothing noisy or intimidating.">
-          <div
-            className={`${mobileRailClassName} lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)] lg:items-start lg:gap-3`}>
-            <div
-              className={
-                mobileCardClassName
-              }>
-              <DashboardPriority
-                priority={priority}
-              />
-            </div>
-
-            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-              {primaryActions.map(
+          {actions.length > 0 ? (
+            <DashboardSnapRail
+              itemCount={
+                actions.length
+              }
+              ariaLabel="Supporting actions"
+              className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
+              {actions.map(
                 item => (
                   <div
                     key={item.id}
+                    data-dashboard-snap-card="true"
                     className={
                       mobileCardClassName
                     }>
@@ -121,168 +107,63 @@ export default function CustomerDashboard() {
                   </div>
                 )
               )}
-            </div>
-          </div>
-        </DashboardCanvasSection>
+            </DashboardSnapRail>
+          ) : null}
+        </section>
 
-        <DashboardCanvasSection
-          eyebrow="Workspace"
-          title="Your commerce"
-          description="Orders, shortcuts and activity arranged as a calm professional canvas.">
-          <div
-            className={`${mobileRailClassName} lg:grid lg:grid-cols-3 lg:items-start lg:gap-3`}>
-            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-              <div
-                className={
-                  mobileCardClassName
-                }>
-                <DashboardCommerceOverviewCard
-                  items={summary}
-                />
-              </div>
-
-              <div
-                className={
-                  mobileCardClassName
-                }>
-                <DashboardActivityCard
-                  items={activity}
-                />
-              </div>
-            </div>
-
-            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-              <div
-                className={
-                  mobileCardClassName
-                }>
-                <DashboardQuickLinksCard
-                  items={quickActions}
-                />
-              </div>
-
-              <div
-                className={
-                  mobileCardClassName
-                }>
-                <DashboardOrdersCard
-                  orders={data.orders}
-                />
-              </div>
-            </div>
-
-            <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-              <div
-                className={
-                  mobileCardClassName
-                }>
-                <DashboardCompanionCard />
-              </div>
-            </div>
-          </div>
-        </DashboardCanvasSection>
-
-        {mixes.length > 0 ||
-        journeys.length > 0 ? (
+        {visibility.commerce ? (
           <DashboardCanvasSection
-            eyebrow="Personal commerce"
-            title="Continue your experience"
-            description="Product worlds are previewed through stacked product headers, then opened only when you need more."
+            eyebrow={
+              sections.commerce.eyebrow
+            }
+            title={
+              sections.commerce.title
+            }
+            description={
+              sections.commerce
+                .description
+            }
+            showSlideHint={
+              commerceCardCount > 1
+            }>
+            <DashboardCommerceBoard
+              summary={summary}
+              quickActions={
+                quickActions
+              }
+              activity={activity}
+              orders={data.orders}
+              visibility={visibility}
+              orderBudget={
+                budgets.orders
+              }
+            />
+          </DashboardCanvasSection>
+        ) : null}
+
+        {visibility.personalCommerce ? (
+          <DashboardCanvasSection
+            eyebrow={
+              sections.personalCommerce
+                .eyebrow
+            }
+            title={
+              sections.personalCommerce
+                .title
+            }
+            description={
+              sections.personalCommerce
+                .description
+            }
             href="/store"
-            actionLabel="Open store">
-            <div
-              className={`${mobileRailClassName} lg:grid lg:grid-cols-3 lg:items-start lg:gap-3`}>
-              <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-                {firstMix ? (
-                  <div
-                    className={
-                      mobileCardClassName
-                    }>
-                    <DashboardProductModule
-                      mix={firstMix}
-                      variant="spotlight"
-                    />
-                  </div>
-                ) : null}
-
-                {journeys[0] ? (
-                  <div
-                    className={
-                      mobileCardClassName
-                    }>
-                    <DashboardJourneyCard
-                      journey={
-                        journeys[0]
-                      }
-                    />
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-                {secondMix ? (
-                  <div
-                    className={
-                      mobileCardClassName
-                    }>
-                    <DashboardProductModule
-                      mix={secondMix}
-                      variant="list"
-                    />
-                  </div>
-                ) : null}
-
-                {journeys[1] ? (
-                  <div
-                    className={
-                      mobileCardClassName
-                    }>
-                    <DashboardJourneyCard
-                      journey={
-                        journeys[1]
-                      }
-                    />
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-                {remainingMixes.map(
-                  mix => (
-                    <div
-                      key={mix.id}
-                      className={
-                        mobileCardClassName
-                      }>
-                      <DashboardProductModule
-                        mix={mix}
-                        variant="compact"
-                      />
-                    </div>
-                  )
-                )}
-
-                {journeys
-                  .slice(2, 3)
-                  .map(
-                    journey => (
-                      <div
-                        key={
-                          journey.id
-                        }
-                        className={
-                          mobileCardClassName
-                        }>
-                        <DashboardJourneyCard
-                          journey={
-                            journey
-                          }
-                        />
-                      </div>
-                    )
-                  )}
-              </div>
-            </div>
+            actionLabel="Open store"
+            showSlideHint={
+              personalCardCount > 1
+            }>
+            <DashboardPersonalCommerceBoard
+              mixes={mixes}
+              journeys={journeys}
+            />
           </DashboardCanvasSection>
         ) : null}
 

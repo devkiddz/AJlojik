@@ -11,10 +11,22 @@ import type {
   CommercePulseItem,
   DashboardActionItem,
   DashboardActivityItem,
+  DashboardOrchestration,
   DashboardQuickAction,
   DashboardSummaryItem,
   ResolvedCustomerDashboard
 } from '../contracts/customerDashboardTypes';
+
+
+const DASHBOARD_BUDGET = {
+  attention: 2,
+  summary: 4,
+  quickActions: 5,
+  activity: 4,
+  orders: 3,
+  mixes: 3,
+  journeys: 2
+} as const;
 
 const activeDeliveryStatuses = new Set([
   'PENDING',
@@ -492,32 +504,24 @@ function resolveDashboardActions(
     actions.push({
       id: `action-payment-${paymentAttentionOrder.id}`,
       kind: 'payment',
-
       title:
         paymentAttentionOrder.paymentStatus ===
         'FAILED'
           ? 'Payment needs attention'
           : 'Payment is still pending',
-
       description: `Order ${paymentAttentionOrder.orderNumber} is waiting for you to complete the transaction.`,
-
       value: formatCurrency(
         paymentAttentionOrder.total
       ),
-
       helper:
         formatLabel(
           paymentAttentionOrder.paymentStatus
         ),
-
       actionLabel: 'Review order',
       href: `/orders?order=${paymentAttentionOrder.id}`,
-
       badge: 'Attention',
-
       icon: 'wallet',
       tone: 'wine',
-
       priority: 100,
       requiresAttention: true
     });
@@ -532,21 +536,16 @@ function resolveDashboardActions(
         )
     );
 
-  if (
-    activeDeliveryOrder?.delivery
-  ) {
+  if (activeDeliveryOrder?.delivery) {
     actions.push({
       id: `action-delivery-${activeDeliveryOrder.id}`,
       kind: 'delivery',
-
       title: 'Delivery in progress',
       description: `Track order ${activeDeliveryOrder.orderNumber} as it moves toward arrival.`,
-
       value:
         formatLabel(
           activeDeliveryOrder.delivery.status
         ),
-
       helper:
         activeDeliveryOrder.delivery
           .estimatedArrival
@@ -561,15 +560,11 @@ function resolveDashboardActions(
               }
             )}`
           : 'Tracking is available',
-
       actionLabel: 'Track delivery',
       href: `/orders?order=${activeDeliveryOrder.id}`,
-
       badge: 'Active',
-
       icon: 'truck',
       tone: 'emerald',
-
       priority: 94,
       requiresAttention: false
     });
@@ -591,29 +586,22 @@ function resolveDashboardActions(
     actions.push({
       id: `action-order-${activeOrder.id}`,
       kind: 'order',
-
       title: 'Order in progress',
       description: `Order ${activeOrder.orderNumber} is currently ${formatLabel(
         activeOrder.status
       ).toLowerCase()}.`,
-
       value:
         formatLabel(
           activeOrder.status
         ),
-
       helper: formatCurrency(
         activeOrder.total
       ),
-
       actionLabel: 'View progress',
       href: `/orders?order=${activeOrder.id}`,
-
       badge: 'Order',
-
       icon: 'package',
       tone: 'navy',
-
       priority: 88,
       requiresAttention: false
     });
@@ -623,31 +611,24 @@ function resolveDashboardActions(
     actions.push({
       id: 'action-cart',
       kind: 'cart',
-
       title: 'Cart waiting',
       description: `${data.pulse.cartQuantity} product${
         data.pulse.cartQuantity === 1
           ? ''
           : 's'
       } remain ready for checkout.`,
-
       value: String(
         data.pulse.cartQuantity
       ),
-
       helper:
         formatCurrency(
           data.pulse.cartSubtotal
         ),
-
       actionLabel: 'Continue checkout',
       href: '/cart',
-
       badge: 'Cart',
-
       icon: 'cart',
       tone: 'gold',
-
       priority: 80,
       requiresAttention: false
     });
@@ -663,30 +644,22 @@ function resolveDashboardActions(
     actions.push({
       id: `action-review-${product.id}`,
       kind: 'review',
-
       title:
         data.pendingReviewProducts
           .length === 1
           ? 'One review is waiting'
           : `${data.pendingReviewProducts.length} reviews are waiting`,
-
       description: `Share your experience with ${product.name}.`,
-
       value: String(
         data.pendingReviewProducts
           .length
       ),
-
       helper: 'Delivered products',
-
       actionLabel: 'Write a review',
       href: `/products/${product.slug}`,
-
       badge: 'Review',
-
       icon: 'review',
       tone: 'violet',
-
       priority: 72,
       requiresAttention: false
     });
@@ -698,7 +671,6 @@ function resolveDashboardActions(
     actions.push({
       id: 'action-wishlist',
       kind: 'wishlist',
-
       title: 'Saved products',
       description: `${data.wishlistProducts.length} product${
         data.wishlistProducts.length ===
@@ -706,21 +678,15 @@ function resolveDashboardActions(
           ? ''
           : 's'
       } remain connected to this workspace.`,
-
       value: String(
         data.wishlistProducts.length
       ),
-
       helper: 'Available in wishlist',
-
       actionLabel: 'Open wishlist',
       href: '/wishlist',
-
       badge: null,
-
       icon: 'wishlist',
       tone: 'wine',
-
       priority: 60,
       requiresAttention: false
     });
@@ -733,20 +699,16 @@ function resolveDashboardActions(
     actions.push({
       id: `action-history-${latestHistory.id}`,
       kind: 'history',
-
       title: 'Continue a recent experience',
       description:
         latestHistory.subtitle ??
         `Return to ${latestHistory.label}.`,
-
       value:
         latestHistory.label,
-
       helper:
         formatLabel(
           latestHistory.source
         ),
-
       actionLabel: 'Continue',
       href:
         latestHistory.productId
@@ -767,12 +729,9 @@ function resolveDashboardActions(
           : `/store?category=${encodeURIComponent(
               latestHistory.categorySlug
             )}`,
-
       badge: null,
-
       icon: 'history',
       tone: 'neutral',
-
       priority: 50,
       requiresAttention: false
     });
@@ -781,22 +740,16 @@ function resolveDashboardActions(
   actions.push({
     id: 'action-discovery',
     kind: 'discovery',
-
     title: 'Start a new shopping journey',
     description:
       'Explore the store and shape the next experience around what matters now.',
-
     value: 'Discover',
     helper: 'Personalized store',
-
     actionLabel: 'Open store',
     href: '/store',
-
     badge: null,
-
     icon: 'store',
     tone: 'navy',
-
     priority: 20,
     requiresAttention: false
   });
@@ -821,161 +774,171 @@ function resolveDashboardActions(
   const duplicateKind =
     priorityKindMap[priority.kind];
 
-  const variedActions =
-    actions.filter(
+  const operationalKinds =
+    new Set<
+      DashboardActionItem['kind']
+    >([
+      'payment',
+      'delivery',
+      'order',
+      'cart',
+      'review'
+    ]);
+
+  return actions
+    .filter(
       action =>
-        action.kind !== duplicateKind
-    );
-
-  const selectedActions =
-    variedActions.length >= 3
-      ? variedActions
-      : actions;
-
-  return selectedActions
+        operationalKinds.has(
+          action.kind
+        ) &&
+        action.kind !== duplicateKind &&
+        action.href !== priority.href
+    )
     .sort(
       (first, second) =>
         second.priority -
         first.priority
     )
-    .slice(0, 4);
+    .slice(
+      0,
+      DASHBOARD_BUDGET.attention
+    );
 }
+
 
 function resolveDashboardSummary(
   data: CommerceDashboardData
 ): DashboardSummaryItem[] {
-  return [
-    {
-      id: 'orders',
+  const items:
+    DashboardSummaryItem[] = [];
 
+  if (
+    data.pulse.paidOrderCount > 0 ||
+    data.pulse.activeOrderCount > 0 ||
+    data.pulse.deliveredOrderCount > 0
+  ) {
+    items.push({
+      id: 'orders',
       label: 'Paid orders',
       value: String(
         data.pulse.paidOrderCount
       ),
-
       helper:
         data.pulse.activeOrderCount > 0
           ? `${data.pulse.activeOrderCount} currently active`
           : `${data.pulse.deliveredOrderCount} delivered`,
-
       href: '/orders',
-
       icon: 'orders',
       tone: 'navy'
-    },
+    });
+  }
 
-    {
+  if (data.pulse.totalSpent > 0) {
+    items.push({
       id: 'spend',
-
       label: 'Recorded purchases',
       value:
         formatCompactCurrency(
           data.pulse.totalSpent
         ),
-
       helper: 'Paid order value',
-
       href: '/orders',
-
       icon: 'spend',
       tone: 'violet'
-    },
+    });
+  }
 
-    {
+  if (data.pulse.cartQuantity > 0) {
+    items.push({
       id: 'cart',
-
       label: 'Current cart',
       value: String(
         data.pulse.cartQuantity
       ),
-
       helper:
-        data.pulse.cartQuantity > 0
-          ? formatCurrency(
-              data.pulse.cartSubtotal
-            )
-          : 'Nothing waiting',
-
+        formatCurrency(
+          data.pulse.cartSubtotal
+        ),
       href: '/cart',
-
       icon: 'cart',
       tone: 'gold'
-    },
+    });
+  }
 
-    {
+  if (data.pulse.wishlistCount > 0) {
+    items.push({
       id: 'saved',
-
       label: 'Saved products',
       value: String(
         data.pulse.wishlistCount
       ),
-
       helper:
-        data.pulse.wishlistCount > 0
-          ? 'Available in wishlist'
-          : 'Start saving products',
-
+        'Available in wishlist',
       href: '/wishlist',
-
       icon: 'saved',
       tone: 'wine'
-    }
-  ];
+    });
+  }
+
+  return items.slice(
+    0,
+    DASHBOARD_BUDGET.summary
+  );
 }
 
-function resolveQuickActions(
-  data: CommerceDashboardData
-): DashboardQuickAction[] {
-  return [
-    {
-      id: 'store',
 
+function resolveQuickActions(
+  data: CommerceDashboardData,
+  priority: CommercePriorityExperience
+): DashboardQuickAction[] {
+  const actions:
+    DashboardQuickAction[] = [];
+
+  if (priority.href !== '/store') {
+    actions.push({
+      id: 'store',
       label: 'Continue shopping',
       description:
         'Open the live store experience.',
-
       href: '/store',
-
       icon: 'store',
       badge: null
-    },
+    });
+  }
 
-    {
+  if (data.pulse.cartQuantity > 0) {
+    actions.push({
       id: 'cart',
-
       label: 'Open cart',
-      description:
-        data.pulse.cartQuantity > 0
-          ? `${data.pulse.cartQuantity} product${
-              data.pulse.cartQuantity ===
-              1
-                ? ''
-                : 's'
-            } waiting`
-          : 'Your cart is ready',
-
+      description: `${data.pulse.cartQuantity} product${
+        data.pulse.cartQuantity === 1
+          ? ''
+          : 's'
+      } waiting`,
       href: '/cart',
-
       icon: 'cart',
-      badge:
-        data.pulse.cartQuantity > 0
-          ? String(
-              data.pulse.cartQuantity
-            )
-          : null
-    },
+      badge: String(
+        data.pulse.cartQuantity
+      )
+    });
+  }
 
-    {
+  if (data.orders.length > 0) {
+    actions.push({
       id: 'orders',
-
-      label: 'Track orders',
+      label:
+        data.pulse.activeOrderCount > 0
+          ? 'Track orders'
+          : 'Order history',
       description:
         data.pulse.activeOrderCount > 0
           ? `${data.pulse.activeOrderCount} active now`
-          : 'Review purchase history',
-
+          : `${data.orders.length} recorded order${
+              data.orders.length === 1
+                ? ''
+                : 's'
+            }`,
       href: '/orders',
-
       icon: 'orders',
       badge:
         data.pulse.activeOrderCount > 0
@@ -983,103 +946,97 @@ function resolveQuickActions(
               data.pulse.activeOrderCount
             )
           : null
-    },
+    });
+  }
 
-    {
+  if (data.pulse.wishlistCount > 0) {
+    actions.push({
       id: 'wishlist',
-
       label: 'View wishlist',
-      description:
-        data.pulse.wishlistCount > 0
-          ? `${data.pulse.wishlistCount} saved product${
-              data.pulse.wishlistCount ===
-              1
-                ? ''
-                : 's'
-            }`
-          : 'Build a saved collection',
-
+      description: `${data.pulse.wishlistCount} saved product${
+        data.pulse.wishlistCount === 1
+          ? ''
+          : 's'
+      }`,
       href: '/wishlist',
-
       icon: 'wishlist',
-      badge:
-        data.pulse.wishlistCount > 0
-          ? String(
-              data.pulse.wishlistCount
-            )
-          : null
-    },
+      badge: String(
+        data.pulse.wishlistCount
+      )
+    });
+  }
 
-    {
+  if (
+    data.shoppingListProducts.length >
+    0
+  ) {
+    actions.push({
       id: 'lists',
-
       label: 'Shopping lists',
-      description:
+      description: `${data.shoppingListProducts.length} planned product${
         data.shoppingListProducts
-          .length > 0
-          ? `${data.shoppingListProducts.length} planned product${
-              data.shoppingListProducts
-                .length === 1
-                ? ''
-                : 's'
-            }`
-          : 'Create a shopping plan',
-
+          .length === 1
+          ? ''
+          : 's'
+      }`,
       href: '/settings',
-
       icon: 'list',
-      badge:
+      badge: String(
         data.shoppingListProducts
-          .length > 0
-          ? String(
-              data.shoppingListProducts
-                .length
-            )
-          : null
-    },
+          .length
+      )
+    });
+  }
 
-    {
-      id: 'settings',
+  actions.push({
+    id: 'settings',
+    label: 'Preferences',
+    description:
+      'Manage your dashboard experience.',
+    href: '/settings',
+    icon: 'settings',
+    badge: null
+  });
 
-      label: 'Preferences',
-      description:
-        'Manage your dashboard experience.',
-
-      href: '/settings',
-
-      icon: 'settings',
-      badge: null
-    }
-  ];
+  return actions.slice(
+    0,
+    DASHBOARD_BUDGET.quickActions
+  );
 }
 
+
 function resolveDashboardActivity(
-  data: CommerceDashboardData
+  data: CommerceDashboardData,
+  priority: CommercePriorityExperience,
+  actions: DashboardActionItem[]
 ): DashboardActivityItem[] {
+  const blockedHrefs =
+    new Set([
+      priority.href,
+      ...actions.map(
+        action => action.href
+      )
+    ]);
+
   const orderActivity:
     DashboardActivityItem[] =
-    data.orders.slice(0, 5).map(
+    data.orders.map(
       order => ({
         id: `activity-order-${order.id}`,
         kind: 'order',
-
         title: `Order ${order.orderNumber}`,
         description: `${formatLabel(
           order.status
         )} · ${formatCurrency(
           order.total
         )}`,
-
         occurredAt:
           order.createdAt,
-
         href: `/orders?order=${order.id}`,
-
         badge:
           formatLabel(
             order.paymentStatus
           ),
-
         image:
           firstOrderImage(order)
       })
@@ -1087,21 +1044,18 @@ function resolveDashboardActivity(
 
   const historyActivity:
     DashboardActivityItem[] =
-    data.history.slice(0, 5).map(
+    data.history.map(
       entry => ({
         id: `activity-history-${entry.id}`,
         kind: 'history',
-
         title: entry.label,
         description:
           entry.subtitle ??
           `Visited ${formatLabel(
             entry.categorySlug
           )}`,
-
         occurredAt:
           entry.visitedAt,
-
         href:
           entry.productId
             ? (() => {
@@ -1121,15 +1075,16 @@ function resolveDashboardActivity(
             : `/store?category=${encodeURIComponent(
                 entry.categorySlug
               )}`,
-
         badge:
           formatLabel(
             entry.source
           ),
-
         image: null
       })
     );
+
+  const seenHrefs =
+    new Set<string>();
 
   return [
     ...orderActivity,
@@ -1144,8 +1099,23 @@ function resolveDashboardActivity(
           first.occurredAt
         ).getTime()
     )
-    .slice(0, 6);
+    .filter(item => {
+      if (
+        blockedHrefs.has(item.href) ||
+        seenHrefs.has(item.href)
+      ) {
+        return false;
+      }
+
+      seenHrefs.add(item.href);
+      return true;
+    })
+    .slice(
+      0,
+      DASHBOARD_BUDGET.activity
+    );
 }
+
 
 function resolvePulse(
   data: CommerceDashboardData
@@ -1195,7 +1165,9 @@ function resolvePulse(
 }
 
 function resolveJourneys(
-  data: CommerceDashboardData
+  data: CommerceDashboardData,
+  priority: CommercePriorityExperience,
+  actions: DashboardActionItem[]
 ): CommerceJourneyItem[] {
   const journeys:
     CommerceJourneyItem[] = [];
@@ -1212,26 +1184,21 @@ function resolveJourneys(
   if (activeDeliveryOrder) {
     journeys.push({
       id: `journey-delivery-${activeDeliveryOrder.id}`,
-
       eyebrow: 'Active delivery',
       title: `Track ${activeDeliveryOrder.orderNumber}`,
       description:
         'Follow the order from dispatch to arrival.',
-
       href: `/orders?order=${activeDeliveryOrder.id}`,
       actionLabel: 'Track order',
-
       image:
         firstOrderImage(
           activeDeliveryOrder
         ),
-
       badge:
         activeDeliveryOrder.delivery?.status.replaceAll(
           '_',
           ' '
         ) ?? 'ACTIVE',
-
       tone: 'emerald'
     });
   }
@@ -1239,7 +1206,6 @@ function resolveJourneys(
   if (data.pulse.cartQuantity > 0) {
     journeys.push({
       id: 'journey-cart',
-
       eyebrow: 'Continue shopping',
       title: 'Your cart is waiting',
       description: `${data.pulse.cartQuantity} item${
@@ -1247,16 +1213,12 @@ function resolveJourneys(
           ? ''
           : 's'
       } remain connected to this workspace.`,
-
       href: '/cart',
       actionLabel: 'Open cart',
-
       image:
         data.cartItems[0]?.product
           .image ?? null,
-
       badge: `${data.pulse.cartQuantity} ITEMS`,
-
       tone: 'gold'
     });
   }
@@ -1270,19 +1232,14 @@ function resolveJourneys(
 
     journeys.push({
       id: `journey-review-${product.id}`,
-
       eyebrow: 'Your voice matters',
       title: `Review ${product.name}`,
       description:
         'Complete the purchase journey with your experience.',
-
       href: `/products/${product.slug}`,
       actionLabel: 'Write review',
-
       image: product.image,
-
       badge: 'REVIEW',
-
       tone: 'violet'
     });
   }
@@ -1293,19 +1250,14 @@ function resolveJourneys(
 
     journeys.push({
       id: `journey-recent-${product.id}`,
-
       eyebrow: 'Jump back in',
       title: product.name,
       description:
         'Return to a product you recently explored.',
-
       href: `/products/${product.slug}`,
       actionLabel: 'Continue',
-
       image: product.image,
-
       badge: 'RECENT',
-
       tone: 'navy'
     });
   }
@@ -1315,7 +1267,6 @@ function resolveJourneys(
   ) {
     journeys.push({
       id: 'journey-wishlist',
-
       eyebrow: 'Your saved world',
       title: 'Revisit your wishlist',
       description: `${data.wishlistProducts.length} product${
@@ -1323,16 +1274,12 @@ function resolveJourneys(
           ? ''
           : 's'
       } are saved for later.`,
-
       href: '/wishlist',
       actionLabel: 'Open wishlist',
-
       image:
         data.wishlistProducts[0]
           ?.image ?? null,
-
       badge: `${data.wishlistProducts.length} SAVED`,
-
       tone: 'wine'
     });
   }
@@ -1343,26 +1290,54 @@ function resolveJourneys(
   ) {
     journeys.push({
       id: 'journey-shopping-list',
-
       eyebrow: 'Your plan',
       title: 'Continue a shopping list',
       description: `${data.shoppingListProducts.length} products are already shaping this plan.`,
-
       href: '/settings',
       actionLabel: 'Open lists',
-
       image:
         data.shoppingListProducts[0]
           ?.image ?? null,
-
       badge: 'LIST',
-
       tone: 'gold'
     });
   }
 
-  return journeys.slice(0, 6);
+  const blockedHrefs =
+    new Set([
+      priority.href,
+      ...actions.map(
+        action => action.href
+      )
+    ]);
+
+  const seenHrefs =
+    new Set<string>();
+
+  return journeys
+    .filter(journey => {
+      if (
+        blockedHrefs.has(
+          journey.href
+        ) ||
+        seenHrefs.has(
+          journey.href
+        )
+      ) {
+        return false;
+      }
+
+      seenHrefs.add(
+        journey.href
+      );
+      return true;
+    })
+    .slice(
+      0,
+      DASHBOARD_BUDGET.journeys
+    );
 }
+
 
 function rankProducts(
   data: CommerceDashboardData
@@ -1616,7 +1591,54 @@ function resolveMixes(
     });
   }
 
-  return mixes.slice(0, 5);
+  const selectedMixes:
+    CommerceMix[] = [];
+
+  const seenSignatures =
+    new Set<string>();
+
+  for (const mix of mixes) {
+    const products =
+      uniqueProducts(
+        mix.products
+      ).slice(0, 8);
+
+    if (products.length === 0) {
+      continue;
+    }
+
+    const signature =
+      products
+        .slice(0, 3)
+        .map(product => product.id)
+        .sort()
+        .join('|');
+
+    if (
+      signature &&
+      seenSignatures.has(signature)
+    ) {
+      continue;
+    }
+
+    if (signature) {
+      seenSignatures.add(signature);
+    }
+
+    selectedMixes.push({
+      ...mix,
+      products
+    });
+
+    if (
+      selectedMixes.length >=
+      DASHBOARD_BUDGET.mixes
+    ) {
+      break;
+    }
+  }
+
+  return selectedMixes;
 }
 
 function resolveAssistantActions(
@@ -1934,6 +1956,101 @@ function resolveHubProjection(
   };
 }
 
+
+function resolveDashboardOrchestration({
+  data,
+  priority,
+  summary,
+  quickActions,
+  activity,
+  journeys,
+  mixes,
+  assistant
+}: {
+  data: CommerceDashboardData;
+  priority: CommercePriorityExperience;
+  summary: DashboardSummaryItem[];
+  quickActions: DashboardQuickAction[];
+  activity: DashboardActivityItem[];
+  journeys: CommerceJourneyItem[];
+  mixes: CommerceMix[];
+  assistant: CommerceAssistantContext;
+}): DashboardOrchestration {
+  const operationalPriorityKinds =
+    new Set<
+      CommercePriorityExperience['kind']
+    >([
+      'active-delivery',
+      'payment-attention',
+      'order-progress',
+      'cart-continuation',
+      'pending-review'
+    ]);
+
+  const hasOperationalPriority =
+    operationalPriorityKinds.has(
+      priority.kind
+    );
+
+  const visibility = {
+    overview: summary.length > 0,
+    quickActions:
+      quickActions.length > 0,
+    activity: activity.length > 0,
+    orders: data.orders.length > 0,
+    companion:
+      assistant.actions.length > 0,
+    commerce:
+      summary.length > 0 ||
+      quickActions.length > 0 ||
+      activity.length > 0 ||
+      data.orders.length > 0 ||
+      assistant.actions.length > 0,
+    personalCommerce:
+      journeys.length > 0 ||
+      mixes.length > 0
+  };
+
+  return {
+    budgets: {
+      ...DASHBOARD_BUDGET
+    },
+    visibility,
+    sections: {
+      attention:
+        hasOperationalPriority
+          ? {
+              eyebrow: 'Right now',
+              title:
+                'Needs your attention',
+              description:
+                'Only the commerce moments that are useful now—nothing noisy or intimidating.'
+            }
+          : {
+              eyebrow: 'For this moment',
+              title:
+                'Continue naturally',
+              description:
+                'A focused starting point shaped by your latest meaningful activity.'
+            },
+      commerce: {
+        eyebrow: 'Workspace',
+        title: 'Your commerce',
+        description:
+          'Orders, shortcuts and activity arranged as a calm professional canvas.'
+      },
+      personalCommerce: {
+        eyebrow:
+          'Personal commerce',
+        title:
+          'Continue your experience',
+        description:
+          'Product worlds are previewed through stacked product headers, then opened only when you need more.'
+      }
+    }
+  };
+}
+
 export function resolveCustomerDashboard(
   data: CommerceDashboardData
 ): ResolvedCustomerDashboard {
@@ -1956,13 +2073,24 @@ export function resolveCustomerDashboard(
     resolveDashboardSummary(data);
 
   const quickActions =
-    resolveQuickActions(data);
+    resolveQuickActions(
+      data,
+      priority
+    );
 
   const activity =
-    resolveDashboardActivity(data);
+    resolveDashboardActivity(
+      data,
+      priority,
+      actions
+    );
 
   const journeys =
-    resolveJourneys(data);
+    resolveJourneys(
+      data,
+      priority,
+      actions
+    );
 
   const mixes = resolveMixes(data);
 
@@ -2011,6 +2139,18 @@ export function resolveCustomerDashboard(
     actions: assistantActions
   };
 
+  const orchestration =
+    resolveDashboardOrchestration({
+      data,
+      priority,
+      summary,
+      quickActions,
+      activity,
+      journeys,
+      mixes,
+      assistant
+    });
+
   const hub = resolveHubProjection(
     data,
     priority,
@@ -2032,6 +2172,8 @@ export function resolveCustomerDashboard(
 
     journeys,
     mixes,
+
+    orchestration,
 
     hub,
     assistant

@@ -59,22 +59,22 @@ export function DashboardCompanionCard() {
                   action
                 )
               }
-              className="group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-left transition hover:bg-white/10">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/10 text-violet-200">
+              className="group flex w-full items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-left transition hover:bg-white/10">
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-white/10 text-violet-200">
                 <Sparkles className="size-3.5" />
               </span>
 
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold">
+                <span className="block line-clamp-2 break-words text-sm font-semibold leading-5">
                   {action.title}
                 </span>
 
-                <span className="mt-0.5 block truncate text-xs text-white/55">
+                <span className="mt-1 block line-clamp-2 break-words text-xs leading-4 text-white/55">
                   {action.description}
                 </span>
               </span>
 
-              <ArrowRight className="size-4 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:text-white" />
+              <ArrowRight className="mt-1 size-4 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:text-white" />
             </button>
           )
         )}

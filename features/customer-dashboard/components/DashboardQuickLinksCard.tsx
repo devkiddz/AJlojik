@@ -71,8 +71,8 @@ export function DashboardQuickLinksCard({
         </span>
       </header>
 
-      <div className="mt-4 grid gap-2">
-        {items.slice(0, 5).map(
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2">
+        {items.map(
           item => (
             <Link
               key={item.id}

@@ -44,7 +44,7 @@ export function DashboardActivityCard({
 
       {items.length > 0 ? (
         <div className="mt-4 grid gap-2">
-          {items.slice(0, 4).map(
+          {items.map(
             item => (
               <DashboardActivityRow
                 key={item.id}

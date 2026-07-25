@@ -1,7 +1,3 @@
-import type {
-  ReactNode
-} from 'react';
-
 import Link from 'next/link';
 
 import {
@@ -13,11 +9,10 @@ type DashboardCanvasSectionProps = {
   eyebrow: string;
   title: string;
   description: string;
-
   href?: string;
   actionLabel?: string;
-
-  children: ReactNode;
+  showSlideHint?: boolean;
+  children: React.ReactNode;
 };
 
 export function DashboardCanvasSection({
@@ -26,6 +21,7 @@ export function DashboardCanvasSection({
   description,
   href,
   actionLabel,
+  showSlideHint = false,
   children
 }: DashboardCanvasSectionProps) {
   return (
@@ -46,10 +42,12 @@ export function DashboardCanvasSection({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden items-center gap-1.5 text-xs font-medium text-muted-foreground max-lg:flex">
-            <MoveHorizontal className="size-4" />
-            Slide
-          </span>
+          {showSlideHint ? (
+            <span className="hidden items-center gap-1.5 text-xs font-medium text-muted-foreground max-lg:flex">
+              <MoveHorizontal className="size-4" />
+              Slide
+            </span>
+          ) : null}
 
           {href && actionLabel ? (
             <Link

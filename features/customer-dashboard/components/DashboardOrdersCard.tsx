@@ -21,7 +21,7 @@ export function DashboardOrdersCard({
   orders
 }: DashboardOrdersCardProps) {
   const visibleOrders =
-    orders.slice(0, 3);
+    orders;
 
   return (
     <article className="flex flex-col rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm sm:p-5">

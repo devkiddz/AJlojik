@@ -41,8 +41,10 @@ export type {
   DashboardActivityItem,
   DashboardActivityKind,
   DashboardCommandTone,
+  DashboardOrchestration,
   DashboardQuickAction,
   DashboardQuickActionIcon,
+  DashboardSectionCopy,
   DashboardSummaryIcon,
   DashboardSummaryItem,
   ResolvedCustomerDashboard

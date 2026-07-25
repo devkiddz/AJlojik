@@ -1,7 +1,28 @@
+export {
+  DashboardHero
+} from './DashboardHero';
+
+
+export {
+  DashboardCommerceBoard
+} from './DashboardCommerceBoard';
+
+
+export {
+  DashboardPersonalCommerceBoard
+} from './DashboardPersonalCommerceBoard';
 
 export {
   DashboardActivityCard
 } from './DashboardActivityCard';
+
+export {
+  DashboardActivityRow
+} from './DashboardActivityItem';
+
+export {
+  DashboardAssistant
+} from './DashboardAssistant';
 
 export {
   DashboardAttentionCard
@@ -20,6 +41,14 @@ export {
 } from './DashboardCompanionCard';
 
 export {
+  DashboardJourneyCard
+} from './DashboardJourneyCard';
+
+export {
+  DashboardOrderCard
+} from './DashboardOrderCard';
+
+export {
   DashboardOrdersCard
 } from './DashboardOrdersCard';
 
@@ -35,71 +64,6 @@ export {
   DashboardQuickLinksCard
 } from './DashboardQuickLinksCard';
 
-
 export {
-  DashboardActionCard
-} from './DashboardActionCard';
-
-export {
-  DashboardActionCentre
-} from './DashboardActionCentre';
-
-export {
-  DashboardActivity
-} from './DashboardActivity';
-
-export {
-  DashboardActivityRow
-} from './DashboardActivityItem';
-
-export {
-  DashboardQuickActionCard
-} from './DashboardQuickAction';
-
-export {
-  DashboardQuickActions
-} from './DashboardQuickActions';
-
-export {
-  DashboardSummary
-} from './DashboardSummary';
-
-export {
-  DashboardSummaryCard
-} from './DashboardSummaryCard';
-
-export {
-  DashboardAssistant
-} from './DashboardAssistant';
-
-export {
-  DashboardHeader
-} from './DashboardHeader';
-
-export {
-  DashboardJourneyCard
-} from './DashboardJourneyCard';
-
-export {
-  DashboardOrderCard
-} from './DashboardOrderCard';
-
-export {
-  DashboardOverview
-} from './DashboardOverview';
-
-export {
-  DashboardOverviewCard
-} from './DashboardOverviewCard';
-
-export {
-  DashboardPriority
-} from './DashboardPriority';
-
-export {
-  DashboardProductCard
-} from './DashboardProductCard';
-
-export {
-  DashboardSectionHeader
-} from './DashboardSectionHeader';
+  DashboardSnapRail
+} from './DashboardSnapRail';

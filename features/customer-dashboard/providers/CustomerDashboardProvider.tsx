@@ -115,6 +115,8 @@ export function CustomerDashboardProvider({
           initialDashboard.quickActions,
         activity:
           initialDashboard.activity,
+        orchestration:
+          initialDashboard.orchestration,
         journeys:
           initialDashboard.journeys,
         mixes:
