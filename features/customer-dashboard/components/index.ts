@@ -1,69 +1,25 @@
 export {
-  DashboardHero
-} from './DashboardHero';
-
-
-export {
-  DashboardCommerceBoard
-} from './DashboardCommerceBoard';
-
+  DashboardAIControl
+} from './ai/DashboardAIControl';
 
 export {
-  DashboardPersonalCommerceBoard
-} from './DashboardPersonalCommerceBoard';
+  DashboardActivityHub,
+  DashboardActivityHubSheet,
+  DashboardActivityHubTrigger
+} from './hub';
 
 export {
-  DashboardActivityCard
-} from './DashboardActivityCard';
+  ExperienceJourneyRail
+} from './journey/ExperienceJourneyRail';
 
 export {
-  DashboardActivityRow
-} from './DashboardActivityItem';
+  DashboardProductExperiences
+} from './products/DashboardProductExperiences';
 
 export {
-  DashboardAssistant
-} from './DashboardAssistant';
+  DashboardRail
+} from './rail/DashboardRail';
 
 export {
-  DashboardAttentionCard
-} from './DashboardAttentionCard';
-
-export {
-  DashboardCanvasSection
-} from './DashboardCanvasSection';
-
-export {
-  DashboardCommerceOverviewCard
-} from './DashboardCommerceOverviewCard';
-
-export {
-  DashboardCompanionCard
-} from './DashboardCompanionCard';
-
-export {
-  DashboardJourneyCard
-} from './DashboardJourneyCard';
-
-export {
-  DashboardOrderCard
-} from './DashboardOrderCard';
-
-export {
-  DashboardOrdersCard
-} from './DashboardOrdersCard';
-
-export {
-  DashboardProductAvatarStack
-} from './DashboardProductAvatarStack';
-
-export {
-  DashboardProductModule
-} from './DashboardProductModule';
-
-export {
-  DashboardQuickLinksCard
-} from './DashboardQuickLinksCard';
-
-export {
-  DashboardSnapRail
-} from './DashboardSnapRail';
+  DashboardWelcome
+} from './welcome/DashboardWelcome';
