@@ -3,25 +3,29 @@
 import { useMemo, useState } from 'react';
 
 import { DashboardAIControl } from '../components/ai/DashboardAIControl';
+
 import {
   DashboardActivityHub,
   DashboardActivityHubSheet,
   DashboardActivityHubTrigger
 } from '../components/hub';
+
 import { ExperienceJourneyRail } from '../components/journey/ExperienceJourneyRail';
+
 import { DashboardProductExperiences } from '../components/products/DashboardProductExperiences';
+
 import { DashboardWelcome } from '../components/welcome/DashboardWelcome';
+
 import { useCustomerDashboard } from '../providers/CustomerDashboardProvider';
+
 import { resolveCustomerDashboardView } from '../view/resolveCustomerDashboardView';
 
 export default function CustomerDashboard() {
   const { dashboard } = useCustomerDashboard();
+
   const [hubOpen, setHubOpen] = useState(false);
 
-  const view = useMemo(
-    () => resolveCustomerDashboardView(dashboard),
-    [dashboard]
-  );
+  const view = useMemo(() => resolveCustomerDashboardView(dashboard), [dashboard]);
 
   return (
     <main className="h-[calc(100dvh-5rem)] min-h-0 overflow-y-auto overscroll-contain bg-muted/20">
@@ -43,12 +47,7 @@ export default function CustomerDashboard() {
             cartSubtotal={view.cartSubtotal}
           />
 
-          <DashboardProductExperiences
-            suggestedProducts={view.suggestedProducts}
-            suggestedHref={view.suggestedHref}
-            pickedProducts={view.pickedProducts}
-            pickedHref={view.pickedHref}
-          />
+          <DashboardProductExperiences view={view} />
 
           <div className="xl:hidden">
             <DashboardAIControl compact />
@@ -60,20 +59,15 @@ export default function CustomerDashboard() {
         <aside className="hidden xl:block">
           <div className="sticky top-4 space-y-4">
             <DashboardActivityHub view={view} />
+
             <DashboardAIControl />
           </div>
         </aside>
       </div>
 
-      <DashboardActivityHubTrigger
-        onClick={() => setHubOpen(true)}
-      />
+      <DashboardActivityHubTrigger onClick={() => setHubOpen(true)} />
 
-      <DashboardActivityHubSheet
-        open={hubOpen}
-        onOpenChange={setHubOpen}
-        view={view}
-      />
+      <DashboardActivityHubSheet open={hubOpen} onOpenChange={setHubOpen} view={view} />
     </main>
   );
 }

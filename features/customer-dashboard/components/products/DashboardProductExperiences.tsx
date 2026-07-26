@@ -1,23 +1,18 @@
 import { Heart, PackageCheck } from 'lucide-react';
 
-import type {
-  CommerceProduct
-} from '../../contracts/customerDashboardTypes';
+import type { resolveCustomerDashboardView } from '../../view/resolveCustomerDashboardView';
+
 import { ProductExperienceSection } from './ProductExperienceSection';
 
+type CustomerDashboardView = ReturnType<typeof resolveCustomerDashboardView>;
+
 type DashboardProductExperiencesProps = {
-  suggestedProducts: CommerceProduct[];
-  suggestedHref: string;
-  pickedProducts: CommerceProduct[];
-  pickedHref: string;
+  view: CustomerDashboardView;
 };
 
-export function DashboardProductExperiences({
-  suggestedProducts,
-  suggestedHref,
-  pickedProducts,
-  pickedHref
-}: DashboardProductExperiencesProps) {
+export function DashboardProductExperiences({ view }: DashboardProductExperiencesProps) {
+  const { suggestedProducts, suggestedHref, pickedProducts, pickedHref } = view;
+
   return (
     <section className="grid items-start gap-4 xl:grid-cols-2">
       <ProductExperienceSection
@@ -26,6 +21,7 @@ export function DashboardProductExperiences({
         icon={<PackageCheck />}
         products={suggestedProducts}
         href={suggestedHref}
+        source="suggested"
       />
 
       <ProductExperienceSection
@@ -34,6 +30,7 @@ export function DashboardProductExperiences({
         icon={<Heart />}
         products={pickedProducts}
         href={pickedHref}
+        source="picked-for-you"
       />
     </section>
   );
