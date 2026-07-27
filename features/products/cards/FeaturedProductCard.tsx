@@ -8,6 +8,8 @@ import type { BaseProductCardProps } from './productCardTypes';
 
 import { openProductExperience } from './productCardPresentation';
 
+import { ProductActionTray } from './ProductActionTray';
+
 import { useProductVariant } from './useProductVariant';
 
 type FeaturedProductCardPresentation = 'hero' | 'collection';
@@ -23,7 +25,9 @@ export function FeaturedProductCard({
   presentation = 'hero',
   title,
   onOpenExperience,
-  onPreview
+  onPreview,
+  onAddToCart,
+  onAskAI
 }: FeaturedProductCardProps) {
   const { selectedVariant } = useProductVariant(product);
 
@@ -138,6 +142,15 @@ export function FeaturedProductCard({
           </span>
         </span>
       </button>
+
+      <ProductActionTray
+        product={product}
+        variant={selectedVariant}
+        onAddToCart={onAddToCart}
+        onAskAI={onAskAI}
+        presentation="overlay"
+        compact={compact}
+      />
     </article>
   );
 }

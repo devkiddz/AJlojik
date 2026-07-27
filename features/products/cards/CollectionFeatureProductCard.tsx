@@ -14,6 +14,8 @@ import type { BaseProductCardProps } from './productCardTypes';
 
 import { createProductPriceFormatter, openProductExperience } from './productCardPresentation';
 
+import { ProductActionTray } from './ProductActionTray';
+
 import { useProductVariant } from './useProductVariant';
 
 export function CollectionFeatureProductCard({
@@ -22,7 +24,9 @@ export function CollectionFeatureProductCard({
   locale = 'en-NG',
   currency = 'NGN',
   onPreview,
-  onOpenExperience
+  onOpenExperience,
+  onAddToCart,
+  onAskAI
 }: BaseProductCardProps) {
   const { selectedVariant, soldOut } = useProductVariant(product);
 
@@ -228,6 +232,17 @@ export function CollectionFeatureProductCard({
           ">
           {priceFormatter.format(Number(selectedVariant.price))}
         </p>
+
+        <ProductActionTray
+          product={product}
+          variant={selectedVariant}
+          onAddToCart={onAddToCart}
+          onAskAI={onAskAI}
+          presentation="inline"
+          compact
+          showAddLabel
+          className="mt-3"
+        />
 
         <Button
           type="button"

@@ -966,27 +966,41 @@ function resolveQuickActions(
     });
   }
 
-  if (
-    data.shoppingListProducts.length >
-    0
-  ) {
-    actions.push({
-      id: 'lists',
-      label: 'Shopping lists',
-      description: `${data.shoppingListProducts.length} planned product${
-        data.shoppingListProducts
-          .length === 1
-          ? ''
-          : 's'
-      }`,
-      href: '/settings',
-      icon: 'list',
-      badge: String(
-        data.shoppingListProducts
-          .length
+ if (
+  data.shoppingLists.length >
+  0
+) {
+  actions.push({
+    id: 'lists',
+
+    label:
+      'Shopping lists',
+
+    description: `${data.pulse.shoppingListCount} list${
+      data.pulse.shoppingListCount ===
+      1
+        ? ''
+        : 's'
+    } holding ${data.pulse.shoppingListItemCount} planned item${
+      data.pulse.shoppingListItemCount ===
+      1
+        ? ''
+        : 's'
+    }`,
+
+    href:
+      '/account/lists',
+
+    icon:
+      'list',
+
+    badge:
+      String(
+        data.pulse
+          .shoppingListCount
       )
-    });
-  }
+  });
+}
 
   actions.push({
     id: 'settings',
@@ -1284,24 +1298,58 @@ function resolveJourneys(
     });
   }
 
-  if (
-    data.shoppingListProducts.length >
-    0
-  ) {
-    journeys.push({
-      id: 'journey-shopping-list',
-      eyebrow: 'Your plan',
-      title: 'Continue a shopping list',
-      description: `${data.shoppingListProducts.length} products are already shaping this plan.`,
-      href: '/settings',
-      actionLabel: 'Open lists',
-      image:
-        data.shoppingListProducts[0]
-          ?.image ?? null,
-      badge: 'LIST',
-      tone: 'gold'
-    });
-  }
+  const primaryShoppingList =
+  data.shoppingLists[0];
+
+if (primaryShoppingList) {
+  journeys.push({
+    id:
+      `journey-shopping-list-${primaryShoppingList.id}`,
+
+    eyebrow:
+      'Your shopping plan',
+
+    title:
+      primaryShoppingList.name,
+
+    description:
+      primaryShoppingList.itemCount >
+      0
+        ? `${primaryShoppingList.itemCount} product${
+            primaryShoppingList.itemCount ===
+            1
+              ? ''
+              : 's'
+          } ${
+            primaryShoppingList.itemCount ===
+            1
+              ? 'is'
+              : 'are'
+          } gathered inside this list.`
+        : 'This list is ready for the products you plan to gather.',
+
+    href:
+      `/dashboard/lists/${primaryShoppingList.id}`,
+
+    actionLabel:
+      'Open list',
+
+    image:
+      primaryShoppingList
+        .items[0]?.product
+        .image ??
+      null,
+
+    badge:
+      primaryShoppingList.itemCount >
+      0
+        ? `${primaryShoppingList.itemCount} ITEMS`
+        : 'NEW LIST',
+
+    tone:
+      'gold'
+  });
+}
 
   const blockedHrefs =
     new Set([
@@ -1516,28 +1564,50 @@ function resolveMixes(
     });
   }
 
-  if (
-    data.wishlistProducts.length > 0
-  ) {
-    mixes.push({
-      id: 'saved-world',
+  const activeShoppingList =
+  data.shoppingLists.find(
+    list =>
+      list.items.length >
+      0
+  );
 
-      eyebrow: 'Your collection',
-      title: 'Saved for your moment',
-      description:
-        'A personal shelf of products you chose not to lose.',
+if (activeShoppingList) {
+  mixes.push({
+    id:
+      `shopping-list-mix-${activeShoppingList.id}`,
 
-      reason:
-        'Pulled directly from your wishlist',
+    eyebrow:
+      'Your plans',
 
-      products:
-        uniqueProducts(
-          data.wishlistProducts
-        ).slice(0, 10),
+    title:
+      activeShoppingList.name,
 
-      href: '/wishlist'
-    });
-  }
+    description:
+      activeShoppingList.description ??
+      'Products already gathered around your current shopping plan.',
+
+    reason: `${activeShoppingList.itemCount} planned product${
+      activeShoppingList.itemCount ===
+      1
+        ? ''
+        : 's'
+    }`,
+
+    products:
+      uniqueProducts(
+        activeShoppingList.items.map(
+          item =>
+            item.product
+        )
+      ).slice(
+        0,
+        10
+      ),
+
+    href:
+      `/dashboard/lists/${activeShoppingList.id}`
+  });
+}
 
   const deliveredProductIds =
     data.orders

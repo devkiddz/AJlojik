@@ -68,6 +68,54 @@ export type CommerceCartItem = {
   lineTotal: number;
 };
 
+export type CommerceShoppingListVisibility =
+  | 'PRIVATE'
+  | 'SHARED';
+
+export type CommerceShoppingListStatus =
+  | 'ACTIVE'
+  | 'ARCHIVED';
+
+export type CommerceShoppingListItem = {
+  id: string;
+
+  product: CommerceProduct;
+
+  variantId: string | null;
+  variantLabel: string | null;
+
+  quantity: number;
+  position: number;
+
+  note: string | null;
+
+  addedAt: string;
+  updatedAt: string;
+};
+
+export type CommerceShoppingList = {
+  id: string;
+
+  name: string;
+  description: string | null;
+
+  visibility:
+    CommerceShoppingListVisibility;
+
+  status:
+    CommerceShoppingListStatus;
+
+  position: number;
+
+  itemCount: number;
+  totalQuantity: number;
+
+  items: CommerceShoppingListItem[];
+
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CommerceOrderItem = {
   id: string;
 
@@ -200,7 +248,6 @@ export type CommerceDashboardData = {
     engagementScore: number;
     commerceScore: number;
 
-    shoppingListProductIds: string[];
   };
 
   pulse: {
@@ -215,16 +262,29 @@ export type CommerceDashboardData = {
 
     wishlistCount: number;
 
+    shoppingListCount: number;
+    shoppingListItemCount: number;
+
     reviewCount: number;
     pendingReviewCount: number;
   };
 
-  cartItems: CommerceCartItem[];
+cartItems: CommerceCartItem[];
 
-  wishlistProducts: CommerceProduct[];
-  recentProducts: CommerceProduct[];
-  shoppingListProducts: CommerceProduct[];
-  pendingReviewProducts: CommerceProduct[];
+shoppingLists: CommerceShoppingList[];
+
+wishlistProducts: CommerceProduct[];
+recentProducts: CommerceProduct[];
+
+/**
+ * Flattened projection retained for recommendation
+ * and dashboard-module compatibility.
+ *
+ * The source of truth is shoppingLists.
+ */
+shoppingListProducts: CommerceProduct[];
+
+pendingReviewProducts: CommerceProduct[];
 
   orders: CommerceOrder[];
   history: CommerceHistoryEntry[];
@@ -572,5 +632,12 @@ export type ResolvedCommerceDashboard = {
 // CommerceProduct, CommerceOrder and the other Commerce* contracts remain
 // domain-level names. The aliases below make the feature ownership explicit
 // without renaming every commerce entity.
-export type CustomerDashboardData = CommerceDashboardData;
+// export type CustomerDashboardData = CommerceDashboardData;
 export type ResolvedCustomerDashboard = ResolvedCommerceDashboard;
+// Customer-dashboard aggregate aliases.
+//
+// CommerceProduct, CommerceOrder and the other Commerce* contracts remain
+// domain-level names. These aliases make the feature ownership explicit.
+export type CustomerDashboardData =
+  CommerceDashboardData;
+

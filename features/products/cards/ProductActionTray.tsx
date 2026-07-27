@@ -2,68 +2,67 @@
 
 import {
   Heart,
+  ListPlus,
   LoaderCircle,
   Minus,
+  MoreHorizontal,
   Plus,
-  ShoppingBag
+  ShoppingBag,
+  Sparkles
 } from 'lucide-react';
 
-import type {
-  MouseEvent
-} from 'react';
+import { useState, type MouseEvent } from 'react';
 
 import {
-  useWishlist
-} from '@/features/wishlist';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+
+import { AddToShoppingListDialog, useOptionalShoppingLists } from '@/features/shopping-lists';
+
+import { useWishlist } from '@/features/wishlist';
 
 import { cn } from '@/lib/utils';
 
-import type {
-  ProductType,
-  ProductVariantType
-} from '@/types/types';
+import type { ProductType, ProductVariantType } from '@/types/types';
 
-import type {
-  ProductCardActions
-} from './productCardTypes';
+import type { ProductCardActions } from './productCardTypes';
 
-import {
-  useProductCartQuantity
-} from './useProductCartQuantity';
+import { useProductCartQuantity } from './useProductCartQuantity';
 
-import {
-  useProductVariant
-} from './useProductVariant';
+import { useProductVariant } from './useProductVariant';
 
-type ProductActionTrayPresentation =
-  | 'overlay'
-  | 'inline';
+type ProductActionTrayPresentation = 'overlay' | 'inline';
 
 type ProductActionTrayProps = {
   product: ProductType;
 
-  /**
-   * Featured surfaces pass their actively selected variant.
-   * Compact cards fall back to the first purchasable variant.
-   */
   variant?: ProductVariantType | null;
 
-  onAddToCart?:
-    ProductCardActions['onAddToCart'];
+  onAddToCart?: ProductCardActions['onAddToCart'];
 
-  presentation?:
-    ProductActionTrayPresentation;
+  onAskAI?: ProductCardActions['onAskAI'];
+
+  presentation?: ProductActionTrayPresentation;
 
   compact?: boolean;
+
+  /**
+   * Retained for compatibility with existing cards.
+   */
   showAddLabel?: boolean;
+
   showWishlist?: boolean;
 
   className?: string;
 };
 
-function stopProductActionEvent(
-  event: MouseEvent<HTMLElement>
-): void {
+function stopProductActionEvent(event: MouseEvent<HTMLElement>): void {
   event.preventDefault();
   event.stopPropagation();
 }
@@ -72,357 +71,393 @@ export function ProductActionTray({
   product,
   variant,
   onAddToCart,
+  onAskAI,
   presentation = 'overlay',
   compact = false,
-  showAddLabel = presentation === 'inline',
   showWishlist = true,
   className
 }: ProductActionTrayProps) {
-  const {
-    availableVariant
-  } = useProductVariant(product);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
 
-  const {
-    toggleWishlist,
-    isWishlisted,
-    isMutating
-  } = useWishlist();
+  const shoppingLists = useOptionalShoppingLists();
 
-  const activeCommerceVariant =
-    variant ??
-    availableVariant;
+  const { availableVariant } = useProductVariant(product);
 
-  const {
-    variantQuantity,
-    cartMutating,
-    pendingAction,
-    canIncrement,
-    canDecrement,
-    addOne,
-    removeOne
-  } = useProductCartQuantity(
-    product,
-    activeCommerceVariant,
-    {
+  const { toggleWishlist, isWishlisted, isMutating } = useWishlist();
+
+  const activeCommerceVariant = variant ?? availableVariant;
+
+  const { variantQuantity, cartMutating, pendingAction, canIncrement, canDecrement, addOne, removeOne } =
+    useProductCartQuantity(product, activeCommerceVariant, {
       onAddToCart
-    }
+    });
+
+  const unavailable = !activeCommerceVariant || activeCommerceVariant.stockLeft <= 0;
+
+  const reachedStockLimit = Boolean(
+    activeCommerceVariant && variantQuantity >= activeCommerceVariant.stockLeft
   );
 
-  const unavailable =
-    !activeCommerceVariant ||
-    activeCommerceVariant.stockLeft <= 0;
+  const saved = isWishlisted(product.id);
 
-  const reachedStockLimit =
-    Boolean(
-      activeCommerceVariant &&
-      variantQuantity >=
-        activeCommerceVariant.stockLeft
-    );
+  const wishlistMutating = isMutating(product.id);
 
-  const saved =
-    isWishlisted(product.id);
+  const cartBusy = cartMutating || pendingAction !== null;
 
-  const wishlistMutating =
-    isMutating(product.id);
+  const overlay = presentation === 'overlay';
 
-  const cartBusy =
-    cartMutating ||
-    pendingAction !== null;
+  const buttonSizeClassName = compact ? 'size-8' : 'size-9';
 
-  const overlay =
-    presentation === 'overlay';
+  const iconSizeClassName = compact ? 'size-3.5' : 'size-4';
 
-  const buttonSizeClassName =
-    compact
-      ? 'size-8'
-      : 'size-9';
+  const actionClassName = cn(
+    'pointer-events-auto relative grid shrink-0 place-items-center rounded-full',
+    buttonSizeClassName,
+    'transition duration-200',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    'disabled:cursor-not-allowed disabled:opacity-40',
 
-  const iconSizeClassName =
-    compact
-      ? 'size-3.5'
-      : 'size-4';
+    overlay
+      ? [
+          'border border-white/20',
+          'bg-background/45',
+          'text-foreground',
+          'shadow-md',
+          'backdrop-blur-md',
+          'hover:border-white/40',
+          'hover:bg-background/85',
+          'dark:border-white/10',
+          'dark:bg-background/30',
+          'dark:hover:bg-background/60'
+        ]
+      : ['border border-border', 'bg-background', 'text-foreground', 'shadow-sm', 'hover:bg-muted']
+  );
 
-  const actionClassName =
-    cn(
-      'pointer-events-auto relative grid shrink-0 place-items-center rounded-full',
-      buttonSizeClassName,
-      'transition duration-200',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-      'disabled:cursor-not-allowed disabled:opacity-40',
+  const handleAdd = (event: MouseEvent<HTMLElement>): void => {
+    stopProductActionEvent(event);
 
-      overlay
-        ? 'border border-white/20 bg-background/45 text-foreground shadow-md backdrop-blur-md hover:border-white/40 hover:bg-background/85 dark:border-white/10 dark:bg-background/30 dark:hover:bg-background/60'
-        : 'border border-border bg-background text-foreground shadow-sm hover:bg-muted'
-    );
+    if (unavailable || cartBusy || !canIncrement) {
+      return;
+    }
 
-  const handleAdd =
-    (
-      event: MouseEvent<HTMLButtonElement>
-    ): void => {
-      stopProductActionEvent(event);
+    void addOne();
+  };
 
-      if (
-        unavailable ||
-        cartBusy ||
-        !canIncrement
-      ) {
-        return;
-      }
+  const handleRemove = (event: MouseEvent<HTMLElement>): void => {
+    stopProductActionEvent(event);
 
-      void addOne();
-    };
+    if (cartBusy || !canDecrement) {
+      return;
+    }
 
-  const handleRemove =
-    (
-      event: MouseEvent<HTMLButtonElement>
-    ): void => {
-      stopProductActionEvent(event);
+    void removeOne();
+  };
 
-      if (
-        cartBusy ||
-        !canDecrement
-      ) {
-        return;
-      }
+  const handleWishlist = (event: MouseEvent<HTMLElement>): void => {
+    stopProductActionEvent(event);
 
-      void removeOne();
-    };
+    if (wishlistMutating) {
+      return;
+    }
 
-  const handleWishlist =
-    (
-      event: MouseEvent<HTMLButtonElement>
-    ): void => {
-      stopProductActionEvent(event);
+    void toggleWishlist({
+      id: product.id,
+      name: product.name
+    });
+  };
 
-      if (wishlistMutating) {
-        return;
-      }
+  const handleOpenShoppingList = (event: MouseEvent<HTMLElement>): void => {
+    event.stopPropagation();
 
-      void toggleWishlist({
-        id: product.id,
-        name: product.name
-      });
-    };
+    if (!shoppingLists || !activeCommerceVariant) {
+      return;
+    }
+
+    /*
+     * Allow the dropdown to close and restore focus
+     * before mounting the Shopping List dialog.
+     */
+    window.setTimeout(() => {
+      setShoppingListOpen(true);
+    }, 0);
+  };
+
+  const handleAskAI = (event: MouseEvent<HTMLElement>): void => {
+    stopProductActionEvent(event);
+
+    if (!onAskAI) {
+      return;
+    }
+
+    void onAskAI(product, activeCommerceVariant ?? null);
+  };
 
   return (
-    <div
-      className={cn(
-        'pointer-events-auto hidden items-center gap-1.5 rounded-full p-1.5 lg:flex',
+    <>
+      <div
+        className={cn(
+          'pointer-events-auto flex items-center gap-1.5 rounded-full p-1.5',
 
-        overlay
-          ? [
-              'absolute bottom-2 left-1/2 z-30 -translate-x-1/2',
-              'border border-white/20 bg-background/20 shadow-xl backdrop-blur-xl',
-              'dark:border-white/10 dark:bg-background/10',
-              'opacity-100 sm:translate-y-1 sm:opacity-0',
-              'sm:transition sm:duration-200',
-              'sm:group-hover:translate-y-0 sm:group-hover:opacity-100',
-              'sm:group-focus-within:translate-y-0 sm:group-focus-within:opacity-100'
-            ]
-          : 'relative border border-border/70 bg-background/80 shadow-sm backdrop-blur-md',
+          overlay
+            ? [
+                'absolute bottom-2 left-1/2 z-30',
+                '-translate-x-1/2',
 
-        className
-      )}
-    >
-      {variantQuantity > 0 ? (
-        <div
-          className={cn(
-            'flex items-center rounded-full border',
+                'border border-white/20',
+                'bg-background/20',
+                'shadow-xl',
+                'backdrop-blur-xl',
 
-            overlay
-              ? 'border-white/15 bg-background/35'
-              : 'border-border bg-muted/40'
-          )}
-        >
-          <button
-            type="button"
-            title={
-              variantQuantity <= 1
-                ? 'Remove from cart'
-                : 'Decrease quantity'
-            }
-            aria-label={
-              variantQuantity <= 1
-                ? `Remove ${product.name} from cart`
-                : `Decrease ${product.name} quantity`
-            }
-            disabled={
-              cartBusy ||
-              !canDecrement
-            }
+                'dark:border-white/10',
+                'dark:bg-background/10',
+
+                'opacity-100',
+
+                'sm:translate-y-1',
+                'sm:opacity-0',
+                'sm:transition',
+                'sm:duration-200',
+
+                'sm:group-hover:translate-y-0',
+                'sm:group-hover:opacity-100',
+
+                'sm:group-focus-within:translate-y-0',
+                'sm:group-focus-within:opacity-100'
+              ]
+            : ['relative', 'border border-border/70', 'bg-background/80', 'shadow-sm', 'backdrop-blur-md'],
+
+          className
+        )}>
+        {/* ============================================
+            PRIMARY CART ACTION
+        ============================================ */}
+
+        {variantQuantity > 0 ? (
+          <div
             className={cn(
-              actionClassName,
-              'border-0 bg-transparent shadow-none hover:bg-background/70'
-            )}
-            onClick={handleRemove}
-          >
-            {pendingAction === 'decrement' ||
-            pendingAction === 'remove' ? (
-              <LoaderCircle
-                className={cn(
-                  iconSizeClassName,
-                  'animate-spin'
-                )}
-              />
-            ) : (
-              <Minus
-                className={
-                  iconSizeClassName
-                }
-              />
-            )}
-          </button>
+              'flex items-center rounded-full border',
 
-          <span
-            aria-live="polite"
-            className={cn(
-              'min-w-6 px-1 text-center font-black tabular-nums',
-              compact
-                ? 'text-[0.65rem]'
-                : 'text-xs'
-            )}
-          >
-            {variantQuantity > 99
-              ? '99+'
-              : variantQuantity}
-          </span>
-
-          <button
-            type="button"
-            title={
-              reachedStockLimit
-                ? 'Available stock reached'
-                : 'Increase quantity'
-            }
-            aria-label={`Increase ${product.name} quantity`}
-            disabled={
-              unavailable ||
-              cartBusy ||
-              !canIncrement
-            }
-            className={cn(
-              actionClassName,
-              'border-0 bg-transparent shadow-none hover:bg-background/70'
-            )}
-            onClick={handleAdd}
-          >
-            {pendingAction === 'increment' ? (
-              <LoaderCircle
-                className={cn(
-                  iconSizeClassName,
-                  'animate-spin'
-                )}
-              />
-            ) : (
-              <Plus
-                className={
-                  iconSizeClassName
-                }
-              />
-            )}
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          title={
-            unavailable
-              ? 'Product is unavailable'
-              : 'Add to cart'
-          }
-          aria-label={
-            unavailable
-              ? `${product.name} is unavailable`
-              : `Add ${product.name} to cart`
-          }
-          disabled={
-            unavailable ||
-            cartBusy ||
-            !canIncrement
-          }
-          className={cn(
-            actionClassName,
-            showAddLabel &&
-              'flex w-auto gap-1.5 px-3'
-          )}
-          onClick={handleAdd}
-        >
-          {pendingAction === 'increment' ? (
-            <LoaderCircle
-              className={cn(
-                iconSizeClassName,
-                'animate-spin'
-              )}
-            />
-          ) : (
-            <ShoppingBag
-              className={
-                iconSizeClassName
+              overlay ? 'border-white/15 bg-background/35' : 'border-border bg-muted/40'
+            )}>
+            <button
+              type="button"
+              title={variantQuantity <= 1 ? 'Remove from cart' : 'Decrease quantity'}
+              aria-label={
+                variantQuantity <= 1
+                  ? `Remove ${product.name} from cart`
+                  : `Decrease ${product.name} quantity`
               }
-            />
-          )}
+              disabled={cartBusy || !canDecrement}
+              className={cn(actionClassName, 'border-0 bg-transparent shadow-none', 'hover:bg-background/70')}
+              onClick={handleRemove}>
+              {pendingAction === 'decrement' || pendingAction === 'remove' ? (
+                <LoaderCircle className={cn(iconSizeClassName, 'animate-spin')} />
+              ) : (
+                <Minus className={iconSizeClassName} />
+              )}
+            </button>
 
-          {showAddLabel ? (
             <span
+              aria-live="polite"
               className={cn(
-                'whitespace-nowrap font-semibold',
-                compact
-                  ? 'text-[0.65rem]'
-                  : 'text-xs'
-              )}
-            >
-              {unavailable
-                ? 'Unavailable'
-                : 'Add'}
-            </span>
-          ) : null}
-        </button>
-      )}
+                'min-w-6 px-1 text-center font-black tabular-nums',
 
-      {showWishlist ? (
-        <button
-          type="button"
-          title={
-            saved
-              ? 'Remove from wishlist'
-              : 'Add to wishlist'
-          }
-          aria-label={
-            saved
-              ? `Remove ${product.name} from wishlist`
-              : `Save ${product.name} to wishlist`
-          }
-          aria-pressed={saved}
-          disabled={wishlistMutating}
-          className={cn(
-            actionClassName,
-            'transition-colors duration-200',
-            saved
-              ? 'border-rose-500/50 bg-rose-500/15 text-rose-500 hover:bg-rose-500/20 dark:bg-rose-500/20 dark:hover:bg-rose-500/25'
-              : 'text-foreground'
-          )}
-          onClick={handleWishlist}
-        >
-          {wishlistMutating ? (
-            <LoaderCircle
-              className={cn(
-                iconSizeClassName,
-                'animate-spin'
+                compact ? 'text-[0.65rem]' : 'text-xs'
+              )}>
+              {variantQuantity > 99 ? '99+' : variantQuantity}
+            </span>
+
+            <button
+              type="button"
+              title={reachedStockLimit ? 'Available stock reached' : 'Increase quantity'}
+              aria-label={`Increase ${product.name} quantity`}
+              disabled={unavailable || cartBusy || !canIncrement}
+              className={cn(actionClassName, 'border-0 bg-transparent shadow-none', 'hover:bg-background/70')}
+              onClick={handleAdd}>
+              {pendingAction === 'increment' ? (
+                <LoaderCircle className={cn(iconSizeClassName, 'animate-spin')} />
+              ) : (
+                <Plus className={iconSizeClassName} />
               )}
-            />
-          ) : (
-            <Heart
-              className={cn(
-                iconSizeClassName,
-                'transition-[color,fill,transform] duration-200',
-                saved
-                  ? 'scale-110 fill-rose-500 text-rose-500'
-                  : 'fill-transparent text-current'
-              )}
-            />
-          )}
-        </button>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            title={unavailable ? 'Product is unavailable' : 'Add to cart'}
+            aria-label={unavailable ? `${product.name} is unavailable` : `Add ${product.name} to cart`}
+            disabled={unavailable || cartBusy || !canIncrement}
+            className={actionClassName}
+            onClick={handleAdd}>
+            {pendingAction === 'increment' ? (
+              <LoaderCircle className={cn(iconSizeClassName, 'animate-spin')} />
+            ) : (
+              <ShoppingBag className={iconSizeClassName} />
+            )}
+          </button>
+        )}
+
+        {/* ============================================
+            PRIMARY WISHLIST ACTION
+        ============================================ */}
+
+        {showWishlist ? (
+          <button
+            type="button"
+            title={saved ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+            aria-pressed={saved}
+            disabled={wishlistMutating}
+            className={cn(
+              actionClassName,
+              'transition-colors duration-200',
+
+              saved
+                ? [
+                    'border-rose-500/50',
+                    'bg-rose-500/15',
+                    'text-rose-500',
+                    'hover:bg-rose-500/20',
+                    'dark:bg-rose-500/20',
+                    'dark:hover:bg-rose-500/25'
+                  ]
+                : 'text-foreground'
+            )}
+            onClick={handleWishlist}>
+            {wishlistMutating ? (
+              <LoaderCircle className={cn(iconSizeClassName, 'animate-spin')} />
+            ) : (
+              <Heart
+                className={cn(
+                  iconSizeClassName,
+                  'transition-[color,fill,transform] duration-200',
+
+                  saved
+                    ? ['scale-110', 'fill-rose-500', 'text-rose-500']
+                    : ['fill-transparent', 'text-current']
+                )}
+              />
+            )}
+          </button>
+        ) : null}
+
+        {/* ============================================
+            MORE OPTIONS
+        ============================================ */}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            type="button"
+            title="More product options"
+            aria-label={`More options for ${product.name}`}
+            className={actionClassName}
+            onClick={event => {
+              event.stopPropagation();
+            }}>
+            <MoreHorizontal className={iconSizeClassName} />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="end"
+            sideOffset={8}
+            className="
+              z-50 w-56
+              rounded-2xl
+              border-border/70
+              p-1.5
+              shadow-xl
+            "
+            onClick={event => {
+              event.stopPropagation();
+            }}>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel
+                className="
+                  px-2.5 py-2
+                  text-[0.65rem]
+                  font-bold uppercase
+                  tracking-[0.14em]
+                  text-muted-foreground
+                ">
+                Product options
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                disabled={!shoppingLists || !activeCommerceVariant}
+                className="
+                  cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                "
+                onClick={handleOpenShoppingList}>
+                <ListPlus className="size-4" />
+
+                <span>Add to Shopping List</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                disabled={!onAskAI}
+                className="
+                  cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                "
+                onClick={handleAskAI}>
+                <Sparkles className="size-4 text-primary" />
+
+                <span>Ask AI</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                disabled={unavailable || cartBusy || !canIncrement}
+                className="
+                  cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                "
+                onClick={handleAdd}>
+                <ShoppingBag className="size-4" />
+
+                <span>{variantQuantity > 0 ? 'Add another to Cart' : 'Add to Cart'}</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                disabled={wishlistMutating}
+                className="
+                  cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                "
+                onClick={handleWishlist}>
+                <Heart
+                  className={cn(
+                    'size-4',
+
+                    saved && 'fill-rose-500 text-rose-500'
+                  )}
+                />
+
+                <span>{saved ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {shoppingLists ? (
+        <AddToShoppingListDialog
+          open={shoppingListOpen}
+          product={product}
+          variant={activeCommerceVariant}
+          onClose={() => {
+            setShoppingListOpen(false);
+          }}
+        />
       ) : null}
-    </div>
+    </>
   );
 }

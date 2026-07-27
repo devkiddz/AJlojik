@@ -14,7 +14,10 @@ type CollectionProductRailProps = {
   title: string;
   subtitle?: string;
   showHeader?: boolean;
+
   products: ProductType[];
+
+  featuredProductId?: string;
 
   onPreview?: (product: ProductType) => void;
 
@@ -23,25 +26,24 @@ type CollectionProductRailProps = {
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
 
-/**
- * Mobile displays 2 complete cards plus a peek (~25%) of a third card.
- */
 const MOBILE_CARDS_PER_VIEW = 2.25;
+const TABLET_CARDS_PER_VIEW = 3.25;
+const LAPTOP_CARDS_PER_VIEW = 4.25;
+const DESKTOP_CARDS_PER_VIEW = 5.25;
 
-/**
- * Tablet and desktop rails display at least three complete cards.
- */
-const MINIMUM_CARDS_PER_VIEW = 3;
+const TABLET_BREAKPOINT = 640;
+const LAPTOP_BREAKPOINT = 900;
+const DESKTOP_BREAKPOINT = 1280;
 
-const MOBILE_RAIL_BREAKPOINT = 640;
-const PREFERRED_CARD_WIDTH = 160;
-const CARD_GAP = 8;
+const PREFERRED_CARD_WIDTH = 184;
+const CARD_GAP = 12;
 
 export default function CollectionProductRail({
   title,
   subtitle,
   showHeader = false,
   products,
+  featuredProductId,
   onPreview,
   onOpenExperience,
   onAddToCart
@@ -87,12 +89,15 @@ export default function CollectionProductRail({
       return;
     }
 
-    const calculatedCount = Math.floor((availableWidth + CARD_GAP) / (PREFERRED_CARD_WIDTH + CARD_GAP));
+    let nextCount = MOBILE_CARDS_PER_VIEW;
 
-    const nextCount =
-      availableWidth < MOBILE_RAIL_BREAKPOINT
-        ? MOBILE_CARDS_PER_VIEW
-        : Math.max(MINIMUM_CARDS_PER_VIEW, calculatedCount);
+    if (availableWidth >= DESKTOP_BREAKPOINT) {
+      nextCount = DESKTOP_CARDS_PER_VIEW;
+    } else if (availableWidth >= LAPTOP_BREAKPOINT) {
+      nextCount = LAPTOP_CARDS_PER_VIEW;
+    } else if (availableWidth >= TABLET_BREAKPOINT) {
+      nextCount = TABLET_CARDS_PER_VIEW;
+    }
 
     setCardsPerView(current => (current === nextCount ? current : nextCount));
   }, []);
@@ -130,7 +135,13 @@ export default function CollectionProductRail({
     return null;
   }
 
-  const visibleCardCount = Math.max(1, Math.min(cardsPerView, products.length));
+  /*
+   * Do not shrink cards merely because a collection contains
+   * fewer products than the normal visible count.
+   *
+   * This preserves the same card dimensions across collections.
+   */
+  const visibleCardCount = cardsPerView;
 
   const visibleGapCount = Math.max(Math.ceil(visibleCardCount) - 1, 0);
 
@@ -158,13 +169,15 @@ export default function CollectionProductRail({
     });
   };
 
+  const hasOverflow = products.length > Math.floor(cardsPerView);
+
   return (
     <div className="w-full min-w-0 max-w-full">
       {showHeader ? (
-        <header className="mb-3 min-w-0">
-          <h3 className="truncate text-sm font-semibold tracking-tight text-card-foreground">{title}</h3>
+        <header className="mb-4 min-w-0">
+          <h3 className="truncate text-lg font-bold tracking-tight text-card-foreground">{title}</h3>
 
-          {subtitle ? <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{subtitle}</p> : null}
+          {subtitle ? <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{subtitle}</p> : null}
         </header>
       ) : null}
 
@@ -172,7 +185,7 @@ export default function CollectionProductRail({
         className="
           relative isolate
           w-full min-w-0 max-w-full
-          overflow-hidden rounded-2xl
+          overflow-hidden
         "
         onPointerEnter={event => {
           if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
@@ -198,45 +211,52 @@ export default function CollectionProductRail({
           role="region"
           aria-label={`${title} products`}
           tabIndex={0}
-          data-cards-per-view={visibleCardCount}
+          data-cards-per-view={cardsPerView}
           className={cn(
             `
-                relative z-0
-                flex w-full min-w-0
-                max-w-full items-stretch
-                gap-2 overflow-x-auto
-                overflow-y-hidden
-                overscroll-x-contain
-                snap-x snap-mandatory
-                scroll-smooth
-                pb-1
-                scrollbar-none
-                focus-visible:outline-none
-              `,
-            products.length > visibleCardCount ? 'pr-6' : 'pr-0'
-          )}>
-          {products.map(product => (
-            <div
-              key={product.id}
-              data-collection-product
-              className="
-                min-w-0 shrink-0
-                snap-start
-              "
-              style={{
-                width: productSlideWidth,
+              relative z-0
+              flex w-full min-w-0
+              max-w-full items-stretch
+              gap-3
+              overflow-x-auto
+              overflow-y-hidden
+              overscroll-x-contain
+              snap-x snap-mandatory
+              scroll-smooth
+              pb-2
+              scrollbar-none
+              focus-visible:outline-none
+            `,
 
-                flexBasis: productSlideWidth
-              }}>
-              <ProductCard
-                product={product}
-                onPreview={onPreview}
-                onOpenExperience={onOpenExperience}
-                onAddToCart={onAddToCart}
-                className="h-full"
-              />
-            </div>
-          ))}
+            hasOverflow ? 'pr-6' : 'pr-0'
+          )}>
+          {products.map(product => {
+            const featured = product.id === featuredProductId;
+
+            return (
+              <div
+                key={product.id}
+                data-collection-product
+                data-featured-product={featured || undefined}
+                className="
+                  min-w-0 shrink-0
+                  snap-start
+                "
+                style={{
+                  width: productSlideWidth,
+                  flexBasis: productSlideWidth
+                }}>
+                <ProductCard
+                  product={product}
+                  presentation={featured ? 'featured' : 'standard'}
+                  onPreview={onPreview}
+                  onOpenExperience={onOpenExperience}
+                  onAddToCart={onAddToCart}
+                  className="h-full"
+                />
+              </div>
+            );
+          })}
         </div>
 
         <div

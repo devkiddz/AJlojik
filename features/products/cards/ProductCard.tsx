@@ -2,39 +2,30 @@
 
 import Image from 'next/image';
 
-import { useMemo } from 'react';
-
-import { ShoppingBag, Star } from 'lucide-react';
-
-import { useCart } from '@/features/cart';
-
 import { cn } from '@/lib/utils';
 
 import type { BaseProductCardProps } from './productCardTypes';
-
 import { openProductExperience } from './productCardPresentation';
-
+import { PremiumCardSurface } from './PremiumCardSurface';
+import { ProductActionTray } from './ProductActionTray';
 import { useProductVariant } from './useProductVariant';
 
-export function ProductCard({ product, className, onOpenExperience, onPreview }: BaseProductCardProps) {
+export function ProductCard({
+  product,
+  presentation = 'standard',
+  className,
+  onOpenExperience,
+  onPreview,
+  onAddToCart,
+  onAskAI
+}: BaseProductCardProps) {
   const { selectedVariant } = useProductVariant(product);
-
-  const { items: cartItems } = useCart();
-
-  const productCartQuantity = useMemo(
-    () =>
-      cartItems
-        .filter(item => String(item.productId) === String(product.id))
-        .reduce((total, item) => total + item.quantity, 0),
-    [cartItems, product.id]
-  );
 
   if (!selectedVariant) {
     return null;
   }
 
-  const formattedReviewCount =
-    product.reviews > 999 ? `${(product.reviews / 1000).toFixed(1)}k` : product.reviews.toLocaleString();
+  const featured = presentation === 'featured';
 
   const openExperience = (): void => {
     openProductExperience({
@@ -45,171 +36,57 @@ export function ProductCard({ product, className, onOpenExperience, onPreview }:
   };
 
   return (
-    <article
+    <PremiumCardSurface
+      glowSize={featured ? 280 : 200}
       className={cn(
-        'group relative h-full w-full min-w-0',
-        'min-h-48 overflow-hidden rounded-xl',
-        'shadow-sm transition duration-300 ease-out',
-        'hover:-translate-y-0.5',
-        'hover:shadow-md',
-        'focus-within:shadow-md',
-        'md:min-h-56',
-
+        `group flex w-full max-w-[200px] min-w-0 flex-col rounded-lg border border-border/20 bg-card/60 p-1 shadow-sm backdrop-blur-sm`,
+        featured && ['border-primary/25', 'bg-gradient-to-b', 'from-primary/10', 'via-card/85', 'to-card'],
         className
       )}>
       <button
         type="button"
         onClick={openExperience}
         aria-label={`Open ${product.name}`}
-        className="
-          relative block size-full
-          min-h-48 overflow-hidden
-          text-left
-          focus-visible:outline-none
-          focus-visible:ring-1
-          focus-visible:ring-inset
-        focus-visible:ring-white/70 
-          md:min-h-56
-        ">
-        {/* ==========================================
-            AMBIENT IMAGE BACKGROUND
-        ========================================== */}
-
+        className="relative block aspect-square w-full overflow-hidden rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70">
         <Image
           src={selectedVariant.image}
           alt=""
           fill
-          sizes="
-            (max-width: 640px) 45vw,
-            (max-width: 768px) 25vw,
-            176px
-          "
-          className="
-            scale-125 object-cover
-            opacity-50 blur-xl
-            saturate-125
-          "
+          sizes="(max-width: 640px) 42vw, (max-width: 900px) 28vw, (max-width: 1280px) 22vw, 17vw"
+          className="scale-125 object-cover opacity-35 blur-2xl saturate-150"
         />
-
-        {/* ==========================================
-            FULL PRODUCT IMAGE
-        ========================================== */}
 
         <Image
           src={selectedVariant.image}
           alt={product.name}
           fill
-          sizes="
-            (max-width: 640px) 45vw,
-            (max-width: 768px) 25vw,
-            176px
-          "
-          className="
-            z-10 object-cover
-            object-center
-            transition-transform
-            duration-500 ease-out
-            group-hover:scale-[1.025]
-          "
+          sizes="(max-width: 640px) 42vw, (max-width: 900px) 28vw, (max-width: 1280px) 22vw, 17vw"
+          className="relative z-10 object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
         />
 
-        {/* ==========================================
-            CART INDICATOR
-        ========================================== */}
-
-        {productCartQuantity > 0 ? (
-          <span
-            className="
-              absolute right-2 top-2 z-30
-              inline-flex max-w-[75%]
-              items-center gap-1
-              rounded-full
-              bg-black/55
-              px-2 py-1
-              text-[8px] font-semibold
-              text-white
-              shadow-md backdrop-blur-md
-              md:text-[9px]
-            ">
-            <ShoppingBag className="size-3 shrink-0" />
-
-            <span className="truncate">
-              {productCartQuantity > 99 ? '99+ added' : `${productCartQuantity} added`}
-            </span>
+        {featured ? (
+          <span className="absolute left-1.5 top-1.5 z-30 rounded-full border border-white/20 bg-black/45 px-1.5 py-0.5 text-[0.45rem] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-lg">
+            Featured
           </span>
         ) : null}
-
-        {/* ==========================================
-            BOTTOM TEXT SHADOW
-        ========================================== */}
-
-        <span
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute inset-x-0 bottom-0 z-20
-            h-30
-            bg-gradient-to-t
-            from-black/85
-            via-black/75
-            to-transparent
-          "
-        />
-
-        {/* ==========================================
-            PRODUCT INFORMATION OVERLAY
-        ========================================== */}
-
-        <span
-          className="
-            absolute inset-x-0 bottom-0 z-30
-            flex min-w-0 flex-col
-            px-2.5 pb-2.5
-            md:px-3 md:pb-3
-          ">
-          <span
-            className="
-              truncate
-              text-[8px] font-semibold
-              uppercase tracking-[0.14em]
-              text-white
-              md:text-[9px]
-            ">
-            {product.category.replaceAll('-', ' ')}
-          </span>
-
-          <span
-            className="
-              mt-0.5 line-clamp-1 md:line-clamp-2
-              text-[11px] font-semibold
-              leading-4 tracking-tight
-              text-white
-              md:text-xs
-              md:leading-4
-            ">
-            {product.name}
-          </span>
-
-          <span
-            className="
-              mt-1.5 flex min-w-0
-              items-center gap-1.5
-              text-[9px] text-white
-            ">
-            <span className="inline-flex shrink-0 items-center gap-1">
-              <Star className="size-3 fill-amber-400 text-amber-400" />
-
-              <strong className="font-semibold text-white/85">{product.rating.toFixed(1)}</strong>
-            </span>
-
-            <span className="size-0.5 shrink-0 rounded-full bg-white/35" />
-
-            <span className="truncate">
-              {formattedReviewCount} {product.reviews === 1 ? 'rating' : 'ratings'}
-            </span>
-          </span>
-        </span>
       </button>
-    </article>
+
+      <div className="min-w-0 px-0.5 pb-0.5 pt-3">
+        <button type="button" onClick={openExperience} className="block min-w-0 max-w-full text-left">
+          <h3 title={product.name} className="line-clamp-1 text-[0.78rem] leading-3.5 text-foreground">
+            {product.name}
+          </h3>
+        </button>
+        <ProductActionTray
+          product={product}
+          variant={selectedVariant}
+          onAddToCart={onAddToCart}
+          onAskAI={onAskAI}
+          presentation="inline"
+          compact
+          className="mt-2 border-0 bg-transparent p-0 shadow-none backdrop-blur-none"
+        />
+      </div>
+    </PremiumCardSurface>
   );
 }

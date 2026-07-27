@@ -9,6 +9,7 @@ import {
   DashboardActivityHubSheet,
   DashboardActivityHubTrigger
 } from '../components/hub';
+import { DashboardShoppingLists } from '../components/shopping-lists';
 
 import { ExperienceJourneyRail } from '../components/journey/ExperienceJourneyRail';
 
@@ -47,6 +48,8 @@ export default function CustomerDashboard() {
             cartQuantity={view.cartQuantity}
             cartSubtotal={view.cartSubtotal}
           />
+
+          <DashboardShoppingLists />
 
           <DashboardProductExperiences view={view} />
 

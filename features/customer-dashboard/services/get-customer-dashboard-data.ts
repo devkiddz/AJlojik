@@ -7,7 +7,8 @@ import type {
   CommerceDashboardData,
   CommerceHistoryEntry,
   CommerceOrder,
-  CommerceProduct
+  CommerceProduct,
+  CommerceShoppingList,
 } from '../contracts/customerDashboardTypes';
 
 type DashboardProductRecord = {
@@ -58,74 +59,21 @@ function uniqueStrings(values: Array<string | null | undefined>): string[] {
   return Array.from(
     new Set(
       values.filter(
-        (value): value is string =>
-          typeof value === 'string' && value.length > 0
+        (value): value is string => typeof value === 'string' && value.length > 0
       )
     )
   );
 }
 
-function extractShoppingListProductIds(
-  value: unknown
-): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const productIds =
-    value.flatMap(
-      (
-        item: unknown
-      ): string[] => {
-        if (
-          !item ||
-          typeof item !== 'object' ||
-          !('productIds' in item)
-        ) {
-          return [];
-        }
-
-        const rawProductIds =
-          item.productIds;
-
-        if (
-          !Array.isArray(
-            rawProductIds
-          )
-        ) {
-          return [];
-        }
-
-        return rawProductIds.filter(
-          (
-            productId: unknown
-          ): productId is string =>
-            typeof productId ===
-            'string'
-        );
-      }
-    );
-
-  return uniqueStrings(
-    productIds
-  );
-}
-
-function mapProduct(
-  product: DashboardProductRecord
-): CommerceProduct {
+function mapProduct(product: DashboardProductRecord): CommerceProduct {
   const activeVariants = product.variants
-    .filter(variant => variant.active)
-    .sort(
-      (first, second) =>
-        first.position - second.position
-    );
+    .filter((variant) => variant.active)
+    .sort((first, second) => first.position - second.position);
 
   const availableVariant =
-    activeVariants.find(variant => {
+    activeVariants.find((variant) => {
       const available =
-        (variant.inventory?.quantity ?? 0) -
-        (variant.inventory?.reserved ?? 0);
+        (variant.inventory?.quantity ?? 0) - (variant.inventory?.reserved ?? 0);
 
       return available > 0;
     }) ??
@@ -141,9 +89,7 @@ function mapProduct(
     : 0;
 
   const primaryImage =
-    product.images.find(image => image.primary) ??
-    product.images[0] ??
-    null;
+    product.images.find((image) => image.primary) ?? product.images[0] ?? null;
 
   return {
     id: product.id,
@@ -153,14 +99,9 @@ function mapProduct(
     categorySlug: product.category.slug,
     brandSlug: product.brand?.slug ?? null,
 
-    image:
-      availableVariant?.image ??
-      primaryImage?.url ??
-      null,
+    image: availableVariant?.image ?? primaryImage?.url ?? null,
 
-    price: availableVariant
-      ? Number(availableVariant.price)
-      : 0,
+    price: availableVariant ? Number(availableVariant.price) : 0,
 
     compareAtPrice:
       availableVariant?.compareAtPrice == null
@@ -174,16 +115,14 @@ function mapProduct(
     soldCount: product.soldCount,
 
     featured: product.featured,
-    isNew: product.isNew
+    isNew: product.isNew,
   };
 }
 
 function createProductMap(
   products: CommerceProduct[]
 ): Map<string, CommerceProduct> {
-  return new Map(
-    products.map(product => [product.id, product])
-  );
+  return new Map(products.map((product) => [product.id, product]));
 }
 
 export async function getCustomerDashboardData(
@@ -195,6 +134,7 @@ export async function getCustomerDashboardData(
     orders,
     cart,
     wishlist,
+    shoppingLists,
     scopedProductViews,
     recentViews,
     reviews,
@@ -202,11 +142,11 @@ export async function getCustomerDashboardData(
     deliveredOrderProducts,
     paidOrderAggregate,
     activeOrderCount,
-    deliveredOrderCount
+    deliveredOrderCount,
   ] = await Promise.all([
     prisma.user.findUnique({
       where: {
-        id: userId
+        id: userId,
       },
       select: {
         id: true,
@@ -231,20 +171,18 @@ export async function getCustomerDashboardData(
             recommendationScore: true,
             engagementScore: true,
             commerceScore: true,
-
-            shoppingLists: true
-          }
-        }
-      }
+          },
+        },
+      },
     }),
 
     prisma.order.findMany({
       where: {
         userId,
-        workspaceId: workspace.id
+        workspaceId: workspace.id,
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: 12,
       select: {
@@ -263,7 +201,7 @@ export async function getCustomerDashboardData(
 
         items: {
           orderBy: {
-            createdAt: 'asc'
+            createdAt: 'asc',
           },
           select: {
             id: true,
@@ -279,21 +217,21 @@ export async function getCustomerDashboardData(
 
             product: {
               select: {
-                slug: true
-              }
-            }
-          }
+                slug: true,
+              },
+            },
+          },
         },
 
         payments: {
           orderBy: {
-            createdAt: 'desc'
+            createdAt: 'desc',
           },
           take: 1,
           select: {
             reference: true,
-            paidAt: true
-          }
+            paidAt: true,
+          },
         },
 
         delivery: {
@@ -310,31 +248,31 @@ export async function getCustomerDashboardData(
 
             events: {
               orderBy: {
-                createdAt: 'desc'
+                createdAt: 'desc',
               },
               take: 5,
               select: {
                 status: true,
                 note: true,
-                createdAt: true
-              }
-            }
-          }
-        }
-      }
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
     }),
 
     prisma.cart.findUnique({
       where: {
         workspaceId_userId: {
           workspaceId: workspace.id,
-          userId
-        }
+          userId,
+        },
       },
       select: {
         items: {
           orderBy: {
-            createdAt: 'desc'
+            createdAt: 'desc',
           },
           select: {
             id: true,
@@ -345,37 +283,98 @@ export async function getCustomerDashboardData(
             variant: {
               select: {
                 label: true,
-                price: true
-              }
+                price: true,
+              },
             },
 
             product: {
               select: {
-                id: true
-              }
-            }
-          }
-        }
-      }
+                id: true,
+              },
+            },
+          },
+        },
+      },
     }),
 
     prisma.wishlist.findUnique({
       where: {
         workspaceId_userId: {
           workspaceId: workspace.id,
-          userId
-        }
+          userId,
+        },
       },
       select: {
         items: {
           orderBy: {
-            createdAt: 'desc'
+            createdAt: 'desc',
           },
           select: {
-            productId: true
-          }
-        }
-      }
+            productId: true,
+          },
+        },
+      },
+    }),
+
+    prisma.shoppingList.findMany({
+      where: {
+        userId,
+        workspaceId: workspace.id,
+        status: 'ACTIVE',
+      },
+
+      orderBy: [
+        {
+          position: 'asc',
+        },
+        {
+          updatedAt: 'desc',
+        },
+      ],
+
+      select: {
+        id: true,
+
+        name: true,
+        description: true,
+
+        visibility: true,
+        status: true,
+
+        position: true,
+
+        createdAt: true,
+        updatedAt: true,
+
+        items: {
+          orderBy: {
+            position: 'asc',
+          },
+
+          select: {
+            id: true,
+
+            productId: true,
+
+            variantId: true,
+
+            quantity: true,
+            position: true,
+
+            note: true,
+
+            addedAt: true,
+            updatedAt: true,
+
+            variant: {
+              select: {
+                id: true,
+                label: true,
+              },
+            },
+          },
+        },
+      },
     }),
 
     prisma.experienceEvent.findMany({
@@ -384,41 +383,41 @@ export async function getCustomerDashboardData(
         userId,
         type: 'PRODUCT_VIEW',
         productId: {
-          not: null
-        }
+          not: null,
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       take: 16,
       select: {
-        productId: true
-      }
+        productId: true,
+      },
     }),
 
     prisma.recentlyViewed.findMany({
       where: {
-        userId
+        userId,
       },
       orderBy: {
-        viewedAt: 'desc'
+        viewedAt: 'desc',
       },
       take: 16,
       select: {
-        productId: true
-      }
+        productId: true,
+      },
     }),
 
     prisma.review.findMany({
       where: {
-        userId
+        userId,
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       select: {
-        productId: true
-      }
+        productId: true,
+      },
     }),
 
     prisma.experienceHistoryEntry.findMany({
@@ -427,17 +426,17 @@ export async function getCustomerDashboardData(
         userId,
         OR: [
           {
-            expiresAt: null
+            expiresAt: null,
           },
           {
             expiresAt: {
-              gt: new Date()
-            }
-          }
-        ]
+              gt: new Date(),
+            },
+          },
+        ],
       },
       orderBy: {
-        visitedAt: 'desc'
+        visitedAt: 'desc',
       },
       take: 10,
       select: {
@@ -453,8 +452,8 @@ export async function getCustomerDashboardData(
         collectionId: true,
         campaignId: true,
 
-        visitedAt: true
-      }
+        visitedAt: true,
+      },
     }),
 
     prisma.orderItem.findMany({
@@ -462,16 +461,16 @@ export async function getCustomerDashboardData(
         order: {
           userId,
           workspaceId: workspace.id,
-          status: 'DELIVERED'
-        }
+          status: 'DELIVERED',
+        },
       },
       distinct: ['productId'],
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       select: {
-        productId: true
-      }
+        productId: true,
+      },
     }),
 
     prisma.order.aggregate({
@@ -480,15 +479,15 @@ export async function getCustomerDashboardData(
         workspaceId: workspace.id,
         paymentStatus: 'PAID',
         status: {
-          notIn: ['CANCELLED', 'REFUNDED']
-        }
+          notIn: ['CANCELLED', 'REFUNDED'],
+        },
       },
       _count: {
-        _all: true
+        _all: true,
       },
       _sum: {
-        total: true
-      }
+        total: true,
+      },
     }),
 
     prisma.order.count({
@@ -501,422 +500,435 @@ export async function getCustomerDashboardData(
             'CONFIRMED',
             'PROCESSING',
             'READY',
-            'DISPATCHED'
-          ]
-        }
-      }
+            'DISPATCHED',
+          ],
+        },
+      },
     }),
 
     prisma.order.count({
       where: {
         userId,
         workspaceId: workspace.id,
-        status: 'DELIVERED'
-      }
-    })
+        status: 'DELIVERED',
+      },
+    }),
   ]);
 
   if (!customer) {
-    throw new Error(
-      'The authenticated customer could not be loaded.'
-    );
+    throw new Error('The authenticated customer could not be loaded.');
   }
 
   const profile = customer.experienceProfile;
 
-  const shoppingListProductIds =
-    extractShoppingListProductIds(
-      profile?.shoppingLists
-    );
+  const shoppingListProductIds = uniqueStrings(
+    shoppingLists.flatMap((list) => list.items.map((item) => item.productId))
+  );
 
   const cartItemsRaw = cart?.items ?? [];
   const wishlistProductIds =
-    wishlist?.items.map(item => item.productId) ??
-    [];
+    wishlist?.items.map((item) => item.productId) ?? [];
 
   const scopedRecentProductIds = uniqueStrings(
-    scopedProductViews.map(item => item.productId)
+    scopedProductViews.map((item) => item.productId)
   );
 
   const fallbackRecentProductIds = uniqueStrings([
-    ...recentViews.map(item => item.productId),
-    ...(profile?.recentlyViewedProductIds ?? [])
+    ...recentViews.map((item) => item.productId),
+    ...(profile?.recentlyViewedProductIds ?? []),
   ]);
 
   const recentProductIds = uniqueStrings([
     ...scopedRecentProductIds,
-    ...fallbackRecentProductIds
+    ...fallbackRecentProductIds,
   ]).slice(0, 12);
 
-  const reviewedProductIds = new Set(
-    reviews.map(review => review.productId)
-  );
+  const reviewedProductIds = new Set(reviews.map((review) => review.productId));
 
-  const pendingReviewProductIds =
-    deliveredOrderProducts
-      .map(item => item.productId)
-      .filter(
-        productId =>
-          !reviewedProductIds.has(productId)
-      );
+  const pendingReviewProductIds = deliveredOrderProducts
+    .map((item) => item.productId)
+    .filter((productId) => !reviewedProductIds.has(productId));
 
   const requiredProductIds = uniqueStrings([
-    ...cartItemsRaw.map(
-      item => item.product.id
-    ),
+    ...cartItemsRaw.map((item) => item.product.id),
     ...wishlistProductIds,
     ...recentProductIds,
     ...shoppingListProductIds,
-    ...pendingReviewProductIds
+    ...pendingReviewProductIds,
   ]);
 
-  const [requiredProductRecords, catalogRecords] =
-    await Promise.all([
-      requiredProductIds.length
-        ? prisma.product.findMany({
-            where: {
-              id: {
-                in: requiredProductIds
-              },
-              active: true
+  const [requiredProductRecords, catalogRecords] = await Promise.all([
+    requiredProductIds.length
+      ? prisma.product.findMany({
+          where: {
+            id: {
+              in: requiredProductIds,
             },
-            select: {
-              id: true,
-              slug: true,
-              name: true,
+            active: true,
+          },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
 
-              rating: true,
-              soldCount: true,
+            rating: true,
+            soldCount: true,
 
-              featured: true,
-              isNew: true,
+            featured: true,
+            isNew: true,
 
-              category: {
-                select: {
-                  slug: true
-                }
+            category: {
+              select: {
+                slug: true,
               },
+            },
 
-              brand: {
-                select: {
-                  slug: true
-                }
+            brand: {
+              select: {
+                slug: true,
               },
+            },
 
-              images: {
-                orderBy: [
-                  {
-                    primary: 'desc'
+            images: {
+              orderBy: [
+                {
+                  primary: 'desc',
+                },
+                {
+                  position: 'asc',
+                },
+              ],
+              select: {
+                url: true,
+                primary: true,
+                position: true,
+              },
+            },
+
+            variants: {
+              where: {
+                active: true,
+              },
+              orderBy: {
+                position: 'asc',
+              },
+              select: {
+                id: true,
+                label: true,
+
+                image: true,
+
+                price: true,
+                compareAtPrice: true,
+
+                active: true,
+                position: true,
+
+                inventory: {
+                  select: {
+                    quantity: true,
+                    reserved: true,
                   },
-                  {
-                    position: 'asc'
-                  }
-                ],
-                select: {
-                  url: true,
-                  primary: true,
-                  position: true
-                }
+                },
               },
+            },
+          },
+        })
+      : Promise.resolve([]),
 
-              variants: {
-                where: {
-                  active: true
-                },
-                orderBy: {
-                  position: 'asc'
-                },
-                select: {
-                  id: true,
-                  label: true,
-
-                  image: true,
-
-                  price: true,
-                  compareAtPrice: true,
-
-                  active: true,
-                  position: true,
-
-                  inventory: {
-                    select: {
-                      quantity: true,
-                      reserved: true
-                    }
-                  }
-                }
-              }
-            }
-          })
-        : Promise.resolve([]),
-
-      prisma.product.findMany({
-        where: {
-          active: true,
-          variants: {
-            some: {
-              active: true
-            }
-          }
+    prisma.product.findMany({
+      where: {
+        active: true,
+        variants: {
+          some: {
+            active: true,
+          },
         },
-        orderBy: [
-          {
-            featured: 'desc'
-          },
-          {
-            soldCount: 'desc'
-          },
-          {
-            rating: 'desc'
-          },
-          {
-            createdAt: 'desc'
-          }
-        ],
-        take: 48,
-        select: {
-          id: true,
-          slug: true,
-          name: true,
+      },
+      orderBy: [
+        {
+          featured: 'desc',
+        },
+        {
+          soldCount: 'desc',
+        },
+        {
+          rating: 'desc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
+      take: 48,
+      select: {
+        id: true,
+        slug: true,
+        name: true,
 
-          rating: true,
-          soldCount: true,
+        rating: true,
+        soldCount: true,
 
-          featured: true,
-          isNew: true,
+        featured: true,
+        isNew: true,
 
-          category: {
-            select: {
-              slug: true
-            }
+        category: {
+          select: {
+            slug: true,
           },
+        },
 
-          brand: {
-            select: {
-              slug: true
-            }
+        brand: {
+          select: {
+            slug: true,
           },
+        },
 
-          images: {
-            orderBy: [
-              {
-                primary: 'desc'
+        images: {
+          orderBy: [
+            {
+              primary: 'desc',
+            },
+            {
+              position: 'asc',
+            },
+          ],
+          select: {
+            url: true,
+            primary: true,
+            position: true,
+          },
+        },
+
+        variants: {
+          where: {
+            active: true,
+          },
+          orderBy: {
+            position: 'asc',
+          },
+          select: {
+            id: true,
+            label: true,
+
+            image: true,
+
+            price: true,
+            compareAtPrice: true,
+
+            active: true,
+            position: true,
+
+            inventory: {
+              select: {
+                quantity: true,
+                reserved: true,
               },
-              {
-                position: 'asc'
-              }
-            ],
-            select: {
-              url: true,
-              primary: true,
-              position: true
-            }
+            },
           },
-
-          variants: {
-            where: {
-              active: true
-            },
-            orderBy: {
-              position: 'asc'
-            },
-            select: {
-              id: true,
-              label: true,
-
-              image: true,
-
-              price: true,
-              compareAtPrice: true,
-
-              active: true,
-              position: true,
-
-              inventory: {
-                select: {
-                  quantity: true,
-                  reserved: true
-                }
-              }
-            }
-          }
-        }
-      })
-    ]);
+        },
+      },
+    }),
+  ]);
 
   const allProducts = Array.from(
     new Map(
-      [
-        ...requiredProductRecords,
-        ...catalogRecords
-      ].map(record => [record.id, mapProduct(record)])
+      [...requiredProductRecords, ...catalogRecords].map((record) => [
+        record.id,
+        mapProduct(record),
+      ])
     ).values()
   );
 
-  const productById =
-    createProductMap(allProducts);
+  const productById = createProductMap(allProducts);
 
-  const cartItems: CommerceCartItem[] =
-    cartItemsRaw.flatMap(item => {
-      const product =
-        productById.get(item.product.id);
+  const mappedShoppingLists: CommerceShoppingList[] = shoppingLists.map(
+    (list) => {
+      const items: CommerceShoppingList['items'] =
+  list.items.flatMap((item) => {
+    const product =
+      productById.get(item.productId);
 
-      if (!product) {
-        return [];
-      }
+    if (!product) {
+      return [];
+    }
 
-      const unitPrice = Number(
-        item.variant.price
-      );
-
-      return [
-        {
-          id: item.id,
-
-          product,
-
-          variantId: item.variantId,
-          variantLabel: item.variant.label,
-
-          quantity: item.quantity,
-          unitPrice,
-          lineTotal:
-            unitPrice * item.quantity
-        }
-      ];
-    });
-
-  const mapProductIds = (
-    productIds: string[]
-  ): CommerceProduct[] =>
-    productIds
-      .map(productId =>
-        productById.get(productId)
-      )
-      .filter(
-        (
-          product
-        ): product is CommerceProduct =>
-          Boolean(product)
-      );
-
-  const mappedOrders: CommerceOrder[] =
-    orders.map(order => ({
-      id: order.id,
-      orderNumber: order.orderNumber,
-
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-
-      subtotal: Number(order.subtotal),
-      discountAmount: Number(
-        order.discountAmount
-      ),
-      deliveryFee: Number(
-        order.deliveryFee
-      ),
-      total: Number(order.total),
-
-      createdAt:
-        order.createdAt.toISOString(),
-
-      items: order.items.map(item => ({
+    return [
+      {
         id: item.id,
+        product,
 
-        productId: item.productId,
-        productSlug: item.product.slug,
-
-        productName: item.productName,
-        variantLabel: item.variantLabel,
-
-        image: item.image,
+        variantId: item.variantId,
+        variantLabel:
+          item.variant?.label ?? null,
 
         quantity: item.quantity,
-        unitPrice: Number(item.unitPrice),
-        totalPrice: Number(
-          item.totalPrice
-        )
-      })),
+        position: item.position,
+        note: item.note,
 
-      paymentReference:
-        order.payments[0]?.reference ??
-        null,
+        addedAt:
+          item.addedAt.toISOString(),
 
-      paidAt:
-        order.payments[0]?.paidAt?.toISOString() ??
-        null,
+        updatedAt:
+          item.updatedAt.toISOString(),
+      },
+    ];
+  });
 
-      delivery: order.delivery
-        ? {
-            method: order.delivery.method,
-            status: order.delivery.status,
+      return {
+        id: list.id,
 
-            trackingCode:
-              order.delivery.trackingCode,
+        name: list.name,
 
-            trackingEnabled:
-              order.delivery.trackingEnabled,
+        description: list.description,
 
-            estimatedArrival:
-              order.delivery.estimatedArrival?.toISOString() ??
-              null,
+        visibility: list.visibility,
 
-            pickedUpAt:
-              order.delivery.pickedUpAt?.toISOString() ??
-              null,
+        status: list.status,
 
-            deliveredAt:
-              order.delivery.deliveredAt?.toISOString() ??
-              null,
+        position: list.position,
 
-            events:
-              order.delivery.events.map(
-                event => ({
-                  status: event.status,
-                  note: event.note,
-                  createdAt:
-                    event.createdAt.toISOString()
-                })
-              )
-          }
-        : null
-    }));
+        itemCount: items.length,
 
-  const mappedHistory:
-    CommerceHistoryEntry[] =
-    history.map(entry => ({
-      id: entry.id,
+        totalQuantity: items.reduce(
+          (total, item) => total + item.quantity,
+          0
+        ),
 
-      label: entry.label,
-      subtitle: entry.subtitle,
+        items,
 
-      categorySlug: entry.categorySlug,
+        createdAt: list.createdAt.toISOString(),
 
-      source: entry.source,
+        updatedAt: list.updatedAt.toISOString(),
+      };
+    }
+  );
 
-      productId: entry.productId,
-      collectionId: entry.collectionId,
-      campaignId: entry.campaignId,
+  const shoppingListProducts = Array.from(
+    new Map(
+      mappedShoppingLists
+        .flatMap((list) => list.items)
+        .map((item) => [item.product.id, item.product])
+    ).values()
+  );
 
-      visitedAt:
-        entry.visitedAt.toISOString()
-    }));
+  const cartItems: CommerceCartItem[] = cartItemsRaw.flatMap((item) => {
+    const product = productById.get(item.product.id);
+
+    if (!product) {
+      return [];
+    }
+
+    const unitPrice = Number(item.variant.price);
+
+    return [
+      {
+        id: item.id,
+
+        product,
+
+        variantId: item.variantId,
+        variantLabel: item.variant.label,
+
+        quantity: item.quantity,
+        unitPrice,
+        lineTotal: unitPrice * item.quantity,
+      },
+    ];
+  });
+
+  const mapProductIds = (productIds: string[]): CommerceProduct[] =>
+    productIds
+      .map((productId) => productById.get(productId))
+      .filter((product): product is CommerceProduct => Boolean(product));
+
+  const mappedOrders: CommerceOrder[] = orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+
+    subtotal: Number(order.subtotal),
+    discountAmount: Number(order.discountAmount),
+    deliveryFee: Number(order.deliveryFee),
+    total: Number(order.total),
+
+    createdAt: order.createdAt.toISOString(),
+
+    items: order.items.map((item) => ({
+      id: item.id,
+
+      productId: item.productId,
+      productSlug: item.product.slug,
+
+      productName: item.productName,
+      variantLabel: item.variantLabel,
+
+      image: item.image,
+
+      quantity: item.quantity,
+      unitPrice: Number(item.unitPrice),
+      totalPrice: Number(item.totalPrice),
+    })),
+
+    paymentReference: order.payments[0]?.reference ?? null,
+
+    paidAt: order.payments[0]?.paidAt?.toISOString() ?? null,
+
+    delivery: order.delivery
+      ? {
+          method: order.delivery.method,
+          status: order.delivery.status,
+
+          trackingCode: order.delivery.trackingCode,
+
+          trackingEnabled: order.delivery.trackingEnabled,
+
+          estimatedArrival:
+            order.delivery.estimatedArrival?.toISOString() ?? null,
+
+          pickedUpAt: order.delivery.pickedUpAt?.toISOString() ?? null,
+
+          deliveredAt: order.delivery.deliveredAt?.toISOString() ?? null,
+
+          events: order.delivery.events.map((event) => ({
+            status: event.status,
+            note: event.note,
+            createdAt: event.createdAt.toISOString(),
+          })),
+        }
+      : null,
+  }));
+
+  const mappedHistory: CommerceHistoryEntry[] = history.map((entry) => ({
+    id: entry.id,
+
+    label: entry.label,
+    subtitle: entry.subtitle,
+
+    categorySlug: entry.categorySlug,
+
+    source: entry.source,
+
+    productId: entry.productId,
+    collectionId: entry.collectionId,
+    campaignId: entry.campaignId,
+
+    visitedAt: entry.visitedAt.toISOString(),
+  }));
 
   const cartQuantity = cartItems.reduce(
-    (total, item) =>
-      total + item.quantity,
+    (total, item) => total + item.quantity,
     0
   );
 
   const cartSubtotal = cartItems.reduce(
-    (total, item) =>
-      total + item.lineTotal,
+    (total, item) => total + item.lineTotal,
     0
   );
 
   const firstName =
-    customer.name.trim().split(/\s+/)[0] ||
-    customer.name;
+    customer.name.trim().split(/\s+/)[0] || customer.name;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -931,11 +943,9 @@ export async function getCustomerDashboardData(
       image: customer.image,
 
       tier: customer.tier ?? 'member',
-      emailVerified:
-        customer.emailVerified,
+      emailVerified: customer.emailVerified,
 
-      memberSince:
-        customer.createdAt.toISOString()
+      memberSince: customer.createdAt.toISOString(),
     },
 
     workspace: {
@@ -946,89 +956,66 @@ export async function getCustomerDashboardData(
       mode: workspace.mode,
       role: workspace.membership.role,
 
-      wallet: workspace.wallet
+      wallet: workspace.wallet,
     },
 
     profile: {
-      persona:
-        profile?.persona ?? 'new-member',
+      persona: profile?.persona ?? 'new-member',
 
-      personalizationEnabled:
-        profile?.personalizationEnabled ??
-        true,
+      personalizationEnabled: profile?.personalizationEnabled ?? true,
 
-      onboardingCompleted:
-        profile?.onboardingCompleted ??
-        false,
+      onboardingCompleted: profile?.onboardingCompleted ?? false,
 
-      preferredCategorySlugs:
-        profile?.preferredCategorySlugs ??
-        [],
+      preferredCategorySlugs: profile?.preferredCategorySlugs ?? [],
 
-      preferredBrandSlugs:
-        profile?.preferredBrandSlugs ??
-        [],
+      preferredBrandSlugs: profile?.preferredBrandSlugs ?? [],
 
-      recommendationScore:
-        profile?.recommendationScore ?? 0,
+      recommendationScore: profile?.recommendationScore ?? 0,
 
-      engagementScore:
-        profile?.engagementScore ?? 0,
+      engagementScore: profile?.engagementScore ?? 0,
 
-      commerceScore:
-        profile?.commerceScore ?? 0,
-
-      shoppingListProductIds
+      commerceScore: profile?.commerceScore ?? 0,
     },
 
     pulse: {
-      paidOrderCount:
-        paidOrderAggregate._count._all,
+      paidOrderCount: paidOrderAggregate._count._all,
 
       activeOrderCount,
       deliveredOrderCount,
 
-      totalSpent: Number(
-        paidOrderAggregate._sum.total ?? 0
-      ),
+      totalSpent: Number(paidOrderAggregate._sum.total ?? 0),
 
       cartQuantity,
       cartSubtotal,
 
-      wishlistCount:
-        wishlistProductIds.length,
+      wishlistCount: wishlistProductIds.length,
+      shoppingListCount: mappedShoppingLists.length,
+
+      shoppingListItemCount: mappedShoppingLists.reduce(
+        (total, list) => total + list.itemCount,
+        0
+      ),
 
       reviewCount: reviews.length,
 
-      pendingReviewCount:
-        pendingReviewProductIds.length
+      pendingReviewCount: pendingReviewProductIds.length,
     },
 
     cartItems,
 
-    wishlistProducts:
-      mapProductIds(
-        wishlistProductIds
-      ),
+    shoppingLists: mappedShoppingLists,
 
-    recentProducts:
-      mapProductIds(
-        recentProductIds
-      ),
+    wishlistProducts: mapProductIds(wishlistProductIds),
 
-    shoppingListProducts:
-      mapProductIds(
-        shoppingListProductIds
-      ),
+    recentProducts: mapProductIds(recentProductIds),
 
-    pendingReviewProducts:
-      mapProductIds(
-        pendingReviewProductIds
-      ),
+    shoppingListProducts,
+
+    pendingReviewProducts: mapProductIds(pendingReviewProductIds),
 
     orders: mappedOrders,
     history: mappedHistory,
 
-    catalog: allProducts
+    catalog: allProducts,
   };
 }

@@ -1,11 +1,13 @@
 import type {
   CommerceDashboardData,
   CommerceOrder,
-  CommerceProduct
+  CommerceProduct,
+  CommerceShoppingList
 } from '../contracts/customerDashboardTypes';
 
 type DashboardSource = {
   data: CommerceDashboardData;
+
   mixes: Array<{
     id: string;
     title: string;
@@ -15,36 +17,84 @@ type DashboardSource = {
 };
 
 export type CustomerDashboardView = {
-  identity: CommerceDashboardData['identity'];
+  identity:
+    CommerceDashboardData['identity'];
+
   membership: string;
 
-  recentProducts: CommerceProduct[];
-  wishlistProducts: CommerceProduct[];
+  recentProducts:
+    CommerceProduct[];
 
-  history: CommerceDashboardData['history'];
-  orders: CommerceOrder[];
-  activeDeliveries: CommerceOrder[];
+  wishlistProducts:
+    CommerceProduct[];
 
-  cartItems: CommerceDashboardData['cartItems'];
+  shoppingLists:
+    CommerceShoppingList[];
+
+  primaryShoppingList:
+    CommerceShoppingList | null;
+
+  shoppingListProducts:
+    CommerceProduct[];
+
+  shoppingListsHref: string;
+
+  history:
+    CommerceDashboardData['history'];
+
+  orders:
+    CommerceOrder[];
+
+  activeDeliveries:
+    CommerceOrder[];
+
+  cartItems:
+    CommerceDashboardData['cartItems'];
+
   cartQuantity: number;
   cartSubtotal: number;
 
-  suggestedProducts: CommerceProduct[];
+  suggestedProducts:
+    CommerceProduct[];
+
   suggestedHref: string;
 
-  pickedProducts: CommerceProduct[];
+  pickedProducts:
+    CommerceProduct[];
+
   pickedHref: string;
 };
 
-const ACTIVE_DELIVERY_STATUSES = new Set([
-  'PENDING',
-  'CONFIRMED',
-  'PROCESSING',
-  'PACKED',
-  'SHIPPED',
-  'IN_TRANSIT',
-  'OUT_FOR_DELIVERY'
-]);
+const ACTIVE_DELIVERY_STATUSES =
+  new Set([
+    'PENDING',
+    'ASSIGNED',
+    'BARCODE_SCANNED',
+    'PICKED_UP',
+    'IN_TRANSIT',
+    'ARRIVED'
+  ]);
+
+function uniqueProducts(
+  products: CommerceProduct[]
+): CommerceProduct[] {
+  return Array.from(
+    new Map(
+      products.map(product => [
+        product.id,
+        product
+      ])
+    ).values()
+  );
+}
+
+function isShoppingListMix(
+  mix: DashboardSource['mixes'][number]
+): boolean {
+  return /shopping-list|shopping list|your plans/i.test(
+    `${mix.id} ${mix.title}`
+  );
+}
 
 export function resolveCustomerDashboardView(
   dashboard: DashboardSource
@@ -59,6 +109,26 @@ export function resolveCustomerDashboardView(
 
   const wishlistProducts =
     data.wishlistProducts ?? [];
+
+  const shoppingLists =
+    data.shoppingLists ?? [];
+
+  const primaryShoppingList =
+    shoppingLists[0] ?? null;
+
+  const shoppingListProducts =
+    uniqueProducts(
+      primaryShoppingList
+        ? primaryShoppingList.items.map(
+            item => item.product
+          )
+        : data.shoppingListProducts ?? []
+    );
+
+  const shoppingListsHref =
+    primaryShoppingList
+      ? `/dashboard/lists/${primaryShoppingList.id}`
+      : '/account/lists';
 
   const cartItems =
     data.cartItems ?? [];
@@ -104,26 +174,55 @@ export function resolveCustomerDashboardView(
       )
     );
 
-  const suggestedMix =
-    mixes.find(mix =>
-      /suggest|similar|recommend/i.test(
-        `${mix.id} ${mix.title}`
+  const shoppingListIds =
+    new Set(
+      shoppingListProducts.map(
+        product => product.id
       )
+    );
+
+  const recommendationMixes =
+    mixes.filter(
+      mix =>
+        !isShoppingListMix(mix)
+    );
+
+  const suggestedMix =
+    recommendationMixes.find(
+      mix =>
+        /suggest|similar|recommend|inspired/i.test(
+          `${mix.id} ${mix.title}`
+        )
     ) ??
-    mixes[0];
+    recommendationMixes[0];
 
   const suggestedProducts =
     uniqueProducts([
-      ...(suggestedMix?.products ?? []),
+      ...(suggestedMix?.products ??
+        []),
+
       ...catalog
     ])
       .filter(
         product =>
-          !recentIds.has(product.id) &&
-          !cartIds.has(product.id) &&
-          !wishlistIds.has(product.id)
+          product.available &&
+          !recentIds.has(
+            product.id
+          ) &&
+          !cartIds.has(
+            product.id
+          ) &&
+          !wishlistIds.has(
+            product.id
+          ) &&
+          !shoppingListIds.has(
+            product.id
+          )
       )
-      .slice(0, 8);
+      .slice(
+        0,
+        8
+      );
 
   const suggestedIds =
     new Set(
@@ -133,34 +232,54 @@ export function resolveCustomerDashboardView(
     );
 
   const pickedMix =
-    mixes.find(
+    recommendationMixes.find(
       mix =>
-        mix.id !== suggestedMix?.id &&
-        /picked|personal|for you/i.test(
+        mix.id !==
+          suggestedMix?.id &&
+        /picked|personal|for you|made-for-you/i.test(
           `${mix.id} ${mix.title}`
         )
     ) ??
-    mixes.find(
+    recommendationMixes.find(
       mix =>
-        mix.id !== suggestedMix?.id
+        mix.id !==
+        suggestedMix?.id
     );
 
   const pickedProducts =
     uniqueProducts([
+      ...(pickedMix?.products ??
+        []),
+
       ...wishlistProducts,
-      ...(pickedMix?.products ?? []),
+
       ...catalog
     ])
       .filter(
         product =>
-          !recentIds.has(product.id) &&
-          !cartIds.has(product.id) &&
-          !suggestedIds.has(product.id)
+          product.available &&
+          !recentIds.has(
+            product.id
+          ) &&
+          !cartIds.has(
+            product.id
+          ) &&
+          !shoppingListIds.has(
+            product.id
+          ) &&
+          !suggestedIds.has(
+            product.id
+          )
       )
-      .slice(0, 8);
+      .slice(
+        0,
+        8
+      );
 
   return {
-    identity: data.identity,
+    identity:
+      data.identity,
+
     membership:
       data.identity.tier ||
       'Member',
@@ -168,49 +287,33 @@ export function resolveCustomerDashboardView(
     recentProducts,
     wishlistProducts,
 
+    shoppingLists,
+    primaryShoppingList,
+    shoppingListProducts,
+    shoppingListsHref,
+
     history,
     orders,
     activeDeliveries,
 
     cartItems,
+
     cartQuantity:
       data.pulse.cartQuantity,
+
     cartSubtotal:
       data.pulse.cartSubtotal,
 
     suggestedProducts,
+
     suggestedHref:
       suggestedMix?.href ??
       '/store',
 
     pickedProducts,
+
     pickedHref:
       pickedMix?.href ??
       '/store'
   };
-}
-
-function uniqueProducts(
-  products: CommerceProduct[]
-): CommerceProduct[] {
-  const resolved =
-    new Map<
-      string,
-      CommerceProduct
-    >();
-
-  products.forEach(product => {
-    if (
-      !resolved.has(product.id)
-    ) {
-      resolved.set(
-        product.id,
-        product
-      );
-    }
-  });
-
-  return Array.from(
-    resolved.values()
-  );
 }

@@ -1,59 +1,323 @@
-import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
+import {
+  NextResponse
+} from 'next/server';
 
-import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import {
+  headers
+} from 'next/headers';
 
-type ShoppingListInput = { id: string; name: string; productIds: string[] };
+import {
+  auth
+} from '@/lib/auth';
 
-function normalizeLists(value: unknown): ShoppingListInput[] {
-  if (!Array.isArray(value)) return [];
-  return value.slice(0, 12).flatMap(item => {
-    if (!item || typeof item !== 'object') return [];
-    const candidate = item as Record<string, unknown>;
-    const name = typeof candidate.name === 'string' ? candidate.name.trim().slice(0, 48) : '';
-    if (!name) return [];
-    const productIds = Array.isArray(candidate.productIds)
-      ? [...new Set(candidate.productIds.filter((id): id is string => typeof id === 'string'))].slice(0, 60)
-      : [];
-    return [{ id: typeof candidate.id === 'string' ? candidate.id : crypto.randomUUID(), name, productIds }];
-  });
+import {
+  prisma
+} from '@/lib/prisma';
+
+type ExperienceSettingsPayload = {
+  experienceDensity?: string;
+  recommendationMode?: string;
+
+  preferredCategorySlugs?: unknown;
+
+  autoplayPreviews?: boolean;
+  discoveryEnabled?: boolean;
+  shoppingNotifications?: boolean;
+  personalizationEnabled?: boolean;
+};
+
+function normalizeStringArray(
+  value: unknown
+): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter(
+          (
+            item
+          ): item is string =>
+            typeof item ===
+              'string' &&
+            item.trim().length >
+              0
+        )
+        .map(item =>
+          item.trim()
+        )
+    )
+  );
 }
 
-async function sessionUser() {
-  return auth.api.getSession({ headers: await headers() });
+function normalizeOptionalString(
+  value: unknown,
+  fallback: string
+): string {
+  return typeof value ===
+      'string' &&
+    value.trim().length > 0
+    ? value.trim()
+    : fallback;
+}
+
+async function requireUser() {
+  const session =
+    await auth.api.getSession({
+      headers:
+        await headers()
+    });
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  return session;
 }
 
 export async function GET() {
-  const session = await sessionUser();
-  if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
-  const profile = await prisma.experienceProfile.upsert({
-    where: { userId: session.user.id },
-    update: {},
-    create: { userId: session.user.id },
-    select: { shoppingLists: true, experienceDensity: true, autoplayPreviews: true, discoveryEnabled: true, recommendationMode: true, shoppingNotifications: true, personalizationEnabled: true, preferredCategorySlugs: true }
-  });
-  return NextResponse.json({ user: { name: session.user.name, email: session.user.email, image: session.user.image ?? '' }, profile: { ...profile, shoppingLists: normalizeLists(profile.shoppingLists) } });
+  try {
+    const session =
+      await requireUser();
+
+    if (!session) {
+      return NextResponse.json(
+        {
+          error:
+            'Authentication is required.'
+        },
+        {
+          status: 401
+        }
+      );
+    }
+
+    const profile =
+      await prisma.experienceProfile.upsert({
+        where: {
+          userId:
+            session.user.id
+        },
+
+        update: {},
+
+        create: {
+          userId:
+            session.user.id
+        },
+
+        select: {
+          experienceDensity:
+            true,
+
+          autoplayPreviews:
+            true,
+
+          discoveryEnabled:
+            true,
+
+          recommendationMode:
+            true,
+
+          shoppingNotifications:
+            true,
+
+          personalizationEnabled:
+            true,
+
+          preferredCategorySlugs:
+            true
+        }
+      });
+
+    return NextResponse.json({
+      user: {
+        name:
+          session.user.name,
+
+        email:
+          session.user.email,
+
+        image:
+          session.user.image ??
+          ''
+      },
+
+      profile
+    });
+  } catch (error) {
+    console.error(
+      '[experience-settings:get]',
+      error
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          'Unable to load experience settings.'
+      },
+      {
+        status: 500
+      }
+    );
+  }
 }
 
-export async function PATCH(request: Request) {
-  const session = await sessionUser();
-  if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
-  const body = await request.json() as Record<string, unknown>;
-  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 80) : session.user.name;
-  const image = typeof body.image === 'string' ? body.image.trim().slice(0, 500) || null : session.user.image;
-  const experienceDensity = ['compact', 'balanced', 'immersive'].includes(String(body.experienceDensity)) ? String(body.experienceDensity) : 'immersive';
-  const recommendationMode = ['familiar', 'balanced', 'exploratory'].includes(String(body.recommendationMode)) ? String(body.recommendationMode) : 'balanced';
-  const preferredCategorySlugs = Array.isArray(body.preferredCategorySlugs) ? body.preferredCategorySlugs.filter((slug): slug is string => typeof slug === 'string').slice(0, 12) : [];
-  const shoppingLists = normalizeLists(body.shoppingLists);
+export async function PATCH(
+  request: Request
+) {
+  try {
+    const session =
+      await requireUser();
 
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: session.user.id }, data: { name: name || session.user.name, image } }),
-    prisma.experienceProfile.upsert({
-      where: { userId: session.user.id },
-      create: { userId: session.user.id, shoppingLists, experienceDensity, recommendationMode, preferredCategorySlugs, autoplayPreviews: body.autoplayPreviews !== false, discoveryEnabled: body.discoveryEnabled !== false, shoppingNotifications: body.shoppingNotifications !== false, personalizationEnabled: body.personalizationEnabled !== false },
-      update: { shoppingLists, experienceDensity, recommendationMode, preferredCategorySlugs, autoplayPreviews: body.autoplayPreviews !== false, discoveryEnabled: body.discoveryEnabled !== false, shoppingNotifications: body.shoppingNotifications !== false, personalizationEnabled: body.personalizationEnabled !== false }
-    })
-  ]);
-  return NextResponse.json({ ok: true });
+    if (!session) {
+      return NextResponse.json(
+        {
+          error:
+            'Authentication is required.'
+        },
+        {
+          status: 401
+        }
+      );
+    }
+
+    const body =
+      (await request.json()) as
+        ExperienceSettingsPayload;
+
+    const experienceDensity =
+      normalizeOptionalString(
+        body.experienceDensity,
+        'immersive'
+      );
+
+    const recommendationMode =
+      normalizeOptionalString(
+        body.recommendationMode,
+        'balanced'
+      );
+
+    const preferredCategorySlugs =
+      normalizeStringArray(
+        body.preferredCategorySlugs
+      );
+
+    const profile =
+      await prisma.experienceProfile.upsert({
+        where: {
+          userId:
+            session.user.id
+        },
+
+        create: {
+          userId:
+            session.user.id,
+
+          experienceDensity,
+
+          recommendationMode,
+
+          preferredCategorySlugs,
+
+          autoplayPreviews:
+            body.autoplayPreviews !==
+            false,
+
+          discoveryEnabled:
+            body.discoveryEnabled !==
+            false,
+
+          shoppingNotifications:
+            body.shoppingNotifications !==
+            false,
+
+          personalizationEnabled:
+            body.personalizationEnabled !==
+            false
+        },
+
+        update: {
+          experienceDensity,
+
+          recommendationMode,
+
+          preferredCategorySlugs,
+
+          autoplayPreviews:
+            body.autoplayPreviews !==
+            false,
+
+          discoveryEnabled:
+            body.discoveryEnabled !==
+            false,
+
+          shoppingNotifications:
+            body.shoppingNotifications !==
+            false,
+
+          personalizationEnabled:
+            body.personalizationEnabled !==
+            false
+        },
+
+        select: {
+          experienceDensity:
+            true,
+
+          autoplayPreviews:
+            true,
+
+          discoveryEnabled:
+            true,
+
+          recommendationMode:
+            true,
+
+          shoppingNotifications:
+            true,
+
+          personalizationEnabled:
+            true,
+
+          preferredCategorySlugs:
+            true
+        }
+      });
+
+    return NextResponse.json({
+      profile
+    });
+  } catch (error) {
+    if (
+      error instanceof SyntaxError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Invalid request payload.'
+        },
+        {
+          status: 400
+        }
+      );
+    }
+
+    console.error(
+      '[experience-settings:patch]',
+      error
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          'Unable to update experience settings.'
+      },
+      {
+        status: 500
+      }
+    );
+  }
 }

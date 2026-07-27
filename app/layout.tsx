@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import IdentityProvider from '@/providers/IdentityProvider';
 import SearchProvider from '@/providers/SearchProvider';
 import ThemeProvider from '@/providers/ThemeProvider';
+import { ShoppingListRuntimeProvider } from '@/features/shopping-lists';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -65,15 +66,17 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <IdentityProvider>
             <ActionFeedbackProvider>
               <WorkspaceProvider>
-                <CatalogProvider>
-                  <WishlistProvider>
-                    <CartProvider>
-                      <SearchProvider>
-                        <ApplicationShell>{children}</ApplicationShell>
-                      </SearchProvider>
-                    </CartProvider>
-                  </WishlistProvider>
-                </CatalogProvider>
+                <ShoppingListRuntimeProvider>
+                  <CatalogProvider>
+                    <WishlistProvider>
+                      <CartProvider>
+                        <SearchProvider>
+                          <ApplicationShell>{children}</ApplicationShell>
+                        </SearchProvider>
+                      </CartProvider>
+                    </WishlistProvider>
+                  </CatalogProvider>
+                </ShoppingListRuntimeProvider>
               </WorkspaceProvider>
             </ActionFeedbackProvider>
           </IdentityProvider>
