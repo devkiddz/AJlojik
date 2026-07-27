@@ -1,10 +1,8 @@
 import { Heart, PackageCheck } from 'lucide-react';
 
-import type { resolveCustomerDashboardView } from '../../view/resolveCustomerDashboardView';
+import type { CustomerDashboardView } from '../../view/resolveCustomerDashboardView';
 
 import { ProductExperienceSection } from './ProductExperienceSection';
-
-type CustomerDashboardView = ReturnType<typeof resolveCustomerDashboardView>;
 
 type DashboardProductExperiencesProps = {
   view: CustomerDashboardView;
@@ -27,7 +25,7 @@ export function DashboardProductExperiences({ view }: DashboardProductExperience
       <ProductExperienceSection
         code="PFY"
         title="Picked for You"
-        icon={<Heart />}
+        icon={<Heart className="fill-current" />}
         products={pickedProducts}
         href={pickedHref}
         source="picked-for-you"

@@ -39,6 +39,7 @@ export default function CustomerDashboard() {
 
           <ExperienceJourneyRail
             recentProducts={view.recentProducts}
+            wishlistProducts={view.wishlistProducts}
             history={view.history}
             orders={view.orders}
             activeDeliveries={view.activeDeliveries}

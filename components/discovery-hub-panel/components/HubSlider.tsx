@@ -478,7 +478,7 @@ export default function HubSlider({ items, autoSlide = false, variant = 'strip' 
   // ============================================================
 
   if (variant === 'grid' || variant === 'minimal-grid') {
-    const visibleItems = safeItems.slice(0, 3);
+    const visibleItems = items.slice(0, 2);
 
     return (
       <div className="mt-5 grid grid-cols-3 gap-2.5 sm:gap-3">

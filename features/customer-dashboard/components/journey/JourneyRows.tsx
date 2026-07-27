@@ -27,16 +27,9 @@ const PROCESSING = new Set([
   'OUT_FOR_DELIVERY'
 ]);
 
-const PROCESSED = new Set([
-  'DELIVERED',
-  'COMPLETED'
-]);
+const PROCESSED = new Set(['DELIVERED', 'COMPLETED']);
 
-export function RecentViewRows({
-  products
-}: {
-  products: CommerceProduct[];
-}) {
+export function RecentViewRows({ products }: { products: CommerceProduct[] }) {
   const visible = products.slice(0, 3);
 
   if (visible.length === 0) {
@@ -54,11 +47,7 @@ export function RecentViewRows({
   ));
 }
 
-export function ActivityRows({
-  history
-}: {
-  history: CommerceDashboardData['history'];
-}) {
+export function ActivityRows({ history }: { history: CommerceDashboardData['history'] }) {
   const visible = history.slice(0, 3);
 
   if (visible.length === 0) {
@@ -79,81 +68,123 @@ export function ActivityRows({
   });
 }
 
-export function OrderRows({
-  orders
-}: {
-  orders: CommerceOrder[];
-}) {
-  const visible = orders.slice(0, 3);
+export function OrderRows({ orders }: { orders: CommerceOrder[] }) {
+  const latestOrder = orders[0];
 
-  if (visible.length === 0) {
+  if (!latestOrder) {
     return <EmptyJourneyRows label="No order history" />;
   }
 
-  return visible.map(order => {
-    const tone = resolveStatusTone(order.status);
+  const tone = resolveStatusTone(latestOrder.status);
 
-    return (
-      <MiniRecord
-        key={order.id}
-        href={`/orders?order=${order.id}`}
-        leading={<RecordLabel>{orderCode(order.orderNumber)}</RecordLabel>}
-        title={order.orderNumber}
-        subtitle={formatLabel(order.status)}
-        subtitleClassName={tone.text}
-        indicatorClassName={tone.dot}
-        trailing={compactMoney.format(order.total)}
-      />
-    );
-  });
+  return (
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/50 bg-background/65 p-3">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <RecordLabel>{orderCode(latestOrder.orderNumber)}</RecordLabel>
+
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold">{latestOrder.orderNumber}</p>
+
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className={cn('size-1.5 shrink-0 rounded-full', tone.dot)} />
+
+              <p className={cn('truncate text-[11px] font-medium', tone.text)}>
+                {formatLabel(latestOrder.status)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <p className="hidden shrink-0 text-sm font-bold sm:block">{compactMoney.format(latestOrder.total)}</p>
+      </div>
+
+      <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
+        <div className="flex flex-col justify-between rounded-lg border border-border/40 bg-card/65 p-2.5">
+          <span className="text-[10px] font-medium text-muted-foreground">Latest order</span>
+
+          <span className="mt-2 text-lg font-bold">01</span>
+        </div>
+
+        <div className="flex flex-col justify-between rounded-lg border border-border/40 bg-card/65 p-2.5">
+          <span className="text-[10px] font-medium text-muted-foreground">Order value</span>
+
+          <span className="mt-2 truncate text-sm font-bold">{compactMoney.format(latestOrder.total)}</span>
+        </div>
+      </div>
+
+      {orders.length > 1 ? (
+        <p className="mt-2 text-[10px] font-medium text-muted-foreground">
+          +{orders.length - 1} earlier {orders.length === 2 ? 'order' : 'orders'}
+        </p>
+      ) : (
+        <p className="mt-2 text-[10px] font-medium text-muted-foreground">Your latest completed journey</p>
+      )}
+    </div>
+  );
 }
 
-export function DeliveryRows({
-  orders
-}: {
-  orders: CommerceOrder[];
-}) {
-  const visible = orders.slice(0, 3);
+export function DeliveryRows({ orders }: { orders: CommerceOrder[] }) {
+  const activeOrder = orders[0];
 
-  if (visible.length === 0) {
+  if (!activeOrder) {
     return <EmptyJourneyRows label="No active delivery" />;
   }
 
-  return visible.map(order => {
-    const status = order.delivery?.status ?? order.status;
-    const progress = resolveDeliveryProgress(status);
+  const status = activeOrder.delivery?.status ?? activeOrder.status;
 
-    return (
-      <Link
-        key={order.id}
-        href={`/orders?order=${order.id}`}
-        className="block rounded-lg border border-border/50 bg-background/65 p-2.5 transition hover:border-primary/25 hover:bg-background">
-        <div className="flex items-center gap-2">
-          <RecordLabel>{orderCode(order.orderNumber)}</RecordLabel>
+  const progress = resolveDeliveryProgress(status);
 
-          <div className="min-w-0 flex-1">
-            <p className="break-words text-xs font-semibold leading-4">
-              {order.orderNumber}
-            </p>
-            <p className="mt-0.5 break-words text-xs text-muted-foreground">
+  return (
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-emerald-500/15 bg-background/65 p-3">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <RecordLabel>{orderCode(activeOrder.orderNumber)}</RecordLabel>
+
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold">{activeOrder.orderNumber}</p>
+
+            <p className="mt-1 truncate text-[11px] font-medium text-emerald-600 dark:text-emerald-300">
               {formatLabel(status)}
             </p>
           </div>
-
-          <span className="shrink-0 text-xs font-bold">
-            {progress}%
-          </span>
         </div>
 
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border/60">
+        <span className="shrink-0 text-lg font-bold text-emerald-600 dark:text-emerald-300">{progress}%</span>
+      </div>
+
+      <div className="mt-4">
+        <div className="relative h-2 overflow-hidden rounded-full bg-border/60">
           <span
             className="block h-full rounded-full bg-emerald-500 transition-all"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: `${progress}%`
+            }}
           />
         </div>
-      </Link>
-    );
-  });
+
+        <div className="mt-2 flex justify-between text-[9px] font-medium text-muted-foreground">
+          <span>Confirmed</span>
+          <span>In transit</span>
+          <span>Delivered</span>
+        </div>
+      </div>
+
+      <div className="mt-auto grid grid-cols-2 gap-2 pt-3">
+        <div className="rounded-lg border border-border/40 bg-card/65 p-2.5">
+          <p className="text-[10px] font-medium text-muted-foreground">Current stage</p>
+
+          <p className="mt-1 truncate text-xs font-semibold">{formatLabel(status)}</p>
+        </div>
+
+        <div className="rounded-lg border border-border/40 bg-card/65 p-2.5">
+          <p className="text-[10px] font-medium text-muted-foreground">Order value</p>
+
+          <p className="mt-1 truncate text-xs font-semibold">{compactMoney.format(activeOrder.total)}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function CartRows({
@@ -183,12 +214,8 @@ export function CartRows({
       ))}
 
       <div className="flex items-center justify-between rounded-lg border border-amber-500/15 bg-background/70 px-2.5 py-2 text-xs">
-        <span className="font-medium text-muted-foreground">
-          Total
-        </span>
-        <span className="font-bold">
-          {compactMoney.format(subtotal)}
-        </span>
+        <span className="font-medium text-muted-foreground">Total</span>
+        <span className="font-bold">{compactMoney.format(subtotal)}</span>
       </div>
     </>
   );
@@ -218,17 +245,10 @@ function MiniRecord({
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-1.5">
           {indicatorClassName ? (
-            <span
-              className={cn(
-                'mt-1.5 size-1.5 shrink-0 rounded-full',
-                indicatorClassName
-              )}
-            />
+            <span className={cn('mt-1.5 size-1.5 shrink-0 rounded-full', indicatorClassName)} />
           ) : null}
 
-          <p className="line-clamp-2 break-words text-xs font-semibold leading-4">
-            {title}
-          </p>
+          <p className="line-clamp-2 break-words text-xs font-semibold leading-4">{title}</p>
         </div>
 
         {subtitle ? (
@@ -258,27 +278,15 @@ function MiniRecord({
       {content}
     </Link>
   ) : (
-    <div className={className}>
-      {content}
-    </div>
+    <div className={className}>{content}</div>
   );
 }
 
-function ProductAvatar({
-  product
-}: {
-  product: CommerceProduct;
-}) {
+function ProductAvatar({ product }: { product: CommerceProduct }) {
   return (
     <span className="relative size-9 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted">
       {product.image ? (
-        <Image
-          src={product.image}
-          alt=""
-          fill
-          sizes="36px"
-          className="object-cover"
-        />
+        <Image src={product.image} alt="" fill sizes="36px" className="object-cover" />
       ) : (
         <span className="grid size-full place-items-center">
           <ShoppingBag className="size-3.5 text-muted-foreground" />
@@ -288,11 +296,7 @@ function ProductAvatar({
   );
 }
 
-function RecordLabel({
-  children
-}: {
-  children: ReactNode;
-}) {
+function RecordLabel({ children }: { children: ReactNode }) {
   return (
     <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold text-muted-foreground">
       {children}
@@ -300,18 +304,13 @@ function RecordLabel({
   );
 }
 
-function EmptyJourneyRows({
-  label
-}: {
-  label: string;
-}) {
+function EmptyJourneyRows({ label }: { label: string }) {
   return (
-    <div className="grid min-h-28 place-items-center rounded-lg border border-dashed border-border/60 bg-background/35 p-3">
+    <div className="grid h-full min-h-0 place-items-center rounded-xl border border-dashed border-border/60 bg-background/35 p-3">
       <div className="text-center">
         <span className="block text-2xl font-bold">0</span>
-        <span className="mt-1 block break-words text-xs font-medium text-muted-foreground">
-          {label}
-        </span>
+
+        <span className="mt-1 block text-xs font-medium text-muted-foreground">{label}</span>
       </div>
     </div>
   );
@@ -368,10 +367,7 @@ function resolveDeliveryProgress(status: string): number {
 }
 
 function resolveActivityLabel(entry: unknown): string {
-  const value = readTextValue(
-    entry,
-    ['title', 'label', 'action', 'source', 'type']
-  );
+  const value = readTextValue(entry, ['title', 'label', 'action', 'source', 'type']);
 
   return value ? formatLabel(value) : 'Activity';
 }
@@ -381,10 +377,7 @@ function resolveCartItemQuantity(item: unknown): number {
   return Math.max(quantity ?? 1, 1);
 }
 
-function readTextValue(
-  value: unknown,
-  keys: string[]
-): string | undefined {
+function readTextValue(value: unknown, keys: string[]): string | undefined {
   if (!value || typeof value !== 'object') {
     return undefined;
   }
@@ -402,10 +395,7 @@ function readTextValue(
   return undefined;
 }
 
-function readNumberValue(
-  value: unknown,
-  keys: string[]
-): number | undefined {
+function readNumberValue(value: unknown, keys: string[]): number | undefined {
   if (!value || typeof value !== 'object') {
     return undefined;
   }
@@ -415,10 +405,7 @@ function readNumberValue(
   for (const key of keys) {
     const candidate = record[key];
 
-    if (
-      typeof candidate === 'number' &&
-      Number.isFinite(candidate)
-    ) {
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
       return candidate;
     }
   }
@@ -427,20 +414,13 @@ function readNumberValue(
 }
 
 function orderCode(orderNumber: string): string {
-  const cleaned = orderNumber
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toUpperCase();
+  const cleaned = orderNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
   return cleaned.slice(-3) || 'ORD';
 }
 
 function abbreviate(value: string): string {
-  const words = value
-    .replaceAll('_', ' ')
-    .replaceAll('-', ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = value.replaceAll('_', ' ').replaceAll('-', ' ').trim().split(/\s+/).filter(Boolean);
 
   if (words.length === 0) {
     return '—';

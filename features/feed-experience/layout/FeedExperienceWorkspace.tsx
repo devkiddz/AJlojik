@@ -18,9 +18,10 @@ import { promos, type Promo } from '@/data/promos';
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
 import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
-import { RegularProductPreviewModal } from '@/features/products/modals';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
+
+import { recordProductView } from '@/features/product-activity';
 
 import { cn } from '@/lib/utils';
 
@@ -122,49 +123,16 @@ function FeedExperienceWorkspaceContent() {
   // PRODUCT PREVIEW
   // ============================================================
 
-  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
-
-  const [previewOpen, setPreviewOpen] = useState(false);
-
-  const openPreview = useCallback((product: ProductType) => {
-    setSelectedProduct(product);
-
-    setPreviewOpen(true);
-  }, []);
-
-  const closePreview = useCallback(() => {
-    setPreviewOpen(false);
-    setSelectedProduct(null);
-  }, []);
-
   const toggleLike = useCallback(
     (productId: string) => {
       const product = catalogProducts.find(item => item.id === productId);
-
-      const currentlyWishlisted = wishlistProductIds.includes(productId);
 
       void toggleWishlist({
         id: productId,
         name: product?.name
       });
-
-      /*
-       * Temporary compatibility for the
-       * existing preview modal.
-       *
-       * The real source of truth remains
-       * WishlistProvider.
-       */
-      setSelectedProduct(currentProduct =>
-        currentProduct?.id === productId
-          ? {
-              ...currentProduct,
-              liked: !currentlyWishlisted
-            }
-          : currentProduct
-      );
     },
-    [catalogProducts, toggleWishlist, wishlistProductIds]
+    [catalogProducts, toggleWishlist]
   );
 
   // ============================================================
@@ -260,19 +228,16 @@ function FeedExperienceWorkspaceContent() {
   // BASE ACTIONS
   // ============================================================
 
-  const baseActions = useMemo<Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>>(
+  const baseActions = useMemo<
+    Omit<FeedActions, 'previewProduct' | 'openExperience' | 'restoreExperience' | 'resetExperience'>
+  >(
     () => ({
       changeCategory: updateQuery,
-
-      previewProduct: openPreview,
-
       toggleLike,
-
       addToCart: handleAddToCart,
-
       previewPromotion
     }),
-    [updateQuery, openPreview, toggleLike, handleAddToCart, previewPromotion]
+    [updateQuery, toggleLike, handleAddToCart, previewPromotion]
   );
 
   // ============================================================
@@ -288,34 +253,6 @@ function FeedExperienceWorkspaceContent() {
       .map(productId => catalogProducts.find(product => product.id === productId))
       .filter((product): product is ProductType => Boolean(product));
   }, [selectedPromo, catalogProducts]);
-
-  const filteredProducts = useMemo(
-    () =>
-      selectedCategory === 'all'
-        ? catalogProducts
-        : catalogProducts.filter(product => product.category === selectedCategory),
-    [selectedCategory, catalogProducts]
-  );
-
-  const selectedIndex = selectedProduct
-    ? filteredProducts.findIndex(product => product.id === selectedProduct.id)
-    : -1;
-
-  const handleNextProduct = useCallback(() => {
-    if (selectedIndex < 0 || selectedIndex >= filteredProducts.length - 1) {
-      return;
-    }
-
-    setSelectedProduct(filteredProducts[selectedIndex + 1]);
-  }, [filteredProducts, selectedIndex]);
-
-  const handlePreviousProduct = useCallback(() => {
-    if (selectedIndex <= 0) {
-      return;
-    }
-
-    setSelectedProduct(filteredProducts[selectedIndex - 1]);
-  }, [filteredProducts, selectedIndex]);
 
   // ============================================================
   // DISCOVERY HUB PREFERENCE
@@ -413,20 +350,6 @@ function FeedExperienceWorkspaceContent() {
               onCollapsedChange={setHubCollapsed}
             />
           </div>
-
-          <RegularProductPreviewModal
-            product={selectedProduct}
-            open={previewOpen}
-            onClose={closePreview}
-            onToggleLike={toggleLike}
-            onAddToCart={handleAddToCart}
-            onNext={handleNextProduct}
-            onPrevious={handlePreviousProduct}
-            hasNext={selectedIndex > -1 && selectedIndex < filteredProducts.length - 1}
-            hasPrevious={selectedIndex > 0}
-            currentIndex={selectedIndex}
-            totalProducts={filteredProducts.length}
-          />
 
           <PromoModal
             promo={selectedPromo}

@@ -11,6 +11,8 @@ import {
   type ReactNode
 } from 'react';
 
+import { recordProductView } from '@/features/product-activity';
+
 import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIntent } from '../contracts';
 
 import { feedExperienceEngine } from '../engine';
@@ -82,7 +84,10 @@ type FeedExperienceProviderProps = {
 
   context: FeedContext;
 
-  baseActions: Omit<FeedActions, 'openExperience' | 'restoreExperience' | 'resetExperience'>;
+  baseActions: Omit<
+    FeedActions,
+    'previewProduct' | 'openExperience' | 'restoreExperience' | 'resetExperience'
+  >;
 };
 
 // ============================================================
@@ -292,6 +297,12 @@ export function FeedExperienceProvider({
   const openExperience = useCallback(
     (target: ExperienceTarget) => {
       beginResolution(createIntent(target));
+
+      if (target.type === 'product') {
+        void recordProductView({
+          productId: target.productId
+        });
+      }
     },
     [beginResolution]
   );

@@ -1,0 +1,3 @@
+export {
+  recordProductView
+} from './productActivityService';
