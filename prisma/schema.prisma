@@ -37,8 +37,6 @@ model User {
   wishlists     Wishlist[]
   shoppingLists ShoppingList[]
   orders        Order[]
-  products      Product[]
-  promotions    Promotion[]
   addresses     Address[]
   reviews       Review[]
 
@@ -58,6 +56,7 @@ model User {
   createdAdminTodos    AdminTodo[]             @relation("AdminTodoCreator")
   dispatchedDeliveries Delivery[]              @relation("DeliveryDispatcher")
   deliveryEvents       DeliveryTrackingEvent[]
+  promotions           Promotion[]
 
   @@unique([email])
   @@index([accountState])
@@ -272,8 +271,6 @@ model Product {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    String?
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, active])
