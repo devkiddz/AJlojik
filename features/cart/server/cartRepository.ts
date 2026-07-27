@@ -139,6 +139,7 @@ export const CartRepository = {
                 active: true,
 
                 product: {
+                  workspaceId,
                   active: true
                 }
               },

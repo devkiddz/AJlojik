@@ -17,25 +17,50 @@ async function main() {
   console.log(' RCENTZ Demo Seed Engine');
   console.log('================================');
 
-const workspaces = await seedWorkspaces(prisma);
+  const workspaces =
+    await seedWorkspaces(prisma);
 
-await seedMemberships(prisma, workspaces);
-await seedAdminAccounts(prisma, workspaces);
-await seedWallets(prisma, workspaces);
-await seedHistorySettings(prisma, workspaces);
+  await seedMemberships(
+    prisma,
+    workspaces
+  );
 
-await seedScenarios(prisma);
-await seedProvisions(prisma, workspaces);
+  await seedAdminAccounts(
+    prisma,
+    workspaces
+  );
 
-await seedCatalog(prisma);
-await seedCommerce(prisma, workspaces);
-await seedExperienceEvents(prisma, workspaces);
+  await seedWallets(
+    prisma,
+    workspaces
+  );
 
-  console.log({
-    live: workspaces.live.slug,
-    demo: workspaces.demo.slug,
-    practice: workspaces.practice.slug
-  });
+  await seedHistorySettings(
+    prisma,
+    workspaces
+  );
+
+  await seedScenarios(prisma);
+
+  await seedProvisions(
+    prisma,
+    workspaces
+  );
+
+  await seedCatalog(
+    prisma,
+    workspaces.live.id
+  );
+
+  await seedCommerce(
+    prisma,
+    workspaces
+  );
+
+  await seedExperienceEvents(
+    prisma,
+    workspaces
+  );
 }
 
 main()

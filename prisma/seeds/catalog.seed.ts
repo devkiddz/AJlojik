@@ -34,7 +34,8 @@ function resolveIconName(icon: LucideIcon): string | null {
 }
 
 export async function seedCatalog(
-  prisma: PrismaClient
+  prisma: PrismaClient,
+  workspaceId: string
 ): Promise<{
   categories: number;
   subcategories: number;
@@ -44,6 +45,23 @@ export async function seedCatalog(
   inventories: number;
 }> {
   console.log('Seeding AJ Logik catalog...');
+  const workspace =
+  await prisma.workspace.findFirst({
+    where: {
+      id: workspaceId,
+      active: true
+    },
+
+    select: {
+      id: true
+    }
+  });
+
+if (!workspace) {
+  throw new Error(
+    `An active workspace with ID "${workspaceId}" was not found.`
+  );
+}
 
   let categoryCount = 0;
   let subcategoryCount = 0;
@@ -152,49 +170,96 @@ export async function seedCatalog(
         })
       : null;
 
-    await prisma.product.upsert({
-      where: {
-        id: product.id
-      },
+   await prisma.product.upsert({
+  where: {
+    id: product.id
+  },
 
-      update: {
-        slug: product.slug,
-        name: product.name,
-        shortDescription: product.shortDescription,
-        longDescription: product.longDescription,
-        categoryId: category.id,
-        subcategoryId: subcategory?.id ?? null,
-        tags: product.tags,
-        rating: product.rating,
-        reviewsCount: product.reviews,
-        soldCount: product.soldCount,
-        featured: product.featured,
-        isNew: product.isNew,
-        active: true,
-        estimatedDelivery: product.estimatedDelivery,
-        discountPercentage: product.discountPercentage
-      },
+  update: {
+    workspaceId: workspace.id,
 
-      create: {
-        id: product.id,
-        slug: product.slug,
-        name: product.name,
-        shortDescription: product.shortDescription,
-        longDescription: product.longDescription,
-        categoryId: category.id,
-        subcategoryId: subcategory?.id ?? null,
-        tags: product.tags,
-        rating: product.rating,
-        reviewsCount: product.reviews,
-        soldCount: product.soldCount,
-        featured: product.featured,
-        isNew: product.isNew,
-        active: true,
-        estimatedDelivery: product.estimatedDelivery,
-        discountPercentage: product.discountPercentage
-      }
-    });
+    slug: product.slug,
+    name: product.name,
 
+    shortDescription:
+      product.shortDescription,
+
+    longDescription:
+      product.longDescription,
+
+    categoryId: category.id,
+
+    subcategoryId:
+      subcategory?.id ?? null,
+
+    tags: product.tags,
+
+    rating: product.rating,
+
+    reviewsCount:
+      product.reviews,
+
+    soldCount:
+      product.soldCount,
+
+    featured:
+      product.featured,
+
+    isNew:
+      product.isNew,
+
+    active: true,
+
+    estimatedDelivery:
+      product.estimatedDelivery,
+
+    discountPercentage:
+      product.discountPercentage
+  },
+
+  create: {
+    id: product.id,
+    workspaceId: workspace.id,
+
+    slug: product.slug,
+    name: product.name,
+
+    shortDescription:
+      product.shortDescription,
+
+    longDescription:
+      product.longDescription,
+
+    categoryId: category.id,
+
+    subcategoryId:
+      subcategory?.id ?? null,
+
+    tags: product.tags,
+
+    rating: product.rating,
+
+    reviewsCount:
+      product.reviews,
+
+    soldCount:
+      product.soldCount,
+
+    featured:
+      product.featured,
+
+    isNew:
+      product.isNew,
+
+    active: true,
+
+    estimatedDelivery:
+      product.estimatedDelivery,
+
+    discountPercentage:
+      product.discountPercentage
+  }
+});
     productCount += 1;
 
     for (const [variantPosition, variant] of product.variants.entries()) {
