@@ -1,11 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-
 import { useDashboardRail } from './useDashboardRail';
 
 type DashboardRailProps = {
@@ -73,9 +71,24 @@ export function DashboardRail({ title, code, icon, children, className }: Dashbo
         tabIndex={0}
         onKeyDown={onKeyDown}
         className={cn(
-          'flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 py-4 outline-none scrollbar-hide sm:px-5',
-          '[--dashboard-rail-card-width:calc((100%_-_0.75rem)/2)]',
-          'lg:[--dashboard-rail-card-width:calc((100%_-_1.5rem)/3)]'
+          `
+            flex snap-x snap-mandatory
+            gap-3 overflow-x-auto
+            overscroll-x-contain
+            px-4 py-4
+            outline-none
+            scrollbar-hide
+            sm:px-5
+          `,
+          `
+            [--dashboard-rail-card-width:calc(66.666%_-_0.5rem)]
+          `,
+          `
+            sm:[--dashboard-rail-card-width:calc((100%_-_0.75rem)/2)]
+          `,
+          `
+            lg:[--dashboard-rail-card-width:calc((100%_-_1.5rem)/3)]
+          `
         )}>
         {children}
       </div>
