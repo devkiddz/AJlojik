@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { StoreStudioProjection } from '../contracts';
+import { STORE_STUDIO_REFRESH_EVENT } from './storeStudioEvents';
 
 type StoreStudioProjectionState = {
   projection: StoreStudioProjection | null;
@@ -18,8 +19,33 @@ export function useStoreStudioProjection(
   const [loading, setLoading] =
     useState(Boolean(workspaceId));
 
+  const [refreshVersion, setRefreshVersion] =
+    useState(0);
+
+  const loadedWorkspaceIdRef =
+    useRef<string | null>(null);
+
+  useEffect(() => {
+    const requestRefresh = () => {
+      setRefreshVersion(current => current + 1);
+    };
+
+    window.addEventListener(
+      STORE_STUDIO_REFRESH_EVENT,
+      requestRefresh
+    );
+
+    return () => {
+      window.removeEventListener(
+        STORE_STUDIO_REFRESH_EVENT,
+        requestRefresh
+      );
+    };
+  }, []);
+
   useEffect(() => {
     if (!workspaceId) {
+      loadedWorkspaceIdRef.current = null;
       setProjection(null);
       setLoading(false);
       return;
@@ -27,7 +53,9 @@ export function useStoreStudioProjection(
 
     const controller = new AbortController();
 
-    setLoading(true);
+    if (loadedWorkspaceIdRef.current !== workspaceId) {
+      setLoading(true);
+    }
 
     void fetch(
       `/api/store-studio/projection?workspaceId=${encodeURIComponent(workspaceId)}`,
@@ -49,6 +77,7 @@ export function useStoreStudioProjection(
         }>;
       })
       .then(result => {
+        loadedWorkspaceIdRef.current = workspaceId;
         setProjection(result.projection);
       })
       .catch(error => {
@@ -64,6 +93,7 @@ export function useStoreStudioProjection(
           error
         );
 
+        loadedWorkspaceIdRef.current = workspaceId;
         setProjection(null);
       })
       .finally(() => {
@@ -75,7 +105,7 @@ export function useStoreStudioProjection(
     return () => {
       controller.abort();
     };
-  }, [workspaceId]);
+  }, [refreshVersion, workspaceId]);
 
   return {
     projection,

@@ -52,8 +52,9 @@ export function roleForStaffLevel(level: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3'): Wor
 
 export async function getAdminAccess() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect('https://ajlojik.vercel.app/adminlogin/login');
-
+ if (!session) {
+  redirect('/adminlogin/login');
+}
   const membership = await prisma.workspaceMembership.findFirst({
     where: {
       userId: session.user.id,
@@ -78,4 +79,65 @@ export async function requireAdminPermission(permission: AdminPermission) {
   const access = await getAdminAccess();
   if (!access.permissions.has(permission)) throw new Error(`Missing required permission: ${permission}`);
   return access;
+}
+
+/**
+ * Resolves administrator access without redirecting public Store visitors.
+ * Used only to decide whether admin-only Store Studio controls should render.
+ * Every write action must still call requireAdminPermission independently.
+ */
+export async function getOptionalAdminAccess() {
+  const session = await auth.api
+    .getSession({
+      headers: await headers()
+    })
+    .catch(() => null);
+
+  if (!session) {
+    return null;
+  }
+
+  const membership =
+    await prisma.workspaceMembership.findFirst({
+      where: {
+        userId: session.user.id,
+        active: true,
+        workspace: {
+          active: true
+        },
+        role: {
+          in: [
+            'SUPPORT',
+            'MANAGER',
+            'ADMIN',
+            'SUPER_ADMIN'
+          ]
+        }
+      },
+      include: {
+        workspace: true
+      },
+      orderBy: [
+        {
+          workspace: {
+            mode: 'asc'
+          }
+        },
+        {
+          joinedAt: 'asc'
+        }
+      ]
+    });
+
+  if (!membership) {
+    return null;
+  }
+
+  return {
+    session,
+    membership,
+    permissions: new Set(
+      permissionsByRole[membership.role] ?? []
+    )
+  };
 }

@@ -13,6 +13,7 @@ import Link from 'next/link';
 import type { FeedActions } from '@/features/feed-experience/contracts';
 
 import { cn } from '@/lib/utils';
+import { publishMediaExperienceState } from '@/lib/mediaExperienceEvents';
 
 import type { CommerceStory } from '../contracts';
 
@@ -55,6 +56,16 @@ export function CommerceStoryRail({
   const [activeStoryId, setActiveStoryId] =
     useState<string | null>(null);
 
+  const closeStoryViewer = useCallback(() => {
+    publishMediaExperienceState({
+      ownerId: viewerOwnerId,
+      kind: 'commerce-story',
+      open: false
+    });
+
+    setActiveStoryId(null);
+  }, [viewerOwnerId]);
+
   useEffect(() => {
     setViewedStoryIds(getViewedStoryIds());
   }, []);
@@ -66,7 +77,7 @@ export function CommerceStoryRail({
       >;
 
       if (viewerEvent.detail?.ownerId !== viewerOwnerId) {
-        setActiveStoryId(null);
+        closeStoryViewer();
       }
     };
 
@@ -81,7 +92,18 @@ export function CommerceStoryRail({
         closeCompetingViewer
       );
     };
-  }, [viewerOwnerId]);
+  }, [closeStoryViewer, viewerOwnerId]);
+
+  useEffect(
+    () => () => {
+      publishMediaExperienceState({
+        ownerId: viewerOwnerId,
+        kind: 'commerce-story',
+        open: false
+      });
+    },
+    [viewerOwnerId]
+  );
 
   const viewedStoryIdSet = useMemo(
     () => new Set(viewedStoryIds),
@@ -111,6 +133,12 @@ export function CommerceStoryRail({
 
   const handleOpenStory = useCallback(
     (story: CommerceStory) => {
+      publishMediaExperienceState({
+        ownerId: viewerOwnerId,
+        kind: 'commerce-story',
+        open: true
+      });
+
       window.dispatchEvent(
         new CustomEvent<CommerceStoryViewerOpenDetail>(
           COMMERCE_STORY_VIEWER_OPEN_EVENT,
@@ -198,7 +226,7 @@ export function CommerceStoryRail({
           actions={actions}
           onActiveStoryChange={setActiveStoryId}
           onViewed={handleViewed}
-          onClose={() => setActiveStoryId(null)}
+          onClose={closeStoryViewer}
         />
       ) : null}
     </>

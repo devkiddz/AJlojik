@@ -4,11 +4,7 @@ import type {
 
 /**
  * Temporary Store Showcase banner while the Store Studio admin is unfinished.
- *
- * It uses the dedicated AJ Logik wolf-and-bottle campaign artwork bundled
- * with the storefront so the fallback remains stable and production-safe.
- * To use an MP4 later, change `mediaType` to `video`, point `mediaUrl` to the
- * MP4 file, and provide an image `posterUrl`.
+ * Database-backed banner campaigns always take precedence.
  */
 export const fallbackStoreBannerSlides:
   StoreStudioBannerSlideProjection[] = [
@@ -16,7 +12,8 @@ export const fallbackStoreBannerSlides:
       id: 'fallback-store-banner',
       campaignId: 'fallback-store-banner-campaign',
       mediaType: 'image',
-      mediaUrl: '/store-studio/banners/aj-logik-store-showcase.png',
+      mediaUrl:
+        '/store-studio/banners/aj-logik-store-showcase.png',
       mobileMediaUrl: null,
       posterUrl: null,
       eyebrow: 'AJ Logik Store',
@@ -32,7 +29,7 @@ export const fallbackStoreBannerSlides:
         href: '/store?category=deals'
       },
       autoplay: false,
-      durationMs: 8000,
+      durationMs: 8_000,
       position: 0
     }
   ];

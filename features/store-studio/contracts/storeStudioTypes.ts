@@ -88,8 +88,14 @@ export type StoreStudioReelProjection = {
   title: string;
   caption: string | null;
   videoUrl: string;
-  posterUrl: string;
+  posterUrl: string | null;
+  durationMs: number | null;
+  autoplay: boolean;
   action: StoreStudioAction | null;
+  detailHref: string | null;
+  productId: string | null;
+  promotionId: string | null;
+  collectionId: string | null;
   priority: number;
 };
 

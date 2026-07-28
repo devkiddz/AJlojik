@@ -23,7 +23,10 @@ import {
 } from '../selectors';
 
 import { commerceStories } from '@/features/commerce-stories/data';
-import { fallbackStoreBannerSlides } from '@/features/store-studio/data';
+import {
+  fallbackStoreBannerSlides,
+  fallbackStoreReels
+} from '@/features/store-studio/data';
 import type {
   CommerceStory,
   CommerceStoryType
@@ -72,12 +75,13 @@ const MORE_DISCOVERY_PRODUCT_LIMIT = 12;
 const RECENT_PRODUCT_LIMIT = 8;
 const SPECIAL_PICK_PRODUCT_LIMIT = 8;
 const CATEGORY_SHELF_PRODUCT_LIMIT = 12;
+const STORE_REEL_LIMIT = 6;
 
 /**
  * Temporary bridge while Store Studio campaign management is unfinished.
- * Disable this once banners and Stories can be managed from the Studio admin.
+ * Disable this once banners, Stories and Reels can be managed from the Studio admin.
  */
-const ENABLE_STATIC_STORE_SHOWCASE_FALLBACK = true;
+const ENABLE_STATIC_STORE_STUDIO_FALLBACK = true;
 
 const CATEGORY_SHELF_ORDER = [
   'wines',
@@ -328,22 +332,24 @@ export function buildStoreDiscoveryExperience(
         secondStory.priority - firstStory.priority
     );
 
-  const storeReels =
-    [...(storeStudio?.reels ?? [])].sort(
-      (firstReel, secondReel) =>
-        secondReel.priority - firstReel.priority
-    );
+  const projectedStoreReels =
+    [...(storeStudio?.reels ?? [])]
+      .sort(
+        (firstReel, secondReel) =>
+          secondReel.priority - firstReel.priority
+      )
+      .slice(0, STORE_REEL_LIMIT);
 
-  const shouldUseStaticStoreShowcaseFallback =
-    ENABLE_STATIC_STORE_SHOWCASE_FALLBACK &&
+  const shouldUseStaticStoreStudioFallback =
+    ENABLE_STATIC_STORE_STUDIO_FALLBACK &&
     projectedCommerceStories.length === 0 &&
     storeBannerSlides.length === 0 &&
-    storeReels.length === 0;
+    projectedStoreReels.length === 0;
 
   const activeStoreBannerSlides =
     storeBannerSlides.length > 0
       ? storeBannerSlides
-      : shouldUseStaticStoreShowcaseFallback
+      : shouldUseStaticStoreStudioFallback
         ? fallbackStoreBannerSlides
         : [];
 
@@ -353,8 +359,15 @@ export function buildStoreDiscoveryExperience(
           (firstStory, secondStory) =>
             secondStory.priority - firstStory.priority
         )
-      : shouldUseStaticStoreShowcaseFallback
+      : shouldUseStaticStoreStudioFallback
         ? fallbackCommerceStories
+        : [];
+
+  const activeStoreReels =
+    projectedStoreReels.length > 0
+      ? projectedStoreReels
+      : shouldUseStaticStoreStudioFallback
+        ? fallbackStoreReels.slice(0, STORE_REEL_LIMIT)
         : [];
 
   // ============================================================
@@ -819,10 +832,10 @@ export function buildStoreDiscoveryExperience(
         priority: 95,
         data: {
           title: 'Reels',
-          reels: storeReels
+          reels: activeStoreReels
         }
       },
-      enabled: storeReels.length > 0,
+      enabled: activeStoreReels.length > 0,
       reason:
         'Store Reels require at least one active Store Studio video asset.'
     },

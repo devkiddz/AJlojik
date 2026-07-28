@@ -1,11 +1,23 @@
-import FeedExperienceWorkspace from '@/features/feed-experience/layout/FeedExperienceWorkspace';
 import { Suspense } from 'react';
-// import FeedExperienceWorkspace from './StorePageClien';
 
-export default function AJStorePage() {
+import { getOptionalAdminAccess } from '@/features/admin/auth/adminPermissions';
+import FeedExperienceWorkspace from '@/features/feed-experience/layout/FeedExperienceWorkspace';
+
+export default async function AJStorePage() {
+  const adminAccess = await getOptionalAdminAccess();
+
+  const canManageStoreStudio = Boolean(
+    adminAccess?.permissions.has('approval:review')
+  );
+
   return (
     <Suspense fallback={null}>
-      <FeedExperienceWorkspace />
+      <FeedExperienceWorkspace
+        canManageStoreStudio={canManageStoreStudio}
+        storeStudioWorkspaceId={
+          adminAccess?.membership.workspaceId ?? null
+        }
+      />
     </Suspense>
   );
 }

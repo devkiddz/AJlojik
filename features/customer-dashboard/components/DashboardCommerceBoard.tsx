@@ -6,39 +6,33 @@ import type {
   DashboardSummaryItem
 } from '../contracts/customerDashboardTypes';
 
-import {
-  DashboardActivityCard
-} from './DashboardActivityCard';
+import { DashboardActivityCard } from './DashboardActivityCard';
 
-import {
-  DashboardCommerceOverviewCard
-} from './DashboardCommerceOverviewCard';
+import { DashboardCommerceOverviewCard } from './DashboardCommerceOverviewCard';
 
-import {
-  DashboardCompanionCard
-} from './DashboardCompanionCard';
+import { DashboardCompanionCard } from './DashboardCompanionCard';
 
-import {
-  DashboardOrdersCard
-} from './DashboardOrdersCard';
+import { DashboardOrdersCard } from './DashboardOrdersCard';
 
-import {
-  DashboardQuickLinksCard
-} from './DashboardQuickLinksCard';
+import { DashboardQuickLinksCard } from './DashboardQuickLinksCard';
 
-import {
-  DashboardSnapRail
-} from './DashboardSnapRail';
+import { DashboardSnapRail } from './DashboardSnapRail';
 
 const mobileCardClassName = [
-  'w-[84vw]',
-  'max-w-[26rem]',
-  'shrink-0',
+  'w-[calc(100%-1rem)]',
+  'min-w-[calc(100%-1rem)]',
+  'max-w-none',
+  'flex-none',
   'snap-start',
 
+  'sm:w-[24rem]',
+  'sm:min-w-[24rem]',
+  'sm:max-w-[24rem]',
+
   'lg:w-full',
+  'lg:min-w-0',
   'lg:max-w-none',
-  'lg:min-w-0'
+  'lg:flex-auto'
 ].join(' ');
 
 type DashboardCommerceBoardProps = {
@@ -47,8 +41,7 @@ type DashboardCommerceBoardProps = {
   activity: DashboardActivityItem[];
   orders: CommerceOrder[];
 
-  visibility:
-    DashboardOrchestration['visibility'];
+  visibility: DashboardOrchestration['visibility'];
 
   orderBudget: number;
 };
@@ -61,27 +54,17 @@ export function DashboardCommerceBoard({
   visibility,
   orderBudget
 }: DashboardCommerceBoardProps) {
-  const firstColumnCount =
-    Number(visibility.overview) +
-    Number(visibility.activity);
+  const firstColumnCount = Number(visibility.overview) + Number(visibility.activity);
 
-  const secondColumnCount =
-    Number(visibility.quickActions) +
-    Number(visibility.orders);
+  const secondColumnCount = Number(visibility.quickActions) + Number(visibility.orders);
 
-  const thirdColumnCount =
-    Number(visibility.companion);
+  const thirdColumnCount = Number(visibility.companion);
 
-  const columnCount = [
-    firstColumnCount,
-    secondColumnCount,
-    thirdColumnCount
-  ].filter(count => count > 0).length;
+  const columnCount = [firstColumnCount, secondColumnCount, thirdColumnCount].filter(
+    count => count > 0
+  ).length;
 
-  const itemCount =
-    firstColumnCount +
-    secondColumnCount +
-    thirdColumnCount;
+  const itemCount = firstColumnCount + secondColumnCount + thirdColumnCount;
 
   const desktopGridClassName =
     columnCount >= 3
@@ -94,31 +77,18 @@ export function DashboardCommerceBoard({
     <DashboardSnapRail
       itemCount={itemCount}
       ariaLabel="Your commerce"
-      className={[
-        'lg:grid',
-        'lg:items-start',
-        'lg:gap-3',
-        desktopGridClassName
-      ].join(' ')}>
+      className={['lg:grid', 'lg:items-start', 'lg:gap-3', desktopGridClassName].join(' ')}>
       {firstColumnCount > 0 ? (
         <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
           {visibility.overview ? (
-            <div
-              data-dashboard-snap-card="true"
-              className={`${mobileCardClassName} order-1 lg:order-none`}>
-              <DashboardCommerceOverviewCard
-                items={summary}
-              />
+            <div data-dashboard-snap-card="true" className={`${mobileCardClassName} order-1 lg:order-none`}>
+              <DashboardCommerceOverviewCard items={summary} />
             </div>
           ) : null}
 
           {visibility.activity ? (
-            <div
-              data-dashboard-snap-card="true"
-              className={`${mobileCardClassName} order-4 lg:order-none`}>
-              <DashboardActivityCard
-                items={activity}
-              />
+            <div data-dashboard-snap-card="true" className={`${mobileCardClassName} order-4 lg:order-none`}>
+              <DashboardActivityCard items={activity} />
             </div>
           ) : null}
         </div>
@@ -127,25 +97,14 @@ export function DashboardCommerceBoard({
       {secondColumnCount > 0 ? (
         <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
           {visibility.quickActions ? (
-            <div
-              data-dashboard-snap-card="true"
-              className={`${mobileCardClassName} order-2 lg:order-none`}>
-              <DashboardQuickLinksCard
-                items={quickActions}
-              />
+            <div data-dashboard-snap-card="true" className={`${mobileCardClassName} order-2 lg:order-none`}>
+              <DashboardQuickLinksCard items={quickActions} />
             </div>
           ) : null}
 
           {visibility.orders ? (
-            <div
-              data-dashboard-snap-card="true"
-              className={`${mobileCardClassName} order-5 lg:order-none`}>
-              <DashboardOrdersCard
-                orders={orders.slice(
-                  0,
-                  orderBudget
-                )}
-              />
+            <div data-dashboard-snap-card="true" className={`${mobileCardClassName} order-5 lg:order-none`}>
+              <DashboardOrdersCard orders={orders.slice(0, orderBudget)} />
             </div>
           ) : null}
         </div>
@@ -153,9 +112,7 @@ export function DashboardCommerceBoard({
 
       {thirdColumnCount > 0 ? (
         <div className="contents lg:grid lg:min-w-0 lg:content-start lg:gap-3">
-          <div
-            data-dashboard-snap-card="true"
-            className={`${mobileCardClassName} order-3 lg:order-none`}>
+          <div data-dashboard-snap-card="true" className={`${mobileCardClassName} order-3 lg:order-none`}>
             <DashboardCompanionCard />
           </div>
         </div>

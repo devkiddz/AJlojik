@@ -5,8 +5,7 @@ import { prisma } from '@/lib/prisma';
 import type {
   StoreStudioAction,
   StoreStudioProjection
-} from '../contracts';
-
+} from '@/features/store-studio/contracts';
 const DEFAULT_BANNER_DURATION_MS = 6_000;
 const DEFAULT_STORY_DURATION_MS = 5_000;
 
@@ -263,63 +262,64 @@ export async function getStoreStudioProjection(
         continue;
       }
 
-      if (
-        campaign.type === 'REEL' &&
-        asset.mediaType === 'VIDEO'
-      ) {
-        reels.push({
-          id: asset.id,
-          campaignId: campaign.id,
-          workspaceId,
+    if (
+  campaign.type === 'REEL' &&
+  asset.mediaType === 'VIDEO'
+) {
+  reels.push({
+    id: asset.id,
+    campaignId: campaign.id,
+    workspaceId,
 
-          vendorId:
-            campaign.vendorId,
+    vendorId:
+      campaign.vendorId,
 
-          vendorName:
-            campaign.vendor?.name ??
-            null,
+    vendorName:
+      campaign.vendor?.name ??
+      null,
 
-          title:
-            asset.title ??
-            campaign.title,
+    title:
+      asset.title ??
+      campaign.title,
 
-          caption:
-            asset.description ??
-            campaign.description,
+    caption:
+      asset.description ??
+      campaign.description,
 
-          videoUrl:
-            asset.mediaUrl,
+    videoUrl:
+      asset.mediaUrl,
 
-          posterUrl:
-            asset.posterUrl ??
-            asset.coverUrl,
+    posterUrl:
+      asset.posterUrl ??
+      asset.coverUrl,
 
-          durationMs:
-            asset.durationSeconds &&
-            asset.durationSeconds > 0
-              ? asset.durationSeconds * 1_000
-              : null,
+    detailHref:
+      `/reels/${asset.id}`,
 
-          autoplay:
-            asset.autoplay,
+    durationMs:
+      asset.durationSeconds &&
+      asset.durationSeconds > 0
+        ? asset.durationSeconds * 1_000
+        : null,
 
-          action,
+    autoplay:
+      asset.autoplay,
 
-          detailHref: `/reels/${asset.id}`,
+    action,
 
-          productId:
-            asset.productId,
+    productId:
+      asset.productId,
 
-          promotionId:
-            asset.promotionId,
+    promotionId:
+      asset.promotionId,
 
-          collectionId:
-            asset.collectionId,
+    collectionId:
+      asset.collectionId,
 
-          priority:
-            campaignPriority
-        });
-      }
+    priority:
+      campaignPriority
+  });
+}
     }
   }
 

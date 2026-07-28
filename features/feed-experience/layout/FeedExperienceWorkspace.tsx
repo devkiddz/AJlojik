@@ -21,6 +21,7 @@ import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceS
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 import { useStoreStudioProjection } from '@/features/store-studio/client';
+import { StorefrontReelComposer } from '@/features/store-studio/admin/StorefrontReelComposer';
 
 import { recordProductView } from '@/features/product-activity';
 
@@ -37,7 +38,15 @@ import { mockExperienceProfiles, type MockExperienceProfileId } from '../mocks';
 import { FeedExperienceProvider } from '../providers';
 import { FeedRenderer } from '../renderers';
 
-function FeedExperienceWorkspaceContent() {
+type FeedExperienceWorkspaceProps = {
+  canManageStoreStudio?: boolean;
+  storeStudioWorkspaceId?: string | null;
+};
+
+function FeedExperienceWorkspaceContent({
+  canManageStoreStudio = false,
+  storeStudioWorkspaceId = null
+}: FeedExperienceWorkspaceProps) {
   const {
     activeWorkspace,
     loading: workspaceLoading,
@@ -369,12 +378,27 @@ function FeedExperienceWorkspaceContent() {
             open={promoOpen}
             onClose={closePromoPreview}
           />
+
+          {canManageStoreStudio &&
+          activeWorkspace.id === storeStudioWorkspaceId ? (
+            <StorefrontReelComposer
+              products={catalogProducts}
+            />
+          ) : null}
         </div>
       </ExperienceStackProvider>
     </FeedExperienceProvider>
   );
 }
 
-export default function FeedExperienceWorkspace() {
-  return <FeedExperienceWorkspaceContent />;
+export default function FeedExperienceWorkspace({
+  canManageStoreStudio = false,
+  storeStudioWorkspaceId = null
+}: FeedExperienceWorkspaceProps) {
+  return (
+    <FeedExperienceWorkspaceContent
+      canManageStoreStudio={canManageStoreStudio}
+      storeStudioWorkspaceId={storeStudioWorkspaceId}
+    />
+  );
 }

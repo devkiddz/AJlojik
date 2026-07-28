@@ -6,6 +6,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { ProductCard } from '@/features/products/cards';
 
+import {
+  EXPERIENCE_PRODUCT_ITEM_CLASS,
+  EXPERIENCE_PRODUCT_RAIL_CLASS,
+  getProductRailScrollStep
+} from '@/features/products/productRailPresentation';
+
 import { cn } from '@/lib/utils';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
@@ -26,18 +32,6 @@ type CollectionProductRailProps = {
   onAddToCart?: (product: ProductType, variant: ProductVariantType) => void;
 };
 
-const MOBILE_CARDS_PER_VIEW = 2.25;
-const TABLET_CARDS_PER_VIEW = 3.25;
-const LAPTOP_CARDS_PER_VIEW = 4.25;
-const DESKTOP_CARDS_PER_VIEW = 5.25;
-
-const TABLET_BREAKPOINT = 640;
-const LAPTOP_BREAKPOINT = 900;
-const DESKTOP_BREAKPOINT = 1280;
-
-const PREFERRED_CARD_WIDTH = 184;
-const CARD_GAP = 12;
-
 export default function CollectionProductRail({
   title,
   subtitle,
@@ -51,8 +45,6 @@ export default function CollectionProductRail({
   const railId = useId();
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
-
-  const [cardsPerView, setCardsPerView] = useState(MOBILE_CARDS_PER_VIEW);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
@@ -76,32 +68,6 @@ export default function CollectionProductRail({
     setCanScrollRight(maximumScroll - currentScroll > 2);
   }, []);
 
-  const updateCardsPerView = useCallback((): void => {
-    const viewport = viewportRef.current;
-
-    if (!viewport) {
-      return;
-    }
-
-    const availableWidth = viewport.clientWidth;
-
-    if (availableWidth <= 0) {
-      return;
-    }
-
-    let nextCount = MOBILE_CARDS_PER_VIEW;
-
-    if (availableWidth >= DESKTOP_BREAKPOINT) {
-      nextCount = DESKTOP_CARDS_PER_VIEW;
-    } else if (availableWidth >= LAPTOP_BREAKPOINT) {
-      nextCount = LAPTOP_CARDS_PER_VIEW;
-    } else if (availableWidth >= TABLET_BREAKPOINT) {
-      nextCount = TABLET_CARDS_PER_VIEW;
-    }
-
-    setCardsPerView(current => (current === nextCount ? current : nextCount));
-  }, []);
-
   useEffect(() => {
     const viewport = viewportRef.current;
 
@@ -109,14 +75,11 @@ export default function CollectionProductRail({
       return;
     }
 
-    const updateRail = (): void => {
-      updateCardsPerView();
+    updateScrollState();
+
+    const resizeObserver = new ResizeObserver(() => {
       updateScrollState();
-    };
-
-    updateRail();
-
-    const resizeObserver = new ResizeObserver(updateRail);
+    });
 
     resizeObserver.observe(viewport);
 
@@ -129,25 +92,11 @@ export default function CollectionProductRail({
 
       viewport.removeEventListener('scroll', updateScrollState);
     };
-  }, [products.length, updateCardsPerView, updateScrollState]);
+  }, [products.length, updateScrollState]);
 
   if (products.length === 0) {
     return null;
   }
-
-  /*
-   * Do not shrink cards merely because a collection contains
-   * fewer products than the normal visible count.
-   *
-   * This preserves the same card dimensions across collections.
-   */
-  const visibleCardCount = cardsPerView;
-
-  const visibleGapCount = Math.max(Math.ceil(visibleCardCount) - 1, 0);
-
-  const occupiedGapSpace = CARD_GAP * visibleGapCount;
-
-  const productSlideWidth = `calc((100% - ${occupiedGapSpace}px) / ${visibleCardCount})`;
 
   const scrollRail = (direction: 'left' | 'right'): void => {
     const viewport = viewportRef.current;
@@ -156,11 +105,7 @@ export default function CollectionProductRail({
       return;
     }
 
-    const firstProduct = viewport.querySelector<HTMLElement>('[data-collection-product]');
-
-    const productWidth = firstProduct?.getBoundingClientRect().width ?? PREFERRED_CARD_WIDTH;
-
-    const distance = productWidth + CARD_GAP;
+    const distance = getProductRailScrollStep(viewport);
 
     viewport.scrollBy({
       left: direction === 'left' ? -distance : distance,
@@ -169,7 +114,7 @@ export default function CollectionProductRail({
     });
   };
 
-  const hasOverflow = products.length > Math.floor(cardsPerView);
+  const hasOverflow = canScrollLeft || canScrollRight;
 
   return (
     <div className="w-full min-w-0 max-w-full">
@@ -211,20 +156,13 @@ export default function CollectionProductRail({
           role="region"
           aria-label={`${title} products`}
           tabIndex={0}
-          data-cards-per-view={cardsPerView}
+          data-product-rail="experience"
           className={cn(
+            EXPERIENCE_PRODUCT_RAIL_CLASS,
+
             `
               relative z-0
-              flex w-full min-w-0
-              max-w-full items-stretch
-              gap-3
-              overflow-x-auto
-              overflow-y-hidden
-              overscroll-x-contain
-              snap-x snap-mandatory
-              scroll-smooth
-              pb-2
-              scrollbar-none
+              max-w-full
               focus-visible:outline-none
             `,
 
@@ -237,15 +175,9 @@ export default function CollectionProductRail({
               <div
                 key={product.id}
                 data-collection-product
+                data-experience-product-item
                 data-featured-product={featured || undefined}
-                className="
-                  min-w-0 shrink-0
-                  snap-start
-                "
-                style={{
-                  width: productSlideWidth,
-                  flexBasis: productSlideWidth
-                }}>
+                className={EXPERIENCE_PRODUCT_ITEM_CLASS}>
                 <ProductCard
                   product={product}
                   presentation={featured ? 'featured' : 'standard'}
