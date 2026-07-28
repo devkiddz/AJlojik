@@ -1,5 +1,9 @@
 'use client';
 
+import { StoreBannerModule } from '../modules/StoreBannerModule';
+import { StoreShowcaseModule } from '../modules/StoreShowcaseModule';
+import { StoreReelsModule } from '../modules/StoreReelsModule';
+
 import ProductExperienceBanner from '@/features/products/experience/ProductExperienceBanner';
 
 import type { FeedActions, FeedModule } from '../contracts';
@@ -27,6 +31,15 @@ type FeedModuleRendererProps = {
 
 export function FeedModuleRenderer({ module, actions }: FeedModuleRendererProps) {
   switch (module.type) {
+    case 'store-showcase':
+      return <StoreShowcaseModule module={module} actions={actions} />;
+
+    case 'store-banner':
+      return <StoreBannerModule module={module} actions={actions} />;
+
+    case 'store-reels':
+      return <StoreReelsModule module={module} actions={actions} />;
+
     case 'commerce-stories':
       return <CommerceStoriesModule module={module} actions={actions} />;
 

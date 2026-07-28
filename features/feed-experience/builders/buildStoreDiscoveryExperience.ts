@@ -23,6 +23,11 @@ import {
 } from '../selectors';
 
 import { commerceStories } from '@/features/commerce-stories/data';
+import { fallbackStoreBannerSlides } from '@/features/store-studio/data';
+import type {
+  CommerceStory,
+  CommerceStoryType
+} from '@/features/commerce-stories/contracts';
 import { buildShoppingJourneyItems } from './buildShoppingJourneyItems';
 
 // ============================================================
@@ -67,6 +72,12 @@ const MORE_DISCOVERY_PRODUCT_LIMIT = 12;
 const RECENT_PRODUCT_LIMIT = 8;
 const SPECIAL_PICK_PRODUCT_LIMIT = 8;
 const CATEGORY_SHELF_PRODUCT_LIMIT = 12;
+
+/**
+ * Temporary bridge while Store Studio campaign management is unfinished.
+ * Disable this once banners and Stories can be managed from the Studio admin.
+ */
+const ENABLE_STATIC_STORE_SHOWCASE_FALLBACK = true;
 
 const CATEGORY_SHELF_ORDER = [
   'wines',
@@ -232,26 +243,119 @@ export function buildStoreDiscoveryExperience(
   const contextDate = new Date(context.environment.now);
 
   // ============================================================
-  // COMMERCE STORIES RESOLUTION
+  // STORE STUDIO RESOLUTION
   // ============================================================
 
-  const activeCommerceStories = commerceStories
+  const storeStudio = context.storeStudio;
+
+  const storeBannerSlides =
+    storeStudio?.banners ?? [];
+
+  const projectedCommerceStories: CommerceStory[] =
+    (storeStudio?.stories ?? []).map(story => {
+      const storyType: CommerceStoryType =
+        story.productIds.length > 0
+          ? 'product'
+          : story.promotionId
+            ? 'promotion'
+            : story.collectionId
+              ? 'collection'
+              : 'announcement';
+
+      const actionType: CommerceStory['actionType'] =
+        story.productIds.length > 0
+          ? 'product'
+          : story.promotionId
+            ? 'promotion'
+            : story.collectionId
+              ? 'collection'
+              : 'none';
+
+      return {
+        id: story.id,
+        workspaceId: story.workspaceId,
+        vendorId: story.vendorId ?? undefined,
+        title: story.title,
+        label: story.label ?? undefined,
+        storyType,
+        mediaType: story.mediaType,
+        mediaUrl: story.mediaUrl,
+        coverUrl: story.coverUrl,
+        posterUrl: story.posterUrl ?? undefined,
+        actionType,
+        productIds:
+          story.productIds.length > 0
+            ? story.productIds
+            : undefined,
+        promotionId: story.promotionId ?? undefined,
+        collectionId: story.collectionId ?? undefined,
+        actionLabel: story.action?.label ?? undefined,
+        active: true,
+        priority: story.priority,
+        createdAt:
+          storeStudio?.generatedAt ??
+          context.environment.now,
+        updatedAt:
+          storeStudio?.generatedAt ??
+          context.environment.now
+      };
+    });
+
+  const fallbackCommerceStories = commerceStories
     .filter(story => {
       if (!story.active) {
         return false;
       }
 
-      if (story.startsAt && new Date(story.startsAt) > contextDate) {
+      if (
+        story.startsAt &&
+        new Date(story.startsAt) > contextDate
+      ) {
         return false;
       }
 
-      if (story.endsAt && new Date(story.endsAt) < contextDate) {
+      if (
+        story.endsAt &&
+        new Date(story.endsAt) < contextDate
+      ) {
         return false;
       }
 
       return true;
     })
-    .sort((firstStory, secondStory) => secondStory.priority - firstStory.priority);
+    .sort(
+      (firstStory, secondStory) =>
+        secondStory.priority - firstStory.priority
+    );
+
+  const storeReels =
+    [...(storeStudio?.reels ?? [])].sort(
+      (firstReel, secondReel) =>
+        secondReel.priority - firstReel.priority
+    );
+
+  const shouldUseStaticStoreShowcaseFallback =
+    ENABLE_STATIC_STORE_SHOWCASE_FALLBACK &&
+    projectedCommerceStories.length === 0 &&
+    storeBannerSlides.length === 0 &&
+    storeReels.length === 0;
+
+  const activeStoreBannerSlides =
+    storeBannerSlides.length > 0
+      ? storeBannerSlides
+      : shouldUseStaticStoreShowcaseFallback
+        ? fallbackStoreBannerSlides
+        : [];
+
+  const activeCommerceStories =
+    projectedCommerceStories.length > 0
+      ? [...projectedCommerceStories].sort(
+          (firstStory, secondStory) =>
+            secondStory.priority - firstStory.priority
+        )
+      : shouldUseStaticStoreShowcaseFallback
+        ? fallbackCommerceStories
+        : [];
 
   // ============================================================
   // CORE CATALOG RESOLUTION
@@ -645,22 +749,27 @@ export function buildStoreDiscoveryExperience(
 
   const candidates: ExperienceModuleCandidate[] = [
     // ----------------------------------------------------------
-    // 1. COMMERCE STORIES
+    // 1. STORE SHOWCASE
+    // Stories and banners remain independently governed by
+    // Store Studio, but are composed into one Store entrance.
     // ----------------------------------------------------------
     {
       module: {
-        id: 'store-commerce-stories',
-        type: 'commerce-stories',
-        priority: 100,
+        id: 'store-showcase',
+        type: 'store-showcase',
+        priority: 110,
         data: {
           title: 'Stories',
-          viewAllHref: '/store/stories',
-          stories: activeCommerceStories
+          storyViewAllHref: '/store/stories',
+          stories: activeCommerceStories,
+          banners: activeStoreBannerSlides
         }
       },
-      enabled: activeCommerceStories.length > 0,
+      enabled:
+        activeCommerceStories.length > 0 ||
+        activeStoreBannerSlides.length > 0,
       reason:
-        'Commerce Stories require at least one active image or video Story.'
+        'Store Showcase requires at least one active Story or Banner.'
     },
 
     // ----------------------------------------------------------
@@ -701,7 +810,25 @@ export function buildStoreDiscoveryExperience(
     },
 
     // ----------------------------------------------------------
-    // 4. PROMOTIONS
+    // 4. STORE REELS
+    // ----------------------------------------------------------
+    {
+      module: {
+        id: 'store-reels',
+        type: 'store-reels',
+        priority: 95,
+        data: {
+          title: 'Reels',
+          reels: storeReels
+        }
+      },
+      enabled: storeReels.length > 0,
+      reason:
+        'Store Reels require at least one active Store Studio video asset.'
+    },
+
+    // ----------------------------------------------------------
+    // 5. PROMOTIONS
     // ----------------------------------------------------------
     {
       module: {
@@ -719,7 +846,7 @@ export function buildStoreDiscoveryExperience(
     },
 
     // ----------------------------------------------------------
-    // 5. COLLECTIONS
+    // 6. COLLECTIONS
     // ----------------------------------------------------------
     {
       module: {
@@ -855,31 +982,7 @@ export function buildStoreDiscoveryExperience(
     context
   });
 
-  const STORE_MODULE_ORDER: Record<string, number> = {
-    'store-banner': 1100,
-    'commerce-stories': 1000,
-    'category-rail': 990,
-    'shopping-journey': 980
-  };
-
-  const modules = [...prioritization.modules].sort(
-    (firstModule, secondModule) => {
-      const firstPinnedPriority = STORE_MODULE_ORDER[firstModule.type];
-      const secondPinnedPriority = STORE_MODULE_ORDER[secondModule.type];
-
-      if (
-        firstPinnedPriority !== undefined ||
-        secondPinnedPriority !== undefined
-      ) {
-        return (
-          (secondPinnedPriority ?? secondModule.priority) -
-          (firstPinnedPriority ?? firstModule.priority)
-        );
-      }
-
-      return secondModule.priority - firstModule.priority;
-    }
-  );
+  const modules = prioritization.modules;
 
   // ============================================================
   // FINAL EXPERIENCE

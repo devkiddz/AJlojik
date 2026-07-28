@@ -8,7 +8,12 @@ import type {
 
 import type {
   CommerceStory
-} from '@/features/commerce-stories';
+} from '@/features/commerce-stories/contracts';
+
+import type {
+  StoreStudioBannerSlideProjection,
+  StoreStudioReelProjection
+} from '@/features/store-studio/contracts';
 
 // ============================================================
 // COLLECTION CONTRACTS
@@ -20,45 +25,43 @@ export type ResolvedCollectionSource = {
   featuredProduct?: ProductType;
 };
 
-export type StoreBannerSlide = {
-  id: string;
-
-  imageUrl: string;
-  mobileImageUrl?: string;
-
-  eyebrow?: string;
-  title: string;
-  description?: string;
-
-  actionLabel?: string;
-  actionHref?: string;
-
-  priority: number;
-};
-
 export type StoreBannerModuleDefinition = {
   id: string;
   type: 'store-banner';
   priority: number;
 
-  data:
-    | {
-        mode: 'image' | 'slider';
-        slides: StoreBannerSlide[];
-      }
-    | {
-        mode: 'video';
+  data: {
+    slides: StoreStudioBannerSlideProjection[];
+  };
+};
 
-        videoUrl: string;
-        posterUrl: string;
+/**
+ * Composes independently governed Store Studio Stories and Banners
+ * into one premium Store entrance surface. Campaign ownership,
+ * scheduling and placement remain separate in Store Studio.
+ */
+export type StoreShowcaseModuleDefinition = {
+  id: string;
+  type: 'store-showcase';
+  priority: number;
 
-        eyebrow?: string;
-        title: string;
-        description?: string;
+  data: {
+    title: string;
+    storyViewAllHref?: string;
+    stories: CommerceStory[];
+    banners: StoreStudioBannerSlideProjection[];
+  };
+};
 
-        actionLabel?: string;
-        actionHref?: string;
-      };
+export type StoreReelsModuleDefinition = {
+  id: string;
+  type: 'store-reels';
+  priority: number;
+
+  data: {
+    title: string;
+    reels: StoreStudioReelProjection[];
+  };
 };
 
 export type FeaturedProductResolutionSource =
@@ -483,13 +486,14 @@ export type ReviewsModuleDefinition = {
 // ============================================================
 
 export type FeedModule =
+  | StoreShowcaseModuleDefinition
   | StoreBannerModuleDefinition
+  | StoreReelsModuleDefinition
   | CommerceStoriesModuleDefinition
   | ProductExperienceBannerModule
   | ProductDetailsModuleDefinition
   | ReviewsModuleDefinition
   | CategoryRailModule
-  | CommerceStoriesModuleDefinition
   | CategoryExperienceModuleDefinition
   | PromotionModule
   | CollectionFeedModule

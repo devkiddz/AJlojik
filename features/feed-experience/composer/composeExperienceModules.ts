@@ -24,6 +24,21 @@ function hasRenderableData(
   module: FeedModule
 ): boolean {
   switch (module.type) {
+    case 'store-showcase':
+      return (
+        module.data.stories.length > 0 ||
+        module.data.banners.length > 0
+      );
+
+    case 'store-banner':
+      return module.data.slides.length > 0;
+
+    case 'commerce-stories':
+      return module.data.stories.length > 0;
+
+    case 'store-reels':
+      return module.data.reels.length > 0;
+
     case 'category-rail':
       return module.data.categories.length > 0;
 

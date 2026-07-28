@@ -53,7 +53,7 @@ export function resolveModulePrioritySignals({
         id: 'category-focus',
         score: 0,
         reason:
-          'Category navigation remains structurally fixed at the top.'
+          'Category navigation remains structurally fixed after the Store Showcase.'
       });
 
       break;

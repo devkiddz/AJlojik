@@ -15,18 +15,19 @@ datasource db {
 // ============================================================
 
 model User {
-  id                String    @id
-  name              String
-  email             String
-  emailVerified     Boolean   @default(false)
-  image             String?
-  tier              String?   @default("member")
-  accountState      String    @default("ACTIVE")
-  lockedUntil       DateTime?
-  restrictionReason String?
-  isGhostDeveloper  Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  storeStudioCampaigns StoreStudioCampaign[]
+  id                   String                @id
+  name                 String
+  email                String
+  emailVerified        Boolean               @default(false)
+  image                String?
+  tier                 String?               @default("member")
+  accountState         String                @default("ACTIVE")
+  lockedUntil          DateTime?
+  restrictionReason    String?
+  isGhostDeveloper     Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   sessions Session[]
   accounts Account[]
@@ -915,12 +916,13 @@ model Workspace {
   products      Product[]
   promotions    Promotion[]
 
-  staffProfiles    StaffProfile[]
-  approvalRequests AdminApprovalRequest[]
-  adminAuditEvents AdminAuditEvent[]
-  adminTodos       AdminTodo[]
-  deliveries       Delivery[]
-  storefrontHero   StorefrontHero?
+  staffProfiles        StaffProfile[]
+  approvalRequests     AdminApprovalRequest[]
+  adminAuditEvents     AdminAuditEvent[]
+  adminTodos           AdminTodo[]
+  deliveries           Delivery[]
+  storefrontHero       StorefrontHero?
+  storeStudioCampaigns StoreStudioCampaign[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1395,4 +1397,102 @@ model ExperienceHistoryEntry {
   @@index([userId, visitedAt])
   @@index([expiresAt])
   @@map("experience_history_entry")
+}
+
+enum StoreStudioCampaignType {
+  BANNER
+  STORY
+  REEL
+}
+
+enum StoreStudioCampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  EXPIRED
+  REJECTED
+}
+
+enum StoreStudioPlacementTier {
+  STANDARD
+  FEATURED
+  PREMIUM
+  SPONSORED
+}
+
+enum StoreStudioMediaType {
+  IMAGE
+  VIDEO
+}
+
+model StoreStudioCampaign {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  vendorId String?
+  vendor   User?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  type          StoreStudioCampaignType
+  status        StoreStudioCampaignStatus @default(DRAFT)
+  placementTier StoreStudioPlacementTier  @default(STANDARD)
+
+  title       String
+  description String?
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  requestedPriority Int     @default(0)
+  adminWeight       Int     @default(0)
+  active            Boolean @default(true)
+
+  assets StoreStudioAsset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, type, status, active])
+  @@index([vendorId])
+  @@index([startsAt, endsAt])
+}
+
+model StoreStudioAsset {
+  id String @id @default(cuid())
+
+  campaignId String
+  campaign   StoreStudioCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  mediaType StoreStudioMediaType
+
+  mediaUrl       String
+  mobileMediaUrl String?
+  coverUrl       String?
+  posterUrl      String?
+
+  eyebrow     String?
+  title       String?
+  description String?
+
+  actionLabel String?
+  actionHref  String?
+
+  productId    String?
+  promotionId  String?
+  collectionId String?
+
+  durationSeconds Int?
+  autoplay        Boolean @default(false)
+  muted           Boolean @default(true)
+  position        Int     @default(0)
+  active          Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId, position, active])
 }

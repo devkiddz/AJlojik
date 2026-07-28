@@ -5,6 +5,10 @@ import type {
   WorkspaceCommerceProjection
 } from '../runtime/commerceProjectionTypes';
 
+import type {
+  StoreStudioProjection
+} from '@/features/store-studio/contracts';
+
 export type FeedCatalogContext = {
   products: ProductType[];
   categories: CategoriesType;
@@ -50,6 +54,9 @@ export type FeedContext = {
    * commerce runtime.
    */
   commerce?: WorkspaceCommerceProjection;
+
+  /** Workspace-scoped promotional media resolved by Store Studio. */
+  storeStudio?: StoreStudioProjection;
 
   /**
    * Temporary legacy compatibility bridge.

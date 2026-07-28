@@ -17,13 +17,21 @@ const globalForPrisma = globalThis as unknown as {
   prismaSchemaVersion?: string;
 };
 
-const PRISMA_SCHEMA_VERSION = '20260720223000';
+const PRISMA_SCHEMA_VERSION = '20260728110000';
 
 function supportsCurrentSchema(client: PrismaClient | undefined, schemaVersion: string | undefined): client is PrismaClient {
   if (!client || schemaVersion !== PRISMA_SCHEMA_VERSION) return false;
 
-  return ['adminTodo', 'adminApprovalRequest', 'adminAuditEvent', 'delivery', 'staffProfile', 'storefrontHero']
-    .every(delegate => delegate in client);
+  return [
+  'adminTodo',
+  'adminApprovalRequest',
+  'adminAuditEvent',
+  'delivery',
+  'staffProfile',
+  'storefrontHero',
+  'storeStudioCampaign',
+  'storeStudioAsset'
+].every(delegate => delegate in client);
 }
 
 const cachedClient = globalForPrisma.prisma;

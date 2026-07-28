@@ -20,6 +20,7 @@ import { useCatalog } from '@/features/catalog';
 import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
+import { useStoreStudioProjection } from '@/features/store-studio/client';
 
 import { recordProductView } from '@/features/product-activity';
 
@@ -37,7 +38,16 @@ import { FeedExperienceProvider } from '../providers';
 import { FeedRenderer } from '../renderers';
 
 function FeedExperienceWorkspaceContent() {
-  const { activeWorkspace, loading: workspaceLoading, error: workspaceError } = useWorkspace();
+  const {
+    activeWorkspace,
+    loading: workspaceLoading,
+    error: workspaceError
+  } = useWorkspace();
+
+  const {
+    projection: storeStudio,
+    loading: storeStudioLoading
+  } = useStoreStudioProjection(activeWorkspace?.id);
   const { error } = useActionFeedback();
 
   const { user, isAuthenticated } = useIdentity();
@@ -202,6 +212,8 @@ function FeedExperienceWorkspaceContent() {
 
       activity: activeProfile.activity,
 
+      storeStudio: storeStudio ?? undefined,
+
       experience: {
         orders: activeProfile.orders,
 
@@ -221,7 +233,7 @@ function FeedExperienceWorkspaceContent() {
         now: new Date().toISOString()
       }
     }),
-    [activeProfile, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, wishlistProductIds]
+    [activeProfile, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, storeStudio, wishlistProductIds]
   );
 
   // ============================================================
@@ -288,7 +300,7 @@ function FeedExperienceWorkspaceContent() {
   // LOADING AND ERROR STATES
   // ============================================================
 
-  if (workspaceLoading || catalogLoading) {
+  if (workspaceLoading || catalogLoading || storeStudioLoading) {
     return (
       <div className="grid min-h-[50vh] place-items-center">
         <div className="flex flex-col items-center gap-3">

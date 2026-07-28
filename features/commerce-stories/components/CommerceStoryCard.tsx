@@ -1,59 +1,64 @@
 'use client';
 
 import Image from 'next/image';
-
 import { Play } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-
 import type { CommerceStory } from '../contracts';
 
 type CommerceStoryCardProps = {
   story: CommerceStory;
   viewed: boolean;
   emphasized?: boolean;
-
+  showLabel?: boolean;
+  compact?: boolean;
   onOpen: (story: CommerceStory) => void;
 };
 
-export function CommerceStoryCard({ story, viewed, emphasized = false, onOpen }: CommerceStoryCardProps) {
+export function CommerceStoryCard({
+  story,
+  viewed,
+  emphasized = false,
+  showLabel = true,
+  compact = false,
+  onOpen
+}: CommerceStoryCardProps) {
   return (
     <button
       type="button"
       onClick={() => onOpen(story)}
       aria-label={`Open ${story.title}`}
-      className="
-        group w-[4.5rem] shrink-0
-        snap-start text-left
-        sm:w-20
-      ">
+      className={cn(
+        `
+          group shrink-0 snap-start
+          text-left sm:w-20
+        `,
+        compact ? 'w-14' : 'w-[4.5rem]',
+        !showLabel && 'drop-shadow-md'
+      )}>
       <span
         className={cn(
           `
-            relative block aspect-square
-            rounded-full p-[3px]
+            relative isolate block aspect-square
+            rounded-full
             transition duration-300
             group-hover:scale-[1.04]
           `,
-
+          compact ? 'p-0.5 sm:p-[3px]' : 'p-[3px]',
           viewed
-            ? 'bg-muted-foreground/25'
-            : `
-                bg-gradient-to-tr
-                from-amber-400
-                via-rose-500
-                to-fuchsia-500
-              `
+            ? 'bg-border'
+            : 'bg-gradient-to-tr from-yellow-500 via-amber-600 to-emerald-500'
         )}>
         {!viewed && emphasized ? (
           <span
             aria-hidden="true"
             className="
               pointer-events-none
-              absolute inset-0
-              animate-ping rounded-full
-              border border-primary/30
-              opacity-20
+              absolute -inset-1
+              -z-10 motion-safe:animate-pulse
+              rounded-full bg-gradient-to-tr
+              from-yellow-500 via-amber-600 to-emerald-500
+              opacity-30 blur-sm
             "
           />
         ) : null}
@@ -102,18 +107,18 @@ export function CommerceStoryCard({ story, viewed, emphasized = false, onOpen }:
         </span>
       </span>
 
-      <span
-        className={cn(
-          `
-            mt-1.5 block truncate
-            text-center text-[10px]
-            font-medium tracking-tight
-          `,
-
-          viewed ? 'text-muted-foreground' : 'text-foreground'
-        )}>
-        {story.title}
-      </span>
+      {showLabel ? (
+        <span
+          className={cn(
+            `
+              mt-1.5 block truncate
+              text-center text-[10px]
+            `,
+            viewed ? 'text-muted-foreground' : 'text-foreground'
+          )}>
+          {story.title}
+        </span>
+      ) : null}
     </button>
   );
 }

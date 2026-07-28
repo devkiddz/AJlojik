@@ -17,6 +17,22 @@ type IndexedFeedModule = {
   originalIndex: number;
 };
 
+/**
+ * Store discovery has a deliberate entrance sequence that must not be
+ * displaced by contextual scoring. Missing modules simply collapse out
+ * of the sequence while the remaining structural modules keep their order.
+ */
+const STRUCTURAL_MODULE_ORDER = new Map<string, number>([
+  ['store-showcase', 0],
+  ['store-category-rail', 1],
+  ['shopping-journey', 2],
+  ['store-reels', 3]
+]);
+
+function getStructuralOrder(module: FeedModule): number | null {
+  return STRUCTURAL_MODULE_ORDER.get(module.id) ?? null;
+}
+
 function getFinalPriority(
   module: FeedModule,
   priorityMap: Map<
@@ -36,8 +52,8 @@ function getFinalPriority(
  *
  * Rules:
  *
- * 1. Category Rail remains pinned to the beginning.
- * 2. Higher contextual priority appears first.
+ * 1. Store Showcase → Categories → Shopping Journey → Store Reels.
+ * 2. Higher contextual priority appears first for remaining modules.
  * 3. Higher base priority resolves contextual ties.
  * 4. Original builder order resolves final ties.
  */
@@ -49,30 +65,25 @@ function compareModules(
     ExperiencePriorityResult
   >
 ): number {
-  const firstIsCategoryRail =
-    first.module.type ===
-    'category-rail';
+  const firstStructuralOrder =
+    getStructuralOrder(first.module);
 
-  const secondIsCategoryRail =
-    second.module.type ===
-    'category-rail';
+  const secondStructuralOrder =
+    getStructuralOrder(second.module);
 
   if (
-    firstIsCategoryRail &&
-    secondIsCategoryRail
+    firstStructuralOrder !== null ||
+    secondStructuralOrder !== null
   ) {
-    return (
-      first.originalIndex -
-      second.originalIndex
-    );
-  }
+    if (firstStructuralOrder === null) {
+      return 1;
+    }
 
-  if (firstIsCategoryRail) {
-    return -1;
-  }
+    if (secondStructuralOrder === null) {
+      return -1;
+    }
 
-  if (secondIsCategoryRail) {
-    return 1;
+    return firstStructuralOrder - secondStructuralOrder;
   }
 
   const finalPriorityDifference =

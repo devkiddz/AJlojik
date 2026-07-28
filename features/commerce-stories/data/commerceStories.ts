@@ -52,7 +52,7 @@ export const commerceStories: CommerceStory[] = [
     mediaType: 'image',
 
     mediaUrl:
-      '/stories/weekend-offer.webp',
+      '/stories/red-wine-pool.mp4',
 
     coverUrl:
       '/stories/covers/weekend-offer.webp',

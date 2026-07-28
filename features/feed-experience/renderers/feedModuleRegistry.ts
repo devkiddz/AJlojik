@@ -13,6 +13,9 @@ import type {
   PromotionModule as PromotionModuleType,
   RecentlyViewedModule as RecentlyViewedModuleType,
   ShoppingJourneyModuleDefinition as ShoppingJourneyModuleType,
+  StoreBannerModuleDefinition as StoreBannerModuleType,
+  StoreShowcaseModuleDefinition as StoreShowcaseModuleType,
+  StoreReelsModuleDefinition as StoreReelsModuleType,
   FeedActions
 } from '../contracts';
 
@@ -28,6 +31,10 @@ import {
   ShoppingJourneyModule
 } from '../modules';
 
+import { StoreBannerModule } from '../modules/StoreBannerModule';
+import { StoreShowcaseModule } from '../modules/StoreShowcaseModule';
+import { StoreReelsModule } from '../modules/StoreReelsModule';
+
 import {
   CategoryProductExperienceSection
 } from '../modules/category-product-experience';
@@ -38,6 +45,18 @@ type ModuleComponentProps<TModule> = {
 };
 
 export type FeedModuleRegistry = {
+  'store-showcase': ComponentType<
+    ModuleComponentProps<StoreShowcaseModuleType>
+  >;
+
+  'store-banner': ComponentType<
+    ModuleComponentProps<StoreBannerModuleType>
+  >;
+
+  'store-reels': ComponentType<
+    ModuleComponentProps<StoreReelsModuleType>
+  >;
+
   'category-rail': ComponentType<
     ModuleComponentProps<
       CategoryRailModuleType
@@ -101,6 +120,15 @@ export type FeedModuleRegistry = {
 
 export const feedModuleRegistry:
   FeedModuleRegistry = {
+    'store-showcase':
+      StoreShowcaseModule,
+
+    'store-banner':
+      StoreBannerModule,
+
+    'store-reels':
+      StoreReelsModule,
+
     'category-rail':
       CategoryRailModule,
 
