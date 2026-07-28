@@ -5,6 +5,7 @@ import type {
 import type {
   CategoryExperienceModuleDefinition as CategoryExperienceModuleType,
   CategoryRailModule as CategoryRailModuleType,
+  CommerceStoriesModuleDefinition as CommerceStoriesModuleType,
   CollectionFeedModule as CollectionFeedModuleType,
   FeaturedProductsModule as FeaturedProductsModuleType,
   ProductGridModule as ProductGridModuleType,
@@ -18,6 +19,7 @@ import type {
 import {
   CategoryExperienceModule,
   CategoryRailModule,
+  CommerceStoriesModule,
   CollectionFeedModule,
   ProductGridModule,
   ProductRailModule,
@@ -39,6 +41,12 @@ export type FeedModuleRegistry = {
   'category-rail': ComponentType<
     ModuleComponentProps<
       CategoryRailModuleType
+    >
+  >;
+
+  'commerce-stories': ComponentType<
+    ModuleComponentProps<
+      CommerceStoriesModuleType
     >
   >;
 
@@ -95,6 +103,9 @@ export const feedModuleRegistry:
   FeedModuleRegistry = {
     'category-rail':
       CategoryRailModule,
+
+    'commerce-stories':
+      CommerceStoriesModule,
 
     'category-experience':
       CategoryExperienceModule,

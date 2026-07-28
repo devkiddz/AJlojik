@@ -6,6 +6,10 @@ import type {
   ProductType
 } from '@/types/types';
 
+import type {
+  CommerceStory
+} from '@/features/commerce-stories';
+
 // ============================================================
 // COLLECTION CONTRACTS
 // ============================================================
@@ -14,6 +18,47 @@ export type ResolvedCollectionSource = {
   collection: CollectionType;
   products: ProductType[];
   featuredProduct?: ProductType;
+};
+
+export type StoreBannerSlide = {
+  id: string;
+
+  imageUrl: string;
+  mobileImageUrl?: string;
+
+  eyebrow?: string;
+  title: string;
+  description?: string;
+
+  actionLabel?: string;
+  actionHref?: string;
+
+  priority: number;
+};
+
+export type StoreBannerModuleDefinition = {
+  id: string;
+  type: 'store-banner';
+  priority: number;
+
+  data:
+    | {
+        mode: 'image' | 'slider';
+        slides: StoreBannerSlide[];
+      }
+    | {
+        mode: 'video';
+
+        videoUrl: string;
+        posterUrl: string;
+
+        eyebrow?: string;
+        title: string;
+        description?: string;
+
+        actionLabel?: string;
+        actionHref?: string;
+      };
 };
 
 export type FeaturedProductResolutionSource =
@@ -208,6 +253,24 @@ export type ShoppingJourneyItem = {
         type: 'store-discovery';
         categorySlug?: string;
       };
+};
+
+
+// ============================================================
+// COMMERCE STORY MODULE
+// ============================================================
+
+export type CommerceStoriesModuleDefinition = {
+  id: string;
+  type: 'commerce-stories';
+  priority: number;
+
+  data: {
+    title: string;
+    viewAllHref?: string;
+
+    stories: CommerceStory[];
+  };
 };
 
 export type ShoppingJourneyModuleDefinition = {
@@ -420,10 +483,13 @@ export type ReviewsModuleDefinition = {
 // ============================================================
 
 export type FeedModule =
+  | StoreBannerModuleDefinition
+  | CommerceStoriesModuleDefinition
   | ProductExperienceBannerModule
   | ProductDetailsModuleDefinition
   | ReviewsModuleDefinition
   | CategoryRailModule
+  | CommerceStoriesModuleDefinition
   | CategoryExperienceModuleDefinition
   | PromotionModule
   | CollectionFeedModule

@@ -8,6 +8,7 @@ import {
   CategoryExperienceModule,
   CategoryRailModule,
   CollectionFeedModule,
+  CommerceStoriesModule,
   ProductGridModule,
   ProductRailModule,
   PromotionModule,
@@ -26,6 +27,9 @@ type FeedModuleRendererProps = {
 
 export function FeedModuleRenderer({ module, actions }: FeedModuleRendererProps) {
   switch (module.type) {
+    case 'commerce-stories':
+      return <CommerceStoriesModule module={module} actions={actions} />;
+
     case 'category-rail':
       return <CategoryRailModule module={module} actions={actions} />;
 

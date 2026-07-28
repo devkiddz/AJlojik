@@ -1,5 +1,6 @@
 export * from './CategoryRailModule';
 export * from './CategoryExperienceModule';
+export * from './CommerceStoriesModule';
 export * from './PromotionModule';
 export * from './CollectionFeedModule';
 export * from './FeaturedProductsModule';
