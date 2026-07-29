@@ -1,32 +1,48 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  Pause,
+  Play,
+  Volume2,
+  VolumeX,
+  X
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle
+} from '@/components/ui/dialog';
 import type { FeedActions } from '@/features/feed-experience/contracts';
 
 import type { CommerceStory } from '../contracts';
 
 type CommerceStoryViewerProps = {
   stories: CommerceStory[];
-
   activeStoryId: string | null;
-
   actions: FeedActions;
-
   onActiveStoryChange: (storyId: string) => void;
-
   onViewed: (storyId: string) => void;
-
   onClose: () => void;
 };
+
+const DEFAULT_IMAGE_DURATION_MS = 5_000;
+const PROGRESS_INTERVAL_MS = 50;
 
 export function CommerceStoryViewer({
   stories,
@@ -36,11 +52,14 @@ export function CommerceStoryViewer({
   onViewed,
   onClose
 }: CommerceStoryViewerProps) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const imageElapsedRef = useRef(0);
 
   const [muted, setMuted] = useState(true);
-
   const [playing, setPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [mediaFailed, setMediaFailed] = useState(false);
 
   const activeIndex = useMemo(
     () => stories.findIndex(story => story.id === activeStoryId),
@@ -48,9 +67,7 @@ export function CommerceStoryViewer({
   );
 
   const activeStory = activeIndex >= 0 ? stories[activeIndex] : null;
-
   const canMovePrevious = activeIndex > 0;
-
   const canMoveNext = activeIndex >= 0 && activeIndex < stories.length - 1;
 
   const movePrevious = useCallback(() => {
@@ -68,7 +85,6 @@ export function CommerceStoryViewer({
   const moveNext = useCallback(() => {
     if (!canMoveNext) {
       onClose();
-
       return;
     }
 
@@ -85,9 +101,76 @@ export function CommerceStoryViewer({
     }
 
     onViewed(activeStory.id);
-
+    imageElapsedRef.current = 0;
+    setProgress(0);
+    setMediaFailed(false);
     setPlaying(true);
   }, [activeStory, onViewed]);
+
+  useEffect(() => {
+    if (
+      !activeStory ||
+      activeStory.mediaType !== 'image' ||
+      !playing ||
+      mediaFailed
+    ) {
+      return;
+    }
+
+    const durationMs = Math.max(
+      1_000,
+      activeStory.durationMs ?? DEFAULT_IMAGE_DURATION_MS
+    );
+
+    const interval = window.setInterval(() => {
+      imageElapsedRef.current += PROGRESS_INTERVAL_MS;
+
+      const nextProgress = Math.min(
+        100,
+        (imageElapsedRef.current / durationMs) * 100
+      );
+
+      setProgress(nextProgress);
+
+      if (nextProgress >= 100) {
+        window.clearInterval(interval);
+        moveNext();
+      }
+    }, PROGRESS_INTERVAL_MS);
+
+    return () => window.clearInterval(interval);
+  }, [activeStory, mediaFailed, moveNext, playing]);
+
+  const togglePlayback = useCallback(async (): Promise<void> => {
+    if (!activeStory) {
+      return;
+    }
+
+    if (activeStory.mediaType === 'image') {
+      setPlaying(current => !current);
+      return;
+    }
+
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    if (video.paused) {
+      try {
+        await video.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+      }
+
+      return;
+    }
+
+    video.pause();
+    setPlaying(false);
+  }, [activeStory]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -102,40 +185,36 @@ export function CommerceStoryViewer({
       if (event.key === 'Escape') {
         onClose();
       }
+
+      if (event.key === ' ') {
+        event.preventDefault();
+        void togglePlayback();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [moveNext, movePrevious, onClose]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [moveNext, movePrevious, onClose, togglePlayback]);
 
-  const togglePlayback = async () => {
-    const video = videoRef.current;
-
-    if (!video) {
-      return;
-    }
-
-    if (video.paused) {
-      try {
-        await video.play();
-
-        setPlaying(true);
-      } catch {
-        setPlaying(false);
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        return;
       }
 
-      return;
-    }
+      videoRef.current?.pause();
+      setPlaying(false);
+    };
 
-    video.pause();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    setPlaying(false);
-  };
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
-  const handlePrimaryAction = () => {
+  const handlePrimaryAction = (): void => {
     if (!activeStory) {
       return;
     }
@@ -152,20 +231,29 @@ export function CommerceStoryViewer({
           type: 'product',
           productId
         });
-
         onClose();
-
         return;
       }
 
-      case 'promotion':
-        if (activeStory.promotionId && actions.previewPromotion) {
-          actions.previewPromotion(activeStory.promotionId);
+      case 'promotion': {
+        if (!activeStory.promotionId) {
+          return;
         }
 
-        return;
+        if (actions.previewPromotion) {
+          actions.previewPromotion(activeStory.promotionId);
+        } else {
+          actions.openExperience({
+            type: 'promotion',
+            promotionId: activeStory.promotionId
+          });
+        }
 
-      case 'collection':
+        onClose();
+        return;
+      }
+
+      case 'collection': {
         if (!activeStory.collectionId) {
           return;
         }
@@ -174,12 +262,20 @@ export function CommerceStoryViewer({
           type: 'collection',
           collectionId: activeStory.collectionId
         });
-
         onClose();
-
         return;
+      }
 
-      case 'vendor':
+      case 'vendor': {
+        if (!activeStory.actionHref) {
+          return;
+        }
+
+        router.push(activeStory.actionHref);
+        onClose();
+        return;
+      }
+
       case 'none':
         return;
     }
@@ -194,61 +290,41 @@ export function CommerceStoryViewer({
         }
       }}>
       <DialogContent
-        className="
-          h-[100dvh] max-h-none
-          w-screen max-w-none
-          overflow-hidden rounded-none
-          border-0 bg-black p-0
-          sm:h-[min(92dvh,52rem)]
-          sm:w-[min(92vw,30rem)]
-          sm:rounded-3xl
-        ">
-        <DialogTitle className="sr-only">{activeStory?.title ?? 'Commerce Story'}</DialogTitle>
+        className="h-[100dvh] max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-black p-0 sm:h-[min(92dvh,52rem)] sm:w-[min(92vw,30rem)] sm:rounded-3xl">
+        <DialogTitle className="sr-only">
+          {activeStory?.title ?? 'Commerce Story'}
+        </DialogTitle>
 
         {activeStory ? (
           <div className="relative size-full bg-black">
-            <div
-              className="
-                absolute left-3 right-3 top-3
-                z-30 flex gap-1
-              ">
+            <div className="absolute left-3 right-3 top-3 z-30 flex gap-1">
               {stories.map((story, index) => (
                 <span
                   key={story.id}
-                  className="
-                      h-0.5 flex-1
-                      overflow-hidden rounded-full
-                      bg-white/30
-                    ">
+                  className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
                   <span
-                    className={index <= activeIndex ? 'block h-full w-full bg-white' : 'block h-full w-0'}
+                    className="block h-full bg-white transition-[width] duration-75"
+                    style={{
+                      width:
+                        index < activeIndex
+                          ? '100%'
+                          : index === activeIndex
+                            ? `${progress}%`
+                            : '0%'
+                    }}
                   />
                 </span>
               ))}
             </div>
 
-            <div
-              className="
-                absolute left-3 right-3 top-6
-                z-30 flex items-center
-                justify-between
-              ">
+            <div className="absolute left-3 right-3 top-6 z-30 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p
-                  className="
-                    truncate text-sm
-                    font-semibold text-white
-                    drop-shadow-md
-                  ">
+                <p className="truncate text-sm font-semibold text-white drop-shadow-md">
                   {activeStory.title}
                 </p>
 
                 {activeStory.label ? (
-                  <p
-                    className="
-                      mt-0.5 truncate
-                      text-[11px] text-white/70
-                    ">
+                  <p className="mt-0.5 truncate text-[11px] text-white/70">
                     {activeStory.label}
                   </p>
                 ) : null}
@@ -260,18 +336,23 @@ export function CommerceStoryViewer({
                 size="icon"
                 onClick={onClose}
                 aria-label="Close Story"
-                className="
-                  size-9 rounded-full
-                  bg-black/25 text-white
-                  hover:bg-black/45
-                  hover:text-white
-                ">
+                className="size-9 rounded-full bg-black/25 text-white hover:bg-black/45 hover:text-white">
                 <X className="size-4" />
               </Button>
             </div>
 
             <div className="absolute inset-0">
-              {activeStory.mediaType === 'video' ? (
+              {mediaFailed ? (
+                <div className="grid size-full place-items-center bg-gradient-to-br from-zinc-950 via-amber-950 to-emerald-950 px-8 text-center text-white">
+                  <div>
+                    <CircleAlert className="mx-auto size-10 text-white/35" />
+                    <p className="mt-4 text-sm font-bold">Story media unavailable</p>
+                    <p className="mt-2 text-xs leading-5 text-white/55">
+                      The campaign destination remains available below.
+                    </p>
+                  </div>
+                </div>
+              ) : activeStory.mediaType === 'video' ? (
                 <video
                   key={activeStory.id}
                   ref={videoRef}
@@ -283,10 +364,20 @@ export function CommerceStoryViewer({
                   onEnded={moveNext}
                   onPlay={() => setPlaying(true)}
                   onPause={() => setPlaying(false)}
-                  className="
-                    size-full object-contain
-                    sm:object-cover
-                  "
+                  onError={() => {
+                    setMediaFailed(true);
+                    setPlaying(false);
+                  }}
+                  onTimeUpdate={event => {
+                    const video = event.currentTarget;
+
+                    if (Number.isFinite(video.duration) && video.duration > 0) {
+                      setProgress(
+                        Math.min(100, (video.currentTime / video.duration) * 100)
+                      );
+                    }
+                  }}
+                  className="size-full object-contain sm:object-cover"
                 />
               ) : (
                 <Image
@@ -296,87 +387,64 @@ export function CommerceStoryViewer({
                   fill
                   priority
                   sizes="(max-width: 640px) 100vw, 480px"
+                  onError={() => {
+                    setMediaFailed(true);
+                    setPlaying(false);
+                  }}
                   className="object-contain sm:object-cover"
                 />
               )}
             </div>
 
-            <div
-              className="
-                pointer-events-none
-                absolute inset-0
-                bg-gradient-to-b
-                from-black/45
-                via-transparent
-                to-black/70
-              "
-            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" />
 
             <button
               type="button"
               aria-label="Previous Story"
               onClick={movePrevious}
               disabled={!canMovePrevious}
-              className="
-                absolute inset-y-20 left-0
-                z-20 w-1/3
-                disabled:cursor-default
-              "
+              className="absolute inset-y-20 left-0 z-20 w-1/3 disabled:cursor-default"
             />
 
             <button
               type="button"
               aria-label="Next Story"
               onClick={moveNext}
-              className="
-                absolute inset-y-20 right-0
-                z-20 w-1/3
-              "
+              className="absolute inset-y-20 right-0 z-20 w-1/3"
             />
 
-            <div
-              className="
-                absolute bottom-4 left-4 right-4
-                z-30 flex items-end
-                justify-between gap-3
-              ">
+            <div className="absolute bottom-4 left-4 right-4 z-30 flex items-end justify-between gap-3">
               <div className="flex items-center gap-2">
-                {activeStory.mediaType === 'video' ? (
-                  <>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      onClick={() => void togglePlayback()}
-                      aria-label={playing ? 'Pause Story' : 'Play Story'}
-                      className="
-                        size-9 rounded-full
-                        border border-white/15
-                        bg-black/35 text-white
-                        backdrop-blur-md
-                        hover:bg-black/55
-                        hover:text-white
-                      ">
-                      {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-                    </Button>
+                {!mediaFailed ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => void togglePlayback()}
+                    aria-label={playing ? 'Pause Story' : 'Play Story'}
+                    className="size-9 rounded-full border border-white/15 bg-black/35 text-white backdrop-blur-md hover:bg-black/55 hover:text-white">
+                    {playing ? (
+                      <Pause className="size-4" />
+                    ) : (
+                      <Play className="size-4" />
+                    )}
+                  </Button>
+                ) : null}
 
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      onClick={() => setMuted(currentMuted => !currentMuted)}
-                      aria-label={muted ? 'Unmute Story' : 'Mute Story'}
-                      className="
-                        size-9 rounded-full
-                        border border-white/15
-                        bg-black/35 text-white
-                        backdrop-blur-md
-                        hover:bg-black/55
-                        hover:text-white
-                      ">
-                      {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-                    </Button>
-                  </>
+                {activeStory.mediaType === 'video' && !mediaFailed ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => setMuted(currentMuted => !currentMuted)}
+                    aria-label={muted ? 'Unmute Story' : 'Mute Story'}
+                    className="size-9 rounded-full border border-white/15 bg-black/35 text-white backdrop-blur-md hover:bg-black/55 hover:text-white">
+                    {muted ? (
+                      <VolumeX className="size-4" />
+                    ) : (
+                      <Volume2 className="size-4" />
+                    )}
+                  </Button>
                 ) : null}
               </div>
 
@@ -388,14 +456,7 @@ export function CommerceStoryViewer({
                   disabled={!canMovePrevious}
                   onClick={movePrevious}
                   aria-label="Previous Story"
-                  className="
-                    hidden size-9 rounded-full
-                    bg-white/15 text-white
-                    backdrop-blur-md
-                    hover:bg-white/25
-                    hover:text-white
-                    sm:inline-flex
-                  ">
+                  className="hidden size-9 rounded-full bg-white/15 text-white backdrop-blur-md hover:bg-white/25 hover:text-white sm:inline-flex">
                   <ChevronLeft className="size-4" />
                 </Button>
 
@@ -403,10 +464,7 @@ export function CommerceStoryViewer({
                   <Button
                     type="button"
                     onClick={handlePrimaryAction}
-                    className="
-                      rounded-full px-5
-                      text-xs font-semibold
-                    ">
+                    className="rounded-full px-5 text-xs font-semibold">
                     {activeStory.actionLabel ?? 'Discover'}
                   </Button>
                 ) : null}
@@ -417,14 +475,7 @@ export function CommerceStoryViewer({
                   variant="secondary"
                   onClick={moveNext}
                   aria-label="Next Story"
-                  className="
-                    hidden size-9 rounded-full
-                    bg-white/15 text-white
-                    backdrop-blur-md
-                    hover:bg-white/25
-                    hover:text-white
-                    sm:inline-flex
-                  ">
+                  className="hidden size-9 rounded-full bg-white/15 text-white backdrop-blur-md hover:bg-white/25 hover:text-white sm:inline-flex">
                   <ChevronRight className="size-4" />
                 </Button>
               </div>

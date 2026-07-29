@@ -9,6 +9,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { ProductCard } from '@/features/products/cards';
+import {
+  EXPERIENCE_PRODUCT_ITEM_CLASS,
+  EXPERIENCE_PRODUCT_RAIL_CLASS,
+  getProductRailScrollStep
+} from '@/features/products/productRailPresentation';
+import { cn } from '@/lib/utils';
 
 import type { CategoryExperienceModuleDefinition, FeedActions } from '../contracts';
 
@@ -38,9 +44,10 @@ export function CategoryExperienceModule({ module, actions }: CategoryExperience
       return;
     }
 
-    rail.scrollBy({
-      left: direction === 'left' ? -rail.clientWidth * 0.8 : rail.clientWidth * 0.8,
+    const distance = getProductRailScrollStep(rail);
 
+    rail.scrollBy({
+      left: direction === 'left' ? -distance : distance,
       behavior: 'smooth'
     });
   };
@@ -241,27 +248,13 @@ export function CategoryExperienceModule({ module, actions }: CategoryExperience
           ref={railRef}
           role="region"
           aria-label={`${title} products`}
-          className="
-            flex min-w-0
-            snap-x snap-mandatory
-            items-stretch gap-3
-            overflow-x-auto
-            overscroll-x-contain
-            scroll-smooth
-            pb-2
-            scrollbar-none
-          ">
+          className={cn(EXPERIENCE_PRODUCT_RAIL_CLASS, 'pb-2')}>
           {products.map(product => (
             <div
               key={product.id}
               data-category-product-slide
-              className="
-                  min-w-0 shrink-0
-                  basis-[calc((100%-1.5rem)/3)]
-                  snap-start
-                  sm:basis-40
-                  md:basis-44
-                ">
+              data-experience-product-item
+              className={EXPERIENCE_PRODUCT_ITEM_CLASS}>
               <ProductCard
                 product={product}
                 onPreview={actions.previewProduct}

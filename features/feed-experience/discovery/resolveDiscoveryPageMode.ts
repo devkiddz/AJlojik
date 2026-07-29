@@ -41,6 +41,45 @@ function matchesAccountRoute(
  */
 export const coreDiscoveryRouteRules: DiscoveryRouteRule[] = [
   {
+    matches: pathname => pathname === '/',
+    pageMode: 'home'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/products'),
+    pageMode: 'product'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/promos'),
+    pageMode: 'promotion'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/reels'),
+    pageMode: 'reel'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/discover'),
+    pageMode: 'discover'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/ai'),
+    pageMode: 'ai'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/payments'),
+    pageMode: 'checkout'
+  },
+  {
+    matches: pathname =>
+      matchesRoute(pathname, '/membership'),
+    pageMode: 'rewards'
+  },
+  {
     matches: pathname =>
       matchesRoute(
         pathname,

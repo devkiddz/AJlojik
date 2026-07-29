@@ -3,6 +3,7 @@ import { Suspense, type ReactNode } from 'react';
 import FooterComponent from '@/components/FooterComponent';
 import NavbarComponent from '@/components/Navbar';
 
+import CustomerExperienceShell from '@/components/layout/CustomerExperienceShell';
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -29,7 +30,9 @@ export default function ApplicationShell({ children }: ApplicationShellProps) {
           </header>
 
           <main className="flex min-w-0 flex-1 flex-col">
-            <MobileApplicationShell>{children}</MobileApplicationShell>
+            <MobileApplicationShell>
+              <CustomerExperienceShell>{children}</CustomerExperienceShell>
+            </MobileApplicationShell>
           </main>
 
           <FooterComponent brandName="AJ" brandSlug="Logik" />

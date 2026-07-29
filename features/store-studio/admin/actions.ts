@@ -11,8 +11,10 @@ type ProductReelDraft = {
   productId: string;
   title: string;
   caption: string;
-  videoUrl: string;
-  posterUrl: string;
+  videoMediaAssetId: string;
+  posterMediaAssetId: string;
+  externalVideoUrl: string;
+  externalPosterUrl: string;
   autoplay: boolean;
 };
 
@@ -66,8 +68,10 @@ function parseDrafts(formData: FormData): ProductReelDraft[] {
         productId: String(record.productId ?? '').trim(),
         title: String(record.title ?? '').trim(),
         caption: String(record.caption ?? '').trim(),
-        videoUrl: String(record.videoUrl ?? '').trim(),
-        posterUrl: String(record.posterUrl ?? '').trim(),
+        videoMediaAssetId: String(record.videoMediaAssetId ?? '').trim(),
+        posterMediaAssetId: String(record.posterMediaAssetId ?? '').trim(),
+        externalVideoUrl: String(record.externalVideoUrl ?? '').trim(),
+        externalPosterUrl: String(record.externalPosterUrl ?? '').trim(),
         autoplay: record.autoplay !== false
       } satisfies ProductReelDraft;
     })
@@ -86,24 +90,31 @@ function parseDrafts(formData: FormData): ProductReelDraft[] {
   const productIds = new Set<string>();
 
   for (const draft of drafts) {
-    if (!draft.productId || !draft.title || !draft.videoUrl) {
+    if (
+      !draft.productId ||
+      !draft.title ||
+      (!draft.videoMediaAssetId && !draft.externalVideoUrl)
+    ) {
       throw new Error(
-        'Every Reel requires a product, title, and video URL.'
-      );
-    }
-
-    if (!isMediaReference(draft.videoUrl)) {
-      throw new Error(
-        `The video URL for “${draft.title}” is invalid.`
+        'Every Reel requires a product, title, and Media Studio video.'
       );
     }
 
     if (
-      draft.posterUrl &&
-      !isMediaReference(draft.posterUrl)
+      draft.externalVideoUrl &&
+      !isMediaReference(draft.externalVideoUrl)
     ) {
       throw new Error(
-        `The poster URL for “${draft.title}” is invalid.`
+        `The external video URL for “${draft.title}” is invalid.`
+      );
+    }
+
+    if (
+      draft.externalPosterUrl &&
+      !isMediaReference(draft.externalPosterUrl)
+    ) {
+      throw new Error(
+        `The external poster URL for “${draft.title}” is invalid.`
       );
     }
 
@@ -122,22 +133,37 @@ function parseDrafts(formData: FormData): ProductReelDraft[] {
 export async function createProductReels(
   formData: FormData
 ): Promise<CreateProductReelsResult> {
-  const access = await requireAdminPermission(
-    'approval:review'
-  );
-
+  const access = await requireAdminPermission('approval:review');
+  const workspaceId = access.membership.workspaceId;
   const drafts = parseDrafts(formData);
   const requestedTitle = String(
     formData.get('campaignTitle') ?? ''
   ).trim();
 
+  const multivendorEnabled =
+    access.membership.workspace.commerceMode === 'MULTI_VENDOR';
+
   const products = await prisma.product.findMany({
     where: {
-      workspaceId: access.membership.workspaceId,
+      workspaceId,
       active: true,
+      status: 'PUBLISHED' as const,
       id: {
         in: drafts.map(draft => draft.productId)
-      }
+      },
+      ...(multivendorEnabled
+        ? {
+            OR: [
+              { vendorProfileId: null },
+              {
+                vendorProfile: {
+                  active: true,
+                  status: 'ACTIVE' as const
+                }
+              }
+            ]
+          }
+        : { vendorProfileId: null })
     },
     select: {
       id: true,
@@ -157,13 +183,63 @@ export async function createProductReels(
 
   if (products.length !== drafts.length) {
     throw new Error(
-      'One or more selected products are no longer available in this workspace.'
+      'One or more selected products are not publicly available in this workspace.'
+    );
+  }
+
+  const selectedMediaIds = Array.from(
+    new Set(
+      drafts.flatMap(draft =>
+        [draft.videoMediaAssetId, draft.posterMediaAssetId].filter(Boolean)
+      )
+    )
+  );
+
+  const mediaAssets = selectedMediaIds.length
+    ? await prisma.mediaAsset.findMany({
+        where: {
+          id: { in: selectedMediaIds },
+          workspaceId,
+          vendorProfileId: null,
+          status: 'ACTIVE' as const
+        },
+        select: {
+          id: true,
+          secureUrl: true,
+          resourceType: true
+        }
+      })
+    : [];
+
+  if (mediaAssets.length !== selectedMediaIds.length) {
+    throw new Error(
+      'One or more selected media assets are unavailable or not owned by this workspace.'
     );
   }
 
   const productMap = new Map(
     products.map(product => [product.id, product])
   );
+  const mediaMap = new Map(
+    mediaAssets.map(asset => [asset.id, asset])
+  );
+
+  for (const draft of drafts) {
+    const video = draft.videoMediaAssetId
+      ? mediaMap.get(draft.videoMediaAssetId)
+      : null;
+    const poster = draft.posterMediaAssetId
+      ? mediaMap.get(draft.posterMediaAssetId)
+      : null;
+
+    if (video && video.resourceType !== 'VIDEO') {
+      throw new Error(`“${draft.title}” must use a video asset.`);
+    }
+
+    if (poster && poster.resourceType !== 'IMAGE') {
+      throw new Error(`The poster for “${draft.title}” must be an image.`);
+    }
+  }
 
   const campaignId = randomUUID();
   const status = 'ACTIVE' as const;
@@ -177,7 +253,7 @@ export async function createProductReels(
   await prisma.storeStudioCampaign.create({
     data: {
       id: campaignId,
-      workspaceId: access.membership.workspaceId,
+      workspaceId,
       type: 'REEL',
       status,
       placementTier: 'STANDARD',
@@ -192,20 +268,28 @@ export async function createProductReels(
       assets: {
         create: drafts.map((draft, index) => {
           const product = productMap.get(draft.productId);
+          const video = draft.videoMediaAssetId
+            ? mediaMap.get(draft.videoMediaAssetId)
+            : null;
+          const poster = draft.posterMediaAssetId
+            ? mediaMap.get(draft.posterMediaAssetId)
+            : null;
           const assetId = randomUUID();
+          const posterUrl =
+            poster?.secureUrl ||
+            draft.externalPosterUrl ||
+            product?.images[0]?.url ||
+            null;
 
           return {
             id: assetId,
             mediaType: 'VIDEO' as const,
-            mediaUrl: draft.videoUrl,
-            posterUrl:
-              draft.posterUrl ||
-              product?.images[0]?.url ||
-              null,
-            coverUrl:
-              draft.posterUrl ||
-              product?.images[0]?.url ||
-              null,
+            mediaUrl: video?.secureUrl || draft.externalVideoUrl,
+            mediaAssetId: video?.id ?? null,
+            posterUrl,
+            posterMediaAssetId: poster?.id ?? null,
+            coverUrl: posterUrl,
+            coverMediaAssetId: poster?.id ?? null,
             title: draft.title || product?.name || 'Store Reel',
             description:
               draft.caption ||
@@ -226,7 +310,7 @@ export async function createProductReels(
 
   await prisma.adminAuditEvent.create({
     data: {
-      workspaceId: access.membership.workspaceId,
+      workspaceId,
       actorId: access.session.user.id,
       action: 'STORE_STUDIO_PRODUCT_REELS_CREATED',
       targetType: 'EXPERIENCE',
@@ -236,6 +320,7 @@ export async function createProductReels(
         campaignTitle,
         status,
         productIds: drafts.map(draft => draft.productId),
+        mediaAssetIds: selectedMediaIds,
         reelCount: drafts.length
       }
     }
@@ -243,6 +328,7 @@ export async function createProductReels(
 
   revalidatePath('/store');
   revalidatePath('/admin');
+  revalidatePath('/admin/store-studio');
 
   return {
     ok: true,

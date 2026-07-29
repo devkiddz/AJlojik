@@ -99,6 +99,9 @@ export const auth = betterAuth({
       },
       isGhostDeveloper: {
         type: 'boolean', required: false, defaultValue: false, input: false
+      },
+      platformRole: {
+        type: 'string', required: false, defaultValue: 'STANDARD', input: false
       }
     }
   },

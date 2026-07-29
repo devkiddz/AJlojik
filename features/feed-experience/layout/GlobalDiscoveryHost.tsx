@@ -5,39 +5,61 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
-
 import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
 
 import { discoveryRegistry } from '@/data/discoveryHubData';
+
+import { isCustomerExperienceRoute } from '@/features/customer-experience/customerExperienceRoutes';
+import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
+import { useWorkspace } from '@/features/workspace';
 
 import { GlobalExperienceRuntime } from '@/features/feed-experience/runtime';
 
 import { cn } from '@/lib/utils';
 
-import { useIdentity } from '@/providers/IdentityProvider';
-
 const DESKTOP_DISCOVERY_QUERY = '(min-width: 1024px)';
 
-function routeOwnsIntegratedDiscovery(pathname: string): boolean {
+type DiscoverySurfaceProps = {
+  pathname: string;
+  workspaceId: string;
+  desktopViewport: boolean;
+};
+
+function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoverySurfaceProps) {
+  const [collapsed, setCollapsed] = useState(() => !pathname.startsWith('/account'));
+
+  if (!desktopViewport) {
+    return (
+      <GlobalExperienceRuntime>
+        <ExperienceStackProvider workspaceId={workspaceId}>
+          <MobileDiscoverySheetHost />
+        </ExperienceStackProvider>
+      </GlobalExperienceRuntime>
+    );
+  }
+
   return (
-    pathname === '/store' ||
-    pathname.startsWith('/store/') ||
-    pathname === '/sign-in' ||
-    pathname === '/sign-up' ||
-    pathname === '/adminlogin/login' ||
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/')
+    <GlobalExperienceRuntime>
+      <ExperienceStackProvider workspaceId={workspaceId}>
+        <div
+          className={cn(
+            'sticky top-[5.75rem] z-40 hidden h-[calc(100dvh-6.5rem)] shrink-0 overflow-hidden p-3 pl-0 transition-[width] duration-300 lg:block',
+            collapsed ? 'w-[6.25rem]' : 'w-[28rem] xl:w-[31rem]'
+          )}>
+          <DesktopDiscoveryRail
+            registry={discoveryRegistry}
+            collapsed={collapsed}
+            onCollapsedChange={setCollapsed}
+          />
+        </div>
+      </ExperienceStackProvider>
+    </GlobalExperienceRuntime>
   );
 }
 
 export default function GlobalDiscoveryHost() {
   const pathname = usePathname();
-
-  const { isAuthenticated } = useIdentity();
-
-  const [collapsed, setCollapsed] = useState(() => !pathname.startsWith('/account'));
-
-  const [discoveryEnabled, setDiscoveryEnabled] = useState(true);
+  const { activeWorkspace } = useWorkspace();
 
   const [desktopViewport, setDesktopViewport] = useState<boolean | null>(null);
 
@@ -49,7 +71,6 @@ export default function GlobalDiscoveryHost() {
     };
 
     synchronizeViewport();
-
     mediaQuery.addEventListener('change', synchronizeViewport);
 
     return () => {
@@ -57,77 +78,16 @@ export default function GlobalDiscoveryHost() {
     };
   }, []);
 
-  /**
-   * Account is the customer's full commerce workspace,
-   * so its Hub opens by default.
-   *
-   * Other customer routes start compact and remain
-   * available without dominating the primary surface.
-   */
-  useEffect(() => {
-    setCollapsed(!pathname.startsWith('/account'));
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setDiscoveryEnabled(true);
-
-      return;
-    }
-
-    let active = true;
-
-    void fetch('/api/account/experience-settings')
-      .then(response => (response.ok ? response.json() : null))
-      .then(data => {
-        if (active && data?.profile) {
-          setDiscoveryEnabled(data.profile.discoveryEnabled !== false);
-        }
-      })
-      .catch(() => {
-        /**
-         * A settings request failure must not remove the
-         * customer's primary Discovery capability.
-         */
-        if (active) {
-          setDiscoveryEnabled(true);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [isAuthenticated]);
-
-  const ownsIntegratedDiscovery = routeOwnsIntegratedDiscovery(pathname);
-
-  if (pathname === '/' || ownsIntegratedDiscovery || !discoveryEnabled || desktopViewport === null) {
+  if (!isCustomerExperienceRoute(pathname) || desktopViewport === null) {
     return null;
   }
 
-  if (!desktopViewport) {
-    return (
-      <GlobalExperienceRuntime>
-        <MobileDiscoverySheetHost />
-      </GlobalExperienceRuntime>
-    );
-  }
-
   return (
-    <GlobalExperienceRuntime>
-      <div
-        className={cn(
-          'fixed bottom-3 right-3 top-[5.75rem] z-40 overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl',
-          'transition-[width] duration-300',
-
-          collapsed ? 'w-[5.5rem]' : 'w-[28rem] xl:w-[31rem]'
-        )}>
-        <DesktopDiscoveryRail
-          registry={discoveryRegistry}
-          collapsed={collapsed}
-          onCollapsedChange={setCollapsed}
-        />
-      </div>
-    </GlobalExperienceRuntime>
+    <DiscoverySurface
+      key={`${pathname}:${desktopViewport ? 'desktop' : 'mobile'}`}
+      pathname={pathname}
+      workspaceId={activeWorkspace?.id ?? 'guest-live'}
+      desktopViewport={desktopViewport}
+    />
   );
 }

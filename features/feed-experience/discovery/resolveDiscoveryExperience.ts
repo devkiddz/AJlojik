@@ -64,7 +64,10 @@ function collectDiscoverySignals(
 ): Set<DiscoverySignalKey> {
   const recentProductIds = [
     ...context.user.recentProductIds,
-    ...context.activity.viewedProductIds
+    ...context.activity.viewedProductIds,
+    ...(context.commerce?.history
+      .map(entry => entry.productId)
+      .filter((productId): productId is string => Boolean(productId)) ?? [])
   ];
 
   const hasCart =
@@ -77,14 +80,12 @@ function collectDiscoverySignals(
     recentProductIds.length > 0;
 
   const hasOrders =
-    Boolean(
-      context.experience?.orders.recent.length
-    );
+    Boolean(context.commerce?.orders.recent.length) ||
+    Boolean(context.experience?.orders.recent.length);
 
   const hasActiveDelivery =
-    Boolean(
-      context.experience?.orders.activeDelivery
-    );
+    Boolean(context.commerce?.orders.activeDelivery) ||
+    Boolean(context.experience?.orders.activeDelivery);
 
   const hasCoupons =
     Boolean(

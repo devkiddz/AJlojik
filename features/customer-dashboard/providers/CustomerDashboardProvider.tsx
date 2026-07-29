@@ -10,6 +10,8 @@ import {
   type ReactNode
 } from 'react';
 
+import { publishCustomerDashboardRuntime } from '@/features/customer-experience/customerDashboardBridge';
+
 import type {
   CommerceAssistantAction,
   ResolvedCustomerDashboard
@@ -128,6 +130,12 @@ export function CustomerDashboardProvider({
       assistant:
         initialDashboard.assistant
     };
+
+    publishCustomerDashboardRuntime({
+      recentProductIds: initialDashboard.assistant.recentProductIds,
+      preferredCategorySlugs: initialDashboard.assistant.preferredCategorySlugs,
+      hubSignals: initialDashboard.hub.signals
+    });
 
     window.dispatchEvent(
       new CustomEvent(

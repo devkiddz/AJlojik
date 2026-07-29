@@ -3,34 +3,24 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import {
-  ArrowLeft,
-  Crown,
-  History,
-  PanelRightOpen
-} from 'lucide-react';
+
+import { ArrowLeft, Crown, History } from 'lucide-react';
+
+import { useMobileDiscovery } from '@/components/layout/MobileApplicationShell';
 
 import { WorkspaceSwitcher } from '@/features/workspace';
 
-import type {
-  CommerceDashboardData
-} from '../../contracts/customerDashboardTypes';
+import type { CommerceDashboardData } from '../../contracts/customerDashboardTypes';
 
 type DashboardWelcomeProps = {
   identity: CommerceDashboardData['identity'];
   membership: string;
-  onOpenHub: () => void;
 };
 
-export function DashboardWelcome({
-  identity,
-  membership,
-  onOpenHub
-}: DashboardWelcomeProps) {
-  const firstName =
-    identity.firstName ||
-    identity.name.split(' ')[0] ||
-    'Customer';
+export function DashboardWelcome({ identity, membership }: DashboardWelcomeProps) {
+  const { openDiscovery } = useMobileDiscovery();
+
+  const firstName = identity.firstName || identity.name.split(' ')[0] || 'Customer';
 
   return (
     <section className="relative z-30 overflow-visible rounded-2xl border border-border/60 bg-card shadow-sm">
@@ -56,12 +46,8 @@ export function DashboardWelcome({
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-muted-foreground">
-              Customer dashboard
-            </p>
-            <h1 className="mt-1 break-words text-2xl font-bold sm:text-3xl">
-              Welcome, {firstName}
-            </h1>
+            <p className="text-xs font-semibold text-muted-foreground">Customer dashboard</p>
+            <h1 className="mt-1 break-words text-2xl font-bold sm:text-3xl">Welcome, {firstName}</h1>
           </div>
         </div>
 
@@ -70,25 +56,14 @@ export function DashboardWelcome({
             <WorkspaceSwitcher />
           </div>
 
-          <HeaderChip
-            icon={<Crown />}
-            label="Membership"
-            value={membership}
-          />
-
-          <Link
-            href="#activity-archive"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 text-xs font-semibold transition hover:border-primary/25 hover:bg-muted">
-            <History className="size-4" />
-            History
-          </Link>
+          <HeaderChip icon={<Crown />} label="Membership" value={membership} />
 
           <button
             type="button"
-            onClick={onOpenHub}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 text-xs font-semibold transition hover:border-primary/25 hover:bg-muted xl:hidden">
-            <PanelRightOpen className="size-4" />
-            Hub
+            onClick={openDiscovery}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 text-xs font-semibold transition hover:border-primary/25 hover:bg-muted lg:hidden">
+            <History className="size-4" />
+            History
           </button>
 
           <Link
@@ -103,26 +78,12 @@ export function DashboardWelcome({
   );
 }
 
-function HeaderChip({
-  icon,
-  label,
-  value
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
+function HeaderChip({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-3.5">
-      <span className="text-muted-foreground [&_svg]:size-4">
-        {icon}
-      </span>
-      <span className="hidden text-xs text-muted-foreground sm:inline">
-        {label}
-      </span>
-      <span className="break-words text-xs font-semibold capitalize">
-        {value}
-      </span>
+      <span className="text-muted-foreground [&_svg]:size-4">{icon}</span>
+      <span className="hidden text-xs text-muted-foreground sm:inline">{label}</span>
+      <span className="break-words text-xs font-semibold capitalize">{value}</span>
     </div>
   );
 }

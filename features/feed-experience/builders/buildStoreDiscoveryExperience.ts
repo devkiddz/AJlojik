@@ -273,7 +273,9 @@ export function buildStoreDiscoveryExperience(
             ? 'promotion'
             : story.collectionId
               ? 'collection'
-              : 'none';
+              : story.action?.href
+                ? 'vendor'
+                : 'none';
 
       return {
         id: story.id,
@@ -294,6 +296,8 @@ export function buildStoreDiscoveryExperience(
         promotionId: story.promotionId ?? undefined,
         collectionId: story.collectionId ?? undefined,
         actionLabel: story.action?.label ?? undefined,
+        actionHref: story.action?.href ?? undefined,
+        durationMs: story.durationMs,
         active: true,
         priority: story.priority,
         createdAt:

@@ -81,9 +81,9 @@ export default function ProductExperienceCard({
   return (
     <article
       className={cn(
-        'group flex h-full w-44 shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm',
+        'group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm',
         'transition duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl',
-        'sm:w-48 lg:w-52',
+        'max-w-none',
         className
       )}>
       {/* Artwork */}

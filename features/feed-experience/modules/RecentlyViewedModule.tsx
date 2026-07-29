@@ -1,6 +1,10 @@
 'use client';
 
 import { ProductCard } from '@/features/products/cards';
+import {
+  EXPERIENCE_PRODUCT_ITEM_CLASS,
+  EXPERIENCE_PRODUCT_RAIL_CLASS
+} from '@/features/products/productRailPresentation';
 
 import type { FeedActions, RecentlyViewedModule as RecentlyViewedModuleType } from '../contracts';
 
@@ -24,9 +28,13 @@ export function RecentlyViewedModule({ module, actions }: RecentlyViewedModulePr
         {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
       </header>
 
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 scrollbar-none">
+      <div className={EXPERIENCE_PRODUCT_RAIL_CLASS}>
         {products.map(product => (
-          <div key={product.id} className="w-56 shrink-0 snap-start md:w-60">
+          <div
+            key={product.id}
+            data-experience-product-item
+            className={EXPERIENCE_PRODUCT_ITEM_CLASS}
+          >
             <ProductCard
               product={product}
               onPreview={actions.previewProduct}

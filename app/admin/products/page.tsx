@@ -7,6 +7,7 @@ export default async function AdminProductsPage() {
 
   const [products, membership] = await Promise.all([
     prisma.product.findMany({
+      where: { workspaceId: access.membership.workspaceId },
       include: {
         category: { select: { label: true, slug: true } },
         subcategory: { select: { label: true } },

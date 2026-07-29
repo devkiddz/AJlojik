@@ -6,9 +6,19 @@ import type {
   WorkspaceCommerceProjectionResponse
 } from './commerceProjectionTypes';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { categories } from '@/data/categories';
+
+import {
+  readCustomerDashboardRuntime,
+  subscribeCustomerDashboardRuntime
+} from '@/features/customer-experience/customerDashboardBridge';
+import {
+  CUSTOMER_EXPERIENCE_INTENT_EVENT,
+  type CustomerExperienceIntentEventDetail
+} from '@/features/customer-experience/customerExperienceEvents';
+import { resolveCustomerRouteIntent } from '@/features/customer-experience/resolveCustomerRouteIntent';
 
 import { collections } from '@/data/collections';
 
@@ -72,24 +82,13 @@ function resolveDevice(): FeedDevice {
   return 'desktop';
 }
 
-function createRouteIntent(pathname: string): FeedIntent {
-  return {
-    id: `route:${pathname}`,
-
-    type: 'home',
-
-    source: 'route',
-
-    createdAt: new Date().toISOString()
-  };
-}
-
 export default function GlobalExperienceRuntime({
   children
 }: GlobalExperienceRuntimeProps): ReactElement | null {
   const router = useRouter();
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const { user, isAuthenticated } = useIdentity();
   const userId = user?.id ? String(user.id) : undefined;
@@ -107,6 +106,53 @@ export default function GlobalExperienceRuntime({
 
   const [device, setDevice] = useState<FeedDevice>('desktop');
   const [commerceProjection, setCommerceProjection] = useState<WorkspaceCommerceProjection | null>(null);
+  const [publishedIntent, setPublishedIntent] = useState<CustomerExperienceIntentEventDetail | null>(null);
+  const [dashboardRecentProductIds, setDashboardRecentProductIds] = useState<string[]>(
+    () => readCustomerDashboardRuntime()?.recentProductIds ?? []
+  );
+
+  useEffect(() => {
+    const handlePublishedIntent = (event: Event) => {
+      const customEvent = event as CustomEvent<CustomerExperienceIntentEventDetail>;
+
+      if (!customEvent.detail?.intent || !customEvent.detail.pathname) {
+        return;
+      }
+
+      setPublishedIntent(customEvent.detail);
+    };
+
+    const handleDashboardResolution = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        assistant?: {
+          recentProductIds?: unknown;
+        };
+      }>;
+
+      const recentProductIds = customEvent.detail?.assistant?.recentProductIds;
+
+      if (!Array.isArray(recentProductIds)) {
+        return;
+      }
+
+      setDashboardRecentProductIds(
+        recentProductIds.filter((value): value is string => typeof value === 'string')
+      );
+    };
+
+    const unsubscribeDashboardRuntime = subscribeCustomerDashboardRuntime(snapshot => {
+      setDashboardRecentProductIds(snapshot.recentProductIds);
+    });
+
+    window.addEventListener(CUSTOMER_EXPERIENCE_INTENT_EVENT, handlePublishedIntent);
+    window.addEventListener('rcentz:customer-dashboard-resolved', handleDashboardResolution);
+
+    return () => {
+      unsubscribeDashboardRuntime();
+      window.removeEventListener(CUSTOMER_EXPERIENCE_INTENT_EVENT, handlePublishedIntent);
+      window.removeEventListener('rcentz:customer-dashboard-resolved', handleDashboardResolution);
+    };
+  }, []);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia('(max-width: 639px)');
@@ -172,7 +218,18 @@ export default function GlobalExperienceRuntime({
     [cartItems]
   );
 
-  const initialIntent = useMemo<FeedIntent>(() => createRouteIntent(pathname), [pathname]);
+  const routeIntent = useMemo<FeedIntent>(
+    () => resolveCustomerRouteIntent(pathname, searchParams),
+    [pathname, searchParams]
+  );
+
+  const initialIntent = useMemo<FeedIntent>(() => {
+    if (publishedIntent?.pathname === pathname) {
+      return publishedIntent.intent;
+    }
+
+    return routeIntent;
+  }, [pathname, publishedIntent, routeIntent]);
 
   const handleCategoryChange = useCallback<FeedActions['changeCategory']>(
     updates => {
@@ -291,7 +348,7 @@ export default function GlobalExperienceRuntime({
 
         cartProductIds,
 
-        recentProductIds: []
+        recentProductIds: dashboardRecentProductIds
       },
 
       activity: {
@@ -336,6 +393,7 @@ export default function GlobalExperienceRuntime({
     activeWorkspace,
     cartProductIds,
     commerceProjection,
+    dashboardRecentProductIds,
     device,
     isAuthenticated,
     products,

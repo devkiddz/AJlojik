@@ -345,16 +345,7 @@ export default function DesktopDiscoveryRail({
   };
 
   return (
-    <aside
-      className={cn(
-        'relative hidden min-w-0 overflow-hidden transition-all duration-300',
-        'lg:block lg:h-[calc(100dvh-6.5rem)]',
-
-        collapsed
-          ? 'lg:col-span-2'
-          : 'lg:col-span-4'
-      )}
-    >
+    <aside className="relative hidden h-full min-w-0 overflow-hidden transition-all duration-300 lg:block">
       <DiscoveryHubProvider
         groups={
           resolution.groups

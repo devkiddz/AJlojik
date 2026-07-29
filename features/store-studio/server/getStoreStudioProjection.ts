@@ -46,6 +46,11 @@ export async function getStoreStudioProjection(
 ): Promise<StoreStudioProjection> {
   const now = new Date();
 
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { commerceMode: true }
+  });
+
   const campaigns =
     await prisma.storeStudioCampaign.findMany({
       where: {
@@ -54,7 +59,6 @@ export async function getStoreStudioProjection(
 
         status: {
           in: [
-            'APPROVED',
             'SCHEDULED',
             'ACTIVE'
           ]
@@ -101,9 +105,10 @@ export async function getStoreStudioProjection(
         },
 
         vendor: {
-          select: {
-            name: true
-          }
+          select: { name: true }
+        },
+        vendorProfile: {
+          select: { name: true, status: true, active: true }
         }
       },
 
@@ -130,6 +135,9 @@ export async function getStoreStudioProjection(
     StoreStudioProjection['reels'] = [];
 
   for (const campaign of campaigns) {
+    if (campaign.vendorProfileId && (workspace?.commerceMode !== 'MULTI_VENDOR' || campaign.vendorProfile?.status !== 'ACTIVE' || !campaign.vendorProfile.active)) {
+      continue;
+    }
     const campaignPriority =
       campaign.adminWeight +
       campaign.requestedPriority;
@@ -206,9 +214,10 @@ export async function getStoreStudioProjection(
           workspaceId,
 
           vendorId:
-            campaign.vendorId,
+            campaign.vendorProfileId ?? campaign.vendorId,
 
           vendorName:
+            campaign.vendorProfile?.name ??
             campaign.vendor?.name ??
             null,
 
@@ -273,9 +282,10 @@ export async function getStoreStudioProjection(
           workspaceId,
 
           vendorId:
-            campaign.vendorId,
+            campaign.vendorProfileId ?? campaign.vendorId,
 
           vendorName:
+            campaign.vendorProfile?.name ??
             campaign.vendor?.name ??
             null,
 

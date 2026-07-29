@@ -25,9 +25,15 @@ export function selectDiscoveryHubWidgets({
     user.wishlistProductIds
   ).size;
 
-  const recentCount = new Set(
-    user.recentProductIds
-  ).size;
+  const recentCount = new Set([
+    ...user.recentProductIds,
+    ...(context.commerce?.history
+      .map(entry => entry.productId)
+      .filter((productId): productId is string => Boolean(productId)) ?? [])
+  ]).size;
+
+  const commerceOrders = context.commerce?.orders.recent ?? [];
+  const commerceActiveDelivery = context.commerce?.orders.activeDelivery;
 
   /*
    * Commerce and activity widgets must still resolve when
@@ -112,53 +118,92 @@ export function selectDiscoveryHubWidgets({
          */
         case 'delivery-tracker':
         case 'active-delivery': {
-          if (!experience) {
-            return widget;
+          if (commerceActiveDelivery) {
+            const statusLabel = commerceActiveDelivery.status.replaceAll('_', ' ').toLowerCase();
+            const timeline = commerceActiveDelivery.events.slice(-5).map((event, index, events) => ({
+              id: event.id,
+              label: event.status.replaceAll('_', ' '),
+              description: event.note ?? undefined,
+              completed: index < events.length - 1,
+              active: index === events.length - 1,
+              time: new Date(event.createdAt).toLocaleTimeString('en-NG', {
+                hour: 'numeric',
+                minute: '2-digit'
+              })
+            }));
+
+            return {
+              ...widget,
+              enabled: widget.enabled,
+              badge: 'Live',
+              description: `Order ${commerceActiveDelivery.orderNumber} is ${statusLabel}.`,
+              location: commerceActiveDelivery.location
+                ? {
+                    title: 'Latest delivery position',
+                    subtitle: commerceActiveDelivery.lastLocationAt
+                      ? `Updated ${new Date(commerceActiveDelivery.lastLocationAt).toLocaleString('en-NG')}`
+                      : undefined,
+                    coordinates: commerceActiveDelivery.location
+                  }
+                : widget.location,
+              progress: {
+                label: 'Delivery progress',
+                value:
+                  commerceActiveDelivery.status === 'ARRIVED'
+                    ? 90
+                    : commerceActiveDelivery.status === 'IN_TRANSIT'
+                      ? 72
+                      : commerceActiveDelivery.status === 'PICKED_UP'
+                        ? 55
+                        : commerceActiveDelivery.status === 'ASSIGNED'
+                          ? 30
+                          : 15,
+                helper: statusLabel
+              },
+              timeline: timeline.length > 0 ? timeline : widget.timeline,
+              stats: [
+                {
+                  label: 'Order',
+                  value: commerceActiveDelivery.orderNumber
+                },
+                {
+                  label: 'Status',
+                  value: commerceActiveDelivery.status.replaceAll('_', ' ')
+                }
+              ],
+              action: {
+                label: 'Track order',
+                href: `/orders?order=${encodeURIComponent(commerceActiveDelivery.orderId)}`
+              }
+            };
           }
 
-          const activeDelivery =
-            experience.orders.activeDelivery;
+          if (!experience) {
+            return {
+              ...widget,
+              enabled: false
+            };
+          }
+
+          const activeDelivery = experience.orders.activeDelivery;
 
           return {
             ...widget,
-
-            enabled:
-              widget.enabled &&
-              Boolean(activeDelivery),
-
-            badge: activeDelivery
-              ? `${activeDelivery.etaMinutes} min`
-              : undefined,
-
+            enabled: widget.enabled && Boolean(activeDelivery),
+            badge: activeDelivery ? `${activeDelivery.etaMinutes} min` : undefined,
             description: activeDelivery
-              ? `Order #${activeDelivery.orderId} is ${activeDelivery.status.replace(
-                  /-/g,
-                  ' '
-                )}.`
+              ? `Order #${activeDelivery.orderId} is ${activeDelivery.status.replace(/-/g, ' ')}.`
               : widget.description,
-
-            location:
-              activeDelivery?.location,
-
+            location: activeDelivery?.location,
             progress: activeDelivery
               ? {
                   label: 'Delivery progress',
-                  value:
-                    activeDelivery.progress,
-                  helper:
-                    activeDelivery.status.replace(
-                      /-/g,
-                      ' '
-                    )
+                  value: activeDelivery.progress,
+                  helper: activeDelivery.status.replace(/-/g, ' ')
                 }
               : widget.progress,
-
-            timeline:
-              activeDelivery?.timeline,
-
-            conditions:
-              activeDelivery?.conditions,
-
+            timeline: activeDelivery?.timeline,
+            conditions: activeDelivery?.conditions,
             stats: activeDelivery
               ? [
                   {
@@ -174,67 +219,85 @@ export function selectDiscoveryHubWidgets({
           };
         }
 
-  case 'recent-orders': {
-  const recentOrders =
-    experience?.orders.recent ?? [];
+        case 'recent-orders': {
+          if (commerceOrders.length > 0) {
+            const completedOrderCount = commerceOrders.filter(
+              order => order.status === 'DELIVERED'
+            ).length;
+            const activeOrderCount = commerceOrders.filter(
+              order => order.status !== 'DELIVERED' && order.status !== 'CANCELLED'
+            ).length;
+            const inProgressCount = activeOrderCount + (cartCount > 0 ? 1 : 0);
 
-  const completedOrderCount =
-    recentOrders.filter(
-      order => order.status === 'delivered'
-    ).length;
+            return {
+              ...widget,
+              enabled: widget.enabled,
+              badge: inProgressCount > 0 ? `${inProgressCount} in progress` : undefined,
+              description:
+                cartCount > 0
+                  ? `${cartCount} ${
+                      cartCount === 1 ? 'cart selection is' : 'cart selections are'
+                    } waiting alongside your orders.`
+                  : 'Your latest AJ Logik order activity.',
+              stats: [
+                {
+                  label: 'Completed',
+                  value: completedOrderCount
+                },
+                {
+                  label: 'In progress',
+                  value: inProgressCount
+                },
+                {
+                  label: 'Orders',
+                  value: commerceOrders.length
+                }
+              ],
+              action: {
+                label: 'View orders',
+                href: '/orders'
+              }
+            };
+          }
 
-  const activeOrderCount =
-    recentOrders.filter(
-      order => order.status !== 'delivered'
-    ).length;
+          const recentOrders = experience?.orders.recent ?? [];
+          const completedOrderCount = recentOrders.filter(
+            order => order.status === 'delivered'
+          ).length;
+          const activeOrderCount = recentOrders.filter(
+            order => order.status !== 'delivered'
+          ).length;
+          const inProgressCount = activeOrderCount + (cartCount > 0 ? 1 : 0);
 
-  const hasActiveCart = cartCount > 0;
+          return {
+            ...widget,
+            enabled: widget.enabled && (recentOrders.length > 0 || cartCount > 0),
+            badge: inProgressCount > 0 ? `${inProgressCount} in progress` : undefined,
+            description:
+              cartCount > 0
+                ? `${cartCount} ${
+                    cartCount === 1 ? 'cart selection is' : 'cart selections are'
+                  } waiting alongside your active orders.`
+                : recentOrders.length > 0
+                  ? 'Your latest AJ Logik order activity.'
+                  : 'You have no active shopping activity yet.',
+            stats: [
+              {
+                label: 'Completed',
+                value: completedOrderCount
+              },
+              {
+                label: 'In progress',
+                value: inProgressCount
+              },
+              {
+                label: 'Cart items',
+                value: cartCount
+              }
+            ]
+          };
+        }
 
-  /*
-   * A cart is one active purchase journey,
-   * regardless of how many products it contains.
-   */
-  const inProgressCount =
-    activeOrderCount +
-    (hasActiveCart ? 1 : 0);
-
-  return {
-    ...widget,
-
-    enabled: widget.enabled,
-
-    badge:
-      inProgressCount > 0
-        ? `${inProgressCount} in progress`
-        : undefined,
-
-    description:
-      hasActiveCart
-        ? `${cartCount} ${
-            cartCount === 1
-              ? 'cart selection is'
-              : 'cart selections are'
-          } waiting alongside your active orders.`
-        : recentOrders.length > 0
-          ? 'Your latest AJ Logik order activity.'
-          : 'You have no active shopping activity yet.',
-
-    stats: [
-      {
-        label: 'Completed',
-        value: completedOrderCount
-      },
-      {
-        label: 'In progress',
-        value: inProgressCount
-      },
-      {
-        label: 'Cart items',
-        value: cartCount
-      }
-    ]
-  };
-}
         case 'rewards-summary':
         case 'reward-points': {
           if (!experience) {

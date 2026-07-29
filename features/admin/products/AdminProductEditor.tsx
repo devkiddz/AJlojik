@@ -1,6 +1,15 @@
 import Link from 'next/link';
-import { ArrowLeft, Boxes, CheckCircle2, Save, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  Boxes,
+  CheckCircle2,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  Store
+} from 'lucide-react';
 
+import { ProductStudioFields, type ProductStudioMedia, type ProductStudioVariant } from './ProductStudioFields';
 import { createProduct, updateProduct } from './actions';
 
 type EditorProduct = {
@@ -8,6 +17,9 @@ type EditorProduct = {
   name: string;
   slug: string;
   categoryId: string;
+  subcategoryId: string | null;
+  brandId: string | null;
+  vendorProfileId: string | null;
   shortDescription: string | null;
   longDescription: string | null;
   estimatedDelivery: string | null;
@@ -15,44 +27,97 @@ type EditorProduct = {
   active: boolean;
   featured: boolean;
   isNew: boolean;
+  status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'PAUSED' | 'REJECTED' | 'ARCHIVED';
   discountPercentage: number;
+  mediaAssetIds: string[];
+  variants: ProductStudioVariant[];
 } | null;
 
-export default function AdminProductEditor({ product, categories, canManage }: { product: EditorProduct; categories: Array<{ id: string; label: string }>; canManage: boolean }) {
+type Taxonomy = {
+  categories: Array<{ id: string; label: string; subcategories: Array<{ id: string; label: string }> }>;
+  brands: Array<{ id: string; name: string }>;
+  vendors: Array<{ id: string; name: string }>;
+};
+
+export default function AdminProductEditor({
+  product,
+  taxonomy,
+  media,
+  canManage,
+  canPublish,
+  multivendorEnabled
+}: {
+  product: EditorProduct;
+  taxonomy: Taxonomy;
+  media: ProductStudioMedia[];
+  canManage: boolean;
+  canPublish: boolean;
+  multivendorEnabled: boolean;
+}) {
   const editing = Boolean(product);
+
   return (
     <main className="min-h-dvh bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_34%)] px-3 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
+      <div className="mx-auto max-w-[90rem] space-y-5">
         <header className="rounded-[2rem] border border-border/60 bg-card/80 p-5 shadow-xl sm:p-7">
-          <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Product command center</Link>
-          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70">Catalog management</p><h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{editing ? `Edit ${product?.name}` : 'Create product'}</h1><p className="mt-2 text-sm text-muted-foreground">Core merchandising details. Variants, media, and inventory remain visible from the product command center.</p></div><span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-2 text-[10px] font-bold text-emerald-600"><ShieldCheck className="size-4" /> Server-authorized writes</span></div>
+          <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Product Studio</Link>
+          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70">Catalog, media and inventory</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{editing ? `Edit ${product?.name}` : 'Create product'}</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Complete the product identity, reusable media gallery, variants, pricing, stock and publishing state in one Studio.</p>
+            </div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-2 text-[10px] font-bold text-emerald-600"><ShieldCheck className="size-4" /> Server-authorized writes</span>
+          </div>
         </header>
 
-        {!canManage ? <div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-700"><strong>Read-only access.</strong> A Manager, Admin, Owner, or Super Admin workspace role is required to save catalog changes.</div> : null}
+        {!canManage ? <div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-700"><strong>Read-only access.</strong> Product creation or editing permission is required to save changes.</div> : null}
 
-        <form action={editing ? updateProduct : createProduct} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <form action={editing ? updateProduct : createProduct} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
           {product ? <input type="hidden" name="id" value={product.id} /> : null}
           <div className="space-y-5">
-            <EditorCard icon={<Boxes />} title="Product identity" description="Customer-facing title, URL, taxonomy, and descriptions.">
+            <EditorCard icon={<Boxes />} title="Product identity" description="Customer-facing title, URL, taxonomy, ownership and descriptions.">
               <div className="grid gap-4 sm:grid-cols-2"><Field label="Product name"><input name="name" required defaultValue={product?.name} className={inputClass} /></Field><Field label="URL slug"><input name="slug" required defaultValue={product?.slug} className={inputClass} /></Field></div>
-              <Field label="Category"><select name="categoryId" required defaultValue={product?.categoryId} className={inputClass}><option value="">Select category</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="Category"><select name="categoryId" required defaultValue={product?.categoryId} className={inputClass}><option value="">Select category</option>{taxonomy.categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+                <Field label="Subcategory"><select name="subcategoryId" defaultValue={product?.subcategoryId ?? ''} className={inputClass}><option value="">No subcategory</option>{taxonomy.categories.flatMap(category => category.subcategories.map(subcategory => <option key={subcategory.id} value={subcategory.id}>{category.label} · {subcategory.label}</option>))}</select></Field>
+                <Field label="Brand"><select name="brandId" defaultValue={product?.brandId ?? ''} className={inputClass}><option value="">No brand</option>{taxonomy.brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></Field>
+              </div>
+              {multivendorEnabled ? <Field label="Vendor owner"><select name="vendorProfileId" defaultValue={product?.vendorProfileId ?? ''} className={inputClass}><option value="">AJ Logik workspace product</option>{taxonomy.vendors.map(vendor => <option key={vendor.id} value={vendor.id}>{vendor.name}</option>)}</select></Field> : null}
               <Field label="Short description"><input name="shortDescription" defaultValue={product?.shortDescription ?? ''} className={inputClass} /></Field>
               <Field label="Long description"><textarea name="longDescription" defaultValue={product?.longDescription ?? ''} rows={6} className={inputClass} /></Field>
             </EditorCard>
-            <EditorCard icon={<Sparkles />} title="Commerce details" description="Delivery promise, search tags, and offer treatment.">
+
+            <EditorCard icon={<Sparkles />} title="Commerce details" description="Delivery promise, search tags and offer treatment.">
               <div className="grid gap-4 sm:grid-cols-2"><Field label="Estimated delivery"><input name="estimatedDelivery" defaultValue={product?.estimatedDelivery ?? ''} placeholder="2–4 business days" className={inputClass} /></Field><Field label="Discount percentage"><input name="discountPercentage" type="number" min="0" max="100" defaultValue={product?.discountPercentage ?? 0} className={inputClass} /></Field></div>
               <Field label="Tags (comma separated)"><input name="tags" defaultValue={product?.tags.join(', ') ?? ''} className={inputClass} /></Field>
             </EditorCard>
+
+            <ProductStudioFields media={media} initialMediaIds={product?.mediaAssetIds ?? []} initialVariants={product?.variants ?? []} />
           </div>
 
-          <aside className="space-y-5">
-            <EditorCard icon={<CheckCircle2 />} title="Publishing" description="Control storefront availability and merchandising signals.">
-              <Toggle name="active" label="Active product" description="Visible and purchasable in catalog experiences." defaultChecked={product?.active ?? true} />
+          <aside className="space-y-5 xl:sticky xl:top-5 xl:self-start">
+            <EditorCard icon={<CheckCircle2 />} title="Publishing" description="Control review, availability and merchandising signals.">
+              <Field label="Product status">
+                <select name="status" defaultValue={product?.status ?? 'DRAFT'} className={inputClass}>
+                  <option value="DRAFT">Draft</option>
+                  <option value="PENDING_REVIEW">Pending review</option>
+                  {canPublish ? <option value="PUBLISHED">Published</option> : null}
+                  <option value="PAUSED">Paused</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </Field>
+              <Toggle name="active" label="Active product" description="Visible and purchasable after publication." defaultChecked={product?.active ?? false} />
               <Toggle name="featured" label="Featured" description="Eligible for premium featured placements." defaultChecked={product?.featured ?? false} />
               <Toggle name="isNew" label="New arrival" description="Show new-product merchandising treatment." defaultChecked={product?.isNew ?? true} />
             </EditorCard>
-            <button type="submit" disabled={!canManage} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-bold text-background shadow-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"><Save className="size-4" /> {editing ? 'Save product' : 'Create product'}</button>
-            <p className="text-center text-[10px] leading-5 text-muted-foreground">Changes revalidate the admin catalog and customer storefront.</p>
+
+            <EditorCard icon={<Store />} title="Media workflow" description="All images are selected from the workspace Media Studio.">
+              <Link href="/admin/media" className="inline-flex w-full items-center justify-center rounded-full border border-border/70 px-4 py-3 text-xs font-bold transition hover:bg-muted">Open Media Studio</Link>
+            </EditorCard>
+
+            <button type="submit" disabled={!canManage} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-bold text-background shadow-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"><Save className="size-4" /> {editing ? 'Save complete product' : 'Create product'}</button>
+            <p className="text-center text-[10px] leading-5 text-muted-foreground">Managers submit publication changes for review. Admin approval rights may publish directly.</p>
           </aside>
         </form>
       </div>

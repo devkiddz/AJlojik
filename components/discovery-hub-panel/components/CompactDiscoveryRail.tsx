@@ -1,5 +1,7 @@
 'use client';
 
+import { ExperienceNavigationControls } from '@/features/experience-stack/ExperienceNavigationControls';
+
 import type { CompactDiscoveryItem } from '../discoveryHubTypes';
 
 import CompactDiscoveryCard from './CompactDiscoveryCard';
@@ -33,20 +35,16 @@ export default function CompactDiscoveryRail({ items, onExpand, onSelectItem }: 
           <h3 className="truncate text-sm font-semibold text-foreground">Quick Experiences</h3>
         </div>
 
-        <button
-          type="button"
-          onClick={onExpand}
-          className="
-            shrink-0 rounded-full
-            border border-border
-            bg-background/70
-            px-3 py-1.5
-            text-xs font-semibold
-            transition
-            hover:bg-background
-          ">
-          Open
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <ExperienceNavigationControls compact />
+
+          <button
+            type="button"
+            onClick={onExpand}
+            className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-xs font-semibold transition hover:bg-background">
+            Open
+          </button>
+        </div>
       </div>
 
       {/* Scrollable discoveries */}

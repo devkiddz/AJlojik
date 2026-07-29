@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 
 import Link from 'next/link';
 
@@ -17,7 +23,12 @@ import {
   X
 } from 'lucide-react';
 
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle
+} from '@/components/ui/dialog';
 import type { FeedActions } from '@/features/feed-experience/contracts';
 import { cn } from '@/lib/utils';
 
@@ -49,7 +60,11 @@ function formatDuration(durationMs: number | null): string | null {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function ReelPreviewTile({ reel, active, onSelect }: ReelPreviewTileProps) {
+function ReelPreviewTile({
+  reel,
+  active,
+  onSelect
+}: ReelPreviewTileProps) {
   return (
     <button
       type="button"
@@ -61,7 +76,8 @@ function ReelPreviewTile({ reel, active, onSelect }: ReelPreviewTileProps) {
         active
           ? 'border-amber-400/80 ring-2 ring-amber-400/20'
           : 'border-white/10 opacity-65 hover:border-white/25 hover:opacity-100'
-      )}>
+      )}
+    >
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-amber-950 to-emerald-950"
@@ -102,12 +118,17 @@ export function StoreReelViewer({
   const [mediaFailed, setMediaFailed] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const activeIndex = useMemo(() => reels.findIndex(reel => reel.id === activeReelId), [activeReelId, reels]);
+  const activeIndex = useMemo(
+    () => reels.findIndex(reel => reel.id === activeReelId),
+    [activeReelId, reels]
+  );
 
-  const activeReel = activeIndex >= 0 ? reels[activeIndex] : null;
+  const activeReel =
+    activeIndex >= 0 ? reels[activeIndex] : null;
 
   const canMovePrevious = activeIndex > 0;
-  const canMoveNext = activeIndex >= 0 && activeIndex < reels.length - 1;
+  const canMoveNext =
+    activeIndex >= 0 && activeIndex < reels.length - 1;
 
   const movePrevious = useCallback(() => {
     const previous = reels[activeIndex - 1];
@@ -221,11 +242,15 @@ export function StoreReelViewer({
     }
   }, [actions, activeReel, onClose]);
 
-  const hasFeedTarget = Boolean(activeReel?.productId || activeReel?.collectionId || activeReel?.promotionId);
+  const hasFeedTarget = Boolean(
+    activeReel?.productId ||
+      activeReel?.collectionId ||
+      activeReel?.promotionId
+  );
 
   const primaryActionLabel = activeReel?.productId
     ? 'Shop this Reel'
-    : (activeReel?.action?.label ?? 'Explore Reel');
+    : activeReel?.action?.label ?? 'Explore Reel';
 
   const destinationTitle = activeReel?.productId
     ? 'Product linked to this Reel'
@@ -243,7 +268,9 @@ export function StoreReelViewer({
         ? 'Open the linked promotion and continue shopping from the campaign.'
         : 'Continue to the destination connected to this Store Reel.';
 
-  const formattedDuration = formatDuration(activeReel?.durationMs ?? null);
+  const formattedDuration = formatDuration(
+    activeReel?.durationMs ?? null
+  );
 
   return (
     <Dialog
@@ -252,52 +279,28 @@ export function StoreReelViewer({
         if (!open) {
           onClose();
         }
-      }}>
+      }}
+    >
       <DialogContent
         showCloseButton={false}
-        className="
-          h-dvh max-h-none
-          w-screen max-w-none
-          gap-0 overflow-hidden
-          rounded-none border-0
-          bg-zinc-950 p-0
-          text-white ring-0
-
-          sm:h-[88dvh]
-          sm:w-[86vw]
-          sm:max-w-[68rem]
-          sm:rounded-3xl
-          sm:border sm:border-white/10
-
-          lg:max-w-[74rem]
-
-          xl:h-[min(88dvh,52rem)]
-          xl:w-[76vw]
-          xl:max-w-[80rem]
-        ">
-        <DialogTitle className="sr-only">{activeReel?.title ?? 'Store Reel'}</DialogTitle>
+        className="h-dvh max-h-none w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 bg-zinc-950 p-0 text-white ring-0 md:h-[min(92dvh,54rem)] md:w-[min(94vw,78rem)] md:rounded-3xl md:border md:border-white/10"
+      >
+        <DialogTitle className="sr-only">
+          {activeReel?.title ?? 'Store Reel'}
+        </DialogTitle>
 
         <DialogDescription className="sr-only">
           Store Reel viewer with a dedicated media stage and commerce details panel.
         </DialogDescription>
 
         {activeReel ? (
-          <div
-            className="
-              relative grid size-full min-h-0
-              grid-rows-[minmax(0,58dvh)_minmax(0,1fr)]
-              overflow-hidden
-
-              md:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]
-              md:grid-rows-1
-
-              xl:grid-cols-[minmax(0,1.2fr)_minmax(26rem,0.8fr)]
-            ">
+          <div className="relative grid size-full min-h-0 grid-rows-[minmax(0,58dvh)_minmax(0,1fr)] overflow-hidden md:grid-cols-[minmax(20rem,0.92fr)_minmax(24rem,1.08fr)] md:grid-rows-1">
             <button
               type="button"
               onClick={onClose}
               aria-label="Close Reel viewer"
-              className="absolute right-3 top-3 z-50 grid size-10 place-items-center rounded-full border border-white/10 bg-black/45 text-white backdrop-blur-md transition hover:bg-white/10 md:right-5 md:top-5">
+              className="absolute right-3 top-3 z-50 grid size-10 place-items-center rounded-full border border-white/10 bg-black/45 text-white backdrop-blur-md transition hover:bg-white/10 md:right-5 md:top-5"
+            >
               <X className="size-5" />
             </button>
 
@@ -332,8 +335,16 @@ export function StoreReelViewer({
                   onTimeUpdate={event => {
                     const video = event.currentTarget;
 
-                    if (Number.isFinite(video.duration) && video.duration > 0) {
-                      setProgress(Math.min(100, (video.currentTime / video.duration) * 100));
+                    if (
+                      Number.isFinite(video.duration) &&
+                      video.duration > 0
+                    ) {
+                      setProgress(
+                        Math.min(
+                          100,
+                          (video.currentTime / video.duration) * 100
+                        )
+                      );
                     }
                   }}
                   onEnded={moveNext}
@@ -344,7 +355,9 @@ export function StoreReelViewer({
                 <div className="relative z-10 grid size-full place-items-center px-8 text-center">
                   <div>
                     <Clapperboard className="mx-auto size-10 text-white/30" />
-                    <p className="mt-4 text-sm font-bold">Reel media unavailable</p>
+                    <p className="mt-4 text-sm font-bold">
+                      Reel media unavailable
+                    </p>
                     <p className="mt-2 text-xs leading-5 text-white/50">
                       The Reel details and commerce destination remain available.
                     </p>
@@ -354,13 +367,24 @@ export function StoreReelViewer({
 
               <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-black/55 via-transparent to-black/45" />
 
-              <div aria-hidden="true" className="absolute inset-x-3 top-3 z-30 flex gap-1 pr-12 md:pr-3">
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-3 top-3 z-30 flex gap-1 pr-12 md:pr-3"
+              >
                 {reels.map((reel, index) => (
-                  <span key={reel.id} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/25">
+                  <span
+                    key={reel.id}
+                    className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/25"
+                  >
                     <span
                       className="block h-full bg-white transition-all duration-150"
                       style={{
-                        width: index < activeIndex ? '100%' : index === activeIndex ? `${progress}%` : '0%'
+                        width:
+                          index < activeIndex
+                            ? '100%'
+                            : index === activeIndex
+                              ? `${progress}%`
+                              : '0%'
                       }}
                     />
                   </span>
@@ -381,7 +405,8 @@ export function StoreReelViewer({
                   type="button"
                   onClick={() => void togglePlayback()}
                   aria-label="Play Reel"
-                  className="absolute inset-0 z-30 m-auto grid size-16 place-items-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md">
+                  className="absolute inset-0 z-30 m-auto grid size-16 place-items-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md"
+                >
                   <Play className="ml-1 size-6 fill-current" />
                 </button>
               ) : null}
@@ -392,7 +417,8 @@ export function StoreReelViewer({
                   onClick={() => void togglePlayback()}
                   disabled={mediaFailed}
                   aria-label={playing ? 'Pause Reel' : 'Play Reel'}
-                  className="grid size-10 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/65 disabled:opacity-35">
+                  className="grid size-10 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/65 disabled:opacity-35"
+                >
                   {playing ? (
                     <Pause className="size-4 fill-current" />
                   ) : (
@@ -405,8 +431,13 @@ export function StoreReelViewer({
                   onClick={() => setMuted(current => !current)}
                   disabled={mediaFailed}
                   aria-label={muted ? 'Unmute Reel' : 'Mute Reel'}
-                  className="grid size-10 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/65 disabled:opacity-35">
-                  {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                  className="grid size-10 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/65 disabled:opacity-35"
+                >
+                  {muted ? (
+                    <VolumeX className="size-4" />
+                  ) : (
+                    <Volume2 className="size-4" />
+                  )}
                 </button>
               </div>
 
@@ -415,7 +446,8 @@ export function StoreReelViewer({
                 onClick={movePrevious}
                 disabled={!canMovePrevious}
                 aria-label="Previous Reel"
-                className="absolute left-2 top-1/2 z-40 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition hover:bg-black/65 disabled:pointer-events-none disabled:opacity-0 md:left-4">
+                className="absolute left-2 top-1/2 z-40 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition hover:bg-black/65 disabled:pointer-events-none disabled:opacity-0 md:left-4"
+              >
                 <ChevronLeft className="size-5" />
               </button>
 
@@ -424,7 +456,8 @@ export function StoreReelViewer({
                 onClick={moveNext}
                 disabled={!canMoveNext}
                 aria-label="Next Reel"
-                className="absolute right-2 top-1/2 z-40 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition hover:bg-black/65 disabled:pointer-events-none disabled:opacity-0 md:right-4">
+                className="absolute right-2 top-1/2 z-40 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition hover:bg-black/65 disabled:pointer-events-none disabled:opacity-0 md:right-4"
+              >
                 <ChevronRight className="size-5" />
               </button>
             </section>
@@ -470,7 +503,9 @@ export function StoreReelViewer({
                     </span>
 
                     <div className="min-w-0">
-                      <h3 className="text-sm font-black text-white md:text-base">{destinationTitle}</h3>
+                      <h3 className="text-sm font-black text-white md:text-base">
+                        {destinationTitle}
+                      </h3>
                       <p className="mt-1.5 text-xs leading-5 text-white/50 md:text-sm md:leading-6">
                         {destinationDescription}
                       </p>
@@ -482,25 +517,34 @@ export function StoreReelViewer({
                       <Link
                         href={activeReel.detailHref}
                         onClick={onClose}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black text-black transition hover:bg-white/90">
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black text-black transition hover:bg-white/90"
+                      >
                         <ShoppingBag className="size-4" />
-                        <span className="truncate">{primaryActionLabel}</span>
+                        <span className="truncate">
+                          {primaryActionLabel}
+                        </span>
                       </Link>
                     ) : hasFeedTarget ? (
                       <button
                         type="button"
                         onClick={openFeedTarget}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black text-black transition hover:bg-white/90">
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black text-black transition hover:bg-white/90"
+                      >
                         <ShoppingBag className="size-4" />
-                        <span className="truncate">{primaryActionLabel}</span>
+                        <span className="truncate">
+                          {primaryActionLabel}
+                        </span>
                       </button>
                     ) : activeReel.action ? (
                       <Link
                         href={activeReel.action.href}
                         onClick={onClose}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black text-black transition hover:bg-white/90">
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black text-black transition hover:bg-white/90"
+                      >
                         <ExternalLink className="size-4" />
-                        <span className="truncate">{activeReel.action.label}</span>
+                        <span className="truncate">
+                          {activeReel.action.label}
+                        </span>
                       </Link>
                     ) : null}
 
@@ -508,7 +552,8 @@ export function StoreReelViewer({
                       <button
                         type="button"
                         onClick={openFeedTarget}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-xs font-black text-white transition hover:bg-white/10">
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-xs font-black text-white transition hover:bg-white/10"
+                      >
                         <ExternalLink className="size-4" />
                         Quick preview
                       </button>
@@ -520,7 +565,9 @@ export function StoreReelViewer({
                   <div className="mt-7">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-black text-white">More Store Reels</p>
+                        <p className="text-sm font-black text-white">
+                          More Store Reels
+                        </p>
                         <p className="mt-1 text-xs text-white/40">
                           Select another Reel without leaving the viewer.
                         </p>
@@ -546,7 +593,8 @@ export function StoreReelViewer({
                   type="button"
                   onClick={movePrevious}
                   disabled={!canMovePrevious}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30">
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+                >
                   <ChevronLeft className="size-4" />
                   Previous
                 </button>
@@ -555,7 +603,8 @@ export function StoreReelViewer({
                   type="button"
                   onClick={moveNext}
                   disabled={!canMoveNext}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30">
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+                >
                   Next
                   <ChevronRight className="size-4" />
                 </button>

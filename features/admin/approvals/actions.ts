@@ -23,7 +23,160 @@ export async function reviewAdminApproval(formData: FormData) {
   const decision = String(formData.get('decision') ?? '');
   const reviewNote = String(formData.get('reviewNote') ?? '').trim();
   if (!id || !['APPROVED', 'REJECTED'].includes(decision)) throw new Error('A request and valid decision are required.');
-  const request = await prisma.adminApprovalRequest.update({ where: { id, workspaceId: access.membership.workspaceId, status: 'PENDING' }, data: { status: decision as 'APPROVED' | 'REJECTED', reviewedById: access.session.user.id, reviewedAt: new Date(), reviewNote: reviewNote || null } });
-  await prisma.adminAuditEvent.create({ data: { workspaceId: access.membership.workspaceId, actorId: access.session.user.id, action: `APPROVAL_${decision}`, targetType: request.targetType, targetId: request.targetId, summary: reviewNote || `${request.action} ${decision.toLowerCase()}`, metadata: { requestId: request.id } } });
+
+  const request = await prisma.adminApprovalRequest.findFirst({
+    where: { id, workspaceId: access.membership.workspaceId, status: 'PENDING' }
+  });
+  if (!request) throw new Error('The approval request is no longer pending.');
+
+  if (
+    request.requestedById === access.session.user.id &&
+    !access.isDeveloperAdmin
+  ) {
+    throw new Error('A submission must be reviewed by a different administrator.');
+  }
+
+  if (decision === 'APPROVED' && request.action === 'PUBLISH_LIVE') {
+    const vendorProfileId =
+      request.targetType === 'PRODUCT'
+        ? (
+            await prisma.product.findFirst({
+              where: {
+                id: request.targetId,
+                workspaceId: access.membership.workspaceId
+              },
+              select: { vendorProfileId: true }
+            })
+          )?.vendorProfileId ?? null
+        : request.targetType === 'PROMOTION'
+          ? (
+              await prisma.promotion.findFirst({
+                where: {
+                  id: request.targetId,
+                  workspaceId: access.membership.workspaceId
+                },
+                select: { vendorProfileId: true }
+              })
+            )?.vendorProfileId ?? null
+          : request.targetType === 'COLLECTION'
+            ? (
+                await prisma.storeCollection.findFirst({
+                  where: {
+                    id: request.targetId,
+                    workspaceId: access.membership.workspaceId
+                  },
+                  select: { vendorProfileId: true }
+                })
+              )?.vendorProfileId ?? null
+            : request.targetType === 'CAMPAIGN' ||
+                request.targetType === 'EXPERIENCE'
+              ? (
+                  await prisma.storeStudioCampaign.findFirst({
+                    where: {
+                      id: request.targetId,
+                      workspaceId: access.membership.workspaceId
+                    },
+                    select: { vendorProfileId: true }
+                  })
+                )?.vendorProfileId ?? null
+              : null;
+
+    if (
+      (request.targetType === 'VENDOR' || vendorProfileId) &&
+      access.membership.workspace.commerceMode !== 'MULTI_VENDOR'
+    ) {
+      throw new Error(
+        'Developer Admin must activate multivendor mode before vendor records or vendor content can be approved.'
+      );
+    }
+
+    if (vendorProfileId) {
+      const vendor = await prisma.vendorProfile.findFirst({
+        where: {
+          id: vendorProfileId,
+          workspaceId: access.membership.workspaceId,
+          status: 'ACTIVE',
+          active: true
+        },
+        select: { id: true }
+      });
+
+      if (!vendor) {
+        throw new Error(
+          'The content owner must be an active approved vendor before this submission can be published.'
+        );
+      }
+    }
+  }
+
+  await prisma.$transaction(async tx => {
+    let executed = false;
+    if (decision === 'APPROVED' && request.action === 'PUBLISH_LIVE') {
+      if (request.targetType === 'PRODUCT') {
+        await tx.product.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'PUBLISHED', active: true, approvedAt: new Date() } });
+        executed = true;
+      } else if (request.targetType === 'PROMOTION') {
+        await tx.promotion.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'PUBLISHED', active: true } });
+        executed = true;
+      } else if (request.targetType === 'COLLECTION') {
+        await tx.storeCollection.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'PUBLISHED', active: true } });
+        executed = true;
+      } else if (request.targetType === 'VENDOR') {
+        await tx.vendorProfile.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'ACTIVE', active: true, approvedAt: new Date() } });
+        executed = true;
+      } else if (request.targetType === 'CAMPAIGN' || request.targetType === 'EXPERIENCE') {
+        await tx.storeStudioCampaign.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'APPROVED', active: true } });
+        executed = true;
+      }
+    } else if (decision === 'REJECTED' && request.action === 'PUBLISH_LIVE') {
+      if (request.targetType === 'PRODUCT') {
+        await tx.product.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
+      } else if (request.targetType === 'PROMOTION') {
+        await tx.promotion.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
+      } else if (request.targetType === 'COLLECTION') {
+        await tx.storeCollection.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
+      } else if (request.targetType === 'VENDOR') {
+        await tx.vendorProfile.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
+      } else if (request.targetType === 'CAMPAIGN' || request.targetType === 'EXPERIENCE') {
+        await tx.storeStudioCampaign.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
+      }
+    }
+
+    await tx.adminApprovalRequest.update({
+      where: { id: request.id },
+      data: {
+        status: executed ? 'EXECUTED' : decision as 'APPROVED' | 'REJECTED',
+        reviewedById: access.session.user.id,
+        reviewedAt: new Date(),
+        executedAt: executed ? new Date() : null,
+        reviewNote: reviewNote || null
+      }
+    });
+    await tx.adminAuditEvent.create({
+      data: {
+        workspaceId: access.membership.workspaceId,
+        actorId: access.session.user.id,
+        action: executed ? 'APPROVAL_EXECUTED' : `APPROVAL_${decision}`,
+        targetType: request.targetType,
+        targetId: request.targetId,
+        summary: reviewNote || `${request.action} ${executed ? 'approved and executed' : decision.toLowerCase()}`,
+        metadata: { requestId: request.id }
+      }
+    });
+  });
+
   revalidatePath('/admin');
+  revalidatePath('/admin/approvals');
+  revalidatePath('/admin/products');
+  revalidatePath('/admin/promotions');
+  revalidatePath('/admin/collections');
+  revalidatePath('/admin/vendors');
+  revalidatePath('/admin/store-studio');
+  revalidatePath('/vendor/products');
+  revalidatePath('/vendor/collections');
+  revalidatePath('/vendor/promotions');
+  revalidatePath('/vendor/stories');
+  revalidatePath('/vendor/reels');
+  revalidatePath('/vendor/submissions');
+  revalidatePath('/store');
 }

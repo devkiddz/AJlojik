@@ -51,7 +51,7 @@ export async function getStoreReelDetail(
           active: true,
 
           status: {
-            in: ['APPROVED', 'SCHEDULED', 'ACTIVE']
+            in: ['SCHEDULED', 'ACTIVE']
           },
 
           AND: [
@@ -79,11 +79,9 @@ export async function getStoreReelDetail(
     include: {
       campaign: {
         include: {
-          vendor: {
-            select: {
-              name: true
-            }
-          }
+          vendor: { select: { name: true } },
+          vendorProfile: { select: { name: true, status: true, active: true } },
+          workspace: { select: { commerceMode: true } }
         }
       }
     }
@@ -93,12 +91,26 @@ export async function getStoreReelDetail(
     return null;
   }
 
+  if (asset.campaign.vendorProfileId && (asset.campaign.workspace.commerceMode !== 'MULTI_VENDOR' || asset.campaign.vendorProfile?.status !== 'ACTIVE' || !asset.campaign.vendorProfile.active)) {
+    return null;
+  }
+
   const productRecord = asset.productId
     ? await prisma.product.findFirst({
         where: {
           id: asset.productId,
           workspaceId: asset.campaign.workspaceId,
-          active: true
+          active: true,
+          status: 'PUBLISHED',
+          OR: [
+            { vendorProfileId: null },
+            {
+              vendorProfile: {
+                is: { active: true, status: 'ACTIVE' }
+              },
+              workspace: { commerceMode: 'MULTI_VENDOR' }
+            }
+          ]
         },
         include: productMappingInclude
       })
@@ -113,8 +125,8 @@ export async function getStoreReelDetail(
       id: asset.id,
       campaignId: asset.campaignId,
       workspaceId: asset.campaign.workspaceId,
-      vendorId: asset.campaign.vendorId,
-      vendorName: asset.campaign.vendor?.name ?? null,
+      vendorId: asset.campaign.vendorProfileId ?? asset.campaign.vendorId,
+      vendorName: asset.campaign.vendorProfile?.name ?? asset.campaign.vendor?.name ?? null,
       title: asset.title ?? asset.campaign.title,
       caption:
         asset.description ??

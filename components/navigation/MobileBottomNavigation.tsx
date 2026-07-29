@@ -5,6 +5,8 @@ import { Compass, House, ShoppingBag, ShoppingCart, UserRound, type LucideIcon }
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { isCustomerExperienceRoute } from '@/features/customer-experience/customerExperienceRoutes';
+
 import { cn } from '@/lib/utils';
 
 type RouteNavigationItem = {
@@ -74,7 +76,11 @@ export default function MobileBottomNavigation({
     }
   ];
 
-  const navigationItems = allNavigationItems.filter(item => pathname !== '/' || item.id !== 'discover');
+  if (!isCustomerExperienceRoute(pathname)) {
+    return null;
+  }
+
+  const navigationItems = allNavigationItems;
 
   return (
     <nav
@@ -96,7 +102,7 @@ export default function MobileBottomNavigation({
         dark:border-white/[0.04]
         lg:hidden
       ">
-      <div className={cn('grid gap-1', pathname === '/' ? 'grid-cols-4' : 'grid-cols-5')}>
+      <div className="grid grid-cols-5 gap-1">
         {navigationItems.map(item => {
           const Icon = item.icon;
 

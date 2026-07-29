@@ -95,7 +95,8 @@ async function ensureIdentity(
         accountState: 'ACTIVE',
         lockedUntil: null,
         restrictionReason: null,
-        isGhostDeveloper: spec.ghost
+        isGhostDeveloper: spec.ghost,
+        platformRole: spec.ghost ? 'DEVELOPER_ADMIN' : 'STANDARD'
       },
 
       select: {
@@ -115,7 +116,8 @@ async function ensureIdentity(
         accountState: 'ACTIVE',
         lockedUntil: null,
         restrictionReason: null,
-        isGhostDeveloper: spec.ghost
+        isGhostDeveloper: spec.ghost,
+        platformRole: spec.ghost ? 'DEVELOPER_ADMIN' : 'STANDARD'
       }
     });
   }

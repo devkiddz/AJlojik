@@ -5,6 +5,11 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { ProductCard } from '@/features/products/cards';
+import {
+  EXPERIENCE_PRODUCT_ITEM_CLASS,
+  EXPERIENCE_PRODUCT_RAIL_CLASS,
+  getProductRailScrollStep
+} from '@/features/products/productRailPresentation';
 
 import { cn } from '@/lib/utils';
 
@@ -101,7 +106,7 @@ export default function ProductShelf({
       return;
     }
 
-    const distance = element.clientWidth * 0.95;
+    const distance = getProductRailScrollStep(element);
 
     element.scrollBy({
       left: direction === 'left' ? -distance : distance,
@@ -168,9 +173,9 @@ export default function ProductShelf({
         role="region"
         aria-label={ariaLabel}
         className={cn(
-          'flex min-w-0 snap-x snap-mandatory gap-3 sm:gap-4',
-          'overflow-x-auto overscroll-x-contain scroll-smooth',
-          'px-1 pb-3 scrollbar-none'
+          threeUp
+            ? 'flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth px-1 pb-3 scrollbar-none sm:gap-4'
+            : EXPERIENCE_PRODUCT_RAIL_CLASS
         )}>
         {products.map(product => (
           <div
@@ -179,8 +184,12 @@ export default function ProductShelf({
               'shrink-0 snap-start',
 
               threeUp
-                ? ['w-[76%]', 'sm:w-[calc((100%_-_1rem)/2)]', 'lg:w-[calc((100%_-_2rem)/3)]']
-                : ['w-[44vw] min-w-40 max-w-48', 'sm:w-52 sm:max-w-none', 'md:w-56'],
+                ? [
+                    'w-[76%] min-w-[76%] max-w-[76%] flex-none',
+                    'sm:w-[calc((100%_-_1rem)/2)] sm:min-w-[calc((100%_-_1rem)/2)] sm:max-w-[calc((100%_-_1rem)/2)]',
+                    'lg:w-[calc((100%_-_2rem)/3)] lg:min-w-[calc((100%_-_2rem)/3)] lg:max-w-[calc((100%_-_2rem)/3)]'
+                  ]
+                : EXPERIENCE_PRODUCT_ITEM_CLASS,
 
               itemClassName
             )}>

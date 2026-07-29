@@ -51,6 +51,10 @@ export type CommerceStory = {
   collectionId?: string;
 
   actionLabel?: string;
+  actionHref?: string;
+
+  /** Resolved Story playback duration in milliseconds. */
+  durationMs?: number;
 
   startsAt?: string;
   endsAt?: string;

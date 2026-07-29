@@ -1,31 +1,23 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { LoaderCircle } from 'lucide-react';
 import { useActionFeedback } from '@/features/action-feedback';
-import DesktopDiscoveryRail from '@/components/discovery-hub-panel/DesktopDiscoveryRail';
-import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDiscoverySheetHost';
 import PromoModal from '@/components/promos/PromoModal';
 
 import { categories } from '@/data/categories';
 import { collections } from '@/data/collections';
-import { hubGroups, hubWidgets } from '@/data/discoveryHubData';
 import { promos, type Promo } from '@/data/promos';
 
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
-import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 import { useStoreStudioProjection } from '@/features/store-studio/client';
 import { StorefrontReelComposer } from '@/features/store-studio/admin/StorefrontReelComposer';
-
-import { recordProductView } from '@/features/product-activity';
-
-import { cn } from '@/lib/utils';
 
 import { useIdentity } from '@/providers/IdentityProvider';
 
@@ -100,10 +92,19 @@ function FeedExperienceWorkspaceContent({
   const searchParams = useSearchParams();
 
   const selectedCategory = searchParams.get('category') ?? 'all';
+  const selectedCollectionId = searchParams.get('collection');
+  const selectedProductId = searchParams.get('product');
+  const selectedPromotionId = searchParams.get('promotion');
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
+
+      if ('category' in updates) {
+        params.delete('collection');
+        params.delete('product');
+        params.delete('promotion');
+      }
 
       Object.entries(updates).forEach(([key, value]) => {
         if (!value || value === 'all') {
@@ -183,16 +184,67 @@ function FeedExperienceWorkspaceContent({
   // INITIAL FEED INTENT
   // ============================================================
 
-  const initialIntent = useMemo<FeedIntent>(
-    () => ({
+  const initialIntent = useMemo<FeedIntent>(() => {
+    const createdAt = new Date().toISOString();
+
+    if (selectedProductId) {
+      return {
+        id: `product:${selectedProductId}:route`,
+        type: 'product',
+        source: 'route',
+        targetId: selectedProductId,
+        route: `/store?product=${encodeURIComponent(selectedProductId)}`,
+        surface: 'product',
+        title: 'Product experience',
+        createdAt
+      };
+    }
+
+    if (selectedCollectionId) {
+      return {
+        id: `collection:${selectedCollectionId}:route`,
+        type: 'collection',
+        source: 'route',
+        targetId: selectedCollectionId,
+        route: `/store?collection=${encodeURIComponent(selectedCollectionId)}`,
+        surface: 'collection',
+        title: 'Collection experience',
+        createdAt
+      };
+    }
+
+    if (selectedPromotionId) {
+      return {
+        id: `promotion:${selectedPromotionId}:route`,
+        type: 'promotion',
+        source: 'route',
+        targetId: selectedPromotionId,
+        route: `/store?promotion=${encodeURIComponent(selectedPromotionId)}`,
+        surface: 'promotion',
+        title: 'Promotion experience',
+        createdAt
+      };
+    }
+
+    return {
       id: `store-discovery:${selectedCategory}`,
       type: 'store-discovery',
       source: 'route',
       categorySlug: selectedCategory,
-      createdAt: new Date().toISOString()
-    }),
-    [selectedCategory]
-  );
+      route:
+        selectedCategory === 'all'
+          ? '/store'
+          : `/store?category=${encodeURIComponent(selectedCategory)}`,
+      surface: 'store',
+      title: selectedCategory === 'all' ? 'Store discovery' : `Browse ${selectedCategory}`,
+      createdAt
+    };
+  }, [
+    selectedCategory,
+    selectedCollectionId,
+    selectedProductId,
+    selectedPromotionId
+  ]);
 
   // ============================================================
   // FEED CONTEXT
@@ -276,36 +328,6 @@ function FeedExperienceWorkspaceContent({
   }, [selectedPromo, catalogProducts]);
 
   // ============================================================
-  // DISCOVERY HUB PREFERENCE
-  // ============================================================
-
-  const [hubCollapsed, setHubCollapsed] = useState(false);
-
-  const [hubPreferenceLoaded, setHubPreferenceLoaded] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const saved = window.localStorage.getItem('aj_discovery_hub_collapsed');
-
-      if (saved !== null) {
-        setHubCollapsed(saved === 'true');
-      }
-
-      setHubPreferenceLoaded(true);
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!hubPreferenceLoaded) {
-      return;
-    }
-
-    window.localStorage.setItem('aj_discovery_hub_collapsed', String(hubCollapsed));
-  }, [hubCollapsed, hubPreferenceLoaded]);
-
-  // ============================================================
   // LOADING AND ERROR STATES
   // ============================================================
 
@@ -346,47 +368,28 @@ function FeedExperienceWorkspaceContent({
   // ============================================================
 
   return (
-    <FeedExperienceProvider initialIntent={initialIntent} context={context} baseActions={baseActions}>
-      <MobileDiscoverySheetHost />
+    <FeedExperienceProvider
+      initialIntent={initialIntent}
+      context={context}
+      baseActions={baseActions}
+      broadcastIntent>
+      <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
+        <section className="min-w-0 pb-6 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:rounded-3xl lg:bg-card/50 lg:p-4 lg:scroll-smooth lg:scrollbar-none">
+          <FeedRenderer />
+        </section>
 
-      <ExperienceStackProvider key={activeWorkspace.id} workspaceId={activeWorkspace.id}>
-        <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
-          <div className="grid h-full min-h-0 grid-cols-12 items-stretch gap-4">
-            <section
-              className={cn(
-                'col-span-12 min-w-0 pb-6 transition-all duration-300',
-                'lg:h-full lg:min-h-0 lg:overflow-y-auto',
-                'lg:rounded-3xl lg:bg-card/50 lg:p-4',
-                'lg:scroll-smooth lg:scrollbar-none',
+        <PromoModal
+          promo={selectedPromo}
+          products={selectedPromoProducts}
+          open={promoOpen}
+          onClose={closePromoPreview}
+        />
 
-                hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
-              )}>
-              <FeedRenderer />
-            </section>
-
-            <DesktopDiscoveryRail
-              groups={hubGroups}
-              widgets={hubWidgets}
-              collapsed={hubCollapsed}
-              onCollapsedChange={setHubCollapsed}
-            />
-          </div>
-
-          <PromoModal
-            promo={selectedPromo}
-            products={selectedPromoProducts}
-            open={promoOpen}
-            onClose={closePromoPreview}
-          />
-
-          {canManageStoreStudio &&
-          activeWorkspace.id === storeStudioWorkspaceId ? (
-            <StorefrontReelComposer
-              products={catalogProducts}
-            />
-          ) : null}
-        </div>
-      </ExperienceStackProvider>
+        {canManageStoreStudio &&
+        activeWorkspace.id === storeStudioWorkspaceId ? (
+          <StorefrontReelComposer products={catalogProducts} />
+        ) : null}
+      </div>
     </FeedExperienceProvider>
   );
 }

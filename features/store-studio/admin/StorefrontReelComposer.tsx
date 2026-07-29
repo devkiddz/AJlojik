@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  useEffect,
   useMemo,
   useState,
   useTransition
@@ -25,6 +26,7 @@ import {
   DialogDescription,
   DialogTitle
 } from '@/components/ui/dialog';
+import { MediaChoiceGrid, type MediaChoiceAsset } from '@/features/admin/media/MediaChoiceGrid';
 import { cn } from '@/lib/utils';
 import type { ProductType } from '@/types/types';
 
@@ -39,8 +41,10 @@ type ReelDraft = {
   productId: string;
   title: string;
   caption: string;
-  videoUrl: string;
-  posterUrl: string;
+  videoMediaAssetId: string;
+  posterMediaAssetId: string;
+  externalVideoUrl: string;
+  externalPosterUrl: string;
   autoplay: boolean;
 };
 
@@ -60,6 +64,9 @@ export function StorefrontReelComposer({
   const [query, setQuery] = useState('');
   const [campaignTitle, setCampaignTitle] = useState('');
   const [drafts, setDrafts] = useState<ReelDraft[]>([]);
+  const [media, setMedia] = useState<MediaChoiceAsset[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
   const [resultMessage, setResultMessage] = useState<string | null>(
     null
   );
@@ -95,6 +102,58 @@ export function StorefrontReelComposer({
     [drafts]
   );
 
+  useEffect(() => {
+    if (!open || media.length || mediaLoading) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setMediaLoading(true);
+    setMediaError(null);
+
+    void fetch('/api/admin/media/assets?scope=workspace', {
+      signal: controller.signal
+    })
+      .then(async response => {
+        const result = (await response.json()) as {
+          assets?: MediaChoiceAsset[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(result.error ?? 'Unable to load Media Studio.');
+        }
+
+        setMedia(result.assets ?? []);
+      })
+      .catch(error => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setMediaError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load Media Studio.'
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setMediaLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [media.length, mediaLoading, open]);
+
+  const addMedia = (asset: MediaChoiceAsset) => {
+    setMedia(current => [
+      asset,
+      ...current.filter(item => item.id !== asset.id)
+    ]);
+  };
+
   const addProduct = (product: ProductType) => {
     if (
       selectedProductIds.has(product.id) ||
@@ -109,8 +168,10 @@ export function StorefrontReelComposer({
         productId: product.id,
         title: product.name,
         caption: product.shortDescription,
-        videoUrl: '',
-        posterUrl: getProductImage(product),
+        videoMediaAssetId: '',
+        posterMediaAssetId: '',
+        externalVideoUrl: '',
+        externalPosterUrl: '',
         autoplay: true
       }
     ]);
@@ -149,12 +210,14 @@ export function StorefrontReelComposer({
     }
 
     const incompleteDraft = drafts.find(
-      draft => !draft.title.trim() || !draft.videoUrl.trim()
+      draft =>
+        !draft.title.trim() ||
+        (!draft.videoMediaAssetId && !draft.externalVideoUrl.trim())
     );
 
     if (incompleteDraft) {
       setErrorMessage(
-        'Every selected product needs a Reel title and video URL.'
+        'Every selected product needs a Reel title and a video selected from Media Studio.'
       );
       return;
     }
@@ -315,6 +378,18 @@ export function StorefrontReelComposer({
                 />
               </label>
 
+              {mediaLoading ? (
+                <p className="mt-4 rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
+                  Loading the workspace Media Studio…
+                </p>
+              ) : null}
+
+              {mediaError ? (
+                <p className="mt-4 rounded-2xl bg-destructive/10 px-4 py-3 text-xs font-semibold text-destructive">
+                  {mediaError}
+                </p>
+              ) : null}
+
               <div className="mt-5 space-y-4">
                 {drafts.map((draft, index) => {
                   const product = products.find(
@@ -375,35 +450,6 @@ export function StorefrontReelComposer({
                           />
                         </Field>
 
-                        <Field label="Video URL">
-                          <input
-                            value={draft.videoUrl}
-                            onChange={event =>
-                              updateDraft(
-                                draft.productId,
-                                'videoUrl',
-                                event.target.value
-                              )
-                            }
-                            placeholder="/reels/product.mp4 or https://..."
-                            className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-xs outline-none focus:border-primary"
-                          />
-                        </Field>
-
-                        <Field label="Poster image URL">
-                          <input
-                            value={draft.posterUrl}
-                            onChange={event =>
-                              updateDraft(
-                                draft.productId,
-                                'posterUrl',
-                                event.target.value
-                              )
-                            }
-                            className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-xs outline-none focus:border-primary"
-                          />
-                        </Field>
-
                         <Field label="Caption">
                           <input
                             value={draft.caption}
@@ -418,6 +464,110 @@ export function StorefrontReelComposer({
                           />
                         </Field>
                       </div>
+
+                      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                        <details className="rounded-2xl border border-border/60 bg-background/55 p-3">
+                          <summary className="cursor-pointer text-[9px] font-black uppercase tracking-[0.14em] text-muted-foreground">
+                            {draft.videoMediaAssetId
+                              ? 'Reel video selected'
+                              : 'Choose or upload Reel video'}
+                          </summary>
+
+                          <div className="mt-3">
+                            <MediaChoiceGrid
+                              media={media}
+                              name={`reelVideo-${draft.productId}`}
+                              initialIds={
+                                draft.videoMediaAssetId
+                                  ? [draft.videoMediaAssetId]
+                                  : []
+                              }
+                              emptyLabel="No Reel video selected"
+                              purpose="reels"
+                              uploadAccept="video"
+                              acceptedResourceTypes={['VIDEO']}
+                              onSelectionChange={ids =>
+                                updateDraft(
+                                  draft.productId,
+                                  'videoMediaAssetId',
+                                  ids[0] ?? ''
+                                )
+                              }
+                              onAssetUploaded={addMedia}
+                            />
+                          </div>
+                        </details>
+
+                        <details className="rounded-2xl border border-border/60 bg-background/55 p-3">
+                          <summary className="cursor-pointer text-[9px] font-black uppercase tracking-[0.14em] text-muted-foreground">
+                            {draft.posterMediaAssetId
+                              ? 'Poster selected'
+                              : 'Choose optional Reel poster'}
+                          </summary>
+
+                          <div className="mt-3">
+                            <MediaChoiceGrid
+                              media={media}
+                              name={`reelPoster-${draft.productId}`}
+                              initialIds={
+                                draft.posterMediaAssetId
+                                  ? [draft.posterMediaAssetId]
+                                  : []
+                              }
+                              emptyLabel="Use the product image as poster"
+                              purpose="reels"
+                              uploadAccept="image"
+                              acceptedResourceTypes={['IMAGE']}
+                              onSelectionChange={ids =>
+                                updateDraft(
+                                  draft.productId,
+                                  'posterMediaAssetId',
+                                  ids[0] ?? ''
+                                )
+                              }
+                              onAssetUploaded={addMedia}
+                            />
+                          </div>
+                        </details>
+                      </div>
+
+                      <details className="mt-3 rounded-2xl border border-dashed border-border/60 px-3 py-2">
+                        <summary className="cursor-pointer text-[9px] font-bold text-muted-foreground">
+                          Advanced external media fallback
+                        </summary>
+
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <Field label="External video URL">
+                            <input
+                              value={draft.externalVideoUrl}
+                              onChange={event =>
+                                updateDraft(
+                                  draft.productId,
+                                  'externalVideoUrl',
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Used only when no gallery video is selected"
+                              className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-xs outline-none focus:border-primary"
+                            />
+                          </Field>
+
+                          <Field label="External poster URL">
+                            <input
+                              value={draft.externalPosterUrl}
+                              onChange={event =>
+                                updateDraft(
+                                  draft.productId,
+                                  'externalPosterUrl',
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Optional poster fallback"
+                              className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-xs outline-none focus:border-primary"
+                            />
+                          </Field>
+                        </div>
+                      </details>
 
                       <label className="mt-3 inline-flex items-center gap-2 text-[10px] font-semibold text-muted-foreground">
                         <input

@@ -1,11 +1,19 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode
+} from 'react';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-import { useFeedExperience } from '@/features/feed-experience';
-
+import { useFeedExperience } from '@/features/feed-experience/hooks/useFeedExperience';
 import type { FeedIntent } from '@/features/feed-experience/contracts';
 
 import { useIdentity } from '@/providers/IdentityProvider';
@@ -16,10 +24,6 @@ import type {
   ExperienceHistorySource,
   ExperienceStackState
 } from './experienceStackTypes';
-
-// ============================================================
-// INPUT CONTRACTS
-// ============================================================
 
 export type PushExperienceInput = {
   label: string;
@@ -34,7 +38,6 @@ export type PushExperienceInput = {
   productId?: string | null;
 
   intentSnapshot: FeedIntent;
-
   contextSnapshot?: Record<string, unknown> | null;
 
   fingerprint: string;
@@ -42,15 +45,9 @@ export type PushExperienceInput = {
 
 export type UpdateHistorySettingsInput = {
   enabled?: boolean;
-
   retention?: ExperienceHistorySettings['retention'];
-
   maxEntries?: number;
 };
-
-// ============================================================
-// PROVIDER CONTRACT
-// ============================================================
 
 type ExperienceStackContextValue = ExperienceStackState & {
   workspaceId: string;
@@ -63,17 +60,11 @@ type ExperienceStackContextValue = ExperienceStackState & {
   requireExperienceAccess: () => boolean;
 
   refreshHistory: () => Promise<void>;
-
   pushExperience: (input: PushExperienceInput) => Promise<ExperienceHistoryEntry | null>;
-
   goBack: () => Promise<ExperienceHistoryEntry | null>;
-
   jumpTo: (entryId: string) => Promise<ExperienceHistoryEntry | null>;
-
   clearHistory: () => Promise<void>;
-
   startFresh: () => Promise<void>;
-
   updateSettings: (input: UpdateHistorySettingsInput) => Promise<void>;
 };
 
@@ -82,10 +73,6 @@ type ExperienceStackProviderProps = {
   workspaceId: string;
   initialState?: ExperienceStackState;
 };
-
-// ============================================================
-// DEFAULT STATE
-// ============================================================
 
 const defaultSettings: ExperienceHistorySettings = {
   enabled: true,
@@ -102,7 +89,79 @@ const defaultState: ExperienceStackState = {
 
 const ExperienceStackContext = createContext<ExperienceStackContextValue | null>(null);
 
-const EXPERIENCE_AUTH_ROUTE = '/sign-in';
+const GUEST_STACK_STORAGE_PREFIX = 'rcentz_guest_experience_stack';
+
+function guestStorageKey(workspaceId: string): string {
+  return `${GUEST_STACK_STORAGE_PREFIX}:${workspaceId}`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readGuestState(workspaceId: string): ExperienceStackState {
+  if (typeof window === 'undefined') {
+    return defaultState;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(guestStorageKey(workspaceId));
+
+    if (!raw) {
+      return defaultState;
+    }
+
+    const parsed: unknown = JSON.parse(raw);
+
+    if (!isRecord(parsed) || !Array.isArray(parsed.entries) || !isRecord(parsed.settings)) {
+      return defaultState;
+    }
+
+    const settings: ExperienceHistorySettings = {
+      enabled: parsed.settings.enabled !== false,
+      retention:
+        typeof parsed.settings.retention === 'string'
+          ? (parsed.settings.retention as ExperienceHistorySettings['retention'])
+          : defaultSettings.retention,
+      maxEntries:
+        typeof parsed.settings.maxEntries === 'number'
+          ? Math.max(5, Math.min(100, Math.round(parsed.settings.maxEntries)))
+          : defaultSettings.maxEntries
+    };
+
+    const entries = parsed.entries.filter(isRecord) as unknown as ExperienceHistoryEntry[];
+    const boundedEntries = entries.slice(0, settings.maxEntries);
+
+    return {
+      entries: boundedEntries,
+      settings,
+      canGoBack: boundedEntries.length > 1,
+      currentEntry: boundedEntries[0] ?? null
+    };
+  } catch {
+    return defaultState;
+  }
+}
+
+function writeGuestState(workspaceId: string, state: ExperienceStackState): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(guestStorageKey(workspaceId), JSON.stringify(state));
+  } catch {
+    // Guest history is a convenience layer and must never block shopping.
+  }
+}
+
+function currentCustomerRoute(): string {
+  if (typeof window === 'undefined') {
+    return '/';
+  }
+
+  return `${window.location.pathname}${window.location.search}`;
+}
 
 function describeIntent(intent: FeedIntent, context: ReturnType<typeof useFeedExperience>['context']) {
   const product =
@@ -121,52 +180,53 @@ function describeIntent(intent: FeedIntent, context: ReturnType<typeof useFeedEx
       : undefined;
 
   const categorySlug = intent.categorySlug ?? product?.category ?? 'all';
+  const route = intent.route ?? currentCustomerRoute();
 
   switch (intent.type) {
     case 'product':
       return {
-        label: product?.name ?? 'Product experience',
-        subtitle: product?.shortDescription ?? null,
+        label: product?.name ?? intent.title ?? 'Product experience',
+        subtitle: product?.shortDescription ?? intent.subtitle ?? null,
         categorySlug,
         source: 'PRODUCT' as const,
         productId: intent.targetId ?? null,
-        fingerprint: `product:${intent.targetId ?? 'unknown'}`
+        fingerprint: `product:${intent.targetId ?? route}`
       };
 
     case 'collection':
       return {
-        label: collection?.title ?? 'Collection experience',
-        subtitle: collection?.subtitle ?? null,
+        label: collection?.title ?? intent.title ?? 'Collection experience',
+        subtitle: collection?.subtitle ?? intent.subtitle ?? null,
         categorySlug,
         source: 'COLLECTION' as const,
         collectionId: intent.targetId ?? null,
-        fingerprint: `collection:${intent.targetId ?? 'unknown'}`
+        fingerprint: `collection:${intent.targetId ?? route}`
       };
 
     case 'promotion':
       return {
-        label: promotion?.title ?? 'Promotion experience',
-        subtitle: promotion?.description ?? null,
+        label: promotion?.title ?? intent.title ?? 'Promotion experience',
+        subtitle: promotion?.description ?? intent.subtitle ?? null,
         categorySlug,
         source: 'CAMPAIGN' as const,
         campaignId: intent.targetId ?? null,
-        fingerprint: `promotion:${intent.targetId ?? 'unknown'}`
+        fingerprint: `promotion:${intent.targetId ?? route}`
       };
 
     case 'search':
       return {
-        label: intent.query ? `Search: ${intent.query}` : 'Search experience',
-        subtitle: null,
+        label: intent.query ? `Search: ${intent.query}` : intent.title ?? 'Search experience',
+        subtitle: intent.subtitle ?? null,
         categorySlug,
         source: 'SEARCH' as const,
-        fingerprint: `search:${intent.query?.trim().toLowerCase() ?? ''}`
+        fingerprint: `search:${intent.query?.trim().toLowerCase() || route}`
       };
 
     case 'category':
     case 'store-discovery':
       return {
-        label: categorySlug === 'all' ? 'Store discovery' : `Browse ${categorySlug}`,
-        subtitle: null,
+        label: intent.title ?? (categorySlug === 'all' ? 'Store discovery' : `Browse ${categorySlug}`),
+        subtitle: intent.subtitle ?? null,
         categorySlug,
         source: intent.source === 'hub-card' ? ('DISCOVERY_HUB' as const) : ('CATEGORY' as const),
         fingerprint: `${intent.type}:${categorySlug}`
@@ -174,38 +234,27 @@ function describeIntent(intent: FeedIntent, context: ReturnType<typeof useFeedEx
 
     case 'home':
       return {
-        label: 'Home experience',
-        subtitle: null,
+        label: intent.title ?? 'AJ Logik experience',
+        subtitle: intent.subtitle ?? null,
         categorySlug: 'all',
         source: 'SYSTEM' as const,
-        fingerprint: 'home'
+        fingerprint: `route:${route}`
       };
   }
 }
-
-// ============================================================
-// RESPONSE ERROR
-// ============================================================
 
 class ExperienceStackRequestError extends Error {
   readonly status: number;
 
   constructor(message: string, status: number) {
     super(message);
-
     this.name = 'ExperienceStackRequestError';
-
     this.status = status;
   }
 }
 
-// ============================================================
-// RESPONSE HELPER
-// ============================================================
-
 async function readJsonResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type') ?? '';
-
   const rawBody = await response.text();
 
   let parsedData: unknown;
@@ -214,7 +263,6 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   if (rawBody && contentType.includes('application/json')) {
     try {
       parsedData = JSON.parse(rawBody);
-
       parsedSuccessfully = true;
     } catch {
       throw new ExperienceStackRequestError('The Experience Stack returned invalid JSON.', response.status);
@@ -222,15 +270,11 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   }
 
   if (!response.ok) {
-    const errorData =
-      typeof parsedData === 'object' && parsedData !== null
-        ? (parsedData as {
-            error?: unknown;
-          })
-        : null;
-
+    const errorData = isRecord(parsedData) ? parsedData : null;
     const message =
-      typeof errorData?.error === 'string' ? errorData.error : 'The Experience Stack request failed.';
+      typeof errorData?.error === 'string'
+        ? errorData.error
+        : 'The Experience Stack request failed.';
 
     throw new ExperienceStackRequestError(message, response.status);
   }
@@ -245,86 +289,83 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return parsedData as T;
 }
 
-// ============================================================
-// PROVIDER
-// ============================================================
-
 export function ExperienceStackProvider({
   children,
   workspaceId,
   initialState = defaultState
 }: ExperienceStackProviderProps) {
   const router = useRouter();
-  const pathname = usePathname();
-
   const { isAuthenticated, isPending } = useIdentity();
-
   const { actions, context, experience, intent } = useFeedExperience();
 
   const recordedIntentIdRef = useRef<string | null>(null);
 
   const [entries, setEntries] = useState(initialState.entries);
-
   const [settings, setSettings] = useState(initialState.settings);
-
   const [currentEntry, setCurrentEntry] = useState(initialState.currentEntry);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
-  const canAccessExperienceModes =
-    !isPending && isAuthenticated && Boolean(workspaceId) && workspaceId !== 'guest-live';
-
-  // ==========================================================
-  // INTERNAL STATE
-  // ==========================================================
+  const canAccessExperienceModes = !isPending && Boolean(workspaceId);
 
   const applyStackState = useCallback((state: ExperienceStackState) => {
     setEntries(state.entries);
     setSettings(state.settings);
-
     setCurrentEntry(state.currentEntry);
   }, []);
 
-  const restoreEntry = useCallback(
-    (entry: ExperienceHistoryEntry) => {
-      actions.restoreExperience(entry.intentSnapshot as FeedIntent);
+  const persistGuestState = useCallback(
+    (nextEntries: ExperienceHistoryEntry[], nextSettings = settings) => {
+      writeGuestState(workspaceId, {
+        entries: nextEntries,
+        settings: nextSettings,
+        canGoBack: nextEntries.length > 1,
+        currentEntry: nextEntries[0] ?? null
+      });
     },
-    [actions]
+    [settings, workspaceId]
   );
 
-  const requestAuthentication = useCallback(() => {
-    setError('Create an account or sign in to access personalised Experience modes.');
+  const restoreEntry = useCallback(
+    (entry: ExperienceHistoryEntry) => {
+      const snapshotRoute =
+        typeof entry.intentSnapshot.route === 'string'
+          ? entry.intentSnapshot.route
+          : typeof entry.contextSnapshot?.route === 'string'
+            ? entry.contextSnapshot.route
+            : null;
 
-    const returnTo = encodeURIComponent(pathname || '/');
+      if (snapshotRoute && currentCustomerRoute() !== snapshotRoute) {
+        router.push(snapshotRoute, { scroll: false });
+      }
 
-    router.push(`${EXPERIENCE_AUTH_ROUTE}?returnTo=${returnTo}`);
-  }, [pathname, router]);
+      actions.restoreExperience(entry.intentSnapshot as FeedIntent);
+
+      const scrollY = entry.contextSnapshot?.scrollY;
+
+      if (typeof scrollY === 'number') {
+        window.setTimeout(() => {
+          window.scrollTo({ top: scrollY, behavior: 'auto' });
+        }, 80);
+      }
+    },
+    [actions, router]
+  );
 
   const requireExperienceAccess = useCallback((): boolean => {
     if (isPending) {
-      setError('Confirming your account session.');
-
+      setError('Confirming your experience runtime.');
       return false;
     }
 
-    if (!isAuthenticated) {
-      requestAuthentication();
-
-      return false;
-    }
-
-    if (!workspaceId || workspaceId === 'guest-live') {
-      setError('Your account workspace is not available yet.');
-
+    if (!workspaceId) {
+      setError('Your shopping workspace is not available yet.');
       return false;
     }
 
     setError(null);
-
     return true;
-  }, [isAuthenticated, isPending, requestAuthentication, workspaceId]);
+  }, [isPending, workspaceId]);
 
   const runOperation = useCallback(
     async <T,>(operation: () => Promise<T>, fallback: T): Promise<T> => {
@@ -334,60 +375,41 @@ export function ExperienceStackProvider({
       try {
         return await operation();
       } catch (operationError) {
-        const message =
+        setError(
           operationError instanceof Error
             ? operationError.message
-            : 'An unexpected Experience Stack error occurred.';
-
-        setError(message);
-
-        if (operationError instanceof ExperienceStackRequestError && operationError.status === 401) {
-          requestAuthentication();
-        }
+            : 'An unexpected Experience Stack error occurred.'
+        );
 
         return fallback;
       } finally {
         setLoading(false);
       }
     },
-    [requestAuthentication]
+    []
   );
 
-  // ==========================================================
-  // REFRESH
-  // ==========================================================
-
   const refreshHistory = useCallback(async () => {
-    if (isPending) {
+    if (isPending || !workspaceId) {
       return;
     }
 
-    /*
-     * Guests do not receive local Experience
-     * history anymore.
-     */
-    if (!canAccessExperienceModes) {
-      applyStackState(defaultState);
+    if (!isAuthenticated) {
+      applyStackState(readGuestState(workspaceId));
       setError(null);
-
       return;
     }
 
     await runOperation(async () => {
-      const params = new URLSearchParams({
-        workspaceId
-      });
-
+      const params = new URLSearchParams({ workspaceId });
       const response = await fetch(`/api/experience-history?${params.toString()}`, {
         method: 'GET',
         cache: 'no-store'
       });
 
-      const state = await readJsonResponse<ExperienceStackState>(response);
-
-      applyStackState(state);
+      applyStackState(await readJsonResponse<ExperienceStackState>(response));
     }, undefined);
-  }, [applyStackState, canAccessExperienceModes, isPending, runOperation, workspaceId]);
+  }, [applyStackState, isAuthenticated, isPending, runOperation, workspaceId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -397,32 +419,47 @@ export function ExperienceStackProvider({
     return () => window.clearTimeout(timer);
   }, [refreshHistory]);
 
-  // ==========================================================
-  // PUSH
-  // ==========================================================
-
   const pushExperience = useCallback(
     async (input: PushExperienceInput): Promise<ExperienceHistoryEntry | null> => {
-      if (!requireExperienceAccess()) {
+      if (!requireExperienceAccess() || !settings.enabled) {
         return null;
       }
 
-      if (!settings.enabled) {
-        return null;
+      if (!isAuthenticated) {
+        const entry: ExperienceHistoryEntry = {
+          id: `guest:${crypto.randomUUID()}`,
+          label: input.label,
+          subtitle: input.subtitle ?? null,
+          categorySlug: input.categorySlug,
+          source: input.source,
+          experienceId: input.experienceId ?? null,
+          campaignId: input.campaignId ?? null,
+          collectionId: input.collectionId ?? null,
+          productId: input.productId ?? null,
+          intentSnapshot: input.intentSnapshot,
+          contextSnapshot: input.contextSnapshot ?? null,
+          fingerprint: input.fingerprint,
+          visitedAt: new Date().toISOString(),
+          expiresAt: null
+        };
+
+        const nextEntries = [
+          entry,
+          ...entries.filter(existingEntry => existingEntry.fingerprint !== entry.fingerprint)
+        ].slice(0, settings.maxEntries);
+
+        setEntries(nextEntries);
+        setCurrentEntry(entry);
+        persistGuestState(nextEntries);
+
+        return entry;
       }
 
       return runOperation(async () => {
         const response = await fetch('/api/experience-history', {
           method: 'POST',
-
-          headers: {
-            'Content-Type': 'application/json'
-          },
-
-          body: JSON.stringify({
-            workspaceId,
-            ...input
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaceId, ...input })
         });
 
         const entry = await readJsonResponse<ExperienceHistoryEntry | null>(response);
@@ -432,21 +469,30 @@ export function ExperienceStackProvider({
         }
 
         setEntries(currentEntries => {
-          const withoutDuplicate = currentEntries.filter(currentEntry => currentEntry.id !== entry.id);
+          const nextEntries = [
+            entry,
+            ...currentEntries.filter(currentEntry => currentEntry.id !== entry.id)
+          ].slice(0, settings.maxEntries);
 
-          return [entry, ...withoutDuplicate].slice(0, settings.maxEntries);
+          return nextEntries;
         });
-
         setCurrentEntry(entry);
 
         return entry;
       }, null);
     },
-    [requireExperienceAccess, runOperation, settings.enabled, settings.maxEntries, workspaceId]
+    [
+      entries,
+      isAuthenticated,
+      persistGuestState,
+      requireExperienceAccess,
+      runOperation,
+      settings.enabled,
+      settings.maxEntries,
+      workspaceId
+    ]
   );
 
-  // Persist meaningful feed transitions as a Spotify-style listening history.
-  // Guests remain entirely passive: browsing never opens an authentication gate.
   useEffect(() => {
     if (!canAccessExperienceModes || !settings.enabled) {
       return;
@@ -459,39 +505,56 @@ export function ExperienceStackProvider({
     recordedIntentIdRef.current = intent.id;
 
     const description = describeIntent(intent, context);
+    const route = intent.route ?? currentCustomerRoute();
 
     void pushExperience({
       ...description,
       experienceId: experience.id,
-      intentSnapshot: intent
+      intentSnapshot: {
+        ...intent,
+        route
+      },
+      contextSnapshot: {
+        route,
+        surface: intent.surface ?? 'default',
+        scrollY: typeof window === 'undefined' ? 0 : window.scrollY
+      }
     });
   }, [canAccessExperienceModes, context, experience.id, intent, pushExperience, settings.enabled]);
-
-  // ==========================================================
-  // BACK
-  // ==========================================================
 
   const goBack = useCallback(async (): Promise<ExperienceHistoryEntry | null> => {
     if (!requireExperienceAccess()) {
       return null;
     }
 
+    if (!isAuthenticated) {
+      if (entries.length < 2) {
+        return null;
+      }
+
+      const nextEntries = entries.slice(1);
+      const previousEntry = nextEntries[0] ?? null;
+
+      setEntries(nextEntries);
+      setCurrentEntry(previousEntry);
+      persistGuestState(nextEntries);
+
+      if (previousEntry) {
+        restoreEntry(previousEntry);
+      }
+
+      return previousEntry;
+    }
+
     return runOperation(async () => {
       const response = await fetch('/api/experience-history/back', {
         method: 'POST',
-
-        headers: {
-          'Content-Type': 'application/json'
-        },
-
-        body: JSON.stringify({
-          workspaceId
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId })
       });
 
       const result = await readJsonResponse<{
         previousEntry: ExperienceHistoryEntry | null;
-
         removedEntryId: string | null;
       }>(response);
 
@@ -499,19 +562,15 @@ export function ExperienceStackProvider({
         return null;
       }
 
-      setEntries(currentEntries => currentEntries.filter(entry => entry.id !== result.removedEntryId));
-
+      setEntries(currentEntries =>
+        currentEntries.filter(entry => entry.id !== result.removedEntryId)
+      );
       setCurrentEntry(result.previousEntry);
-
       restoreEntry(result.previousEntry);
 
       return result.previousEntry;
     }, null);
-  }, [requireExperienceAccess, restoreEntry, runOperation, workspaceId]);
-
-  // ==========================================================
-  // JUMP
-  // ==========================================================
+  }, [entries, isAuthenticated, persistGuestState, requireExperienceAccess, restoreEntry, runOperation, workspaceId]);
 
   const jumpTo = useCallback(
     async (entryId: string): Promise<ExperienceHistoryEntry | null> => {
@@ -519,18 +578,32 @@ export function ExperienceStackProvider({
         return null;
       }
 
+      if (!isAuthenticated) {
+        const selectedEntry = entries.find(entry => entry.id === entryId);
+
+        if (!selectedEntry) {
+          return null;
+        }
+
+        const entry = {
+          ...selectedEntry,
+          visitedAt: new Date().toISOString()
+        };
+        const nextEntries = [entry, ...entries.filter(item => item.id !== entryId)];
+
+        setEntries(nextEntries);
+        setCurrentEntry(entry);
+        persistGuestState(nextEntries);
+        restoreEntry(entry);
+
+        return entry;
+      }
+
       return runOperation(async () => {
         const response = await fetch('/api/experience-history/jump', {
           method: 'POST',
-
-          headers: {
-            'Content-Type': 'application/json'
-          },
-
-          body: JSON.stringify({
-            workspaceId,
-            entryId
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaceId, entryId })
         });
 
         const entry = await readJsonResponse<ExperienceHistoryEntry | null>(response);
@@ -541,54 +614,41 @@ export function ExperienceStackProvider({
 
         setEntries(currentEntries => [
           entry,
-
           ...currentEntries.filter(currentEntry => currentEntry.id !== entry.id)
         ]);
-
         setCurrentEntry(entry);
-
         restoreEntry(entry);
 
         return entry;
       }, null);
     },
-    [requireExperienceAccess, restoreEntry, runOperation, workspaceId]
+    [entries, isAuthenticated, persistGuestState, requireExperienceAccess, restoreEntry, runOperation, workspaceId]
   );
-
-  // ==========================================================
-  // CLEAR
-  // ==========================================================
 
   const clearHistory = useCallback(async () => {
     if (!requireExperienceAccess()) {
       return;
     }
 
+    if (!isAuthenticated) {
+      setEntries([]);
+      setCurrentEntry(null);
+      persistGuestState([]);
+      return;
+    }
+
     await runOperation(async () => {
       const response = await fetch('/api/experience-history', {
         method: 'DELETE',
-
-        headers: {
-          'Content-Type': 'application/json'
-        },
-
-        body: JSON.stringify({
-          workspaceId
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId })
       });
 
-      await readJsonResponse<{
-        deletedCount: number;
-      }>(response);
-
+      await readJsonResponse<{ deletedCount: number }>(response);
       setEntries([]);
       setCurrentEntry(null);
     }, undefined);
-  }, [requireExperienceAccess, runOperation, workspaceId]);
-
-  // ==========================================================
-  // START FRESH
-  // ==========================================================
+  }, [isAuthenticated, persistGuestState, requireExperienceAccess, runOperation, workspaceId]);
 
   const startFresh = useCallback(async () => {
     if (!requireExperienceAccess()) {
@@ -596,13 +656,9 @@ export function ExperienceStackProvider({
     }
 
     await clearHistory();
-
     actions.resetExperience();
-  }, [actions, clearHistory, requireExperienceAccess]);
-
-  // ==========================================================
-  // SETTINGS
-  // ==========================================================
+    router.push('/store', { scroll: false });
+  }, [actions, clearHistory, requireExperienceAccess, router]);
 
   const updateSettings = useCallback(
     async (input: UpdateHistorySettingsInput) => {
@@ -610,24 +666,35 @@ export function ExperienceStackProvider({
         return;
       }
 
+      if (!isAuthenticated) {
+        const updatedSettings: ExperienceHistorySettings = {
+          enabled: input.enabled ?? settings.enabled,
+          retention: input.retention ?? settings.retention,
+          maxEntries:
+            input.maxEntries === undefined
+              ? settings.maxEntries
+              : Math.max(5, Math.min(100, Math.round(input.maxEntries)))
+        };
+        const nextEntries = updatedSettings.enabled
+          ? entries.slice(0, updatedSettings.maxEntries)
+          : [];
+
+        setSettings(updatedSettings);
+        setEntries(nextEntries);
+        setCurrentEntry(nextEntries[0] ?? null);
+        persistGuestState(nextEntries, updatedSettings);
+        return;
+      }
+
       await runOperation(async () => {
         const response = await fetch('/api/experience-history/settings', {
           method: 'PATCH',
-
-          headers: {
-            'Content-Type': 'application/json'
-          },
-
-          body: JSON.stringify({
-            workspaceId,
-            ...input
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaceId, ...input })
         });
 
         const updatedSettings = await readJsonResponse<ExperienceHistorySettings>(response);
-
         setSettings(updatedSettings);
-
         setEntries(currentEntries => currentEntries.slice(0, updatedSettings.maxEntries));
 
         if (!updatedSettings.enabled) {
@@ -635,29 +702,28 @@ export function ExperienceStackProvider({
         }
       }, undefined);
     },
-    [requireExperienceAccess, runOperation, workspaceId]
+    [
+      entries,
+      isAuthenticated,
+      persistGuestState,
+      requireExperienceAccess,
+      runOperation,
+      settings,
+      workspaceId
+    ]
   );
-
-  // ==========================================================
-  // CONTEXT VALUE
-  // ==========================================================
 
   const value = useMemo<ExperienceStackContextValue>(
     () => ({
       workspaceId,
-
       entries,
       settings,
       currentEntry,
-
       canGoBack: canAccessExperienceModes && entries.length > 1,
-
       loading,
       error,
-
       canAccessExperienceModes,
       requireExperienceAccess,
-
       refreshHistory,
       pushExperience,
       goBack,
@@ -687,10 +753,6 @@ export function ExperienceStackProvider({
 
   return <ExperienceStackContext.Provider value={value}>{children}</ExperienceStackContext.Provider>;
 }
-
-// ============================================================
-// HOOK
-// ============================================================
 
 export function useExperienceStack() {
   const context = useContext(ExperienceStackContext);

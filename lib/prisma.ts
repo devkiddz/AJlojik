@@ -17,7 +17,7 @@ const globalForPrisma = globalThis as unknown as {
   prismaSchemaVersion?: string;
 };
 
-const PRISMA_SCHEMA_VERSION = '20260728110000';
+const PRISMA_SCHEMA_VERSION = '20260729110000';
 
 function supportsCurrentSchema(client: PrismaClient | undefined, schemaVersion: string | undefined): client is PrismaClient {
   if (!client || schemaVersion !== PRISMA_SCHEMA_VERSION) return false;
@@ -30,7 +30,10 @@ function supportsCurrentSchema(client: PrismaClient | undefined, schemaVersion: 
   'staffProfile',
   'storefrontHero',
   'storeStudioCampaign',
-  'storeStudioAsset'
+  'storeStudioAsset',
+  'mediaAsset',
+  'vendorProfile',
+  'storeCollection'
 ].every(delegate => delegate in client);
 }
 

@@ -74,6 +74,7 @@ export const discoveryGroups: DiscoveryGroupDefinition[] = [
     description: 'Overview of your experience',
     defaultPriority: 90,
     pagePriority: {
+      home: 220,
       account: 180,
       cart: 160,
       checkout: 160,
@@ -93,6 +94,11 @@ export const discoveryGroups: DiscoveryGroupDefinition[] = [
     description: 'Cart, wishlist and product activity',
     defaultPriority: 85,
     pagePriority: {
+      product: 230,
+      promotion: 220,
+      discover: 215,
+      reel: 205,
+      home: 170,
       store: 200,
       wishlist: 190,
       search: 185,
@@ -154,6 +160,11 @@ export const discoveryGroups: DiscoveryGroupDefinition[] = [
     description: 'Smart suggestions and personal guidance',
     defaultPriority: 55,
     pagePriority: {
+      ai: 240,
+      product: 225,
+      discover: 210,
+      reel: 190,
+      promotion: 180,
       search: 200,
       store: 130,
       wishlist: 120,

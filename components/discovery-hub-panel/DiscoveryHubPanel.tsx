@@ -10,6 +10,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+import { ExperienceNavigationControls } from '@/features/experience-stack/ExperienceNavigationControls';
+
 import { cn } from '@/lib/utils';
 
 import { useDiscoveryHub } from '@/providers/DiscoveryHubProvider';
@@ -95,8 +97,10 @@ export default function DiscoveryHubPanel({
           </h2>
 
           <p className="mt-1 pr-10 text-sm text-primary/55">
-            Your personalized shopping and activity workspace.
+            Your adaptive shopping, account and activity workspace.
           </p>
+
+          <ExperienceNavigationControls />
         </div>
 
         {groups.length > 0 ? (

@@ -11,6 +11,7 @@ import {
   type ReactNode
 } from 'react';
 
+import { publishCustomerExperienceIntent } from '@/features/customer-experience/customerExperienceEvents';
 import { recordProductView } from '@/features/product-activity';
 
 import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIntent } from '../contracts';
@@ -88,6 +89,13 @@ type FeedExperienceProviderProps = {
     FeedActions,
     'previewProduct' | 'openExperience' | 'restoreExperience' | 'resetExperience'
   >;
+
+  /**
+   * Store-owned providers publish their richer in-feed intent so the
+   * single global Discovery Hub can remain synchronized without the
+   * Store rendering a second Hub instance.
+   */
+  broadcastIntent?: boolean;
 };
 
 // ============================================================
@@ -105,17 +113,30 @@ function createIntent(target: ExperienceTarget): FeedIntent {
         id: `home:${nonce}`,
         type: 'home',
         source: 'user-action',
+        route: '/',
+        surface: 'home',
+        title: 'AJ Logik home',
         createdAt
       };
 
-    case 'store-discovery':
+    case 'store-discovery': {
+      const categorySlug = target.categorySlug ?? 'all';
+      const route =
+        categorySlug === 'all'
+          ? '/store'
+          : `/store?category=${encodeURIComponent(categorySlug)}`;
+
       return {
-        id: `store-discovery:${target.categorySlug ?? 'all'}:${nonce}`,
+        id: `store-discovery:${categorySlug}:${nonce}`,
         type: 'store-discovery',
         source: 'user-action',
-        categorySlug: target.categorySlug ?? 'all',
+        categorySlug,
+        route,
+        surface: 'store',
+        title: categorySlug === 'all' ? 'Store discovery' : `Browse ${categorySlug}`,
         createdAt
       };
+    }
 
     case 'category':
       return {
@@ -123,6 +144,9 @@ function createIntent(target: ExperienceTarget): FeedIntent {
         type: 'category',
         source: 'user-action',
         categorySlug: target.categorySlug,
+        route: `/store?category=${encodeURIComponent(target.categorySlug)}`,
+        surface: 'store',
+        title: `Browse ${target.categorySlug}`,
         createdAt
       };
 
@@ -132,6 +156,9 @@ function createIntent(target: ExperienceTarget): FeedIntent {
         type: 'product',
         source: 'user-action',
         targetId: target.productId,
+        route: `/store?product=${encodeURIComponent(target.productId)}`,
+        surface: 'product',
+        title: 'Product experience',
         createdAt
       };
 
@@ -141,6 +168,9 @@ function createIntent(target: ExperienceTarget): FeedIntent {
         type: 'collection',
         source: 'user-action',
         targetId: target.collectionId,
+        route: `/store?collection=${encodeURIComponent(target.collectionId)}`,
+        surface: 'collection',
+        title: 'Collection experience',
         createdAt
       };
 
@@ -150,6 +180,9 @@ function createIntent(target: ExperienceTarget): FeedIntent {
         type: 'promotion',
         source: 'user-action',
         targetId: target.promotionId,
+        route: `/store?promotion=${encodeURIComponent(target.promotionId)}`,
+        surface: 'promotion',
+        title: 'Promotion experience',
         createdAt
       };
 
@@ -159,6 +192,9 @@ function createIntent(target: ExperienceTarget): FeedIntent {
         type: 'search',
         source: 'search',
         query: target.query,
+        route: `/store?q=${encodeURIComponent(target.query)}`,
+        surface: 'search',
+        title: `Search: ${target.query}`,
         createdAt
       };
   }
@@ -172,7 +208,8 @@ export function FeedExperienceProvider({
   children,
   initialIntent,
   context,
-  baseActions
+  baseActions,
+  broadcastIntent = false
 }: FeedExperienceProviderProps) {
   const [intent, setIntent] = useState<FeedIntent>(initialIntent);
 
@@ -271,6 +308,14 @@ export function FeedExperienceProvider({
 
     beginResolution(initialIntent);
   }, [beginResolution, initialIntent]);
+
+  useEffect(() => {
+    if (!broadcastIntent) {
+      return;
+    }
+
+    publishCustomerExperienceIntent(intent);
+  }, [broadcastIntent, intent]);
 
   /**
    * Every committed Product Experience begins in overview mode.
