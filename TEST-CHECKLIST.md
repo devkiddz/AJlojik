@@ -1,34 +1,30 @@
 # Test checklist
 
-## WordMark
+## Story Player
 
-- [ ] Only `AJ Logik` is shown in the Navbar.
-- [ ] No app-logo icon remains.
-- [ ] WordMark still links to Home.
-- [ ] Mobile controls fit without overlap.
+- [ ] Story Player begins immediately below the mobile Navbar.
+- [ ] Player does not overlap or fight the Navbar.
+- [ ] Story Player remains full-width on a phone.
+- [ ] Story media is not compressed.
+- [ ] Only one close button is visible.
+- [ ] Story progress, previous, next, pause and sound controls work.
+- [ ] Product, collection and promotion actions still work.
+- [ ] Desktop Story Player remains centered.
 
-## Account Sheet
+## Reels Player
 
-- [ ] The Sheet starts below the complete Navbar.
-- [ ] The close button is below the Navbar.
-- [ ] The close button is fully visible and clickable.
-- [ ] The Sheet title and identity card are not clipped.
-- [ ] The Sheet content scrolls within the remaining screen height.
-- [ ] Sign Out/Create Account remains reachable.
-- [ ] Experience History, Start Fresh and Clear History remain visible.
+- [ ] Reels Player begins below the mobile Navbar.
+- [ ] Reels Player opens at full phone width.
+- [ ] Video stage is not narrow or squeezed.
+- [ ] Details panel has usable height and scrolls independently.
+- [ ] Close, previous, next, pause and sound controls work.
+- [ ] Reel commerce destinations still work.
+- [ ] Desktop Reels Player remains a large two-column experience.
 
 ## Back
 
-- [ ] Back floats over the upper-left Hero area.
-- [ ] Back does not create extra space above the Hero.
+- [ ] Back appears slightly lower over the Hero.
+- [ ] Back does not push the Hero downward.
+- [ ] Back glass blur and highlight are visible.
 - [ ] Back remains clickable.
-- [ ] Back disappears when Experience Stack cannot go back.
-- [ ] Desktop does not show the mobile Back overlay.
-
-## Regression
-
-- [ ] Search works.
-- [ ] Activity works.
-- [ ] Account Sheet opens and closes.
-- [ ] Discovery Hub remains unchanged.
-- [ ] Desktop History remains unchanged.
+- [ ] Back is absent when no previous experience exists.

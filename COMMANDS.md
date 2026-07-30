@@ -1,9 +1,8 @@
 # Copy order
 
-1. `components/shared/LogoComponent.tsx`
-2. `components/UserActionComponent.tsx`
+1. `features/commerce-stories/components/CommerceStoryViewer.tsx`
+2. `features/store-studio/components/StoreReelViewer.tsx`
 3. `features/experience-stack/ExperienceNavigationControls.tsx`
-4. `components/layout/ApplicationShell.tsx`
 
 # Validation
 
@@ -16,9 +15,9 @@ npm run build
 # Commit
 
 ```powershell
-git add components/shared/LogoComponent.tsx components/UserActionComponent.tsx features/experience-stack/ExperienceNavigationControls.tsx components/layout/ApplicationShell.tsx
+git add features/commerce-stories/components/CommerceStoryViewer.tsx features/store-studio/components/StoreReelViewer.tsx features/experience-stack/ExperienceNavigationControls.tsx
 
-git commit -m "fix: lower account sheet float experience back and retain wordmark"
+git commit -m "fix: restore mobile story and reel players with premium back control"
 
 git push origin main
 ```
