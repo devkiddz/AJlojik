@@ -291,7 +291,7 @@ export function CommerceStoryViewer({
       }}>
       <DialogContent
         showCloseButton={false}
-        className="left-0 top-[calc(var(--app-navbar-height)+var(--pwa-safe-top))] h-[calc(100dvh-var(--app-navbar-height)-var(--pwa-safe-top))] max-h-none w-[100vw] max-w-[100vw] translate-x-0 translate-y-0 overflow-hidden rounded-t-[1.75rem] border-0 border-t border-white/10 bg-black p-0 shadow-[0_-18px_55px_rgba(0,0,0,0.32)] sm:left-1/2 sm:top-1/2 sm:h-[min(92dvh,52rem)] sm:w-[min(92vw,30rem)] sm:max-w-[30rem] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border sm:border-white/10">
+        className="left-0 top-[var(--pwa-safe-top)] bottom-0 h-auto max-h-none w-[100vw] max-w-[100vw] translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 bg-black p-0 shadow-[0_0_70px_rgba(0,0,0,0.42)] sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:h-[min(92dvh,52rem)] sm:w-[min(92vw,30rem)] sm:max-w-[30rem] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border sm:border-white/10">
         <DialogTitle className="sr-only">
           {activeStory?.title ?? 'Commerce Story'}
         </DialogTitle>

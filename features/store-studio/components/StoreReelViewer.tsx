@@ -283,7 +283,7 @@ export function StoreReelViewer({
     >
       <DialogContent
         showCloseButton={false}
-        className="left-0 top-[calc(var(--app-navbar-height)+var(--pwa-safe-top))] h-[calc(100dvh-var(--app-navbar-height)-var(--pwa-safe-top))] max-h-none w-[100vw] max-w-[100vw] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-[1.75rem] border-0 border-t border-white/10 bg-zinc-950 p-0 text-white shadow-[0_-18px_55px_rgba(0,0,0,0.32)] ring-0 md:left-1/2 md:top-1/2 md:h-[min(92dvh,54rem)] md:w-[min(94vw,78rem)] md:max-w-[78rem] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl md:border md:border-white/10"
+        className="left-0 top-[var(--pwa-safe-top)] bottom-0 h-auto max-h-none w-[100vw] max-w-[100vw] translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 bg-zinc-950 p-0 text-white shadow-[0_0_70px_rgba(0,0,0,0.42)] ring-0 md:left-1/2 md:top-1/2 md:bottom-auto md:h-[min(92dvh,54rem)] md:w-[min(94vw,78rem)] md:max-w-[78rem] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl md:border md:border-white/10"
       >
         <DialogTitle className="sr-only">
           {activeReel?.title ?? 'Store Reel'}

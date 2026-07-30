@@ -2,7 +2,6 @@
 
 1. `features/commerce-stories/components/CommerceStoryViewer.tsx`
 2. `features/store-studio/components/StoreReelViewer.tsx`
-3. `features/experience-stack/ExperienceNavigationControls.tsx`
 
 # Validation
 
@@ -15,9 +14,9 @@ npm run build
 # Commit
 
 ```powershell
-git add features/commerce-stories/components/CommerceStoryViewer.tsx features/store-studio/components/StoreReelViewer.tsx features/experience-stack/ExperienceNavigationControls.tsx
+git add features/commerce-stories/components/CommerceStoryViewer.tsx features/store-studio/components/StoreReelViewer.tsx
 
-git commit -m "fix: restore mobile story and reel players with premium back control"
+git commit -m "fix: align mobile story and reel players with header level"
 
 git push origin main
 ```

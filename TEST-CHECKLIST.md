@@ -1,30 +1,18 @@
 # Test checklist
 
-## Story Player
+## Mobile
 
-- [ ] Story Player begins immediately below the mobile Navbar.
-- [ ] Player does not overlap or fight the Navbar.
-- [ ] Story Player remains full-width on a phone.
-- [ ] Story media is not compressed.
-- [ ] Only one close button is visible.
-- [ ] Story progress, previous, next, pause and sound controls work.
-- [ ] Product, collection and promotion actions still work.
-- [ ] Desktop Story Player remains centered.
+- [ ] Story Player opens above and covers the Navbar.
+- [ ] Reels Player opens above and covers the Navbar.
+- [ ] Both players begin below only the phone safe-area.
+- [ ] Neither player begins below `--app-navbar-height`.
+- [ ] Both players occupy the complete remaining screen height.
+- [ ] Story media remains correctly proportioned.
+- [ ] Reel video and details remain correctly proportioned.
+- [ ] Close controls remain visible and clickable.
+- [ ] No duplicate close button appears.
 
-## Reels Player
+## Desktop
 
-- [ ] Reels Player begins below the mobile Navbar.
-- [ ] Reels Player opens at full phone width.
-- [ ] Video stage is not narrow or squeezed.
-- [ ] Details panel has usable height and scrolls independently.
-- [ ] Close, previous, next, pause and sound controls work.
-- [ ] Reel commerce destinations still work.
-- [ ] Desktop Reels Player remains a large two-column experience.
-
-## Back
-
-- [ ] Back appears slightly lower over the Hero.
-- [ ] Back does not push the Hero downward.
-- [ ] Back glass blur and highlight are visible.
-- [ ] Back remains clickable.
-- [ ] Back is absent when no previous experience exists.
+- [ ] Story Player remains centered and constrained.
+- [ ] Reels Player remains the large two-column modal.
