@@ -10,11 +10,17 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import {
+  cn
+} from '@/lib/utils';
 
-import { useDiscoveryHub } from '@/providers/DiscoveryHubProvider';
+import {
+  useDiscoveryHub
+} from '@/providers/DiscoveryHubProvider';
 
-import { DiscoveryHubRenderer } from './DiscoveryHubRenderer';
+import {
+  DiscoveryHubRenderer
+} from './DiscoveryHubRenderer';
 
 import {
   resolveDiscoveryHubIcon
@@ -61,7 +67,8 @@ export default function DiscoveryHubPanel({
           ? -160
           : 160,
 
-      behavior: 'smooth'
+      behavior:
+        'smooth'
     });
   };
 
@@ -80,28 +87,56 @@ export default function DiscoveryHubPanel({
   return (
     <main
       className={cn(
-        'flex h-full min-h-0 w-full flex-col overflow-hidden bg-background',
+        `
+          flex h-full min-h-0
+          w-full flex-col
+          overflow-hidden
+          bg-background
+        `,
         className
-      )}
-    >
-      <div className="relative z-40 shrink-0 border-b border-primary/10 bg-background/95 backdrop-blur-xl">
-        <div className="px-5 pb-4 pt-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/50">
+      )}>
+      <div
+        className="
+          relative z-40 shrink-0
+          border-b border-primary/10
+          bg-background/95
+          backdrop-blur-xl
+        ">
+        <div className="px-4 pb-3 pt-4">
+          <p
+            className="
+              text-[10px] font-semibold
+              uppercase tracking-[0.2em]
+              text-primary/50
+            ">
             AJ Logik Workspace
           </p>
 
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-primary">
+          <h2
+            className="
+              mt-1 text-lg
+              font-bold tracking-tight
+              text-primary
+            ">
             Discovery Hub
           </h2>
 
-          <p className="mt-1 pr-10 text-sm text-primary/55">
+          <p
+            className="
+              mt-1 pr-8 text-xs
+              leading-5 text-primary/55
+            ">
             Your adaptive shopping, account and activity workspace.
           </p>
         </div>
 
         {groups.length > 0 ? (
-          <div className="border-t border-primary/10 px-3 py-3">
-            <div className="flex items-center gap-2">
+          <div
+            className="
+              border-t border-primary/10
+              px-2 py-2.5
+            ">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 title="Scroll groups left"
@@ -111,15 +146,27 @@ export default function DiscoveryHubPanel({
                     'left'
                   )
                 }
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-background/5 text-primary/60 transition hover:bg-card/10 hover:text-primary"
-              >
+                className="
+                  grid size-8 shrink-0
+                  place-items-center
+                  rounded-full
+                  bg-background/5
+                  text-primary/60
+                  transition
+                  hover:bg-card/10
+                  hover:text-primary
+                ">
                 <ChevronLeft className="size-4" />
               </button>
 
               <div
                 ref={tabsRef}
-                className="flex min-w-0 flex-1 gap-2 overflow-x-auto scroll-smooth scrollbar-none"
-              >
+                className="
+                  flex min-w-0 flex-1
+                  gap-1.5 overflow-x-auto
+                  scroll-smooth
+                  scrollbar-none
+                ">
                 {groups.map(
                   group => {
                     const Icon =
@@ -149,14 +196,20 @@ export default function DiscoveryHubPanel({
                           )
                         }
                         className={cn(
-                          'relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all',
-
+                          `
+                            relative flex shrink-0
+                            items-center gap-1.5
+                            whitespace-nowrap
+                            rounded-full
+                            px-3 py-1.5
+                            text-xs
+                            transition-all
+                          `,
                           isActive
                             ? 'bg-card font-semibold text-primary'
                             : 'bg-background/5 text-primary/60 hover:bg-card/10 hover:text-primary'
-                        )}
-                      >
-                        <Icon className="size-4" />
+                        )}>
+                        <Icon className="size-3.5" />
 
                         <span>
                           {
@@ -168,7 +221,6 @@ export default function DiscoveryHubPanel({
                           <span
                             className={cn(
                               'size-1.5 rounded-full',
-
                               group.indicator ===
                                 'live'
                                 ? 'bg-emerald-400'
@@ -197,8 +249,16 @@ export default function DiscoveryHubPanel({
                     'right'
                   )
                 }
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-background/5 text-primary/60 transition hover:bg-background/10 hover:text-primary"
-              >
+                className="
+                  grid size-8 shrink-0
+                  place-items-center
+                  rounded-full
+                  bg-background/5
+                  text-primary/60
+                  transition
+                  hover:bg-background/10
+                  hover:text-primary
+                ">
                 <ChevronRight className="size-4" />
               </button>
             </div>
@@ -208,8 +268,14 @@ export default function DiscoveryHubPanel({
 
       <div className="min-h-0 flex-1 overflow-hidden">
         {children ?? (
-          <div className="h-full overflow-x-hidden overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]">
-            <div className="w-full p-3 pb-24 md:p-4">
+          <div
+            className="
+              h-full overflow-x-hidden
+              overflow-y-auto
+              overscroll-y-contain
+              [scrollbar-gutter:stable]
+            ">
+            <div className="w-full p-2.5 pb-20 md:p-3">
               <DiscoveryHubRenderer />
             </div>
           </div>

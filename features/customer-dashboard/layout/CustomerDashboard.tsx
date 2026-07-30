@@ -1,41 +1,101 @@
 'use client';
 
-import { useMemo } from 'react';
+import {
+  useMemo
+} from 'react';
 
-import { DashboardShoppingLists } from '../components/shopping-lists';
-import { ExperienceJourneyRail } from '../components/journey/ExperienceJourneyRail';
-import { DashboardProductExperiences } from '../components/products/DashboardProductExperiences';
-import { DashboardWelcome } from '../components/welcome/DashboardWelcome';
+import {
+  DashboardShoppingLists
+} from '../components/shopping-lists';
 
-import { useCustomerDashboard } from '../providers/CustomerDashboardProvider';
-import { resolveCustomerDashboardView } from '../view/resolveCustomerDashboardView';
+import {
+  ExperienceJourneyRail
+} from '../components/journey/ExperienceJourneyRail';
+
+import {
+  DashboardProductExperiences
+} from '../components/products/DashboardProductExperiences';
+
+import {
+  DashboardWelcome
+} from '../components/welcome/DashboardWelcome';
+
+import {
+  useCustomerDashboard
+} from '../providers/CustomerDashboardProvider';
+
+import {
+  resolveCustomerDashboardView
+} from '../view/resolveCustomerDashboardView';
 
 export default function CustomerDashboard() {
-  const { dashboard } = useCustomerDashboard();
+  const {
+    dashboard
+  } = useCustomerDashboard();
 
-  const view = useMemo(() => resolveCustomerDashboardView(dashboard), [dashboard]);
+  const view = useMemo(
+    () =>
+      resolveCustomerDashboardView(
+        dashboard
+      ),
+    [
+      dashboard
+    ]
+  );
 
   return (
-    <main className="h-[calc(100dvh-5rem)] min-h-0 overflow-y-auto overscroll-contain bg-muted/20">
-      <div className="mx-auto w-full max-w-[96rem] space-y-4 px-3 py-4 sm:px-5 sm:py-5 lg:px-6">
-        <DashboardWelcome identity={view.identity} membership={view.membership} />
+    <main
+      className="
+        h-[calc(100dvh-5rem)]
+        min-h-0 overflow-y-auto
+        overscroll-contain bg-muted/20
+      ">
+      <div
+        className="
+          mx-auto w-full
+          max-w-screen-2xl
+          space-y-3
+          px-3 py-3
+          sm:px-4 sm:py-4
+          lg:px-5
+        ">
+        <DashboardWelcome
+          identity={view.identity}
+          membership={
+            view.membership
+          }
+        />
 
         <ExperienceJourneyRail
-          recentProducts={view.recentProducts}
-          wishlistProducts={view.wishlistProducts}
+          recentProducts={
+            view.recentProducts
+          }
+          wishlistProducts={
+            view.wishlistProducts
+          }
           history={view.history}
           orders={view.orders}
-          activeDeliveries={view.activeDeliveries}
-          cartItems={view.cartItems}
-          cartQuantity={view.cartQuantity}
-          cartSubtotal={view.cartSubtotal}
+          activeDeliveries={
+            view.activeDeliveries
+          }
+          cartItems={
+            view.cartItems
+          }
+          cartQuantity={
+            view.cartQuantity
+          }
+          cartSubtotal={
+            view.cartSubtotal
+          }
         />
 
         <DashboardShoppingLists />
 
-        <DashboardProductExperiences view={view} />
+        <DashboardProductExperiences
+          view={view}
+        />
 
-        <div className="h-24 lg:h-12" />
+        <div className="h-20 lg:h-10" />
       </div>
     </main>
   );

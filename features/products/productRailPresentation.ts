@@ -5,18 +5,20 @@ export const EXPERIENCE_PRODUCT_RAIL_CLASS = `
   overflow-x-auto overflow-y-hidden
   overscroll-x-contain
   scroll-smooth
-  px-1 pb-3
+  px-0.5 pb-2.5
   scrollbar-none
-  sm:gap-3
+
+  sm:gap-2.5
+  sm:px-1
 `;
 
 /**
- * One Store product-card contract.
+ * Shared Store product-card density.
  *
- * Mobile uses a rail-relative width so every supported phone
- * exposes two complete cards and approximately half of the next.
- * From the small breakpoint upward, cards keep stable physical
- * widths and wider workspaces simply reveal more products.
+ * Mobile keeps two complete cards and exposes part of the next.
+ * Larger viewports use one standard Tailwind width step less than
+ * the previous presentation so rails feel denser without making
+ * product text or actions cramped.
  */
 export const EXPERIENCE_PRODUCT_ITEM_CLASS = `
   w-[calc(40%_-_0.4rem)]
@@ -24,41 +26,49 @@ export const EXPERIENCE_PRODUCT_ITEM_CLASS = `
   max-w-[calc(40%_-_0.4rem)]
   flex-none snap-start
 
-  sm:w-48
-  sm:min-w-48
-  sm:max-w-48
+  sm:w-44
+  sm:min-w-44
+  sm:max-w-44
 
-  md:w-52
-  md:min-w-52
-  md:max-w-52
+  md:w-48
+  md:min-w-48
+  md:max-w-48
 
-  xl:w-56
-  xl:min-w-56
-  xl:max-w-56
+  xl:w-52
+  xl:min-w-52
+  xl:max-w-52
 `;
 
-const FALLBACK_PRODUCT_ITEM_WIDTH = 208;
+const FALLBACK_PRODUCT_ITEM_WIDTH = 192;
 const FALLBACK_PRODUCT_RAIL_GAP = 8;
 
 export function getProductRailScrollStep(
   viewport: HTMLElement,
   itemSelector = '[data-experience-product-item]'
 ): number {
-  const firstItem = viewport.querySelector<HTMLElement>(itemSelector);
+  const firstItem =
+    viewport.querySelector<HTMLElement>(
+      itemSelector
+    );
 
   const itemWidth =
-    firstItem?.getBoundingClientRect().width ??
+    firstItem?.getBoundingClientRect()
+      .width ??
     FALLBACK_PRODUCT_ITEM_WIDTH;
 
-  const computedStyle = window.getComputedStyle(viewport);
+  const computedStyle =
+    window.getComputedStyle(viewport);
 
-  const parsedGap = Number.parseFloat(
-    computedStyle.columnGap || computedStyle.gap
-  );
+  const parsedGap =
+    Number.parseFloat(
+      computedStyle.columnGap ||
+        computedStyle.gap
+    );
 
-  const gap = Number.isFinite(parsedGap)
-    ? parsedGap
-    : FALLBACK_PRODUCT_RAIL_GAP;
+  const gap =
+    Number.isFinite(parsedGap)
+      ? parsedGap
+      : FALLBACK_PRODUCT_RAIL_GAP;
 
   return itemWidth + gap;
 }
