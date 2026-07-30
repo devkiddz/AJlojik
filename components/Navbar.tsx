@@ -21,322 +21,168 @@ import {
 } from 'next/navigation';
 
 import SearchBarComponent from '@/components/SearchBarComponent';
-
 import UserActionComponent from '@/components/UserActionComponent';
-
 import LogoComponent from '@/components/shared/LogoComponent';
-
 import SidebarToggle from '@/components/shared/SidebarToggle';
-
 import StoreCategoriesPill from '@/components/store/StoreCategoriesPill';
-
-import {
-  Button
-} from '@/components/ui/button';
-
+import { Button } from '@/components/ui/button';
 import PremiumStoreButton from '@/components/ui/premium-store-button';
+import { PWAInstallControl } from '@/features/pwa';
+import { MobileSearchButton } from '@/features/search';
 
-import {
-  PWAInstallControl
-} from '@/features/pwa';
-
-import {
-  MobileSearchButton
-} from '@/features/search';
-
-import {
-  CartLogics
-} from './shared/CartLogics';
+import { CartLogics } from './shared/CartLogics';
 
 type BrandType = {
-  brandName:
-    string;
-
-  brandSlug:
-    string;
+  brandName: string;
+  brandSlug: string;
 };
 
 const brands = [
   {
-    id:
-      'all',
-
-    label:
-      'All',
-
-    icon:
-      LayoutGrid,
-
-    slug:
-      'all'
+    id: 'all',
+    label: 'All',
+    icon: LayoutGrid,
+    slug: 'all'
   },
   {
-    id:
-      'kitchen',
-
-    label:
-      'AJ Kitchen',
-
-    icon:
-      UtensilsCrossed,
-
-    slug:
-      'kitchen'
+    id: 'kitchen',
+    label: 'AJ Kitchen',
+    icon: UtensilsCrossed,
+    slug: 'kitchen'
   },
   {
-    id:
-      'liqz',
-
-    label:
-      'AJ Liqz',
-
-    icon:
-      Wine,
-
-    slug:
-      'wines'
+    id: 'liqz',
+    label: 'AJ Liqz',
+    icon: Wine,
+    slug: 'wines'
   },
   {
-    id:
-      'party',
-
-    label:
-      'Party Plans',
-
-    icon:
-      PartyPopper,
-
-    slug:
-      'party-plans'
+    id: 'party',
+    label: 'Party Plans',
+    icon: PartyPopper,
+    slug: 'party-plans'
   }
 ] as const;
 
-export default function NavbarComponent({
-  brandName,
-  brandSlug
-}: BrandType) {
-  const router =
-    useRouter();
+export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const pathname =
-    usePathname();
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
 
-  const searchParams =
-    useSearchParams();
+  const selectedCategory = searchParams.get('category') ?? 'all';
 
-  const [
-    mobileToolsOpen,
-    setMobileToolsOpen
-  ] = useState(
-    false
+  const isStorePage = pathname === '/store' || pathname.startsWith('/store/');
+
+  const updateQuery = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (!value || value === 'all') {
+          params.delete(key);
+          return;
+        }
+
+        params.set(key, value);
+      });
+
+      const query = params.toString();
+
+      router.push(query ? `/store?${query}` : '/store', {
+        scroll: false
+      });
+    },
+    [router, searchParams]
   );
 
-  const selectedCategory =
-    searchParams.get(
-      'category'
-    ) ??
-    'all';
+  const openStore = useCallback(() => {
+    const query = searchParams.toString();
 
-  const isStorePage =
-    pathname ===
-      '/store' ||
-    pathname.startsWith(
-      '/store/'
-    );
-
-  const updateQuery =
-    useCallback(
-      (
-        updates:
-          Record<
-            string,
-            string | null
-          >
-      ) => {
-        const params =
-          new URLSearchParams(
-            searchParams.toString()
-          );
-
-        Object.entries(
-          updates
-        ).forEach(
-          (
-            [
-              key,
-              value
-            ]
-          ) => {
-            if (
-              !value ||
-              value ===
-                'all'
-            ) {
-              params.delete(
-                key
-              );
-
-              return;
-            }
-
-            params.set(
-              key,
-              value
-            );
-          }
-        );
-
-        const query =
-          params.toString();
-
-        router.push(
-          query
-            ? `/store?${query}`
-            : '/store',
-          {
-            scroll:
-              false
-          }
-        );
-      },
-      [
-        router,
-        searchParams
-      ]
-    );
-
-  const openStore =
-    useCallback(
-      () => {
-        const query =
-          searchParams.toString();
-
-        router.push(
-          query
-            ? `/store?${query}`
-            : '/store',
-          {
-            scroll:
-              false
-          }
-        );
-      },
-      [
-        router,
-        searchParams
-      ]
-    );
+    router.push(query ? `/store?${query}` : '/store', {
+      scroll: false
+    });
+  }, [router, searchParams]);
 
   return (
-    <div className="relative isolate w-full border-b border-border/60 bg-card/90 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-3xl backdrop-saturate-[180%]">
-      <div className="header-ambient-light" />
-
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+    <div className="relative isolate w-full overflow-hidden border-b border-white/[0.08] bg-background/88 shadow-[0_14px_48px_rgba(0,0,0,0.2)] backdrop-blur-3xl backdrop-saturate-[180%] supports-[backdrop-filter]:bg-background/72">
+      <div className="header-ambient-light opacity-60" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/45 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-[12%] bottom-0 h-px bg-gradient-to-r from-transparent via-white/[0.09] to-transparent" />
 
       <div
         data-pwa-safe-inline
-        className="relative isolate mx-auto flex h-[var(--app-navbar-height)] items-center justify-between gap-2 px-[var(--app-page-gutter)] sm:gap-3">
+        className="relative isolate mx-auto flex h-[var(--app-navbar-height)] min-w-0 items-center gap-2 px-[var(--app-page-gutter)] lg:gap-3">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <SidebarToggle />
-
-          <LogoComponent
-            brandName={
-              brandName
-            }
-            brandSlug={
-              brandSlug
-            }
-          />
+          <LogoComponent brandName={brandName} brandSlug={brandSlug} />
         </div>
 
-        <div className="hidden min-w-0 items-center rounded-full border border-white/10 bg-muted/60 p-1 shadow-sm backdrop-blur-xl md:flex">
-          {brands.map(
-            item => {
-              const Icon =
-                item.icon;
+        <div className="hidden min-w-0 flex-1 items-center xl:flex">
+          <div className="mx-auto flex min-w-0 max-w-[78rem] flex-1 items-center gap-1.5 rounded-2xl border border-white/[0.07] bg-background/42 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_34px_rgba(0,0,0,0.13)] backdrop-blur-2xl">
+            <nav aria-label="Store categories" className="flex shrink-0 items-center gap-0.5">
+              {brands.map(item => {
+                const Icon = item.icon;
+                const isActive = selectedCategory === item.slug;
 
-              const isActive =
-                selectedCategory ===
-                item.slug;
-
-              return (
-                <Button
-                  key={
-                    item.id
-                  }
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    updateQuery({
-                      category:
-                        item.slug ===
-                        'all'
-                          ? null
-                          : item.slug
-                    })
-                  }
-                  className={
-                    isActive
-                      ? 'h-9 gap-2 rounded-full bg-accent px-3 text-xs text-accent-foreground shadow-sm transition-all'
-                      : 'h-9 gap-2 rounded-full px-3 text-xs text-muted-foreground transition-all hover:bg-background/70 hover:text-foreground'
-                  }>
-                  <Icon className="size-4" />
-
-                  <span className="whitespace-nowrap font-medium">
-                    {
-                      item.label
+                return (
+                  <Button
+                    key={item.id}
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                      updateQuery({
+                        category: item.slug === 'all' ? null : item.slug
+                      })
                     }
-                  </span>
-                </Button>
-              );
-            }
-          )}
+                    className={
+                      isActive
+                        ? 'h-10 gap-2 rounded-xl bg-accent px-3 text-xs font-semibold text-accent-foreground shadow-[0_8px_24px_rgba(201,164,92,0.18)] transition-all'
+                        : 'h-10 gap-2 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-all hover:bg-background/70 hover:text-foreground'
+                    }>
+                    <Icon className="size-4" />
+                    <span className="whitespace-nowrap">{item.label}</span>
+                  </Button>
+                );
+              })}
 
-          <PremiumStoreButton
-            active={
-              isStorePage
-            }
-            onClick={
-              openStore
-            }
-          />
+              <PremiumStoreButton active={isStorePage} onClick={openStore} />
+            </nav>
 
-          <div className="mx-2 h-6 w-px bg-border" />
+            <div className="mx-1.5 h-7 w-px shrink-0 bg-border/70" />
 
-          <div className="w-[clamp(13rem,21vw,22.5rem)]">
-            <SearchBarComponent />
+            <div className="min-w-[15rem] flex-1">
+              <SearchBarComponent />
+            </div>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 lg:gap-2">
           <button
             type="button"
-            title="Toggle search and categories"
-            aria-expanded={
-              mobileToolsOpen
-            }
+            title="Open search and categories"
+            aria-label="Open search and categories"
+            aria-expanded={mobileToolsOpen}
             aria-controls="mobile-discovery-tools"
-            onClick={() =>
-              setMobileToolsOpen(
-                current =>
-                  !current
-              )
-            }
-            className="grid size-9 place-items-center rounded-full bg-muted text-muted-foreground transition hover:bg-accent hover:text-accent-foreground md:hidden">
+            onClick={() => setMobileToolsOpen(current => !current)}
+            className="grid size-10 place-items-center rounded-full border border-white/[0.08] bg-background/55 text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-accent/25 hover:bg-muted/70 hover:text-foreground xl:hidden">
             {mobileToolsOpen ? (
-              <ChevronUp className="size-5" />
+              <ChevronUp className="size-[1.15rem]" />
             ) : (
-              <TextSearch className="size-5" />
+              <TextSearch className="size-[1.15rem]" />
             )}
           </button>
 
-          <PWAInstallControl />
+          <div className="hidden lg:block">
+            <PWAInstallControl />
+          </div>
 
           <CartLogics />
 
           <div
             id="customer-experience-history-slot"
-            className="relative flex min-h-9 shrink-0 items-center"
+            className="relative hidden min-h-10 shrink-0 items-center lg:flex"
             aria-live="polite"
           />
 
@@ -344,28 +190,18 @@ export default function NavbarComponent({
         </div>
       </div>
 
-      <div
-        id="mobile-discovery-tools"
-        className="md:hidden">
+      <div id="mobile-discovery-tools" className="xl:hidden">
         <div
           className={
             mobileToolsOpen
-              ? 'max-h-56 overflow-hidden border-t border-white/10 bg-background/95 opacity-100 backdrop-blur-xl transition-all duration-300 ease-in-out'
-              : 'max-h-0 overflow-hidden border-t border-transparent bg-background/95 opacity-0 backdrop-blur-xl transition-all duration-300 ease-in-out'
+              ? 'max-h-56 overflow-hidden border-t border-white/[0.07] bg-background/92 opacity-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-3xl transition-all duration-300 ease-in-out'
+              : 'max-h-0 overflow-hidden border-t border-transparent bg-background/92 opacity-0 backdrop-blur-3xl transition-all duration-300 ease-in-out'
           }>
           <div className="space-y-3 px-[var(--app-page-gutter)] pb-4 pt-3">
             <MobileSearchButton />
-
             <StoreCategoriesPill
-              selectedCategory={
-                selectedCategory
-              }
-              onSelectCategory={
-                category =>
-                  updateQuery({
-                    category
-                  })
-              }
+              selectedCategory={selectedCategory}
+              onSelectCategory={category => updateQuery({ category })}
             />
           </div>
         </div>

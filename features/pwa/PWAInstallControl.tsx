@@ -6,15 +6,16 @@ import {
   Share2
 } from 'lucide-react';
 
-import {
-  cn
-} from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { usePWARuntime } from './PWARuntimeProvider';
 
-import {
-  usePWARuntime
-} from './PWARuntimeProvider';
+type PWAInstallControlProps = {
+  presentation?: 'navbar' | 'account-sheet';
+};
 
-export function PWAInstallControl() {
+export function PWAInstallControl({
+  presentation = 'navbar'
+}: PWAInstallControlProps) {
   const {
     installMode,
     isStandalone,
@@ -23,80 +24,49 @@ export function PWAInstallControl() {
     install,
     shareCurrentExperience,
     applyUpdate
-  } =
-    usePWARuntime();
+  } = usePWARuntime();
 
-  const visible =
-    updateReady ||
-    isStandalone ||
-    installAvailable;
+  const visible = updateReady || isStandalone || installAvailable;
 
-  if (
-    !visible
-  ) {
+  if (!visible) {
     return null;
   }
 
-  const action =
-    updateReady
-      ? () =>
-          void applyUpdate()
-      : isStandalone
-        ? () =>
-            void shareCurrentExperience()
-        : () =>
-            void install();
+  const action = updateReady
+    ? () => void applyUpdate()
+    : isStandalone
+      ? () => void shareCurrentExperience()
+      : () => void install();
 
-  const Icon =
-    updateReady
-      ? RefreshCcw
-      : isStandalone
-        ? Share2
-        : Download;
+  const Icon = updateReady ? RefreshCcw : isStandalone ? Share2 : Download;
 
-  const label =
-    updateReady
-      ? 'Update'
-      : isStandalone
-        ? 'Share'
-        : installMode ===
-            'beta'
-          ? 'Install Beta'
-          : 'Install App';
+  const label = updateReady
+    ? 'Update AJ Logik'
+    : isStandalone
+      ? 'Share this experience'
+      : installMode === 'beta'
+        ? 'Install AJ Logik Beta'
+        : 'Install AJ Logik';
 
-  const title =
-    updateReady
-      ? 'Apply the latest AJ Logik update'
-      : isStandalone
-        ? 'Share this AJ Logik experience'
-        : label;
+  const title = updateReady
+    ? 'Apply the latest AJ Logik update'
+    : isStandalone
+      ? 'Share this AJ Logik experience'
+      : label;
+
+  const accountSheet = presentation === 'account-sheet';
 
   return (
     <button
       type="button"
-      title={
-        title
-      }
-      aria-label={
-        title
-      }
-      onClick={
-        action
-      }
+      title={title}
+      aria-label={title}
+      onClick={action}
       className={cn(
-        `
-          relative inline-flex
-          h-9 shrink-0
-          items-center justify-center
-          gap-2 rounded-full
-          border px-2.5
-          text-xs font-semibold
-          shadow-sm transition
-          focus-visible:outline-none
-          focus-visible:ring-2
-          focus-visible:ring-ring
-          sm:px-3
-        `,
+        'relative inline-flex shrink-0 items-center justify-center gap-2 border text-xs font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        accountSheet
+          ? ['h-12 w-full', 'justify-start', 'rounded-2xl', 'px-4']
+          : ['h-10', 'rounded-full', 'px-3'],
         updateReady
           ? [
               'border-amber-500/30',
@@ -107,25 +77,29 @@ export function PWAInstallControl() {
             ]
           : [
               'border-border/70',
-              'bg-background/70',
+              'bg-background/60',
               'text-foreground',
               'backdrop-blur-xl',
               'hover:bg-muted'
             ]
       )}>
-      <Icon
+      <span
         className={cn(
-          'size-4',
-          updateReady &&
-            'animate-pulse'
-        )}
-      />
-
-      <span className="hidden whitespace-nowrap sm:inline">
-        {
-          label
-        }
+          'grid size-7 shrink-0 place-items-center rounded-full',
+          updateReady ? 'bg-amber-500/15' : 'bg-muted/80'
+        )}>
+        <Icon className={cn('size-4', updateReady && 'animate-pulse')} />
       </span>
+
+      <span className={cn('whitespace-nowrap', accountSheet ? 'inline' : 'hidden sm:inline')}>
+        {label}
+      </span>
+
+      {accountSheet ? (
+        <span className="ml-auto text-[10px] font-medium text-muted-foreground">
+          {updateReady ? 'Ready' : isStandalone ? 'System share' : 'Available'}
+        </span>
+      ) : null}
 
       {updateReady ? (
         <span

@@ -17,7 +17,12 @@ html[data-pwa-display-mode='standalone'] body {
 }
 
 html[data-pwa-display-mode='standalone'] [data-app-navbar] {
-  top: var(--pwa-safe-top);
+  top: 0;
+  padding-top: var(--pwa-safe-top);
+  background: var(--background);
+  box-shadow:
+    0 -2rem 0 var(--background),
+    0 10px 32px rgb(0 0 0 / 0.16);
 }
 
 html[data-pwa-display-mode='standalone'] [data-pwa-safe-inline] {

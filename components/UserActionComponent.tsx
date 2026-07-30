@@ -17,7 +17,13 @@ import {
 } from 'lucide-react';
 
 import BaseTriggerButton from '@/components/shared/BaseTriggerButton';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage
+} from '@/components/ui/avatar';
+
 import {
   Sheet,
   SheetContent,
@@ -28,11 +34,13 @@ import {
 } from '@/components/ui/sheet';
 
 import { useCart } from '@/features/cart';
+import { PWAInstallControl } from '@/features/pwa';
 import { WorkspaceSwitcher } from '@/features/workspace';
-
 import { useIdentity } from '@/providers/IdentityProvider';
 
 import ThemeController from './ThemeController';
+
+const CLOSE_ACCOUNT_SHEET_EVENT = 'rcentz:close-account-sheet';
 
 type MenuItemProps = {
   icon: React.ReactNode;
@@ -66,7 +74,9 @@ function MenuItem({ icon, label, onClick, disabled, badge }: MenuItemProps) {
 }
 
 function getInitials(name?: string) {
-  if (!name) return 'AJ';
+  if (!name) {
+    return 'AJ';
+  }
 
   return name
     .split(' ')
@@ -84,7 +94,7 @@ function UserTrigger() {
     return (
       <div className="flex items-center gap-2">
         <div className="size-9 animate-pulse rounded-full bg-muted" />
-        <div className="hidden space-y-1 md:block">
+        <div className="hidden space-y-1 lg:block">
           <div className="h-3 w-16 animate-pulse rounded bg-muted" />
           <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
         </div>
@@ -95,13 +105,13 @@ function UserTrigger() {
   const firstName = user?.name.split(' ')[0] ?? 'Guest';
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-transparent px-1.5 py-1 transition hover:border-border hover:bg-background/60 sm:px-2">
-      <Avatar className="size-8 md:size-10">
+    <div className="flex items-center gap-2 rounded-full border border-transparent p-1 transition hover:border-white/[0.08] hover:bg-background/55 lg:pr-3">
+      <Avatar className="size-9 lg:size-10">
         <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? 'Guest'} />
         <AvatarFallback>{isAuthenticated ? getInitials(user?.name) : 'G'}</AvatarFallback>
       </Avatar>
 
-      <div className="hidden min-w-0 flex-col items-start md:flex">
+      <div className="hidden min-w-0 flex-col items-start lg:flex">
         <span className="max-w-28 truncate text-sm font-semibold">
           {isAuthenticated ? `Hi, ${firstName}` : 'Guest'}
         </span>
@@ -120,6 +130,16 @@ export default function UserActionComponent() {
 
   const [open, setOpen] = React.useState(false);
   const [signingOut, setSigningOut] = React.useState(false);
+
+  React.useEffect(() => {
+    const closeSheet = () => setOpen(false);
+
+    window.addEventListener(CLOSE_ACCOUNT_SHEET_EVENT, closeSheet);
+
+    return () => {
+      window.removeEventListener(CLOSE_ACCOUNT_SHEET_EVENT, closeSheet);
+    };
+  }, []);
 
   const navigateTo = (href: string) => {
     setOpen(false);
@@ -153,9 +173,9 @@ export default function UserActionComponent() {
 
       <SheetContent
         side="right"
-        className="flex h-dvh max-h-dvh w-[min(23.75rem,100vw)] flex-col overflow-hidden p-0 sm:max-w-[380px]">
+        className="flex h-dvh max-h-dvh w-[min(23.75rem,100vw)] flex-col overflow-hidden border-l border-white/[0.08] bg-background/94 p-0 shadow-2xl backdrop-blur-3xl sm:max-w-[380px]">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
-          <SheetHeader className="border-b px-5 py-5 text-left">
+          <SheetHeader className="border-b border-border/70 px-5 py-5 text-left">
             <SheetTitle className="text-base">
               {isAuthenticated ? 'My AJ Logik' : 'Guest Experience'}
             </SheetTitle>
@@ -199,44 +219,56 @@ export default function UserActionComponent() {
             </div>
           </SheetHeader>
 
-          <div className="space-y-1 px-3 py-4">
-            <MenuItem
-              icon={<User className="size-4" />}
-              label="Profile"
-              disabled={!isAuthenticated}
-              onClick={() => navigateTo('/account')}
+          <div className="space-y-3 px-3 py-4">
+            <div
+              id="customer-experience-history-account-slot"
+              className="lg:hidden"
+              aria-live="polite"
             />
-            <MenuItem
-              icon={<ShoppingCart className="size-4" />}
-              label="Cart"
-              badge={cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity}
-              onClick={() => navigateTo('/cart')}
-            />
-            <MenuItem
-              icon={<Heart className="size-4" />}
-              label="Wishlist"
-              badge={0}
-              disabled={!isAuthenticated}
-              onClick={() => navigateTo('/wishlist')}
-            />
-            <MenuItem
-              icon={<ShoppingBag className="size-4" />}
-              label="Orders"
-              disabled={!isAuthenticated}
-              onClick={() => navigateTo('/orders')}
-            />
-            <MenuItem
-              icon={<CreditCard className="size-4" />}
-              label="Payments"
-              disabled={!isAuthenticated}
-              onClick={() => navigateTo('/payments')}
-            />
-            <MenuItem
-              icon={<Settings className="size-4" />}
-              label="Account settings"
-              disabled={!isAuthenticated}
-              onClick={() => navigateTo('/settings')}
-            />
+
+            <div className="lg:hidden">
+              <PWAInstallControl presentation="account-sheet" />
+            </div>
+
+            <div className="space-y-1">
+              <MenuItem
+                icon={<User className="size-4" />}
+                label="Profile"
+                disabled={!isAuthenticated}
+                onClick={() => navigateTo('/account')}
+              />
+              <MenuItem
+                icon={<ShoppingCart className="size-4" />}
+                label="Cart"
+                badge={cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity}
+                onClick={() => navigateTo('/cart')}
+              />
+              <MenuItem
+                icon={<Heart className="size-4" />}
+                label="Wishlist"
+                badge={0}
+                disabled={!isAuthenticated}
+                onClick={() => navigateTo('/wishlist')}
+              />
+              <MenuItem
+                icon={<ShoppingBag className="size-4" />}
+                label="Orders"
+                disabled={!isAuthenticated}
+                onClick={() => navigateTo('/orders')}
+              />
+              <MenuItem
+                icon={<CreditCard className="size-4" />}
+                label="Payments"
+                disabled={!isAuthenticated}
+                onClick={() => navigateTo('/payments')}
+              />
+              <MenuItem
+                icon={<Settings className="size-4" />}
+                label="Account settings"
+                disabled={!isAuthenticated}
+                onClick={() => navigateTo('/settings')}
+              />
+            </div>
           </div>
 
           <div className="border-t px-5 py-4">
