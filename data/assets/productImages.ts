@@ -23,7 +23,7 @@ export const hennessyXO_lg = {
 } as const;
 
 export const DomPérignon_lg = {
-  src: '/products/DomP#U00e9rignon_lg.jpg'
+  src: '/products/DomPérignon_lg.jpg'
 } as const;
 
 export const moetchandonnectar_lg = {
@@ -87,7 +87,7 @@ export const Jameson_Irish_Whiskey = {
 } as const;
 
 export const Don_Julio_1942_Añejo_Tequila = {
-  src: '/products/Don_Julio_1942_A#U00f1ejo_Tequila.jpg'
+  src: '/products/Don_Julio_1942_Añejo_Tequila.jpg'
 } as const;
 
 export const Belvedere_Vodka = {
@@ -119,5 +119,5 @@ export const Baileys_Original_Irish_Cream = {
 } as const;
 
 export const Jägermeister_Herbal_Liqueur = {
-  src: '/products/J#U00e4germeister_Herbal_Liqueur.jpg'
+  src: '/products/Jägermeister_Herbal_Liqueur.jpg'
 } as const;

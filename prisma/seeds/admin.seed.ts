@@ -1,12 +1,14 @@
-import { randomUUID } from 'node:crypto';
-
-import type {
-  PrismaClient
-} from '../../lib/generated/prisma/client';
+import {
+  randomUUID
+} from 'node:crypto';
 
 import {
   hashPassword
 } from 'better-auth/crypto';
+
+import type {
+  PrismaClient
+} from '../../lib/generated/prisma/client';
 
 import type {
   SeededWorkspaces
@@ -20,6 +22,10 @@ const LEGACY_DEVELOPER_EMAIL =
 
 const DEMO_EMAIL =
   'demo.superadmin@ajlojik.com';
+
+const DEVELOPER_NAME =
+  process.env.DEVELOPER_ADMIN_NAME?.trim() ||
+  'RCENTZ Developer Super Admin';
 
 async function ensureCredentialAccount(
   prisma: PrismaClient,
@@ -87,11 +93,58 @@ async function ensureCredentialAccount(
   });
 }
 
+async function ensureSuperAdminMembership(
+  prisma: PrismaClient,
+  input: {
+    workspaceId: string;
+    userId: string;
+  }
+): Promise<void> {
+  await prisma.workspaceMembership.upsert({
+    where: {
+      workspaceId_userId: {
+        workspaceId:
+          input.workspaceId,
+
+        userId:
+          input.userId
+      }
+    },
+
+    update: {
+      role:
+        'SUPER_ADMIN',
+
+      active:
+        true
+    },
+
+    create: {
+      workspaceId:
+        input.workspaceId,
+
+      userId:
+        input.userId,
+
+      role:
+        'SUPER_ADMIN',
+
+      active:
+        true
+    }
+  });
+}
+
 async function seedDeveloperAdmin(
   prisma: PrismaClient,
   workspaces: SeededWorkspaces
 ): Promise<void> {
-  const developer =
+  const developerPassword =
+    process.env
+      .DEVELOPER_ADMIN_PASSWORD
+      ?.trim();
+
+  let developer =
     await prisma.user.findFirst({
       where: {
         email: {
@@ -108,11 +161,43 @@ async function seedDeveloperAdmin(
     });
 
   if (!developer) {
-    console.warn(
-      `Developer Super Admin ${DEVELOPER_EMAIL} does not exist yet; create the identity before assigning live access.`
-    );
+    if (!developerPassword) {
+      console.warn(
+        `Developer Super Admin ${DEVELOPER_EMAIL} does not exist yet. Set DEVELOPER_ADMIN_PASSWORD and run the seed again to create it securely.`
+      );
 
-    return;
+      return;
+    }
+
+    developer =
+      await prisma.user.create({
+        data: {
+          id:
+            randomUUID(),
+
+          name:
+            DEVELOPER_NAME,
+
+          email:
+            DEVELOPER_EMAIL,
+
+          emailVerified:
+            true,
+
+          tier:
+            'member',
+
+          accountState:
+            'ACTIVE',
+
+          isGhostDeveloper:
+            true
+        },
+
+        select: {
+          id: true
+        }
+      });
   }
 
   await prisma.user.update({
@@ -122,8 +207,14 @@ async function seedDeveloperAdmin(
     },
 
     data: {
+      name:
+        DEVELOPER_NAME,
+
       email:
         DEVELOPER_EMAIL,
+
+      emailVerified:
+        true,
 
       isGhostDeveloper:
         true,
@@ -139,39 +230,42 @@ async function seedDeveloperAdmin(
     }
   });
 
-  await prisma.workspaceMembership.upsert({
-    where: {
-      workspaceId_userId: {
-        workspaceId:
-          workspaces.live.id,
-
+  if (developerPassword) {
+    await ensureCredentialAccount(
+      prisma,
+      {
         userId:
-          developer.id
+          developer.id,
+
+        password:
+          developerPassword
       }
-    },
+    );
+  } else {
+    console.warn(
+      'DEVELOPER_ADMIN_PASSWORD is not set. The existing developer password was left unchanged.'
+    );
+  }
 
-    update: {
-      role:
-        'SUPER_ADMIN',
+  await Promise.all([
+    workspaces.live.id,
+    workspaces.demo.id,
+    workspaces.practice.id
+  ].map(
+    workspaceId =>
+      ensureSuperAdminMembership(
+        prisma,
+        {
+          workspaceId,
+          userId:
+            developer.id
+        }
+      )
+  ));
 
-      active:
-        true
-    },
-
-    create: {
-      workspaceId:
-        workspaces.live.id,
-
-      userId:
-        developer.id,
-
-      role:
-        'SUPER_ADMIN',
-
-      active:
-        true
-    }
-  });
+  console.log(
+    `Developer Super Admin ready: ${DEVELOPER_EMAIL}`
+  );
 }
 
 async function seedDemoAdmin(
@@ -267,39 +361,16 @@ async function seedDemoAdmin(
     }
   );
 
-  await prisma.workspaceMembership.upsert({
-    where: {
-      workspaceId_userId: {
-        workspaceId:
-          workspaces.demo.id,
-
-        userId:
-          demo.id
-      }
-    },
-
-    update: {
-      role:
-        'SUPER_ADMIN',
-
-      active:
-        true
-    },
-
-    create: {
+  await ensureSuperAdminMembership(
+    prisma,
+    {
       workspaceId:
         workspaces.demo.id,
 
       userId:
-        demo.id,
-
-      role:
-        'SUPER_ADMIN',
-
-      active:
-        true
+        demo.id
     }
-  });
+  );
 
   console.log(
     `Demo Super Admin ready: ${DEMO_EMAIL}`
