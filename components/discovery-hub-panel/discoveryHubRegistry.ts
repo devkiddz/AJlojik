@@ -2,6 +2,8 @@ import type {
   ComponentType
 } from 'react';
 
+import ActiveDeliveryWidget from './widgets/ActiveDeliveryWidget';
+
 import CartSummaryWidget from './widgets/CartSummaryWidget';
 
 import ContinueShoppingWidget from './widgets/ContinueShoppingWidget';
@@ -9,6 +11,10 @@ import ContinueShoppingWidget from './widgets/ContinueShoppingWidget';
 import HubWishlistWidget from './widgets/HubWishlistWidget';
 
 import RecentlyViewedWidget from './widgets/RecentlyViewedWidget';
+
+import RecentOrdersWidget from './widgets/RecentOrdersWidget';
+
+import ShoppingListsWidget from './widgets/ShoppingListsWidget';
 
 import type {
   DiscoveryComponentKey
@@ -37,5 +43,21 @@ export const discoveryHubRegistry =
     [
       'recently-viewed',
       RecentlyViewedWidget
+    ],
+    [
+      'recent-orders',
+      RecentOrdersWidget
+    ],
+    [
+      'active-delivery',
+      ActiveDeliveryWidget
+    ],
+    [
+      'delivery-tracker',
+      ActiveDeliveryWidget
+    ],
+    [
+      'shopping-lists-runtime',
+      ShoppingListsWidget
     ]
   ]);
