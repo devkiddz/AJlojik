@@ -181,6 +181,21 @@ export async function reviewAdminApproval(formData: FormData) {
         reviewNote: reviewNote || null
       }
     });
+    await tx.adminTodo.updateMany({
+      where: {
+        workspaceId: access.membership.workspaceId,
+        source: 'APPROVAL',
+        targetType: request.targetType,
+        targetId: request.targetId,
+        status: {
+          in: ['OPEN', 'IN_PROGRESS', 'BLOCKED']
+        }
+      },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date()
+      }
+    });
     await tx.adminAuditEvent.create({
       data: {
         workspaceId: access.membership.workspaceId,

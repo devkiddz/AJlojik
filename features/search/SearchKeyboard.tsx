@@ -9,6 +9,7 @@ type Props = {
   setActiveIndex: (index: number) => void;
   onSelect: () => void;
   onClose: () => void;
+  desktopOnly?: boolean;
 };
 
 export default function SearchKeyboard({
@@ -17,10 +18,11 @@ export default function SearchKeyboard({
   activeIndex,
   setActiveIndex,
   onSelect,
-  onClose
+  onClose,
+  desktopOnly = false
 }: Props) {
   useEffect(() => {
-    if (!open) return;
+    if (!open || (desktopOnly && window.innerWidth < 1024)) return;
 
     const handleKey = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -52,7 +54,7 @@ export default function SearchKeyboard({
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [open, activeIndex, total, setActiveIndex, onSelect, onClose]);
+  }, [open, activeIndex, total, setActiveIndex, onSelect, onClose, desktopOnly]);
 
   return null;
 }

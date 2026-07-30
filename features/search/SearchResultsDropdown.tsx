@@ -108,6 +108,7 @@ export default function SearchResultsDropdown({ mobile = false }: Props) {
         activeIndex={activeIndex}
         setActiveIndex={setActiveIndex}
         onClose={() => setOpen(false)}
+        desktopOnly={!mobile}
         onSelect={() => {
           const product = results[activeIndex];
           if (product) {

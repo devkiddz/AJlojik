@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   BadgePercent,
   BarChart3,
+  BrainCircuit,
   Boxes,
   Clapperboard,
   FileClock,
@@ -37,6 +38,7 @@ type VendorNavigationItem = {
 
 const navigation: VendorNavigationItem[] = [
   { href: '/vendor', label: 'Overview', icon: LayoutDashboard },
+  { href: '/vendor/assistant', label: 'AJ Studio Manager', icon: BrainCircuit },
   { href: '/vendor/media', label: 'Media Studio', icon: GalleryVerticalEnd, permission: 'media:view' },
   { href: '/vendor/products', label: 'Product Studio', icon: Boxes, permission: 'product:view' },
   { href: '/vendor/collections', label: 'Collection Studio', icon: FolderKanban, permission: 'collection:view' },

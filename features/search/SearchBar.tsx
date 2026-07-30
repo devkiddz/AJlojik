@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useSearch } from '@/providers/SearchProvider';
 
 export default function SearchBar() {
-  const { query, setQuery, setActiveIndex, setOpen, loading } = useSearch();
+  const { query, setQuery, setActiveIndex, setOpen, submitSearch, loading } = useSearch();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -61,8 +61,19 @@ export default function SearchBar() {
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <div className="flex h-11 items-center rounded-full bg-background shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-        <Search className="ml-4 h-4 w-4 text-muted-foreground" />
+      <form
+        role="search"
+        onSubmit={event => {
+          event.preventDefault();
+          submitSearch();
+        }}
+        className="flex h-11 items-center rounded-full bg-background shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+        <button
+          type="submit"
+          aria-label="Search AJ Logik products"
+          className="ml-2 grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground">
+          <Search className="h-4 w-4" />
+        </button>
 
         <input
           ref={inputRef}
@@ -82,6 +93,7 @@ export default function SearchBar() {
 
         {!loading && query && (
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             onClick={e => {
@@ -97,7 +109,7 @@ export default function SearchBar() {
         <kbd className="mr-2 hidden rounded-md border bg-muted px-2 py-1 text-[10px] text-muted-foreground lg:block">
           Ctrl K
         </kbd>
-      </div>
+      </form>
     </div>
   );
 }

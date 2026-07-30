@@ -21,7 +21,13 @@ export default function CustomerExperienceShell({ children }: CustomerExperience
 
   return (
     <div className="min-w-0 flex-1 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-      <div className="min-w-0">{children}</div>
+      <div className="relative min-w-0">
+        <div id="customer-global-feed-slot" className="min-w-0" />
+
+        <div id="customer-route-content" className="min-w-0">
+          {children}
+        </div>
+      </div>
 
       <Suspense fallback={null}>
         <GlobalDiscoveryHost />

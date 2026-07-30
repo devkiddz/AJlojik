@@ -38,7 +38,7 @@ export function DashboardAIControl({
         </div>
 
         <Link
-          href="/assistant?source=customer-dashboard"
+          href="/ai?source=customer-dashboard"
           aria-label="Open AJ Companion"
           className="grid size-9 shrink-0 place-items-center rounded-xl bg-foreground text-background">
           <ArrowUpRight className="size-4" />

@@ -49,7 +49,7 @@ export default async function AdminHomePage() {
           </Panel>
         </section>
 
-        <section className="rounded-[2rem] border border-primary/20 bg-primary/5 p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-3"><div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles className="size-5" /></div><div><h2 className="font-bold">AI Admin Assistant foundation</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Suggestions will remain reviewable drafts. Staff must explicitly accept content, categories, media, or operational recommendations before use.</p></div></div><span className="rounded-full border border-primary/20 px-3 py-2 text-[9px] font-bold uppercase text-primary">Phase 6</span></div></section>
+        <section className="rounded-[2rem] border border-primary/20 bg-primary/5 p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-3"><div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles className="size-5" /></div><div><h2 className="font-bold">AJ Studio Manager foundation</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Reviewable catalog, campaign, media and operational suggestions are now defined. Every accepted action will remain permission-controlled and auditable.</p></div></div><Link href="/admin/assistant" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-foreground px-4 text-[10px] font-bold text-background">Open foundation <ArrowRight className="size-3.5" /></Link></div></section>
       </div>
     </main>
   );

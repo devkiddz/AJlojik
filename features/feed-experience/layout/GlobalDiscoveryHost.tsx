@@ -16,6 +16,8 @@ import { useWorkspace } from '@/features/workspace';
 
 import { GlobalExperienceRuntime } from '@/features/feed-experience/runtime';
 
+import GlobalCustomerFeedPortal from './GlobalCustomerFeedPortal';
+
 import { cn } from '@/lib/utils';
 
 const DESKTOP_DISCOVERY_QUERY = '(min-width: 1024px)';
@@ -33,6 +35,7 @@ function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoveryS
     <GlobalExperienceRuntime>
       <ExperienceStackProvider workspaceId={workspaceId}>
         <CustomerExperienceNavigationPortal />
+        <GlobalCustomerFeedPortal />
 
         {desktopViewport ? (
           <div

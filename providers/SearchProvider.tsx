@@ -42,6 +42,7 @@ type SearchContextType = {
   selectTrending: (value: string) => void;
   selectCategory: (value: string) => void;
   selectProduct: (product: ProductType) => void;
+  submitSearch: () => void;
   removeHistory: (value: string) => void;
   clearHistory: () => void;
 };
@@ -50,6 +51,24 @@ const SearchContext = createContext<SearchContextType | null>(null);
 
 const RECENT_SEARCHES_STORAGE_KEY = 'aj_recent_searches';
 const SEARCH_DEBOUNCE_MS = 300;
+
+function filterSearchProducts(products: ProductType[], value: string): ProductType[] {
+  const normalizedQuery = value.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  return products.filter(product => {
+    return (
+      product.name.toLowerCase().includes(normalizedQuery) ||
+      product.shortDescription.toLowerCase().includes(normalizedQuery) ||
+      product.longDescription.toLowerCase().includes(normalizedQuery) ||
+      product.category.toLowerCase().includes(normalizedQuery) ||
+      product.tags.some(tag => tag.toLowerCase().includes(normalizedQuery))
+    );
+  });
+}
 
 type SearchUrlSynchronizerProps = {
   debouncedQuery: string;
@@ -64,18 +83,45 @@ function SearchUrlSynchronizer({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const lastRouteQueryRef = useRef<string | null>(null);
+  const routeQuery = searchParams.get('q') ?? '';
+  const pendingRouteQueryRef = useRef<string | null>(null);
+  const lastObservedRouteQueryRef = useRef<string | null>(null);
+  const skipNextRouteWriteRef = useRef(false);
 
   useEffect(() => {
-    const routeQuery = searchParams.get('q') ?? '';
+    const pendingRouteQuery = pendingRouteQueryRef.current;
 
     /*
-     * First render and browser navigation hydrate the provider
-     * from the URL without immediately rewriting that URL.
+     * A router.replace call is asynchronous. While it is pending, the URL may
+     * still expose the previous q value. Never hydrate that stale value back
+     * into the input or the customer's search will appear to clear itself.
      */
-    if (lastRouteQueryRef.current === null || routeQuery !== lastRouteQueryRef.current) {
-      lastRouteQueryRef.current = routeQuery;
+    if (pendingRouteQuery !== null) {
+      if (routeQuery === pendingRouteQuery) {
+        pendingRouteQueryRef.current = null;
+        lastObservedRouteQueryRef.current = routeQuery;
+      }
+
+      return;
+    }
+
+    if (lastObservedRouteQueryRef.current === null) {
+      lastObservedRouteQueryRef.current = routeQuery;
+      skipNextRouteWriteRef.current = true;
       syncFromUrl(routeQuery);
+      return;
+    }
+
+    if (routeQuery !== lastObservedRouteQueryRef.current) {
+      lastObservedRouteQueryRef.current = routeQuery;
+      skipNextRouteWriteRef.current = true;
+      syncFromUrl(routeQuery);
+    }
+  }, [routeQuery, syncFromUrl]);
+
+  useEffect(() => {
+    if (skipNextRouteWriteRef.current) {
+      skipNextRouteWriteRef.current = false;
       return;
     }
 
@@ -86,19 +132,19 @@ function SearchUrlSynchronizer({
     const params = new URLSearchParams(searchParams.toString());
 
     if (debouncedQuery.trim()) {
-      params.set('q', debouncedQuery);
+      params.set('q', debouncedQuery.trim());
     } else {
       params.delete('q');
     }
 
     const nextQuery = params.toString();
 
-    lastRouteQueryRef.current = debouncedQuery;
+    pendingRouteQueryRef.current = debouncedQuery.trim();
 
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
       scroll: false
     });
-  }, [debouncedQuery, pathname, router, searchParams, syncFromUrl]);
+  }, [debouncedQuery, pathname, routeQuery, router, searchParams]);
 
   return null;
 }
@@ -176,23 +222,10 @@ export default function SearchProvider({ children }: { children: ReactNode }) {
     setDebouncedQuery(current => (current === value ? current : value));
   }, []);
 
-  const results = useMemo(() => {
-    const normalizedQuery = debouncedQuery.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-      return [];
-    }
-
-    return products.filter(product => {
-      return (
-        product.name.toLowerCase().includes(normalizedQuery) ||
-        product.shortDescription.toLowerCase().includes(normalizedQuery) ||
-        product.longDescription.toLowerCase().includes(normalizedQuery) ||
-        product.category.toLowerCase().includes(normalizedQuery) ||
-        product.tags.some(tag => tag.toLowerCase().includes(normalizedQuery))
-      );
-    });
-  }, [debouncedQuery, products]);
+  const results = useMemo(
+    () => filterSearchProducts(products, debouncedQuery),
+    [debouncedQuery, products]
+  );
 
   const resolvedActiveIndex =
     results.length > 0 ? Math.min(Math.max(activeIndex, 0), results.length - 1) : -1;
@@ -276,6 +309,36 @@ export default function SearchProvider({ children }: { children: ReactNode }) {
     [saveHistory]
   );
 
+  const submitSearch = useCallback((): void => {
+    const normalizedQuery = query.trim();
+
+    if (!normalizedQuery) {
+      return;
+    }
+
+    saveHistory(normalizedQuery);
+
+    const submissionResults = filterSearchProducts(products, normalizedQuery);
+    const submissionIndex = Math.min(
+      Math.max(activeIndex, 0),
+      Math.max(submissionResults.length - 1, 0)
+    );
+    const product = submissionResults[submissionIndex] ?? submissionResults[0];
+
+    if (!product) {
+      setOpen(true);
+      return;
+    }
+
+    setOpen(false);
+
+    openCustomerProductExperience({
+      id: product.id,
+      name: product.name,
+      shortDescription: product.shortDescription
+    });
+  }, [activeIndex, products, query, saveHistory]);
+
   const value = useMemo<SearchContextType>(
     () => ({
       previewProduct,
@@ -294,6 +357,7 @@ export default function SearchProvider({ children }: { children: ReactNode }) {
       selectTrending,
       selectCategory,
       selectProduct,
+      submitSearch,
       removeHistory,
       clearHistory
     }),
@@ -311,6 +375,7 @@ export default function SearchProvider({ children }: { children: ReactNode }) {
       selectHistory,
       selectProduct,
       selectTrending,
+      submitSearch,
       setActiveIndex,
       trendingProducts
     ]

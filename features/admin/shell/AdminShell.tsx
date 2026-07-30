@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   Activity,
   BadgePercent,
+  BrainCircuit,
   Boxes,
   ChartNoAxesCombined,
   ChevronRight,
@@ -79,6 +80,7 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
     label: 'Command',
     items: [
       { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+      { href: '/admin/assistant', label: 'AJ Studio Manager', icon: BrainCircuit, permission: 'commerce:view' },
       { href: '/admin/activity', label: 'Activity', icon: Activity, permission: 'activity:view' },
       { href: '/admin/analytics', label: 'Analytics', icon: ChartNoAxesCombined, permission: 'analytics:view' },
       { href: '/admin/approvals', label: 'Approvals', icon: ShieldCheck, permission: 'approval:view' }

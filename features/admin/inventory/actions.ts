@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
+import { generateAdminTodos } from '@/features/admin/todos/generateAdminTodos';
 import { prisma } from '@/lib/prisma';
 
 const text = (data: FormData, key: string) => String(data.get(key) ?? '').trim();
@@ -68,6 +69,9 @@ export async function adjustInventory(formData: FormData) {
     });
   });
 
+  await generateAdminTodos(access.membership.workspaceId);
+
+  revalidatePath('/admin');
   revalidatePath('/admin/inventory');
   revalidatePath('/admin/products');
   revalidatePath('/store');
