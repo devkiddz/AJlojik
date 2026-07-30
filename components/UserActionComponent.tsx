@@ -242,7 +242,15 @@ export default function UserActionComponent() {
 
       <SheetContent
         side="right"
-        className="top-[max(0.75rem,env(safe-area-inset-top))] bottom-0 flex h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top)))] max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top)))] w-[min(23.75rem,100vw)] flex-col gap-0 overflow-hidden rounded-tl-[1.75rem] border-l border-t border-white/[0.1] bg-background/88 p-0 shadow-[0_0_70px_rgba(0,0,0,0.35)] backdrop-blur-[34px] backdrop-saturate-[185%] sm:top-3 sm:h-[calc(100dvh-0.75rem)] sm:max-h-[calc(100dvh-0.75rem)] sm:max-w-[380px] [&_[data-slot=sheet-close]]:right-4 [&_[data-slot=sheet-close]]:top-4 [&_[data-slot=sheet-close]]:z-40 [&_[data-slot=sheet-close]]:rounded-full [&_[data-slot=sheet-close]]:border [&_[data-slot=sheet-close]]:border-white/[0.09] [&_[data-slot=sheet-close]]:bg-background/75 [&_[data-slot=sheet-close]]:backdrop-blur-xl">
+        style={{
+          top: 'calc(var(--app-navbar-height) + max(0.75rem, env(safe-area-inset-top)))',
+          bottom: 'auto',
+          height:
+            'calc(100dvh - var(--app-navbar-height) - max(0.75rem, env(safe-area-inset-top)))',
+          maxHeight:
+            'calc(100dvh - var(--app-navbar-height) - max(0.75rem, env(safe-area-inset-top)))'
+        }}
+        className="flex w-[min(23.75rem,100vw)] flex-col gap-0 overflow-hidden rounded-tl-[1.75rem] border-l border-t border-white/[0.1] bg-background/88 p-0 shadow-[0_0_70px_rgba(0,0,0,0.35)] backdrop-blur-[34px] backdrop-saturate-[185%] sm:max-w-[380px] [&_[data-slot=sheet-close]]:right-4 [&_[data-slot=sheet-close]]:top-5 [&_[data-slot=sheet-close]]:z-40 [&_[data-slot=sheet-close]]:rounded-full [&_[data-slot=sheet-close]]:border [&_[data-slot=sheet-close]]:border-white/[0.09] [&_[data-slot=sheet-close]]:bg-background/80 [&_[data-slot=sheet-close]]:shadow-sm [&_[data-slot=sheet-close]]:backdrop-blur-xl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
           <SheetHeader className="sticky top-0 z-30 border-b border-border/70 bg-background/82 px-5 pb-5 pt-5 pr-16 text-left shadow-[0_12px_28px_rgba(0,0,0,0.08)] backdrop-blur-2xl">
             <SheetTitle className="text-base">

@@ -1,20 +1,11 @@
-# Copy and Validation Commands
+# Copy order
 
-## Copy order
-
-Replace the files in this order:
-
-1. `features/pwa/PWAInstallControl.tsx`
-2. `features/pwa/pwa.css`
+1. `components/shared/LogoComponent.tsx`
+2. `components/UserActionComponent.tsx`
 3. `features/experience-stack/ExperienceNavigationControls.tsx`
-4. `features/experience-stack/CustomerExperienceNavigationPortal.tsx`
-5. `components/shared/LogoComponent.tsx`
-6. `components/shared/SidebarToggle.tsx`
-7. `components/UserActionComponent.tsx`
-8. `components/Navbar.tsx`
-9. `components/layout/ApplicationShell.tsx`
+4. `components/layout/ApplicationShell.tsx`
 
-## Validate
+# Validation
 
 ```powershell
 npm run typecheck
@@ -22,14 +13,12 @@ npm run lint
 npm run build
 ```
 
-## Commit
+# Commit
 
 ```powershell
-git add components/Navbar.tsx components/UserActionComponent.tsx components/shared/LogoComponent.tsx components/shared/SidebarToggle.tsx components/layout/ApplicationShell.tsx features/experience-stack/ExperienceNavigationControls.tsx features/experience-stack/CustomerExperienceNavigationPortal.tsx features/pwa/PWAInstallControl.tsx features/pwa/pwa.css
+git add components/shared/LogoComponent.tsx components/UserActionComponent.tsx features/experience-stack/ExperienceNavigationControls.tsx components/layout/ApplicationShell.tsx
 
-git commit -m "feat: introduce premium command header and mobile navigation hierarchy"
+git commit -m "fix: lower account sheet float experience back and retain wordmark"
 
 git push origin main
 ```
-
-No migration or seed command is required.

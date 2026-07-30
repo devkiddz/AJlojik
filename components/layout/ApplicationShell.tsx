@@ -15,13 +15,18 @@ import {
 } from '@/components/ui/sidebar';
 
 import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
-import { AppSidebar } from '@/providers/AppSideBar';
+
+import {
+  AppSidebar
+} from '@/providers/AppSideBar';
 
 type ApplicationShellProps = {
   children: ReactNode;
 };
 
-export default function ApplicationShell({ children }: ApplicationShellProps) {
+export default function ApplicationShell({
+  children
+}: ApplicationShellProps) {
   const customerShell = (
     <SidebarProvider defaultOpen>
       <AppSidebar />
@@ -32,23 +37,31 @@ export default function ApplicationShell({ children }: ApplicationShellProps) {
             className="sticky top-0 z-[120] shrink-0 bg-background"
             data-app-navbar>
             <Suspense fallback={null}>
-              <NavbarComponent brandName="AJ" brandSlug="Logik" />
+              <NavbarComponent
+                brandName="AJ"
+                brandSlug="Logik"
+              />
             </Suspense>
           </header>
 
           <main className="relative flex min-w-0 flex-1 flex-col">
             <div
               id="customer-experience-back-slot"
-              className="relative z-[70] min-w-0 empty:hidden"
+              className="pointer-events-none absolute inset-x-0 top-0 z-[90] min-w-0 empty:hidden"
               aria-live="polite"
             />
 
             <MobileApplicationShell>
-              <CustomerExperienceShell>{children}</CustomerExperienceShell>
+              <CustomerExperienceShell>
+                {children}
+              </CustomerExperienceShell>
             </MobileApplicationShell>
           </main>
 
-          <FooterComponent brandName="AJ" brandSlug="Logik" />
+          <FooterComponent
+            brandName="AJ"
+            brandSlug="Logik"
+          />
         </div>
       </SidebarInset>
 
@@ -59,7 +72,11 @@ export default function ApplicationShell({ children }: ApplicationShellProps) {
   return (
     <ApplicationShellBoundary
       customerShell={customerShell}
-      operationalShell={<div className="min-h-dvh min-w-0 bg-background">{children}</div>}
+      operationalShell={
+        <div className="min-h-dvh min-w-0 bg-background">
+          {children}
+        </div>
+      }
     />
   );
 }

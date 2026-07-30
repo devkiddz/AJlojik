@@ -1,68 +1,46 @@
-# ms-e02.4b — Premium Command Header & Navigation Reorganization
+# ms-e02.4e — Account Sheet Offset, Floating Back & WordMark-Only Identity
 
-Apply after `ms-e02.3c` and `ms-e02.4`.
+Apply after `ms-e02.4d`.
 
-This package implements the approved AJ Logik navigation direction without rebuilding Search, Discovery Hub, Experience Stack, Cart, Wishlist, account, workspace or PWA engines.
+## Replace
 
-## REPLACE
-
-1. `components/Navbar.tsx`
+1. `components/shared/LogoComponent.tsx`
 2. `components/UserActionComponent.tsx`
-3. `components/shared/LogoComponent.tsx`
-4. `components/shared/SidebarToggle.tsx`
-5. `components/layout/ApplicationShell.tsx`
-6. `features/experience-stack/ExperienceNavigationControls.tsx`
-7. `features/experience-stack/CustomerExperienceNavigationPortal.tsx`
-8. `features/pwa/PWAInstallControl.tsx`
-9. `features/pwa/pwa.css`
+3. `features/experience-stack/ExperienceNavigationControls.tsx`
+4. `components/layout/ApplicationShell.tsx`
 
-## Mobile result
+## Corrections
 
-```text
-Navigation | App Logo | Search | Activity | Account
-```
+### Account Sheet
 
-- AJ Logik words are removed from the Navbar.
-- The installed application icon becomes the navigation identity.
-- History leaves the mobile Navbar and renders inside the Account Sheet.
-- Share is removed from the mobile Navbar.
-- Install, Update and standalone Share actions live inside the Account Sheet.
-- The Experience Stack Back control returns below the Navbar in the traditional top-left content position.
-- The header covers the full standalone safe-area region.
-- The header uses the sealed glass language of the bottom app navigation.
-- Search and category engines remain unchanged.
+- The entire Sheet now begins below the complete Navbar.
+- The offset includes the installed-app top safe area.
+- The close button moves down with the Sheet because it remains positioned relative to the Sheet.
+- The Sheet height is recalculated from the remaining viewport.
+- The Sheet still reaches the bottom and retains bottom safe-area handling.
 
-## Desktop result
+### Back control
 
-- One continuous premium glass command surface.
-- App-logo identity instead of brand words.
-- Clear brand, category, Search and utility zones.
-- Stronger header height, shadow and visual authority.
-- Desktop History remains in the command header.
-- PWA Install, Update and Share controls remain available on desktop.
-- Search, History and commerce behaviour remain unchanged.
-- Full category command mode starts at `xl`; compact desktop/tablet keeps the clean icon header.
+- The Back slot is now absolutely positioned over the top-left Hero region.
+- It no longer reserves vertical space or pushes the Hero downward.
+- The slot ignores pointer events while the actual Back button remains clickable.
+- It still uses Experience Stack navigation rather than browser history.
 
-## Share decision
+### Brand identity
 
-A scroll-triggered floating Share control was intentionally not introduced.
+- The app icon is removed completely from the Navbar.
+- Only the AJ Logik WordMark remains.
+- No replacement generic symbol is introduced.
 
-- It would add another viewport obstruction beside Discovery Hub and bottom navigation.
-- Share is not meaningful on every route.
-- The existing PWA runtime already knows whether system sharing is supported.
-- Moving it into the Account Sheet keeps the mobile header clean without deleting the feature.
+## Preserved
 
-## Back policy
+- Start Fresh
+- Clear History
+- Experience History
+- Search
+- Activity
+- Cart and Wishlist
+- Discovery Hub controls
+- PWA Install, Share and Update behaviour
 
-The restored Back button:
-
-- uses `ExperienceStackProvider.goBack()`;
-- does not use uncontrolled browser history;
-- appears only when a meaningful previous experience exists;
-- appears in normal document flow below the Navbar;
-- is mobile/tablet only;
-- does not overlap the Hero.
-
-## Database
-
-No Prisma migration or seed is required.
+No migration or seed is required.
