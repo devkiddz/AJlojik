@@ -1,6 +1,13 @@
 'use client';
 
-import { Clock3, Heart, History, ReceiptText, ShoppingBag, Truck } from 'lucide-react';
+import {
+  Clock3,
+  Heart,
+  History,
+  ReceiptText,
+  ShoppingBag,
+  Truck
+} from 'lucide-react';
 
 import type {
   CommerceDashboardData,
@@ -8,26 +15,41 @@ import type {
   CommerceProduct
 } from '../../contracts/customerDashboardTypes';
 
-import { DashboardRail } from '../rail/DashboardRail';
+import {
+  DashboardRail
+} from '../rail/DashboardRail';
 
-import { ActivityRows, DeliveryRows, OrderRows } from './JourneyRows';
+import {
+  ActivityRows,
+  DeliveryRows,
+  OrderRows
+} from './JourneyRows';
 
-import { JourneyListCard } from './JourneyListCard';
+import {
+  JourneyListCard
+} from './JourneyListCard';
 
-import { ProductJourneyCard } from './ProductJourneyCard';
+import {
+  ProductJourneyCard
+} from './ProductJourneyCard';
 
-import { CartJourneyCard } from './CartJourneyCard';
+import {
+  CartJourneyCard
+} from './CartJourneyCard';
 
 type ExperienceJourneyRailProps = {
   recentProducts: CommerceProduct[];
   wishlistProducts: CommerceProduct[];
 
-  history: CommerceDashboardData['history'];
+  history:
+    CommerceDashboardData['history'];
 
   orders: CommerceOrder[];
   activeDeliveries: CommerceOrder[];
 
-  cartItems: CommerceDashboardData['cartItems'];
+  cartItems:
+    CommerceDashboardData['cartItems'];
+
   cartQuantity: number;
   cartSubtotal: number;
 };
@@ -43,12 +65,17 @@ export function ExperienceJourneyRail({
   cartSubtotal
 }: ExperienceJourneyRailProps) {
   return (
-    <DashboardRail title="Your Experience Journey" code="EJ" icon={<History className="size-4" />}>
+    <DashboardRail
+      title="Your Experience Journey"
+      code="EJ"
+      icon={
+        <History className="size-4" />
+      }>
       <ProductJourneyCard
         code="RV"
         title="Recent Views"
         count={recentProducts.length}
-        href="/account/journey/recent-views"
+        href="/store?view=recent"
         icon={<Clock3 />}
         tone="slate"
         products={recentProducts}
@@ -60,8 +87,10 @@ export function ExperienceJourneyRail({
         code="WL"
         title="Wishlist"
         count={wishlistProducts.length}
-        href="/account/journey/wishlist"
-        icon={<Heart className="fill-current" />}
+        href="/wishlist"
+        icon={
+          <Heart className="fill-current" />
+        }
         tone="rose"
         products={wishlistProducts}
         emptyLabel="Products you save will appear here"
@@ -72,7 +101,7 @@ export function ExperienceJourneyRail({
         code="CT"
         title="Cart"
         count={cartQuantity}
-        href="/account/journey/cart"
+        href="/cart"
         icon={<ShoppingBag />}
         tone="amber"
         items={cartItems}
@@ -84,36 +113,50 @@ export function ExperienceJourneyRail({
         code="AA"
         title="Activity Archive"
         count={history.length}
-        href="/account/journey/activity"
+        href="/account#activity-archive"
         icon={<History />}
         tone="rose"
         supportingLabel="Recorded activities"
         emptyLabel="No recorded activity yet">
-        <ActivityRows history={history} />
+        <ActivityRows
+          history={history}
+        />
       </JourneyListCard>
 
       <JourneyListCard
         code="OH"
         title="Order History"
         count={orders.length}
-        href="/account/journey/orders"
+        href="/orders"
         icon={<ReceiptText />}
         tone="violet"
-        supportingLabel={orders.length === 1 ? 'Completed order' : 'Completed orders'}
+        supportingLabel={
+          orders.length === 1
+            ? 'Completed order'
+            : 'Completed orders'
+        }
         emptyLabel="No completed orders yet">
-        <OrderRows orders={orders} />
+        <OrderRows
+          orders={orders}
+        />
       </JourneyListCard>
 
       <JourneyListCard
         code="OD"
         title="On Delivery"
         count={activeDeliveries.length}
-        href="/account/journey/deliveries"
+        href="/orders?status=active"
         icon={<Truck />}
         tone="emerald"
-        supportingLabel={activeDeliveries.length === 1 ? 'Active delivery' : 'Active deliveries'}
+        supportingLabel={
+          activeDeliveries.length === 1
+            ? 'Active delivery'
+            : 'Active deliveries'
+        }
         emptyLabel="No active deliveries">
-        <DeliveryRows orders={activeDeliveries} />
+        <DeliveryRows
+          orders={activeDeliveries}
+        />
       </JourneyListCard>
     </DashboardRail>
   );
