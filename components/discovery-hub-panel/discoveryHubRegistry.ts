@@ -4,7 +4,11 @@ import type {
 
 import CartSummaryWidget from './widgets/CartSummaryWidget';
 
+import ContinueShoppingWidget from './widgets/ContinueShoppingWidget';
+
 import HubWishlistWidget from './widgets/HubWishlistWidget';
+
+import RecentlyViewedWidget from './widgets/RecentlyViewedWidget';
 
 import type {
   DiscoveryComponentKey
@@ -25,5 +29,13 @@ export const discoveryHubRegistry =
     [
       'wishlist-products',
       HubWishlistWidget
+    ],
+    [
+      'continue-shopping',
+      ContinueShoppingWidget
+    ],
+    [
+      'recently-viewed',
+      RecentlyViewedWidget
     ]
   ]);
