@@ -64,7 +64,10 @@ const brands = [
   }
 ] as const;
 
-export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
+export default function NavbarComponent({
+  brandName,
+  brandSlug
+}: BrandType) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -73,7 +76,9 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
   const selectedCategory = searchParams.get('category') ?? 'all';
 
-  const isStorePage = pathname === '/store' || pathname.startsWith('/store/');
+  const isStorePage =
+    pathname === '/store' ||
+    pathname.startsWith('/store/');
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -106,22 +111,32 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   }, [router, searchParams]);
 
   return (
-    <div className="relative isolate w-full overflow-hidden border-b border-white/[0.08] bg-background/88 shadow-[0_14px_48px_rgba(0,0,0,0.2)] backdrop-blur-3xl backdrop-saturate-[180%] supports-[backdrop-filter]:bg-background/72">
-      <div className="header-ambient-light opacity-60" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/45 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-[12%] bottom-0 h-px bg-gradient-to-r from-transparent via-white/[0.09] to-transparent" />
+    <div className="relative isolate w-full overflow-hidden border-b border-white/[0.1] bg-background/78 shadow-[0_14px_46px_rgba(0,0,0,0.22)] backdrop-blur-[34px] backdrop-saturate-[195%] supports-[backdrop-filter]:bg-background/60">
+      <div className="header-ambient-light opacity-80" />
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent" />
+
+      <div className="pointer-events-none absolute inset-x-[8%] bottom-0 h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent" />
+
+      <div className="pointer-events-none absolute left-[6%] top-0 h-full w-44 bg-[radial-gradient(circle_at_top,rgba(215,184,111,0.1),transparent_72%)] blur-2xl" />
 
       <div
         data-pwa-safe-inline
-        className="relative isolate mx-auto flex h-[var(--app-navbar-height)] min-w-0 items-center gap-2 px-[var(--app-page-gutter)] lg:gap-3">
-        <div className="flex min-w-0 shrink-0 items-center gap-2">
+        className="relative isolate mx-auto flex h-[var(--app-navbar-height)] min-w-0 items-center gap-1.5 px-[var(--app-page-gutter)] sm:gap-2 lg:gap-3">
+        <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
           <SidebarToggle />
-          <LogoComponent brandName={brandName} brandSlug={brandSlug} />
+
+          <LogoComponent
+            brandName={brandName}
+            brandSlug={brandSlug}
+          />
         </div>
 
         <div className="hidden min-w-0 flex-1 items-center xl:flex">
-          <div className="mx-auto flex min-w-0 max-w-[78rem] flex-1 items-center gap-1.5 rounded-2xl border border-white/[0.07] bg-background/42 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_34px_rgba(0,0,0,0.13)] backdrop-blur-2xl">
-            <nav aria-label="Store categories" className="flex shrink-0 items-center gap-0.5">
+          <div className="mx-auto flex min-w-0 max-w-[78rem] flex-1 items-center gap-1.5 rounded-2xl border border-white/[0.09] bg-background/38 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_14px_38px_rgba(0,0,0,0.14)] backdrop-blur-2xl">
+            <nav
+              aria-label="Store categories"
+              className="flex shrink-0 items-center gap-0.5">
               {brands.map(item => {
                 const Icon = item.icon;
                 const isActive = selectedCategory === item.slug;
@@ -133,7 +148,10 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                     variant="ghost"
                     onClick={() =>
                       updateQuery({
-                        category: item.slug === 'all' ? null : item.slug
+                        category:
+                          item.slug === 'all'
+                            ? null
+                            : item.slug
                       })
                     }
                     className={
@@ -142,12 +160,18 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                         : 'h-10 gap-2 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-all hover:bg-background/70 hover:text-foreground'
                     }>
                     <Icon className="size-4" />
-                    <span className="whitespace-nowrap">{item.label}</span>
+
+                    <span className="whitespace-nowrap">
+                      {item.label}
+                    </span>
                   </Button>
                 );
               })}
 
-              <PremiumStoreButton active={isStorePage} onClick={openStore} />
+              <PremiumStoreButton
+                active={isStorePage}
+                onClick={openStore}
+              />
             </nav>
 
             <div className="mx-1.5 h-7 w-px shrink-0 bg-border/70" />
@@ -158,15 +182,17 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           </div>
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 lg:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5 lg:gap-2">
           <button
             type="button"
             title="Open search and categories"
             aria-label="Open search and categories"
             aria-expanded={mobileToolsOpen}
             aria-controls="mobile-discovery-tools"
-            onClick={() => setMobileToolsOpen(current => !current)}
-            className="grid size-10 place-items-center rounded-full border border-white/[0.08] bg-background/55 text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-accent/25 hover:bg-muted/70 hover:text-foreground xl:hidden">
+            onClick={() =>
+              setMobileToolsOpen(current => !current)
+            }
+            className="grid size-10 place-items-center rounded-full border border-white/[0.09] bg-background/48 text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl transition hover:border-accent/25 hover:bg-muted/70 hover:text-foreground xl:hidden">
             {mobileToolsOpen ? (
               <ChevronUp className="size-[1.15rem]" />
             ) : (
@@ -190,18 +216,25 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
         </div>
       </div>
 
-      <div id="mobile-discovery-tools" className="xl:hidden">
+      <div
+        id="mobile-discovery-tools"
+        className="xl:hidden">
         <div
           className={
             mobileToolsOpen
-              ? 'max-h-56 overflow-hidden border-t border-white/[0.07] bg-background/92 opacity-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-3xl transition-all duration-300 ease-in-out'
-              : 'max-h-0 overflow-hidden border-t border-transparent bg-background/92 opacity-0 backdrop-blur-3xl transition-all duration-300 ease-in-out'
+              ? 'max-h-56 overflow-hidden border-t border-white/[0.08] bg-background/86 opacity-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[32px] transition-all duration-300 ease-in-out'
+              : 'max-h-0 overflow-hidden border-t border-transparent bg-background/86 opacity-0 backdrop-blur-[32px] transition-all duration-300 ease-in-out'
           }>
           <div className="space-y-3 px-[var(--app-page-gutter)] pb-4 pt-3">
             <MobileSearchButton />
+
             <StoreCategoriesPill
               selectedCategory={selectedCategory}
-              onSelectCategory={category => updateQuery({ category })}
+              onSelectCategory={category =>
+                updateQuery({
+                  category
+                })
+              }
             />
           </div>
         </div>
