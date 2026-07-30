@@ -1,110 +1,67 @@
-# ms-e02.4 — PWA and Installed-App Experience
+# ms-e02.4b — Premium Command Header & Navigation Reorganization
 
-This package implements the controlled AJ Logik Early Access PWA.
+Apply after `ms-e02.3c` and `ms-e02.4`.
 
-## CREATE
-
-- `features/pwa/pwaTypes.ts`
-- `features/pwa/pwaRuntime.ts`
-- `features/pwa/PWARuntimeProvider.tsx`
-- `features/pwa/PWAInstallControl.tsx`
-- `features/pwa/PWAGlobalStatus.tsx`
-- `features/pwa/OfflineRecovery.tsx`
-- `features/pwa/pwa.css`
-- `features/pwa/index.ts`
+This package implements the approved AJ Logik navigation direction without rebuilding Search, Discovery Hub, Experience Stack, Cart, Wishlist, account, workspace or PWA engines.
 
 ## REPLACE
 
-- `app/layout.tsx`
-- `components/Navbar.tsx`
-- `app/manifest.ts`
-- `public/sw.js`
-- `next.config.ts`
-- `app/offline/page.tsx`
+1. `components/Navbar.tsx`
+2. `components/UserActionComponent.tsx`
+3. `components/shared/LogoComponent.tsx`
+4. `components/shared/SidebarToggle.tsx`
+5. `components/layout/ApplicationShell.tsx`
+6. `features/experience-stack/ExperienceNavigationControls.tsx`
+7. `features/experience-stack/CustomerExperienceNavigationPortal.tsx`
+8. `features/pwa/PWAInstallControl.tsx`
+9. `features/pwa/pwa.css`
 
-## Controlled release modes
-
-The public install UI is controlled with:
+## Mobile result
 
 ```text
-NEXT_PUBLIC_PWA_INSTALL_MODE
+Navigation | App Logo | Search | Activity | Account
 ```
 
-Allowed values:
+- AJ Logik words are removed from the Navbar.
+- The installed application icon becomes the navigation identity.
+- History leaves the mobile Navbar and renders inside the Account Sheet.
+- Share is removed from the mobile Navbar.
+- Install, Update and standalone Share actions live inside the Account Sheet.
+- The Experience Stack Back control returns below the Navbar in the traditional top-left content position.
+- The header covers the full standalone safe-area region.
+- The header uses the sealed glass language of the bottom app navigation.
+- Search and category engines remain unchanged.
 
-- `off` — suppress AJ Logik’s install UI
-- `beta` — show `Install Beta`
-- `public` — show `Install App`
+## Desktop result
 
-The default is `beta`, so the package is immediately ready for installed-app testing.
+- One continuous premium glass command surface.
+- App-logo identity instead of brand words.
+- Clear brand, category, Search and utility zones.
+- Stronger header height, shadow and visual authority.
+- Desktop History remains in the command header.
+- PWA Install, Update and Share controls remain available on desktop.
+- Search, History and commerce behaviour remain unchanged.
+- Full category command mode starts at `xl`; compact desktop/tablet keeps the clean icon header.
 
-The service worker foundation remains enabled in production even when the install UI is off.
+## Share decision
 
-## Adaptive navbar control
+A scroll-triggered floating Share control was intentionally not introduced.
 
-The global customer navbar now adapts:
+- It would add another viewport obstruction beside Discovery Hub and bottom navigation.
+- Share is not meaningful on every route.
+- The existing PWA runtime already knows whether system sharing is supported.
+- Moving it into the Account Sheet keeps the mobile header clean without deleting the feature.
 
-- Browser + install prompt available → `Install Beta` or `Install App`
-- iPhone/iPad Safari → opens clear Add to Home Screen instructions
-- Installed app → becomes `Share`
-- Update waiting → becomes `Update`
+## Back policy
 
-The History control remains separate and unchanged.
+The restored Back button:
 
-## Update safety
-
-A newly downloaded service worker does not force-refresh an active experience.
-
-The customer receives:
-
-- an Update-ready notice;
-- a persistent navbar Update action;
-- manual approval before `SKIP_WAITING`;
-- reload only after the new worker becomes the controller.
-
-## Safe cache policy
-
-Cached:
-
-- offline fallback;
-- PWA icons;
-- manifest;
-- favicon;
-- immutable `/_next/static/` files;
-- CSS, JavaScript and local font assets.
-
-Never promoted to offline truth by the service worker:
-
-- API responses;
-- authentication;
-- prices;
-- stock;
-- Cart;
-- Wishlist;
-- Shopping Lists;
-- orders;
-- payments;
-- checkout;
-- personalized feeds;
-- product images and dynamic media.
-
-Navigation remains network-first and falls back to `/offline`.
-
-## Installed-app refinements
-
-- standalone display detection;
-- iOS standalone detection;
-- safe-area handling;
-- offline status banner;
-- connection-restored feedback;
-- non-interruptive update notice;
-- native share with clipboard fallback;
-- improved offline recovery page;
-- Store, Cart, Shopping Lists and Account shortcuts.
-
-## Existing file
-
-`components/pwa/PWARegistration.tsx` becomes unused after this package. It may be deleted after validation, but leaving it in place does not affect the build.
+- uses `ExperienceStackProvider.goBack()`;
+- does not use uncontrolled browser history;
+- appears only when a meaningful previous experience exists;
+- appears in normal document flow below the Navbar;
+- is mobile/tablet only;
+- does not overlap the Hero.
 
 ## Database
 

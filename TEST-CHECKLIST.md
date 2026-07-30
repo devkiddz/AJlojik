@@ -1,74 +1,65 @@
-# ms-e02.4 Test Checklist
+# Test Checklist
 
-## Manifest and icons
+## Mobile Navbar
 
-- [ ] `/manifest.webmanifest` returns 200.
-- [ ] Manifest name is AJ Logik.
-- [ ] Start URL opens `/store?source=pwa`.
-- [ ] 192px, 512px, maskable and Apple icons load.
-- [ ] Browser application panel reports the manifest as valid.
-- [ ] Store, Cart, Shopping Lists and Account shortcuts appear where supported.
+- [ ] Header covers the entire screen width.
+- [ ] No feed content leaks through the top or side edges.
+- [ ] Installed iPhone safe-area is filled by the header surface.
+- [ ] Only the app logo is visible; AJ Logik words are absent.
+- [ ] Navigation toggle remains operational.
+- [ ] Search/categories toggle remains operational.
+- [ ] Activity dropdown remains operational.
+- [ ] Account Sheet remains operational.
+- [ ] History is absent from the mobile Navbar.
+- [ ] Share/Install/Update is absent from the mobile Navbar.
+- [ ] No control overlaps at 320px, 360px, 390px or 430px widths.
 
-## Installation control
+## Account Sheet
 
-- [ ] Production browser shows `Install Beta` when an install prompt is available.
-- [ ] Mobile layout shows the compact Install icon without overflow.
-- [ ] The History tracker remains visible and separate.
-- [ ] Accepting installation removes the install action.
-- [ ] Installed mode changes the navbar action to Share.
-- [ ] `NEXT_PUBLIC_PWA_INSTALL_MODE=off` suppresses AJ Logik’s install UI.
-- [ ] `NEXT_PUBLIC_PWA_INSTALL_MODE=public` changes the label to Install App.
+- [ ] Experience History appears on mobile/tablet.
+- [ ] History shows the real count.
+- [ ] History expands inline without escaping the Sheet.
+- [ ] Previous experience works.
+- [ ] Direct history entry navigation works.
+- [ ] Start Fresh works.
+- [ ] Clear History works.
+- [ ] Account Sheet closes after history navigation.
+- [ ] Installed PWA shows Share inside the Sheet.
+- [ ] Browser installation shows Install App/Beta inside the Sheet.
+- [ ] Waiting service worker shows Update inside the Sheet.
+- [ ] Desktop Account Sheet does not duplicate desktop History.
 
-## iPhone and iPad
+## Traditional Back
 
-- [ ] Safari shows the AJ Logik install control.
-- [ ] Tapping it opens Share → Add to Home Screen instructions.
-- [ ] Installed launch uses the standalone display.
-- [ ] The navbar respects the top safe area.
-- [ ] Bottom notices respect the home-indicator safe area.
+- [ ] Back appears below the Navbar when `canGoBack` is true.
+- [ ] Back aligns with the normal page gutter.
+- [ ] Back appears before Hero/page content.
+- [ ] Back does not overlap the Hero.
+- [ ] Back uses Experience Stack state.
+- [ ] Back disappears when no meaningful previous experience exists.
+- [ ] Back is not shown on desktop.
 
-## Service worker
+## Desktop Header
 
-- [ ] `/sw.js` returns JavaScript with no-store headers.
-- [ ] The worker registers only in a production build.
-- [ ] Development unregisters existing AJ Logik workers.
-- [ ] API requests are not intercepted.
-- [ ] `/_next/static/` assets are cached.
-- [ ] Product images are not stored by the worker.
-- [ ] Dynamic navigation remains network-first.
-- [ ] Offline navigation reaches `/offline`.
-
-## Update flow
-
-- [ ] Deploy version A and install/open it.
-- [ ] Deploy version B with a changed `VERSION` in `public/sw.js`.
-- [ ] Existing app does not refresh automatically.
-- [ ] Update-ready notice appears.
-- [ ] Navbar action becomes Update.
-- [ ] Dismissing the notice leaves the navbar Update action available.
-- [ ] Tapping Update activates the waiting worker and reloads once.
-
-## Connectivity
-
-- [ ] Going offline shows the global offline banner.
-- [ ] Banner explains that live commerce data is unavailable.
-- [ ] Going online shows connection-restored feedback.
-- [ ] Offline page does not claim cached price, stock, Cart or order truth.
-- [ ] Try again becomes useful once the network returns.
-
-## Share
-
-- [ ] Installed app shows Share in the navbar.
-- [ ] Native share opens where supported.
-- [ ] Clipboard fallback copies the current route.
-- [ ] Cancelling native share does not show an error.
+- [ ] Header reads as one premium command surface.
+- [ ] App logo replaces the AJ Logik words.
+- [ ] Category controls remain operational.
+- [ ] AJ Store control remains operational.
+- [ ] Search remains operational.
+- [ ] Install/Update/Share remains operational.
+- [ ] Activity remains operational.
+- [ ] History remains operational.
+- [ ] Account profile remains operational.
+- [ ] Header does not collide with left or right rails.
+- [ ] Header remains stable while scrolling.
 
 ## Regression
 
-- [ ] Customer Store loads normally.
-- [ ] Search remains unchanged.
-- [ ] History remains unchanged.
-- [ ] Cart, Wishlist and Shopping Lists remain live.
-- [ ] Admin and Vendor operational shells remain unaffected.
-- [ ] No horizontal navbar overflow is introduced.
-- [ ] `npm run typecheck`, `npm run lint` and `npm run build` pass.
+- [ ] Discovery Hub Control is unchanged.
+- [ ] Search engine and mobile Search overlay are unchanged.
+- [ ] Cart and Wishlist providers are unchanged.
+- [ ] Experience History persistence is unchanged.
+- [ ] Store category query behaviour is unchanged.
+- [ ] PWA installation runtime is unchanged.
+- [ ] Bottom navigation is unchanged.
+- [ ] Admin and Vendor shells are unchanged.
