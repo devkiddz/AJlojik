@@ -1,10 +1,36 @@
 # Commands
 
-## 1. Replace the files
+## 1. Copy order
 
-Copy every file under `REPLACE/` to the exact matching project path.
+Copy every file under `CREATE/`.
 
-## 2. Validate
+Replace every file under `REPLACE/`.
+
+## 2. Environment
+
+For immediate Early Access testing, no variable is required because the default mode is `beta`.
+
+Optional Vercel setting:
+
+```text
+NEXT_PUBLIC_PWA_INSTALL_MODE=beta
+```
+
+Later public release:
+
+```text
+NEXT_PUBLIC_PWA_INSTALL_MODE=public
+```
+
+Hide AJ Logik’s install UI:
+
+```text
+NEXT_PUBLIC_PWA_INSTALL_MODE=off
+```
+
+After changing a `NEXT_PUBLIC_` variable, redeploy because it is embedded during the build.
+
+## 3. Validate
 
 ```powershell
 npm run typecheck
@@ -12,14 +38,23 @@ npm run lint
 npm run build
 ```
 
-## 3. Commit
+## 4. Local production test
 
 ```powershell
-git add features/products/productRailPresentation.ts features/products/cards/ProductCard.tsx features/feed-experience/renderers/FeedRenderer.tsx features/customer-dashboard/layout/CustomerDashboard.tsx features/customer-dashboard/components/rail/DashboardRail.tsx features/customer-dashboard/components/journey/JourneyCardShell.tsx features/customer-dashboard/components/products/DashboardProductPreview.tsx features/customer-dashboard/components/products/ProductExperienceSection.tsx components/discovery-hub-panel/DiscoveryHubPanel.tsx
+npm run build
+npm run start
+```
 
-git commit -m "refactor: normalize UI density gutters and product rails"
+Open the production build in a supported browser. Service workers remain unregistered during `npm run dev`.
+
+## 5. Commit
+
+```powershell
+git add features/pwa app/layout.tsx components/Navbar.tsx app/manifest.ts public/sw.js next.config.ts app/offline/page.tsx
+
+git commit -m "feat: complete controlled PWA and installed app experience"
 
 git push origin main
 ```
 
-No database migration or seed is required for this package.
+No migration or seed command is required.
