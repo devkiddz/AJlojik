@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Check, ChevronRight, LoaderCircle, Plus, Save, Settings2, Sparkles, Trash2 } from 'lucide-react';
 
 import StoreLoadingState from '@/components/loading/StoreLoadingState';
-import { categories } from '@/data/categories';
+import { useActionFeedback } from '@/features/action-feedback';
 import { useCatalog } from '@/features/catalog';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,8 @@ type ShoppingList = { id: string; name: string; productIds: string[] };
 type SettingsState = { name: string; email: string; image: string; shoppingLists: ShoppingList[]; experienceDensity: string; recommendationMode: string; preferredCategorySlugs: string[]; autoplayPreviews: boolean; discoveryEnabled: boolean; shoppingNotifications: boolean; personalizationEnabled: boolean };
 
 export default function SettingsPage() {
-  const { products } = useCatalog();
+  const { success, error: notifyError } = useActionFeedback();
+  const { categories, products } = useCatalog();
   const [settings, setSettings] = useState<SettingsState | null>(null);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [newListName, setNewListName] = useState('');
@@ -26,7 +27,41 @@ export default function SettingsPage() {
   if (!settings) return <StoreLoadingState label="Loading experience settings" />;
 
   const update = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => { setSaved(false); setSettings(current => current ? { ...current, [key]: value } : current); };
-  const save = async () => { setSaving(true); setSaved(false); try { const response = await fetch('/api/account/experience-settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) }); if (!response.ok) throw new Error(); setSaved(true); } finally { setSaving(false); } };
+  const save = async () => {
+    setSaving(true);
+    setSaved(false);
+
+    try {
+      const response = await fetch('/api/account/experience-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || 'Your experience settings could not be saved.');
+      }
+
+      setSaved(true);
+      success({
+        title: 'Experience saved',
+        description: 'Your AJ Logik preferences are now up to date.',
+        groupKey: 'account:experience-settings'
+      });
+    } catch (saveError) {
+      notifyError({
+        title: 'Save unsuccessful',
+        description:
+          saveError instanceof Error
+            ? saveError.message
+            : 'Your experience settings could not be saved.',
+        groupKey: 'account:experience-settings'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
   const createList = () => { const name = newListName.trim(); if (!name) return; const list = { id: crypto.randomUUID(), name, productIds: [] }; update('shoppingLists', [...settings.shoppingLists, list]); setActiveListId(list.id); setNewListName(''); };
   const updateActiveList = (next: ShoppingList) => update('shoppingLists', settings.shoppingLists.map(list => list.id === next.id ? next : list));
 

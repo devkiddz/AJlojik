@@ -1,10 +1,7 @@
 'use client';
 
 import { BadgeCheck, ListChecks, ShoppingBag, Sparkles } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
-
-import StoreExperienceSidebar from '@/features/feed-experience/layout/StoreExperienceSidebar';
-import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
 
 const experiencePoints = [
   {
@@ -24,16 +21,17 @@ const experiencePoints = [
   }
 ];
 
+/**
+ * Authentication remains a customer-facing experience surface.
+ *
+ * The adaptive Discovery Hub is owned by ApplicationShell through
+ * CustomerExperienceShell. This component must never mount another
+ * Store/Discovery sidebar of its own.
+ */
 export default function AuthExperienceShell({ children }: { children: ReactNode }) {
-  const [hubCollapsed, setHubCollapsed] = useState(false);
-
   return (
-    <div className="grid h-[calc(100dvh-5rem)] grid-cols-12 items-stretch gap-4 overflow-hidden px-3 py-4 sm:px-4">
-      <main
-        className={cn(
-          'relative col-span-12 h-full min-w-0 overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl transition-all duration-300',
-          hubCollapsed ? 'lg:col-span-10' : 'lg:col-span-8'
-        )}>
+    <div className="h-[calc(100dvh-5rem)] overflow-hidden px-3 py-4 sm:px-4">
+      <main className="relative h-full min-w-0 overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -left-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute -bottom-32 right-0 size-80 rounded-full bg-rose-950/20 blur-3xl" />
@@ -67,9 +65,7 @@ export default function AuthExperienceShell({ children }: { children: ReactNode 
                 const Icon = point.icon;
 
                 return (
-                  <article
-                    key={point.title}
-                    className="glass-surface rounded-2xl border border-border/50 p-4">
+                  <article key={point.title} className="glass-surface rounded-2xl border border-border/50 p-4">
                     <div className="flex gap-3">
                       <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                         <Icon className="size-5" />
@@ -77,7 +73,6 @@ export default function AuthExperienceShell({ children }: { children: ReactNode 
 
                       <div>
                         <h3 className="text-sm font-semibold text-foreground">{point.title}</h3>
-
                         <p className="mt-1 text-sm leading-5 text-muted-foreground">{point.description}</p>
                       </div>
                     </div>
@@ -98,13 +93,6 @@ export default function AuthExperienceShell({ children }: { children: ReactNode 
           </section>
         </div>
       </main>
-
-      <StoreExperienceSidebar
-        tier="guest"
-        authenticated={false}
-        collapsed={hubCollapsed}
-        onCollapsedChange={setHubCollapsed}
-      />
     </div>
   );
 }

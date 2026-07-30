@@ -4,12 +4,12 @@ import { useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Heart, LoaderCircle, Minus, Plus, RotateCcw, ShieldCheck, ShoppingBag, Star, Truck } from 'lucide-react';
 
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { ProductCard } from '@/features/products/cards';
 import { useWishlist } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,6 @@ import type { ProductType } from '@/types/types';
 const currency = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
 
 export default function SingleProductLayout({ product }: { product: ProductType }) {
-  const router = useRouter();
   const { products } = useCatalog();
   const { addToCart, mutating: cartMutating } = useCart();
   const { toggleWishlist, isWishlisted, isMutating } = useWishlist();
@@ -43,7 +42,7 @@ export default function SingleProductLayout({ product }: { product: ProductType 
     <main className="min-h-screen bg-background pb-16">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-8">
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 overflow-hidden text-xs text-muted-foreground">
-          <Link href="/store" className="inline-flex shrink-0 items-center gap-1.5 font-semibold hover:text-foreground"><ArrowLeft className="size-3.5" /> Store</Link><ChevronRight className="size-3.5 shrink-0" /><Link href={`/store?category=${product.category}`} className="truncate capitalize hover:text-foreground">{product.category.replaceAll('-', ' ')}</Link><ChevronRight className="size-3.5 shrink-0" /><span className="truncate text-foreground">{product.name}</span>
+          <Link href="/store" className="inline-flex shrink-0 items-center gap-1.5 font-semibold hover:text-foreground"><ArrowLeft className="size-3.5" /> Store</Link><ChevronRight className="size-3.5 shrink-0" /><Link href={`/store?category=${product.category}&view=grid`} className="truncate capitalize hover:text-foreground">{product.category.replaceAll('-', ' ')}</Link><ChevronRight className="size-3.5 shrink-0" /><span className="truncate text-foreground">{product.name}</span>
         </nav>
 
         <section className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(24rem,.88fr)] xl:gap-10">
@@ -89,7 +88,7 @@ export default function SingleProductLayout({ product }: { product: ProductType 
           <article className="rounded-[2rem] border border-border/60 bg-card p-6 sm:p-8"><p className="text-xs font-black uppercase tracking-[.16em] text-primary">Details</p><div className="mt-5 divide-y divide-border/60"><Detail label="Category" value={product.category.replaceAll('-', ' ')} /><Detail label="Options" value={String(product.variants.length)} /><Detail label="Availability" value={`${variant.stockLeft} in stock`} /><Detail label="Delivery" value={product.estimatedDelivery} /><Detail label="Customer rating" value={`${product.rating.toFixed(1)} / 5`} /></div></article>
         </section>
 
-        {recommendations.length ? <section className="mt-12"><header className="mb-5 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-[.16em] text-primary">Continue discovering</p><h2 className="mt-2 text-2xl font-black sm:text-3xl">Customers also explored</h2></div><Link href={`/store?category=${product.category}`} className="hidden items-center gap-1 text-xs font-bold sm:inline-flex">See category <ArrowRight className="size-4" /></Link></header><div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-5 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-4 xl:grid-cols-5">{recommendations.map(item => <ProductCard key={item.id} product={item} onOpenExperience={selected => router.push(`/products/${selected.slug}`)} onPreview={selected => router.push(`/products/${selected.slug}`)} onAddToCart={(selected, selectedVariant) => void addToCart({ product: selected, variant: selectedVariant, quantity: 1 })} className="w-[72vw] max-w-[265px] shrink-0 snap-start sm:w-auto sm:max-w-none" />)}</div></section> : null}
+        {recommendations.length ? <section className="mt-12"><header className="mb-5 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-[.16em] text-primary">Continue discovering</p><h2 className="mt-2 text-2xl font-black sm:text-3xl">Customers also explored</h2></div><Link href={`/store?category=${product.category}&view=grid`} className="hidden items-center gap-1 text-xs font-bold sm:inline-flex">See category <ArrowRight className="size-4" /></Link></header><div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-5 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-4 xl:grid-cols-5">{recommendations.map(item => <ProductCard key={item.id} product={item} onOpenExperience={selected => openCustomerProductExperience({ id: selected.id, name: selected.name, shortDescription: selected.shortDescription })} onPreview={selected => openCustomerProductExperience({ id: selected.id, name: selected.name, shortDescription: selected.shortDescription })} onAddToCart={(selected, selectedVariant) => void addToCart({ product: selected, variant: selectedVariant, quantity: 1 })} className="w-[72vw] max-w-[265px] shrink-0 snap-start sm:w-auto sm:max-w-none" />)}</div></section> : null}
       </div>
     </main>
   );

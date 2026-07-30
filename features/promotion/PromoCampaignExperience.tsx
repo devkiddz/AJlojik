@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import { ArrowLeft, ArrowRight, Flame, ShieldCheck, Tag } from 'lucide-react';
 import CollectionProductRail from '@/features/collection/components/CollectionProductRail';
@@ -10,9 +9,9 @@ import PromoCountdown from '@/components/promos/PromoCountdown';
 import type { Promo } from '@/data/promos';
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 
 export default function PromoCampaignExperience({ promo }: { promo: Promo }) {
-  const router = useRouter();
   const { products } = useCatalog();
   const { addToCart } = useCart();
   const promoProducts = products.filter(product => promo.productIds.includes(product.id));
@@ -120,10 +119,18 @@ export default function PromoCampaignExperience({ promo }: { promo: Promo }) {
             showHeader={false}
             products={promoProducts}
             onPreview={product => {
-              router.push(`/products/${product.slug}`);
+              openCustomerProductExperience({
+                id: product.id,
+                name: product.name,
+                shortDescription: product.shortDescription
+              });
             }}
             onOpenExperience={product => {
-              router.push(`/products/${product.slug}`);
+              openCustomerProductExperience({
+                id: product.id,
+                name: product.name,
+                shortDescription: product.shortDescription
+              });
             }}
             onAddToCart={(product, variant) => {
               void addToCart({

@@ -321,7 +321,7 @@ function resolvePriorityExperience(
           : `${data.pendingReviewProducts.length} delivered products are waiting for your experience review.`,
 
       actionLabel: 'Write a review',
-      href: `/products/${product.slug}`,
+      href: `/store?product=${encodeURIComponent(product.id)}`,
 
       secondaryActionLabel:
         'View purchases',
@@ -364,7 +364,7 @@ function resolvePriorityExperience(
               );
 
               return product
-                ? `/products/${product.slug}`
+                ? `/store?product=${encodeURIComponent(product.id)}`
                 : `/store?category=${encodeURIComponent(
                     latestHistory.categorySlug
                   )}`;
@@ -400,7 +400,7 @@ function resolvePriorityExperience(
         'Your recent activity is shaping a more personal AJ Logik experience around you.',
 
       actionLabel: 'Return to product',
-      href: `/products/${recentProduct.slug}`,
+      href: `/store?product=${encodeURIComponent(recentProduct.id)}`,
 
       secondaryActionLabel:
         'Explore your mix',
@@ -656,7 +656,7 @@ function resolveDashboardActions(
       ),
       helper: 'Delivered products',
       actionLabel: 'Write a review',
-      href: `/products/${product.slug}`,
+      href: `/store?product=${encodeURIComponent(product.id)}`,
       badge: 'Review',
       icon: 'review',
       tone: 'violet',
@@ -721,7 +721,7 @@ function resolveDashboardActions(
                 );
 
               return product
-                ? `/products/${product.slug}`
+                ? `/store?product=${encodeURIComponent(product.id)}`
                 : `/store?category=${encodeURIComponent(
                     latestHistory.categorySlug
                   )}`;
@@ -1081,7 +1081,7 @@ function resolveDashboardActivity(
                   );
 
                 return product
-                  ? `/products/${product.slug}`
+                  ? `/store?product=${encodeURIComponent(product.id)}`
                   : `/store?category=${encodeURIComponent(
                       entry.categorySlug
                     )}`;
@@ -1250,7 +1250,7 @@ function resolveJourneys(
       title: `Review ${product.name}`,
       description:
         'Complete the purchase journey with your experience.',
-      href: `/products/${product.slug}`,
+      href: `/store?product=${encodeURIComponent(product.id)}`,
       actionLabel: 'Write review',
       image: product.image,
       badge: 'REVIEW',
@@ -1268,7 +1268,7 @@ function resolveJourneys(
       title: product.name,
       description:
         'Return to a product you recently explored.',
-      href: `/products/${product.slug}`,
+      href: `/store?product=${encodeURIComponent(product.id)}`,
       actionLabel: 'Continue',
       image: product.image,
       badge: 'RECENT',
@@ -1329,7 +1329,7 @@ if (primaryShoppingList) {
         : 'This list is ready for the products you plan to gather.',
 
     href:
-      `/dashboard/lists/${primaryShoppingList.id}`,
+      `/account/lists/${primaryShoppingList.id}`,
 
     actionLabel:
       'Open list',
@@ -1491,7 +1491,7 @@ function resolveMixes(
       products:
         rankedProducts.slice(0, 10),
 
-      href: '/store'
+      href: '/store?view=grid'
     });
   }
 
@@ -1535,7 +1535,7 @@ function resolveMixes(
 
         href: `/store?category=${encodeURIComponent(
           recentCategory
-        )}`
+        )}&view=grid`
       });
     }
   }
@@ -1605,7 +1605,7 @@ if (activeShoppingList) {
       ),
 
     href:
-      `/dashboard/lists/${activeShoppingList.id}`
+      `/account/lists/${activeShoppingList.id}`
   });
 }
 

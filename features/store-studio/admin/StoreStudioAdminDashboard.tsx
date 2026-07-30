@@ -46,6 +46,7 @@ import type {
 } from './storeStudioAdminTypes';
 import { StoreStudioSubmitButton } from './StoreStudioSubmitButton';
 import { StoreStudioMediaSelector } from './StoreStudioMediaSelector';
+import { StoreStudioPreviewer } from './StoreStudioPreviewer';
 
 type StoreStudioAdminDashboardProps = {
   data: StoreStudioAdminDashboardData;
@@ -153,7 +154,7 @@ export function StoreStudioAdminDashboard({
   };
 
   return (
-    <main className="min-h-dvh bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_34%)] px-3 py-5 sm:px-6 lg:px-8">
+    <main className="admin-page min-h-dvh bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.1),transparent_34%)] px-3 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[96rem] space-y-5">
         <header className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/85 shadow-xl">
           <div className="relative p-5 sm:p-7">
@@ -191,12 +192,15 @@ export function StoreStudioAdminDashboard({
                   {canReview ? 'Publishing authority' : 'Campaign manager'}
                 </span>
 
+                <StoreStudioPreviewer />
+
                 <Link
                   href="/store"
+                  target="_blank"
                   className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-4 py-2 text-xs font-bold transition hover:bg-muted"
                 >
                   <Eye className="size-4" />
-                  Preview Store
+                  Open Store
                 </Link>
               </div>
             </div>

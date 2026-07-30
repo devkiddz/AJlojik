@@ -11,6 +11,16 @@ export type ShoppingListStatus =
   | 'ACTIVE'
   | 'ARCHIVED';
 
+export type ShoppingListPublicationStatus =
+  | 'PRIVATE'
+  | 'PENDING_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED';
+
+export type ShoppingListPublicationAction =
+  | 'SUBMIT'
+  | 'WITHDRAW';
+
 export type ShoppingListPromotion = {
   id: string;
   title: string;
@@ -63,6 +73,14 @@ export type ShoppingList = {
   status:
     ShoppingListStatus;
 
+  publicationStatus:
+    ShoppingListPublicationStatus;
+
+  publicationSubmittedAt: string | null;
+  publicationReviewedAt: string | null;
+  publicationPublishedAt: string | null;
+  publicationReviewNote: string | null;
+
   position: number;
 
   items:
@@ -101,9 +119,12 @@ export type UpdateShoppingListInput = {
 
   status?:
     ShoppingListStatus;
+};
 
-  visibility?:
-    ShoppingListVisibility;
+export type UpdateShoppingListPublicationInput = {
+  workspaceId: string;
+  listId: string;
+  action: ShoppingListPublicationAction;
 };
 
 export type AddShoppingListItemInput = {

@@ -47,7 +47,7 @@ export function VendorProductEditor({ product, media, taxonomy, action }: { prod
         </div>
       </section>
 
-      <ProductStudioFields media={media} initialMediaIds={initialMediaIds} initialVariants={initialVariants} apiBasePath="/api/vendor/media" />
+      <ProductStudioFields media={media} initialMediaIds={initialMediaIds} initialVariants={initialVariants} apiBasePath="/api/vendor/media" retainedImageCount={product?.images.length ?? 0} />
 
       <section className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6">
         <h2 className="font-black">Submission</h2>

@@ -648,7 +648,7 @@ export async function saveVendorCampaign(
   const promotionId = promotion?.id ?? null;
   const collectionId = collection?.id ?? null;
   const actionHref = product
-    ? `/products/${product.slug}`
+    ? `/store?product=${encodeURIComponent(product.id)}`
     : promotion
       ? `/promos/${promotion.slug}`
       : collection

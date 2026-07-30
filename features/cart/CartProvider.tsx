@@ -35,7 +35,7 @@ const CART_ACTIVITY_DURATION = 5000;
 export function CartProvider({ children }: CartProviderProps) {
   const { activeWorkspace } = useWorkspace();
 
-  const { success } = useActionFeedback();
+  const { success, error: notifyError } = useActionFeedback();
 
   const runtime = useMemo<CartRuntime>(
     () => ({
@@ -190,13 +190,24 @@ export function CartProvider({ children }: CartProviderProps) {
         const result = await CartEngine.update(runtime, input);
 
         setItems(result.items);
+        success({
+          title: 'Cart quantity saved',
+          description: 'Your cart now reflects the new quantity.',
+          groupKey: 'cart:quantity'
+        });
       } catch (updateError) {
-        setError(getCartErrorMessage(updateError, 'Unable to update the cart.'));
+        const message = getCartErrorMessage(updateError, 'Unable to update the cart.');
+        setError(message);
+        notifyError({
+          title: 'Cart update unsuccessful',
+          description: message,
+          groupKey: 'cart:quantity'
+        });
       } finally {
         setMutating(false);
       }
     },
-    [runtime]
+    [notifyError, runtime, success]
   );
 
   const removeFromCart = useCallback(
@@ -208,13 +219,24 @@ export function CartProvider({ children }: CartProviderProps) {
         const result = await CartEngine.remove(runtime, itemId);
 
         setItems(result.items);
+        success({
+          title: 'Item removed',
+          description: 'The product was removed from your cart.',
+          groupKey: 'cart:remove'
+        });
       } catch (removeError) {
-        setError(getCartErrorMessage(removeError, 'Unable to remove this item.'));
+        const message = getCartErrorMessage(removeError, 'Unable to remove this item.');
+        setError(message);
+        notifyError({
+          title: 'Removal unsuccessful',
+          description: message,
+          groupKey: 'cart:remove'
+        });
       } finally {
         setMutating(false);
       }
     },
-    [runtime]
+    [notifyError, runtime, success]
   );
 
   const clearCart = useCallback(async (): Promise<void> => {
@@ -225,12 +247,23 @@ export function CartProvider({ children }: CartProviderProps) {
       const result = await CartEngine.clear(runtime);
 
       setItems(result.items);
+      success({
+        title: 'Cart cleared',
+        description: 'All products were removed from your cart.',
+        groupKey: 'cart:clear'
+      });
     } catch (clearCartError) {
-      setError(getCartErrorMessage(clearCartError, 'Unable to clear your cart.'));
+      const message = getCartErrorMessage(clearCartError, 'Unable to clear your cart.');
+      setError(message);
+      notifyError({
+        title: 'Cart could not be cleared',
+        description: message,
+        groupKey: 'cart:clear'
+      });
     } finally {
       setMutating(false);
     }
-  }, [runtime]);
+  }, [notifyError, runtime, success]);
 
   const itemCount = useMemo(() => calculateCartItemCount(items), [items]);
 

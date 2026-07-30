@@ -1,33 +1,24 @@
 'use client';
 
-import {
-  useRouter
-} from 'next/navigation';
-
 import type {
   KeyboardEvent,
   MouseEvent,
   SyntheticEvent
 } from 'react';
 
-import type {
-  ProductType
-} from '@/types/types';
+import { openCustomerProductExperience } from '@/features/customer-experience';
+import type { ProductType } from '@/types/types';
 
 export function useProductNavigation() {
-  const router = useRouter();
-
-  const openProductPage = (
-    product: ProductType
-  ) => {
-    router.push(
-      `/products/${product.slug}`
-    );
+  const openProductPage = (product: ProductType) => {
+    openCustomerProductExperience({
+      id: product.id,
+      name: product.name,
+      shortDescription: product.shortDescription
+    });
   };
 
-  const handleProductClick = (
-    product: ProductType
-  ) => {
+  const handleProductClick = (product: ProductType) => {
     openProductPage(product);
   };
 
@@ -35,21 +26,15 @@ export function useProductNavigation() {
     event: KeyboardEvent<HTMLElement>,
     product: ProductType
   ) => {
-    if (
-      event.key !== 'Enter' &&
-      event.key !== ' '
-    ) {
+    if (event.key !== 'Enter' && event.key !== ' ') {
       return;
     }
 
     event.preventDefault();
-
     openProductPage(product);
   };
 
-  const stopProductNavigation = (
-    event: SyntheticEvent
-  ) => {
+  const stopProductNavigation = (event: SyntheticEvent) => {
     event.stopPropagation();
   };
 
@@ -59,7 +44,6 @@ export function useProductNavigation() {
   ) => {
     event.preventDefault();
     event.stopPropagation();
-
     action();
   };
 

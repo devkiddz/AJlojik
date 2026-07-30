@@ -1,21 +1,37 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getCatalog } from "@/features/catalog/services/get-catalog";
+import { getCatalog, getCatalogCategories } from '@/features/catalog/services/get-catalog';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
-    const products = await getCatalog();
-
-    return NextResponse.json(products);
-  } catch (error) {
-    console.error("Failed to load catalog:", error);
+    const [products, categories] = await Promise.all([
+      getCatalog(),
+      getCatalogCategories()
+    ]);
 
     return NextResponse.json(
       {
-        error: "Unable to load catalog.",
+        products,
+        categories
       },
       {
-        status: 500,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Failed to load catalog:', error);
+
+    return NextResponse.json(
+      {
+        error: 'Unable to load catalog.'
+      },
+      {
+        status: 500
       }
     );
   }

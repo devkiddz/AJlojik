@@ -29,7 +29,6 @@ export default async function EditAdminProductPage({ params }: { params: Promise
         status: true,
         discountPercentage: true,
         images: {
-          where: { mediaAssetId: { not: null } },
           orderBy: { position: 'asc' },
           select: { mediaAssetId: true }
         },
@@ -84,6 +83,7 @@ export default async function EditAdminProductPage({ params }: { params: Promise
       product={{
         ...product,
         mediaAssetIds: product.images.map(image => image.mediaAssetId).filter((value): value is string => Boolean(value)),
+        existingImageCount: product.images.length,
         variants: product.variants.map(variant => ({
           id: variant.id,
           label: variant.label,

@@ -30,6 +30,7 @@ type EditorProduct = {
   status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'PAUSED' | 'REJECTED' | 'ARCHIVED';
   discountPercentage: number;
   mediaAssetIds: string[];
+  existingImageCount: number;
   variants: ProductStudioVariant[];
 } | null;
 
@@ -93,7 +94,7 @@ export default function AdminProductEditor({
               <Field label="Tags (comma separated)"><input name="tags" defaultValue={product?.tags.join(', ') ?? ''} className={inputClass} /></Field>
             </EditorCard>
 
-            <ProductStudioFields media={media} initialMediaIds={product?.mediaAssetIds ?? []} initialVariants={product?.variants ?? []} />
+            <ProductStudioFields media={media} initialMediaIds={product?.mediaAssetIds ?? []} initialVariants={product?.variants ?? []} retainedImageCount={product?.existingImageCount ?? 0} />
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-5 xl:self-start">

@@ -15,10 +15,9 @@ import {
   ShoppingCart,
   User
 } from 'lucide-react';
-import { useCart } from '@/features/cart';
+
 import BaseTriggerButton from '@/components/shared/BaseTriggerButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
 import {
   Sheet,
   SheetContent,
@@ -28,10 +27,12 @@ import {
   SheetTrigger
 } from '@/components/ui/sheet';
 
-import ThemeController from './ThemeController';
+import { useCart } from '@/features/cart';
+import { WorkspaceSwitcher } from '@/features/workspace';
 
 import { useIdentity } from '@/providers/IdentityProvider';
-import { WorkspaceSwitcher } from '@/features/workspace';
+
+import ThemeController from './ThemeController';
 
 type MenuItemProps = {
   icon: React.ReactNode;
@@ -53,7 +54,6 @@ function MenuItem({ icon, label, onClick, disabled, badge }: MenuItemProps) {
           : 'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-muted'
       }>
       <span className="text-muted-foreground">{icon}</span>
-
       <span className="flex-1">{label}</span>
 
       {badge !== undefined ? (
@@ -84,7 +84,6 @@ function UserTrigger() {
     return (
       <div className="flex items-center gap-2">
         <div className="size-9 animate-pulse rounded-full bg-muted" />
-
         <div className="hidden space-y-1 md:block">
           <div className="h-3 w-16 animate-pulse rounded bg-muted" />
           <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
@@ -96,10 +95,9 @@ function UserTrigger() {
   const firstName = user?.name.split(' ')[0] ?? 'Guest';
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-transparent px-2 py-1 transition hover:border-border hover:bg-background/60">
+    <div className="flex items-center gap-2 rounded-full border border-transparent px-1.5 py-1 transition hover:border-border hover:bg-background/60 sm:px-2">
       <Avatar className="size-8 md:size-10">
         <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? 'Guest'} />
-
         <AvatarFallback>{isAuthenticated ? getInitials(user?.name) : 'G'}</AvatarFallback>
       </Avatar>
 
@@ -107,7 +105,6 @@ function UserTrigger() {
         <span className="max-w-28 truncate text-sm font-semibold">
           {isAuthenticated ? `Hi, ${firstName}` : 'Guest'}
         </span>
-
         <span className="max-w-32 truncate text-[11px] capitalize text-muted-foreground">
           {isAuthenticated ? `${user?.tier ?? 'member'} member` : 'Explore AJ Logik'}
         </span>
@@ -118,9 +115,7 @@ function UserTrigger() {
 
 export default function UserActionComponent() {
   const router = useRouter();
-
   const { user, isAuthenticated, signOut } = useIdentity();
-
   const { totalQuantity, loading: cartLoading } = useCart();
 
   const [open, setOpen] = React.useState(false);
@@ -155,110 +150,107 @@ export default function UserActionComponent() {
         }>
         <UserTrigger />
       </SheetTrigger>
-      <SheetContent side="right" className="flex w-[340px] flex-col p-0 sm:max-w-[380px]">
-        <SheetHeader className="border-b px-5 py-5 text-left">
-          <SheetTitle className="text-base">
-            {isAuthenticated ? 'My AJ Logik' : 'Guest Experience'}
-          </SheetTitle>
 
-          <SheetDescription>
-            {isAuthenticated
-              ? 'Manage your account, shopping activity and preferences.'
-              : 'Sign in to save products and continue your shopping journey.'}
-          </SheetDescription>
+      <SheetContent
+        side="right"
+        className="flex h-dvh max-h-dvh w-[min(23.75rem,100vw)] flex-col overflow-hidden p-0 sm:max-w-[380px]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+          <SheetHeader className="border-b px-5 py-5 text-left">
+            <SheetTitle className="text-base">
+              {isAuthenticated ? 'My AJ Logik' : 'Guest Experience'}
+            </SheetTitle>
 
-          {isAuthenticated && user ? (
-            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 p-3">
-              <Avatar className="size-11">
-                <AvatarImage src={user.image ?? undefined} alt={user.name} />
+            <SheetDescription>
+              {isAuthenticated
+                ? 'Manage your account, shopping activity and preferences.'
+                : 'Sign in to save products and continue your shopping journey.'}
+            </SheetDescription>
 
-                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{user.name}</p>
+            {isAuthenticated && user ? (
+              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 p-3">
+                <Avatar className="size-11">
+                  <AvatarImage src={user.image ?? undefined} alt={user.name} />
+                  <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                </Avatar>
 
-                <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-
-                <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary">
-                  {user.tier} member
-                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{user.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary">
+                    {user.tier} member
+                  </span>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">You are browsing as a guest.</p>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+                <p className="text-sm text-muted-foreground">You are browsing as a guest.</p>
+                <button
+                  type="button"
+                  onClick={() => navigateTo('/sign-in')}
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                  <LogIn className="size-4" />
+                  Sign in
+                </button>
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => navigateTo('/sign-in')}
-                className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                <LogIn className="size-4" />
-                Sign in
-              </button>
+            <div className="mt-3">
+              <WorkspaceSwitcher variant="account-sheet" />
             </div>
-          )}
-          <div className="mt-3">
-            <WorkspaceSwitcher variant="account-sheet" />
+          </SheetHeader>
+
+          <div className="space-y-1 px-3 py-4">
+            <MenuItem
+              icon={<User className="size-4" />}
+              label="Profile"
+              disabled={!isAuthenticated}
+              onClick={() => navigateTo('/account')}
+            />
+            <MenuItem
+              icon={<ShoppingCart className="size-4" />}
+              label="Cart"
+              badge={cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity}
+              onClick={() => navigateTo('/cart')}
+            />
+            <MenuItem
+              icon={<Heart className="size-4" />}
+              label="Wishlist"
+              badge={0}
+              disabled={!isAuthenticated}
+              onClick={() => navigateTo('/wishlist')}
+            />
+            <MenuItem
+              icon={<ShoppingBag className="size-4" />}
+              label="Orders"
+              disabled={!isAuthenticated}
+              onClick={() => navigateTo('/orders')}
+            />
+            <MenuItem
+              icon={<CreditCard className="size-4" />}
+              label="Payments"
+              disabled={!isAuthenticated}
+              onClick={() => navigateTo('/payments')}
+            />
+            <MenuItem
+              icon={<Settings className="size-4" />}
+              label="Account settings"
+              disabled={!isAuthenticated}
+              onClick={() => navigateTo('/settings')}
+            />
           </div>
-        </SheetHeader>
 
-        <div className="space-y-1 px-3 py-4">
-          <MenuItem
-            icon={<User className="size-4" />}
-            label="Profile"
-            disabled={!isAuthenticated}
-            onClick={() => navigateTo('/account')}
-          />
-
-          <MenuItem
-            icon={<ShoppingCart className="size-4" />}
-            label="Cart"
-            badge={cartLoading ? '…' : totalQuantity > 99 ? '99+' : totalQuantity}
-            onClick={() => navigateTo('/cart')}
-          />
-
-          <MenuItem
-            icon={<Heart className="size-4" />}
-            label="Wishlist"
-            badge={0}
-            disabled={!isAuthenticated}
-            onClick={() => navigateTo('/wishlist')}
-          />
-
-          <MenuItem
-            icon={<ShoppingBag className="size-4" />}
-            label="Orders"
-            disabled={!isAuthenticated}
-            onClick={() => navigateTo('/orders')}
-          />
-
-          <MenuItem
-            icon={<CreditCard className="size-4" />}
-            label="Payments"
-            disabled={!isAuthenticated}
-            onClick={() => navigateTo('/payments')}
-          />
-
-          <MenuItem
-            icon={<Settings className="size-4" />}
-            label="Account settings"
-            disabled={!isAuthenticated}
-            onClick={() => navigateTo('/settings')}
-          />
-        </div>
-
-        <div className="border-t px-5 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Palette className="size-4" />
-              Theme
+          <div className="border-t px-5 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Palette className="size-4" />
+                Theme
+              </div>
+              <ThemeController />
             </div>
-
-            <ThemeController />
           </div>
         </div>
 
-        <div className="mt-auto border-t px-5 py-4">
+        <div className="shrink-0 border-t bg-background/95 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
           {isAuthenticated ? (
             <button
               type="button"
@@ -266,7 +258,6 @@ export default function UserActionComponent() {
               disabled={signingOut}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive transition hover:bg-destructive/15 disabled:opacity-50">
               <LogOut className="size-4" />
-
               {signingOut ? 'Signing out...' : 'Sign out'}
             </button>
           ) : (

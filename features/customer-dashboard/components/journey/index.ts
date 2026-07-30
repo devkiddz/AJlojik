@@ -1,11 +1,6 @@
+export { ExperienceJourneyRail } from './ExperienceJourneyRail';
 export {
-  CartJourneyCard
-} from './CartJourneyCard';
-
-export {
-  ProductJourneyCard
-} from './ProductJourneyCard';
-
-export {
-  JourneyProductCollage
-} from './JourneyProductCollage';
+  CustomerJourneyWorkspace,
+  CUSTOMER_JOURNEY_SECTIONS,
+  type CustomerJourneySection
+} from './CustomerJourneyWorkspace';

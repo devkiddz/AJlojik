@@ -1,8 +1,10 @@
+'use client';
+
 import Image from 'next/image';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ShoppingBag } from 'lucide-react';
 
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { cn } from '@/lib/utils';
 
 import type {
@@ -39,7 +41,7 @@ export function RecentViewRows({ products }: { products: CommerceProduct[] }) {
   return visible.map((product, index) => (
     <MiniRecord
       key={product.id}
-      href={`/products/${product.slug}`}
+      onSelect={() => openCustomerProductExperience({ id: product.id, name: product.name })}
       leading={<ProductAvatar product={product} />}
       title={product.name}
       trailing={String(index + 1).padStart(2, '0')}
@@ -189,12 +191,14 @@ export function DeliveryRows({ orders }: { orders: CommerceOrder[] }) {
 
 export function CartRows({
   items,
-  subtotal
+  subtotal,
+  compact = false
 }: {
   items: CommerceDashboardData['cartItems'];
   subtotal: number;
+  compact?: boolean;
 }) {
-  const visible = items.slice(0, 3);
+  const visible = items.slice(0, compact ? 4 : 3);
 
   if (visible.length === 0) {
     return <EmptyJourneyRows label="Your cart is empty" />;
@@ -204,8 +208,8 @@ export function CartRows({
     <>
       {visible.map(item => (
         <MiniRecord
-          key={item.product.id}
-          href={`/products/${item.product.slug}`}
+          key={item.id}
+          onSelect={compact ? undefined : () => openCustomerProductExperience({ id: item.product.id, name: item.product.name })}
           leading={<ProductAvatar product={item.product} />}
           title={item.product.name}
           subtitle={`Qty ${resolveCartItemQuantity(item)}`}
@@ -213,10 +217,12 @@ export function CartRows({
         />
       ))}
 
-      <div className="flex items-center justify-between rounded-lg border border-amber-500/15 bg-background/70 px-2.5 py-2 text-xs">
-        <span className="font-medium text-muted-foreground">Total</span>
-        <span className="font-bold">{compactMoney.format(subtotal)}</span>
-      </div>
+      {!compact ? (
+        <div className="flex items-center justify-between rounded-lg border border-amber-500/15 bg-background/70 px-2.5 py-2 text-xs">
+          <span className="font-medium text-muted-foreground">Total</span>
+          <span className="font-bold">{compactMoney.format(subtotal)}</span>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -226,7 +232,7 @@ function MiniRecord({
   title,
   subtitle,
   trailing,
-  href,
+  onSelect,
   subtitleClassName,
   indicatorClassName
 }: {
@@ -234,7 +240,7 @@ function MiniRecord({
   title: string;
   subtitle?: string;
   trailing?: string;
-  href?: string;
+  onSelect?: () => void;
   subtitleClassName?: string;
   indicatorClassName?: string;
 }) {
@@ -273,10 +279,10 @@ function MiniRecord({
   const className =
     'flex min-w-0 items-center gap-2.5 rounded-lg border border-border/50 bg-background/65 p-2 transition hover:border-primary/25 hover:bg-background';
 
-  return href ? (
-    <Link href={href} className={className}>
+  return onSelect ? (
+    <button type="button" onClick={onSelect} className={`${className} w-full text-left`}>
       {content}
-    </Link>
+    </button>
   ) : (
     <div className={className}>{content}</div>
   );

@@ -18,6 +18,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { useWishlist } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +72,11 @@ export function CartLogics() {
   const navigateTo = (href: string) => {
     setOpen(false);
     router.push(href);
+  };
+
+  const openProduct = (product: { id: string; name: string; shortDescription?: string | null }) => {
+    setOpen(false);
+    openCustomerProductExperience(product);
   };
 
   const activeLoading = activeView === 'cart' ? cartLoading : wishlistLoading;
@@ -168,11 +174,11 @@ export function CartLogics() {
                   <div
                     key={item.id}
                     className="group flex w-full items-center gap-3 rounded-2xl border border-transparent p-2 text-left transition hover:border-border/60 hover:bg-card">
-                    <button type="button" onClick={() => navigateTo(`/products/${item.product.slug}`)} className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+                    <button type="button" onClick={() => openProduct({ id: item.product.id, name: item.product.name })} className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                       <Image src={item.variant.image} alt={item.product.name} fill sizes="56px" className="object-cover" />
                     </button>
 
-                    <button type="button" onClick={() => navigateTo(`/products/${item.product.slug}`)} className="min-w-0 flex-1 text-left">
+                    <button type="button" onClick={() => openProduct({ id: item.product.id, name: item.product.name })} className="min-w-0 flex-1 text-left">
                       <p className="truncate text-xs font-semibold">{item.product.name}</p>
                       <p className="mt-1 truncate text-[10px] text-muted-foreground">{item.variant.label}</p>
                       <p className="mt-1 text-xs font-bold">{currencyFormatter.format(item.variant.price)}</p>
@@ -205,11 +211,11 @@ export function CartLogics() {
                   <div
                     key={product.id}
                     className="group flex w-full items-center gap-3 rounded-2xl border border-transparent p-2 text-left transition hover:border-border/60 hover:bg-card">
-                    <button type="button" onClick={() => navigateTo(`/products/${product.slug}`)} className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+                    <button type="button" onClick={() => openProduct({ id: product.id, name: product.name, shortDescription: product.shortDescription })} className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                       {variant ? <Image src={variant.image} alt={product.name} fill sizes="56px" className="object-cover" /> : null}
                     </button>
 
-                    <button type="button" onClick={() => navigateTo(`/products/${product.slug}`)} className="min-w-0 flex-1 text-left">
+                    <button type="button" onClick={() => openProduct({ id: product.id, name: product.name, shortDescription: product.shortDescription })} className="min-w-0 flex-1 text-left">
                       <p className="truncate text-xs font-semibold">{product.name}</p>
                       <p className="mt-1 line-clamp-1 text-[10px] text-muted-foreground">{product.shortDescription}</p>
                       <p className="mt-1 text-xs font-bold">

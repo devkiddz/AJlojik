@@ -3,8 +3,7 @@ import type { ReactNode } from 'react';
 import type { CommerceProduct } from '../../contracts/customerDashboardTypes';
 
 import { JourneyCardShell, type JourneyCardTone } from './JourneyCardShell';
-
-import { JourneyProductCollage } from './JourneyProductCollage';
+import { JourneyProductRows } from './JourneyProductRows';
 
 type ProductJourneyCardProps = {
   code: string;
@@ -40,7 +39,7 @@ export function ProductJourneyCard({
       tone={tone}
       metric={count}
       supportingLabel={count > 0 ? supportingLabel : emptyLabel}>
-      <JourneyProductCollage products={products} title={title} fillToFour className="h-full w-full" />
+      <JourneyProductRows products={products} emptyLabel={emptyLabel} limit={4} />
     </JourneyCardShell>
   );
 }

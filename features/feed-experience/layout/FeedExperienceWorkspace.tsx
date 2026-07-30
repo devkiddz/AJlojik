@@ -8,7 +8,6 @@ import { LoaderCircle } from 'lucide-react';
 import { useActionFeedback } from '@/features/action-feedback';
 import PromoModal from '@/components/promos/PromoModal';
 
-import { categories } from '@/data/categories';
 import { collections } from '@/data/collections';
 import { promos, type Promo } from '@/data/promos';
 
@@ -18,6 +17,7 @@ import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 import { useStoreStudioProjection } from '@/features/store-studio/client';
 import { StorefrontReelComposer } from '@/features/store-studio/admin/StorefrontReelComposer';
+import { PublicShoppingListRail } from '@/features/shopping-lists/components/PublicShoppingListRail';
 
 import { useIdentity } from '@/providers/IdentityProvider';
 
@@ -29,6 +29,7 @@ import { mockExperienceProfiles, type MockExperienceProfileId } from '../mocks';
 
 import { FeedExperienceProvider } from '../providers';
 import { FeedRenderer } from '../renderers';
+import { StoreGridDestination } from './StoreGridDestination';
 
 type FeedExperienceWorkspaceProps = {
   canManageStoreStudio?: boolean;
@@ -45,10 +46,7 @@ function FeedExperienceWorkspaceContent({
     error: workspaceError
   } = useWorkspace();
 
-  const {
-    projection: storeStudio,
-    loading: storeStudioLoading
-  } = useStoreStudioProjection(activeWorkspace?.id);
+  const { projection: storeStudio } = useStoreStudioProjection(activeWorkspace?.id);
   const { error } = useActionFeedback();
 
   const { user, isAuthenticated } = useIdentity();
@@ -57,7 +55,12 @@ function FeedExperienceWorkspaceContent({
 
   const { productIds: wishlistProductIds, toggleWishlist } = useWishlist();
 
-  const { products: catalogProducts, loading: catalogLoading, error: catalogError } = useCatalog();
+  const {
+    products: catalogProducts,
+    categories: catalogCategories,
+    loading: catalogLoading,
+    error: catalogError
+  } = useCatalog();
 
   // ============================================================
   // CART
@@ -95,6 +98,7 @@ function FeedExperienceWorkspaceContent({
   const selectedCollectionId = searchParams.get('collection');
   const selectedProductId = searchParams.get('product');
   const selectedPromotionId = searchParams.get('promotion');
+  const selectedView = searchParams.get('view');
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -254,7 +258,7 @@ function FeedExperienceWorkspaceContent({
     () => ({
       catalog: {
         products: catalogProducts,
-        categories,
+        categories: catalogCategories,
         collections,
         promotions: promos
       },
@@ -294,7 +298,7 @@ function FeedExperienceWorkspaceContent({
         now: new Date().toISOString()
       }
     }),
-    [activeProfile, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, storeStudio, wishlistProductIds]
+    [activeProfile, catalogCategories, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, storeStudio, wishlistProductIds]
   );
 
   // ============================================================
@@ -327,11 +331,24 @@ function FeedExperienceWorkspaceContent({
       .filter((product): product is ProductType => Boolean(product));
   }, [selectedPromo, catalogProducts]);
 
+
+  const gridProducts = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return catalogProducts;
+    }
+
+    if (selectedCategory === 'deals') {
+      return catalogProducts.filter(product => product.discountPercentage > 0);
+    }
+
+    return catalogProducts.filter(product => product.category === selectedCategory);
+  }, [catalogProducts, selectedCategory]);
+
   // ============================================================
   // LOADING AND ERROR STATES
   // ============================================================
 
-  if (workspaceLoading || catalogLoading || storeStudioLoading) {
+  if (workspaceLoading || catalogLoading) {
     return (
       <div className="grid min-h-[50vh] place-items-center">
         <div className="flex flex-col items-center gap-3">
@@ -373,23 +390,32 @@ function FeedExperienceWorkspaceContent({
       context={context}
       baseActions={baseActions}
       broadcastIntent>
-      <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
-        <section className="min-w-0 pb-6 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:rounded-3xl lg:bg-card/50 lg:p-4 lg:scroll-smooth lg:scrollbar-none">
-          <FeedRenderer />
-        </section>
-
-        <PromoModal
-          promo={selectedPromo}
-          products={selectedPromoProducts}
-          open={promoOpen}
-          onClose={closePromoPreview}
+      {selectedView === 'grid' ? (
+        <StoreGridDestination
+          selectedCategory={selectedCategory}
+          products={gridProducts}
+          onAddToCart={handleAddToCart}
         />
+      ) : (
+        <div className="min-h-dvh px-3 py-3 md:px-4 md:py-4 lg:h-[calc(100dvh-6.5rem)] lg:min-h-0 lg:overflow-hidden">
+          <section className="min-w-0 pb-6 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:rounded-3xl lg:bg-card/50 lg:p-4 lg:scroll-smooth lg:scrollbar-none">
+            <PublicShoppingListRail workspaceId={activeWorkspace.id} />
+            <FeedRenderer />
+          </section>
 
-        {canManageStoreStudio &&
-        activeWorkspace.id === storeStudioWorkspaceId ? (
-          <StorefrontReelComposer products={catalogProducts} />
-        ) : null}
-      </div>
+          <PromoModal
+            promo={selectedPromo}
+            products={selectedPromoProducts}
+            open={promoOpen}
+            onClose={closePromoPreview}
+          />
+
+          {canManageStoreStudio &&
+          activeWorkspace.id === storeStudioWorkspaceId ? (
+            <StorefrontReelComposer products={catalogProducts} />
+          ) : null}
+        </div>
+      )}
     </FeedExperienceProvider>
   );
 }

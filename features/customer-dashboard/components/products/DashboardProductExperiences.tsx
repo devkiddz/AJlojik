@@ -12,7 +12,7 @@ export function DashboardProductExperiences({ view }: DashboardProductExperience
   const { suggestedProducts, suggestedHref, pickedProducts, pickedHref } = view;
 
   return (
-    <section className="grid items-start gap-4 xl:grid-cols-2">
+    <section className="space-y-4">
       <ProductExperienceSection
         code="SP"
         title="Suggested Products"

@@ -16,6 +16,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useCatalog } from '@/features/catalog';
 
+import { openCustomerProductExperience } from '@/features/customer-experience';
+
 import type { ProductType } from '@/types/types';
 
 type SearchContextType = {
@@ -264,10 +266,14 @@ export default function SearchProvider({ children }: { children: ReactNode }) {
   const selectProduct = useCallback(
     (product: ProductType): void => {
       saveHistory(product.name);
-      router.push(`/products/${product.slug}`);
       setOpen(false);
+      openCustomerProductExperience({
+        id: product.id,
+        name: product.name,
+        shortDescription: product.shortDescription
+      });
     },
-    [router, saveHistory]
+    [saveHistory]
   );
 
   const value = useMemo<SearchContextType>(

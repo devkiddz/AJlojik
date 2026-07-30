@@ -76,6 +76,99 @@ async function requireOwnedList(
   return list;
 }
 
+async function requeueApprovedPublication(
+  userId: string,
+  workspaceId: string,
+  listId: string,
+  reason: string
+): Promise<void> {
+  const list = await prisma.shoppingList.findFirst({
+    where: {
+      id: listId,
+      userId,
+      workspaceId,
+      status: 'ACTIVE'
+    },
+    select: {
+      id: true,
+      name: true,
+      visibility: true,
+      publicationStatus: true
+    }
+  });
+
+  if (!list || list.visibility !== 'SHARED' || list.publicationStatus !== 'APPROVED') {
+    return;
+  }
+
+  await prisma.$transaction(async transaction => {
+    await transaction.adminApprovalRequest.updateMany({
+      where: {
+        workspaceId,
+        targetType: 'SHOPPING_LIST',
+        targetId: listId,
+        status: 'PENDING'
+      },
+      data: {
+        status: 'CANCELLED',
+        reviewNote: 'Replaced by a newer shopping-list revision.'
+      }
+    });
+
+    await transaction.shoppingList.update({
+      where: { id: listId },
+      data: {
+        publicationStatus: 'PENDING_REVIEW',
+        publicationSubmittedAt: new Date(),
+        publicationReviewedAt: null,
+        publicationPublishedAt: null,
+        publicationReviewNote: null
+      }
+    });
+
+    const request = await transaction.adminApprovalRequest.create({
+      data: {
+        workspaceId,
+        requestedById: userId,
+        action: 'PUBLISH_LIVE',
+        targetType: 'SHOPPING_LIST',
+        targetId: listId,
+        reason: `${list.name} changed after publication and requires a new review.`,
+        payload: {
+          source: 'CUSTOMER_SHOPPING_LIST',
+          revisionReason: reason
+        }
+      }
+    });
+
+    await transaction.adminTodo.create({
+      data: {
+        workspaceId,
+        title: 'Shopping list requires re-approval',
+        description: `${list.name} changed after publication.`,
+        source: 'APPROVAL',
+        priority: 'MEDIUM',
+        targetType: 'SHOPPING_LIST',
+        targetId: listId
+      }
+    });
+
+    await transaction.adminAuditEvent.create({
+      data: {
+        workspaceId,
+        actorId: userId,
+        action: 'SHOPPING_LIST_PUBLICATION_REQUEUED',
+        targetType: 'SHOPPING_LIST',
+        targetId: listId,
+        summary: reason,
+        metadata: {
+          requestId: request.id
+        }
+      }
+    });
+  });
+}
+
 export const ShoppingListRepository = {
   async get(
     userId: string,
@@ -181,8 +274,6 @@ export const ShoppingListRepository = {
       name?: string;
       description?:
         string | null;
-      visibility?:
-        'PRIVATE' | 'SHARED';
       status?:
         'ACTIVE' | 'ARCHIVED';
     }
@@ -250,14 +341,6 @@ export const ShoppingListRepository = {
               }
             : {}),
 
-          ...(input.visibility !==
-          undefined
-            ? {
-                visibility:
-                  input.visibility
-              }
-            : {}),
-
           ...(input.status !==
           undefined
             ? {
@@ -271,6 +354,46 @@ export const ShoppingListRepository = {
           shoppingListInclude
       });
 
+    if (input.status === 'ARCHIVED') {
+      await prisma.$transaction([
+        prisma.adminApprovalRequest.updateMany({
+          where: {
+            workspaceId,
+            targetType: 'SHOPPING_LIST',
+            targetId: listId,
+            status: 'PENDING'
+          },
+          data: {
+            status: 'CANCELLED',
+            reviewNote: 'The customer archived this shopping list.'
+          }
+        }),
+        prisma.shoppingList.update({
+          where: { id: listId },
+          data: {
+            visibility: 'PRIVATE',
+            publicationStatus: 'PRIVATE',
+            publicationSubmittedAt: null,
+            publicationReviewedAt: null,
+            publicationPublishedAt: null,
+            publicationReviewNote: null
+          }
+        })
+      ]);
+    } else {
+      await requeueApprovedPublication(
+        userId,
+        workspaceId,
+        listId,
+        'The list title or description changed.'
+      );
+    }
+
+    const refreshedList = await prisma.shoppingList.findUnique({
+      where: { id: listId },
+      include: shoppingListInclude
+    });
+
     return {
       lists:
         await readLists(
@@ -279,10 +402,237 @@ export const ShoppingListRepository = {
         ),
 
       affectedList:
-        mapShoppingList(list),
+        refreshedList ? mapShoppingList(refreshedList) : mapShoppingList(list),
 
       affectedItem: null
     };
+  },
+
+  async submitPublication(
+    userId: string,
+    workspaceId: string,
+    listId: string
+  ): Promise<ShoppingListMutationResponse> {
+    const ownedList = await prisma.shoppingList.findFirst({
+      where: {
+        id: listId,
+        userId,
+        workspaceId,
+        status: 'ACTIVE'
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        publicationStatus: true,
+        _count: {
+          select: { items: true }
+        }
+      }
+    });
+
+    if (!ownedList) {
+      throw new ShoppingListRouteError('The selected shopping list was not found.', 404);
+    }
+
+    if (ownedList._count.items === 0) {
+      throw new ShoppingListRouteError('Add at least one product before submitting this list for publication.', 422);
+    }
+
+    if (ownedList.publicationStatus === 'PENDING_REVIEW') {
+      throw new ShoppingListRouteError('This shopping list is already awaiting review.', 409);
+    }
+
+    await prisma.$transaction(async transaction => {
+      await transaction.adminApprovalRequest.updateMany({
+        where: {
+          workspaceId,
+          targetType: 'SHOPPING_LIST',
+          targetId: listId,
+          status: 'PENDING'
+        },
+        data: {
+          status: 'CANCELLED',
+          reviewNote: 'Replaced by a new customer publication request.'
+        }
+      });
+
+      await transaction.shoppingList.update({
+        where: { id: listId },
+        data: {
+          visibility: 'SHARED',
+          publicationStatus: 'PENDING_REVIEW',
+          publicationSubmittedAt: new Date(),
+          publicationReviewedAt: null,
+          publicationPublishedAt: null,
+          publicationReviewNote: null
+        }
+      });
+
+      const request = await transaction.adminApprovalRequest.create({
+        data: {
+          workspaceId,
+          requestedById: userId,
+          action: 'PUBLISH_LIVE',
+          targetType: 'SHOPPING_LIST',
+          targetId: listId,
+          reason: `${ownedList.name} was shared publicly by its owner and requires Store approval.`,
+          payload: {
+            source: 'CUSTOMER_SHOPPING_LIST',
+            listName: ownedList.name,
+            description: ownedList.description,
+            itemCount: ownedList._count.items
+          }
+        }
+      });
+
+      await transaction.adminTodo.create({
+        data: {
+          workspaceId,
+          title: 'Review public shopping list',
+          description: `${ownedList.name} contains ${ownedList._count.items} product${ownedList._count.items === 1 ? '' : 's'}.`,
+          source: 'APPROVAL',
+          priority: 'MEDIUM',
+          targetType: 'SHOPPING_LIST',
+          targetId: listId
+        }
+      });
+
+      await transaction.adminAuditEvent.create({
+        data: {
+          workspaceId,
+          actorId: userId,
+          action: 'SHOPPING_LIST_PUBLICATION_SUBMITTED',
+          targetType: 'SHOPPING_LIST',
+          targetId: listId,
+          summary: `${ownedList.name} was submitted for public Store approval.`,
+          metadata: {
+            requestId: request.id,
+            itemCount: ownedList._count.items
+          }
+        }
+      });
+    });
+
+    const affectedList = await prisma.shoppingList.findUnique({
+      where: { id: listId },
+      include: shoppingListInclude
+    });
+
+    return {
+      lists: await readLists(userId, workspaceId),
+      affectedList: affectedList ? mapShoppingList(affectedList) : null,
+      affectedItem: null
+    };
+  },
+
+  async withdrawPublication(
+    userId: string,
+    workspaceId: string,
+    listId: string
+  ): Promise<ShoppingListMutationResponse> {
+    const ownedList = await prisma.shoppingList.findFirst({
+      where: {
+        id: listId,
+        userId,
+        workspaceId
+      },
+      select: {
+        id: true,
+        name: true
+      }
+    });
+
+    if (!ownedList) {
+      throw new ShoppingListRouteError('The selected shopping list was not found.', 404);
+    }
+
+    await prisma.$transaction(async transaction => {
+      await transaction.adminApprovalRequest.updateMany({
+        where: {
+          workspaceId,
+          targetType: 'SHOPPING_LIST',
+          targetId: listId,
+          status: 'PENDING'
+        },
+        data: {
+          status: 'CANCELLED',
+          reviewNote: 'The customer withdrew the list from public review.'
+        }
+      });
+
+      await transaction.shoppingList.update({
+        where: { id: listId },
+        data: {
+          visibility: 'PRIVATE',
+          publicationStatus: 'PRIVATE',
+          publicationSubmittedAt: null,
+          publicationReviewedAt: null,
+          publicationPublishedAt: null,
+          publicationReviewNote: null
+        }
+      });
+
+      await transaction.adminAuditEvent.create({
+        data: {
+          workspaceId,
+          actorId: userId,
+          action: 'SHOPPING_LIST_PUBLICATION_WITHDRAWN',
+          targetType: 'SHOPPING_LIST',
+          targetId: listId,
+          summary: `${ownedList.name} was returned to private visibility.`
+        }
+      });
+    });
+
+    const affectedList = await prisma.shoppingList.findUnique({
+      where: { id: listId },
+      include: shoppingListInclude
+    });
+
+    return {
+      lists: await readLists(userId, workspaceId),
+      affectedList: affectedList ? mapShoppingList(affectedList) : null,
+      affectedItem: null
+    };
+  },
+
+  async getApprovedPublic(
+    workspaceId: string,
+    take = 12
+  ): Promise<ShoppingList[]> {
+    const lists = await prisma.shoppingList.findMany({
+      where: {
+        workspaceId,
+        status: 'ACTIVE',
+        visibility: 'SHARED',
+        publicationStatus: 'APPROVED'
+      },
+      include: shoppingListInclude,
+      orderBy: [
+        { publicationPublishedAt: 'desc' },
+        { updatedAt: 'desc' }
+      ],
+      take
+    });
+
+    return mapShoppingLists(lists);
+  },
+
+  async getApprovedPublicById(
+    listId: string
+  ): Promise<ShoppingList | null> {
+    const list = await prisma.shoppingList.findFirst({
+      where: {
+        id: listId,
+        status: 'ACTIVE',
+        visibility: 'SHARED',
+        publicationStatus: 'APPROVED'
+      },
+      include: shoppingListInclude
+    });
+
+    return list ? mapShoppingList(list) : null;
   },
 
   async addItem(
@@ -464,6 +814,18 @@ export const ShoppingListRepository = {
             .items.include
       });
 
+    await requeueApprovedPublication(
+      userId,
+      workspaceId,
+      listId,
+      'A product was added or its planned quantity changed.'
+    );
+
+    const affectedListRecord = await prisma.shoppingList.findUnique({
+      where: { id: listId },
+      include: shoppingListInclude
+    });
+
     return {
       lists:
         await readLists(
@@ -472,7 +834,7 @@ export const ShoppingListRepository = {
         ),
 
       affectedList:
-        null,
+        affectedListRecord ? mapShoppingList(affectedListRecord) : null,
 
       affectedItem:
         affectedRecord
@@ -557,6 +919,13 @@ export const ShoppingListRepository = {
             .items.include
       });
 
+    await requeueApprovedPublication(
+      userId,
+      workspaceId,
+      listId,
+      'A planned product quantity or note changed.'
+    );
+
     return {
       lists:
         await readLists(
@@ -611,6 +980,13 @@ export const ShoppingListRepository = {
         id: item.id
       }
     });
+
+    await requeueApprovedPublication(
+      userId,
+      workspaceId,
+      listId,
+      'A product was removed from the shopping list.'
+    );
 
     return {
       lists:

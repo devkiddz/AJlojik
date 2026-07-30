@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { ChartColumnStacked, Eye } from 'lucide-react';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { ProductType } from '@/types/types';
 import LikedComponent from './LikedComponent';
 
@@ -15,7 +15,6 @@ type ProductCardProps = {
 };
 
 export default function ProductCard({ product, onSelect, onPreview, onToggleLike }: ProductCardProps) {
-  const router = useRouter();
   const cardRef = useRef<HTMLElement>(null);
   const [selectedVariantId] = useState(product.variants[0]?.id ?? '');
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
@@ -23,7 +22,21 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
   const activeVariant = product.variants.find(v => v.id === selectedVariantId) ?? product.variants[0];
 
   const handleCardClick = () => {
-    router.push(`/products/${product.slug}`);
+    if (onPreview) {
+      onPreview();
+      return;
+    }
+
+    if (onSelect) {
+      onSelect();
+      return;
+    }
+
+    openCustomerProductExperience({
+      id: product.id,
+      name: product.name,
+      shortDescription: product.shortDescription
+    });
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
@@ -109,8 +122,14 @@ export default function ProductCard({ product, onSelect, onPreview, onToggleLike
                   e.stopPropagation();
                   if (onPreview) {
                     onPreview();
+                  } else if (onSelect) {
+                    onSelect();
                   } else {
-                    onSelect?.();
+                    openCustomerProductExperience({
+                      id: product.id,
+                      name: product.name,
+                      shortDescription: product.shortDescription
+                    });
                   }
                 }}>
                 <button

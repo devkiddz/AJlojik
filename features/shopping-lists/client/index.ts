@@ -11,14 +11,16 @@ export {
   getShoppingLists,
   removeShoppingListItem,
   updateShoppingList,
-  updateShoppingListItem
+  updateShoppingListItem,
+  updateShoppingListPublication
 } from './shoppingListService';
 
 export type {
   AddShoppingListItemInput,
   CreateShoppingListInput,
   UpdateShoppingListInput,
-  UpdateShoppingListItemInput
+  UpdateShoppingListItemInput,
+  UpdateShoppingListPublicationInput
 } from './shoppingListService';
 
 export {

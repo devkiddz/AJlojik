@@ -2,22 +2,23 @@
   "name": "aj_concepts",
   "version": "0.1.0",
   "private": true,
- "engines": {
+  "engines": {
     "node": "24.x"
   },
   "scripts": {
-  "dev": "next dev",
-  "build": "prisma migrate deploy && next build",
-  "start": "next start",
-  "lint": "eslint .",
-  "typecheck": "tsc --noEmit",
-  "check": "npm run lint && npm run typecheck && npm run build",
-  "seed": "tsx prisma/seed.ts",
-  "seed:admins": "tsx prisma/seed-admins.ts",
-  "provision:super-admins": "tsx prisma/provision-super-admins.ts",
-  "seed:production": "node --env-file=.vercel/.env.production.local ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
-  "postinstall": "prisma generate"
-},
+    "dev": "next dev",
+    "build": "prisma migrate deploy && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run build",
+    "seed": "tsx prisma/seed.ts",
+    "seed:admins": "tsx prisma/seed-admins.ts",
+    "provision:super-admins": "tsx prisma/provision-super-admins.ts",
+    "seed:production": "node --env-file=.vercel/.env.production.local ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
+    "postinstall": "prisma generate",
+    "dev:webpack": "next dev --webpack"
+  },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@better-auth/prisma-adapter": "^1.6.23",

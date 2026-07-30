@@ -279,6 +279,21 @@ export function mapShoppingList(
     status:
       record.status,
 
+    publicationStatus:
+      record.publicationStatus,
+
+    publicationSubmittedAt:
+      record.publicationSubmittedAt?.toISOString() ?? null,
+
+    publicationReviewedAt:
+      record.publicationReviewedAt?.toISOString() ?? null,
+
+    publicationPublishedAt:
+      record.publicationPublishedAt?.toISOString() ?? null,
+
+    publicationReviewNote:
+      record.publicationReviewNote,
+
     position:
       record.position,
 

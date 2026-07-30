@@ -24,9 +24,13 @@ export type UpdateShoppingListInput = {
 
   description?: string | null;
 
-  visibility?: 'PRIVATE' | 'SHARED';
-
   status?: 'ACTIVE' | 'ARCHIVED';
+};
+
+
+export type UpdateShoppingListPublicationInput = {
+  workspaceId: string;
+  action: 'SUBMIT' | 'WITHDRAW';
 };
 
 export type AddShoppingListItemInput = {
@@ -103,6 +107,20 @@ export async function getShoppingLists(
   return result.lists;
 }
 
+export async function getApprovedPublicShoppingLists(
+  workspaceId: string
+): Promise<ShoppingList[]> {
+  const query = new URLSearchParams({ workspaceId });
+  const response = await fetch(`/api/shopping-lists/public?${query.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' }
+  });
+  const result = await readResponse<ShoppingListsResponse>(response);
+  return result.lists;
+}
+
 export async function createShoppingList(
   input: CreateShoppingListInput
 ): Promise<ShoppingListMutationResponse> {
@@ -152,6 +170,28 @@ export async function updateShoppingList(
   return readResponse<ShoppingListMutationResponse>(
     response
   );
+}
+
+export async function updateShoppingListPublication(
+  listId: string,
+  input: UpdateShoppingListPublicationInput
+): Promise<ShoppingListMutationResponse> {
+  const response = await fetch(
+    `/api/shopping-lists/${encodeURIComponent(listId)}/publication`,
+    {
+      method: 'POST',
+      credentials: 'include',
+
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify(input)
+    }
+  );
+
+  return readResponse<ShoppingListMutationResponse>(response);
 }
 
 export async function archiveShoppingList(

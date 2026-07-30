@@ -24,6 +24,10 @@ export type AdminPermission =
   | 'product:create'
   | 'product:update'
   | 'product:delete'
+  | 'category:view'
+  | 'category:manage'
+  | 'brand:view'
+  | 'brand:manage'
   | 'collection:view'
   | 'collection:manage'
   | 'promotion:view'
@@ -56,6 +60,8 @@ const levelOne: AdminPermission[] = [
   'order:view',
   'customer:view',
   'media:view',
+  'category:view',
+  'brand:view',
   'collection:view',
   'promotion:view',
   'vendor:view',
@@ -70,6 +76,8 @@ const levelTwo: AdminPermission[] = [
   'media:manage',
   'product:create',
   'product:update',
+  'category:manage',
+  'brand:manage',
   'collection:manage',
   'promotion:manage',
   'experience:manage',

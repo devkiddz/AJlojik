@@ -12,10 +12,12 @@ import {
   Clapperboard,
   FolderKanban,
   GalleryVerticalEnd,
+  Grid2X2Plus,
   LayoutDashboard,
   Menu,
   PackageSearch,
   Settings2,
+  Tags,
   ShieldCheck,
   Sparkles,
   ShoppingBag,
@@ -27,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useState, type ComponentType } from 'react';
 
+import { AdminActionFeedbackBridge } from '@/features/admin/components/AdminActionFeedbackBridge';
 import { cn } from '@/lib/utils';
 
 export type AdminShellPermission =
@@ -38,6 +41,8 @@ export type AdminShellPermission =
   | 'order:view'
   | 'customer:view'
   | 'media:view'
+  | 'category:view'
+  | 'brand:view'
   | 'collection:view'
   | 'promotion:view'
   | 'experience:manage'
@@ -84,6 +89,8 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
     items: [
       { href: '/admin/media', label: 'Media Studio', icon: GalleryVerticalEnd, permission: 'media:view' },
       { href: '/admin/products', label: 'Product Studio', icon: Boxes, permission: 'commerce:view' },
+      { href: '/admin/categories', label: 'Category Studio', icon: Grid2X2Plus, permission: 'category:view' },
+      { href: '/admin/brands', label: 'Brand Studio', icon: Tags, permission: 'brand:view' },
       { href: '/admin/collections', label: 'Collection Studio', icon: FolderKanban, permission: 'collection:view' },
       { href: '/admin/promotions', label: 'Promotion Studio', icon: BadgePercent, permission: 'promotion:view' },
       { href: '/admin/store-studio', label: 'Store Studio', icon: Clapperboard, permission: 'experience:manage' },
@@ -145,7 +152,7 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
           </span>
           <span className="min-w-0">
             <strong className="block truncate text-sm">AJ Logik Admin</strong>
-            <span className="block truncate text-[10px] text-muted-foreground">Rcentz control plane</span>
+            <span className="block truncate text-xs text-muted-foreground">Rcentz control plane</span>
           </span>
         </Link>
       </div>
@@ -154,7 +161,7 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
         <div className="space-y-5">
           {groups.map(group => (
             <section key={group.label}>
-              <p className="px-3 text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
+              <p className="px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
                 {group.label}
               </p>
               <div className="mt-2 space-y-1">
@@ -168,7 +175,7 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-semibold transition',
+                        'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition',
                         active
                           ? 'bg-foreground text-background shadow-sm'
                           : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
@@ -187,15 +194,15 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
 
       <div className="border-t border-border/60 p-3">
         <div className="rounded-2xl bg-muted/55 p-3">
-          <p className="truncate text-xs font-bold">{operator.name}</p>
-          <p className="mt-1 truncate text-[9px] text-muted-foreground">
+          <p className="truncate text-sm font-bold">{operator.name}</p>
+          <p className="mt-1 truncate text-[11px] text-muted-foreground">
             {operator.role.replaceAll('_', ' ')} · {operator.workspaceName}
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <span className="rounded-full bg-background px-2 py-1 text-[8px] font-bold">
+            <span className="rounded-full bg-background px-2 py-1 text-[10px] font-bold">
               {operator.workspaceMode}
             </span>
-            <span className="rounded-full bg-background px-2 py-1 text-[8px] font-bold">
+            <span className="rounded-full bg-background px-2 py-1 text-[10px] font-bold">
               {operator.commerceMode.replaceAll('_', ' ')}
             </span>
           </div>
@@ -205,8 +212,9 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
   );
 
   return (
-    <div className="min-h-dvh bg-background">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-border/60 bg-card/95 backdrop-blur-xl lg:block">
+    <div className="admin-control-plane min-h-dvh bg-background">
+      <AdminActionFeedbackBridge />
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-border/60 bg-card/95 backdrop-blur-xl lg:block">
         {sidebar}
       </aside>
 
@@ -219,8 +227,8 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
           <Menu className="size-5" />
         </button>
         <div className="min-w-0 text-center">
-          <p className="truncate text-xs font-bold">{operator.workspaceName}</p>
-          <p className="truncate text-[9px] text-muted-foreground">Admin control plane</p>
+          <p className="truncate text-sm font-bold">{operator.workspaceName}</p>
+          <p className="truncate text-[11px] text-muted-foreground">Admin control plane</p>
         </div>
         <Link href="/store" className="grid size-10 place-items-center rounded-2xl border border-border/60 bg-card" aria-label="Open Store">
           <ShoppingBag className="size-4" />
@@ -248,7 +256,7 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
         </div>
       ) : null}
 
-      <div className="min-w-0 lg:pl-64">{children}</div>
+      <div className="min-w-0 lg:pl-60">{children}</div>
     </div>
   );
 }

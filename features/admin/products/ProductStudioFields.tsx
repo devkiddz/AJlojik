@@ -44,13 +44,15 @@ export function ProductStudioFields({
   initialMediaIds,
   initialVariants,
   apiBasePath = '/api/admin/media',
-  canUpload = true
+  canUpload = true,
+  retainedImageCount = 0
 }: {
   media: ProductStudioMedia[];
   initialMediaIds: string[];
   initialVariants: ProductStudioVariant[];
   apiBasePath?: string;
   canUpload?: boolean;
+  retainedImageCount?: number;
 }) {
   const [availableMedia, setAvailableMedia] = useState(media);
   const [selectedMediaIds, setSelectedMediaIds] = useState(initialMediaIds);
@@ -135,6 +137,10 @@ export function ProductStudioFields({
                 </article>
               );
             })}
+          </div>
+        ) : retainedImageCount > 0 && !mediaTouched ? (
+          <div className="mt-5 rounded-3xl border border-amber-500/25 bg-amber-500/8 p-5 text-xs leading-5 text-amber-700">
+            This product already has {retainedImageCount} saved image{retainedImageCount === 1 ? '' : 's'}. They will remain attached until you select or remove Media Studio images here.
           </div>
         ) : (
           <div className="mt-5 rounded-3xl border border-dashed border-border/70 p-6 text-center text-xs text-muted-foreground">No product gallery selected yet.</div>

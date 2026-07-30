@@ -90,26 +90,21 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
   }, [router, searchParams]);
 
   return (
-    <header className="sticky top-0 isolate z-50 w-full bg-card/90 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-3xl backdrop-saturate-[180%] md:py-3">
-      {/* Ambient header treatment */}
+    <div className="relative isolate w-full border-b border-border/60 bg-card/90 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-3xl backdrop-saturate-[180%]">
       <div className="header-ambient-light" />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
 
-      {/* Main desktop/mobile header */}
-      <div className="relative isolate mx-auto flex h-16 items-center justify-between gap-3 px-4">
-        {/* Left identity */}
+      <div className="relative isolate mx-auto flex h-[var(--app-navbar-height)] items-center justify-between gap-2 px-[var(--app-page-gutter)] sm:gap-3">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <SidebarToggle />
 
           <LogoComponent brandName={brandName} brandSlug={brandSlug} />
         </div>
 
-        {/* Desktop discovery dock */}
         <div className="hidden min-w-0 items-center rounded-full border border-white/10 bg-muted/60 p-1 shadow-sm backdrop-blur-xl md:flex">
           {brands.map(item => {
             const Icon = item.icon;
-
             const isActive = selectedCategory === item.slug;
 
             return (
@@ -128,7 +123,6 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
                     : 'h-9 gap-2 rounded-full px-3 text-xs text-muted-foreground transition-all hover:bg-background/70 hover:text-foreground'
                 }>
                 <Icon className="size-4" />
-
                 <span className="whitespace-nowrap font-medium">{item.label}</span>
               </Button>
             );
@@ -138,16 +132,15 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
           <div className="mx-2 h-6 w-px bg-border" />
 
-          <div className="w-56 lg:w-90">
+          <div className="w-[clamp(13rem,21vw,22.5rem)]">
             <SearchBarComponent />
           </div>
         </div>
 
-        {/* Right actions */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <button
             type="button"
-            title="Toggle discovery tools"
+            title="Toggle search and categories"
             aria-expanded={mobileToolsOpen}
             aria-controls="mobile-discovery-tools"
             onClick={() => setMobileToolsOpen(current => !current)}
@@ -157,11 +150,16 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
 
           <CartLogics />
 
+          <div
+            id="customer-experience-history-slot"
+            className="relative flex min-h-9 shrink-0 items-center"
+            aria-live="polite"
+          />
+
           <UserActionComponent />
         </div>
       </div>
 
-      {/* Mobile collapsible discovery dock */}
       <div id="mobile-discovery-tools" className="md:hidden">
         <div
           className={
@@ -169,7 +167,7 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
               ? 'max-h-56 overflow-hidden border-t border-white/10 bg-background/95 opacity-100 backdrop-blur-xl transition-all duration-300 ease-in-out'
               : 'max-h-0 overflow-hidden border-t border-transparent bg-background/95 opacity-0 backdrop-blur-xl transition-all duration-300 ease-in-out'
           }>
-          <div className="space-y-3 px-4 pb-4 pt-3">
+          <div className="space-y-3 px-[var(--app-page-gutter)] pb-4 pt-3">
             <MobileSearchButton />
 
             <StoreCategoriesPill
@@ -183,6 +181,6 @@ export default function NavbarComponent({ brandName, brandSlug }: BrandType) {
           </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

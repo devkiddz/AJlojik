@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -12,7 +14,7 @@ import {
   Truck
 } from 'lucide-react';
 
-import { categories } from '@/data/categories';
+import { useCatalog } from '@/features/catalog';
 
 import HeroBackgroundMedia from './HeroBackgroundMedia';
 
@@ -41,8 +43,6 @@ type HomeStorefrontProps = {
 const DEFAULT_HERO_IMAGE =
   'https://images.unsplash.com/photo-1575444758702-4a6b9222336e?q=85&w=2400&auto=format&fit=crop';
 
-const homeCategories = categories.slice(0, 6);
-
 const whyShopItems = [
   {
     icon: BadgeCheck,
@@ -67,6 +67,8 @@ const whyShopItems = [
 ];
 
 export default function HomeStorefront({ hero }: HomeStorefrontProps) {
+  const { categories } = useCatalog();
+  const homeCategories = categories.slice(0, 6);
   const heroMedia = hero?.mediaUrl?.trim() || hero?.posterUrl?.trim() || DEFAULT_HERO_IMAGE;
 
   const heroFallbackImage = hero?.posterUrl?.trim() || DEFAULT_HERO_IMAGE;
@@ -201,7 +203,7 @@ export default function HomeStorefront({ hero }: HomeStorefrontProps) {
             </div>
 
             <Link
-              href="/store"
+              href="/store?view=grid"
               className="hidden items-center gap-1 text-sm font-semibold text-white/55 transition hover:text-white sm:inline-flex">
               Explore everything
               <ChevronRight className="size-4" />
@@ -272,7 +274,7 @@ export default function HomeStorefront({ hero }: HomeStorefrontProps) {
 
           <div className="mt-4 flex justify-end sm:hidden">
             <Link
-              href="/store"
+              href="/store?view=grid"
               className="inline-flex items-center gap-1 text-xs font-semibold text-white/55 transition hover:text-white">
               Explore everything
               <ChevronRight className="size-4" />

@@ -268,8 +268,8 @@ export function StoreExperienceOnboarding({ suppressed = false }: StoreExperienc
           continueAsGuest();
         }
       }}>
-      <DialogContent className="max-h-[92vh] w-[calc(100%_-_1.5rem)] max-w-none overflow-hidden border-primary/10 p-0 sm:max-w-[96vw] lg:max-w-[1180px] xl:max-w-[1320px]">
-        <div className="max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%_-_1rem)] max-w-none overflow-hidden border-primary/10 p-0 sm:max-w-[96vw] lg:max-w-[1180px] xl:max-w-[1320px]">
+        <div className="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain">
           <div className="grid lg:grid-cols-2">
             {/* =====================================================
                 LEFT — HERO AND EXPERIENCE MODES

@@ -1,8 +1,7 @@
 import Image from 'next/image';
-import Link from 'next/link';
-
 import { ArrowUpRight, Heart, PackageCheck, Play, ShoppingBag, Star } from 'lucide-react';
 
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { cn } from '@/lib/utils';
 
 import type { CommerceProduct } from '../../contracts/customerDashboardTypes';
@@ -73,12 +72,18 @@ export function DashboardProductPreview({
   const SourceIcon = sourceLabel.icon;
 
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      aria-label={`View ${product.name}`}
+    <button
+      type="button"
+      data-rail-item
+      onClick={() => openCustomerProductExperience({
+        id: product.id,
+        name: product.name
+      })}
+      aria-label={`Open ${product.name} in Discovery Hub`}
       className="
         group
         w-40
+        text-left
         shrink-0
         snap-start
         overflow-hidden
@@ -165,6 +170,6 @@ export function DashboardProductPreview({
           </span>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }

@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 
-import type { CommerceDashboardData, CommerceProduct } from '../../contracts/customerDashboardTypes';
+import type { CommerceDashboardData } from '../../contracts/customerDashboardTypes';
 
 import { JourneyCardShell, type JourneyCardTone } from './JourneyCardShell';
-
-import { JourneyProductCollage } from './JourneyProductCollage';
+import { CartRows } from './JourneyRows';
 
 type CartJourneyCardProps = {
   code: string;
@@ -28,10 +27,6 @@ export function CartJourneyCard({
   items,
   subtotal
 }: CartJourneyCardProps) {
-  const products = items
-    .map(item => item.product)
-    .filter((product): product is CommerceProduct => Boolean(product));
-
   const formattedSubtotal = new Intl.NumberFormat('en-NG', {
     style: 'currency',
     currency: 'NGN',
@@ -47,7 +42,9 @@ export function CartJourneyCard({
       tone={tone}
       metric={count}
       supportingLabel={count > 0 ? `${formattedSubtotal} subtotal` : 'Your cart is currently empty'}>
-      <JourneyProductCollage products={products} title={title} fillToFour className="h-full w-full" />
+      <div className="flex h-full flex-col gap-1.5 overflow-hidden">
+        <CartRows items={items} subtotal={subtotal} compact />
+      </div>
     </JourneyCardShell>
   );
 }

@@ -127,7 +127,7 @@ export function resolveCustomerDashboardView(
 
   const shoppingListsHref =
     primaryShoppingList
-      ? `/dashboard/lists/${primaryShoppingList.id}`
+      ? `/account/lists/${primaryShoppingList.id}`
       : '/account/lists';
 
   const cartItems =
@@ -221,7 +221,7 @@ export function resolveCustomerDashboardView(
       )
       .slice(
         0,
-        8
+        12
       );
 
   const suggestedIds =
@@ -273,7 +273,7 @@ export function resolveCustomerDashboardView(
       )
       .slice(
         0,
-        8
+        12
       );
 
   return {

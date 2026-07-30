@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -9,6 +11,7 @@ import {
   Star
 } from 'lucide-react';
 
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import {
   cn
 } from '@/lib/utils';
@@ -48,9 +51,10 @@ function ProductRow({
   product: CommerceProduct;
 }) {
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className="group/row flex min-w-0 items-center gap-3 rounded-xl border border-border/55 bg-background/70 p-2.5 transition hover:border-primary/25 hover:bg-muted/45">
+    <button
+      type="button"
+      onClick={() => openCustomerProductExperience({ id: product.id, name: product.name })}
+      className="group/row flex w-full min-w-0 items-center text-left gap-3 rounded-xl border border-border/55 bg-background/70 p-2.5 transition hover:border-primary/25 hover:bg-muted/45">
       <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted">
         {product.image ? (
           <Image
@@ -94,7 +98,7 @@ function ProductRow({
       </span>
 
       <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition group-hover/row:-translate-y-0.5 group-hover/row:translate-x-0.5" />
-    </Link>
+    </button>
   );
 }
 
@@ -104,9 +108,10 @@ function SpotlightProduct({
   product: CommerceProduct;
 }) {
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className="group/spotlight relative block min-h-40 overflow-hidden rounded-2xl border border-border/55 bg-slate-950 text-white">
+    <button
+      type="button"
+      onClick={() => openCustomerProductExperience({ id: product.id, name: product.name })}
+      className="group/spotlight relative block min-h-40 w-full text-left overflow-hidden rounded-2xl border border-border/55 bg-slate-950 text-white">
       {product.image ? (
         <Image
           src={product.image}
@@ -154,7 +159,7 @@ function SpotlightProduct({
           </div>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }
 

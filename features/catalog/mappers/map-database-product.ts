@@ -12,6 +12,8 @@ type DatabaseVariant = ProductVariant & {
 };
 
 type DatabaseProductWithRelations = DatabaseProduct & {
+  category: { slug: string };
+  subcategory: { slug: string } | null;
   images: ProductImage[];
   variants: DatabaseVariant[];
 };
@@ -40,7 +42,11 @@ export function mapDatabaseProduct(
     longDescription:
       product.longDescription ?? '',
 
-    category: product.categoryId,
+    category: product.category.slug,
+
+    ...(product.subcategory?.slug
+      ? { subcategory: product.subcategory.slug }
+      : {}),
 
     tags: product.tags,
 

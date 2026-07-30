@@ -8,8 +8,6 @@ import type {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { categories } from '@/data/categories';
-
 import {
   readCustomerDashboardRuntime,
   subscribeCustomerDashboardRuntime
@@ -27,6 +25,7 @@ import { promos } from '@/data/promos';
 import { useCart } from '@/features/cart';
 
 import { useCatalog } from '@/features/catalog';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 
 import { useWishlist } from '@/features/wishlist';
 
@@ -98,7 +97,7 @@ export default function GlobalExperienceRuntime({
   const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const activeWorkspaceId = activeWorkspace?.id ?? null;
 
-  const { products, loading: catalogLoading } = useCatalog();
+  const { products, categories: catalogCategories, loading: catalogLoading } = useCatalog();
 
   const { items: cartItems, addToCart } = useCart();
 
@@ -256,9 +255,13 @@ export default function GlobalExperienceRuntime({
    */
   const handleProductPreview = useCallback<FeedActions['previewProduct']>(
     product => {
-      router.push(`/products/${encodeURIComponent(String(product.id))}`);
+      openCustomerProductExperience({
+        id: String(product.id),
+        name: product.name,
+        shortDescription: product.shortDescription
+      });
     },
-    [router]
+    []
   );
 
   const handleToggleLike = useCallback<FeedActions['toggleLike']>(
@@ -324,7 +327,7 @@ export default function GlobalExperienceRuntime({
       catalog: {
         products,
 
-        categories,
+        categories: catalogCategories,
 
         collections,
 
@@ -391,6 +394,7 @@ export default function GlobalExperienceRuntime({
     };
   }, [
     activeWorkspace,
+    catalogCategories,
     cartProductIds,
     commerceProjection,
     dashboardRecentProductIds,

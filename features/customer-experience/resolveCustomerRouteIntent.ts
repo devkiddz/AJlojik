@@ -16,6 +16,8 @@ function routeTitle(surface: string): string {
   switch (surface) {
     case 'home':
       return 'AJ Logik home';
+    case 'auth':
+      return 'Account access';
     case 'store':
       return 'Store discovery';
     case 'account':

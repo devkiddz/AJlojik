@@ -1,9 +1,7 @@
 const EXCLUDED_CUSTOMER_PREFIXES = [
   '/admin',
   '/vendor',
-  '/adminlogin',
-  '/sign-in',
-  '/sign-up'
+  '/adminlogin'
 ] as const;
 
 export function isCustomerExperienceRoute(pathname: string): boolean {
@@ -14,6 +12,8 @@ export function isCustomerExperienceRoute(pathname: string): boolean {
 
 export function resolveCustomerSurface(pathname: string): string {
   if (pathname === '/') return 'home';
+  if (pathname === '/sign-in' || pathname.startsWith('/sign-in/')) return 'auth';
+  if (pathname === '/sign-up' || pathname.startsWith('/sign-up/')) return 'auth';
   if (pathname === '/store' || pathname.startsWith('/store/')) return 'store';
   if (pathname === '/account' || pathname.startsWith('/account/')) return 'account';
   if (pathname === '/cart' || pathname.startsWith('/cart/')) return 'cart';

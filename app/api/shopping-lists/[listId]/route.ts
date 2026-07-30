@@ -66,9 +66,6 @@ export async function PATCH(
           description:
             payload.description,
 
-          visibility:
-            payload.visibility,
-
           status:
             payload.status
         }

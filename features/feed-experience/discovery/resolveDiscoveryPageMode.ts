@@ -46,6 +46,12 @@ export const coreDiscoveryRouteRules: DiscoveryRouteRule[] = [
   },
   {
     matches: pathname =>
+      matchesRoute(pathname, '/sign-in') ||
+      matchesRoute(pathname, '/sign-up'),
+    pageMode: 'auth'
+  },
+  {
+    matches: pathname =>
       matchesRoute(pathname, '/products'),
     pageMode: 'product'
   },

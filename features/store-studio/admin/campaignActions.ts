@@ -426,11 +426,11 @@ async function resolveActionHref({
         workspaceId
       },
       select: {
-        slug: true
+        id: true
       }
     });
 
-    return product ? `/products/${product.slug}` : null;
+    return product ? `/store?product=${encodeURIComponent(product.id)}` : null;
   }
 
   if (promotionId) {

@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, LoaderCircle, Minus, PackageOpen, Plus, RefreshC
 
 import StoreLoadingState from '@/components/loading/StoreLoadingState';
 import { useCart } from '@/features/cart';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 
 const currency = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
 
@@ -52,9 +53,15 @@ export default function CartPage() {
               const busy = activeItemId === item.id;
               return (
                 <article key={item.id} className="flex gap-3 rounded-3xl border border-border/60 bg-card p-3 shadow-sm sm:gap-5 sm:p-4">
-                  <Link href={`/products/${item.product.slug}`} className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-muted sm:size-32"><Image src={item.variant.image} alt={item.product.name} fill sizes="128px" className="object-cover transition hover:scale-105" /></Link>
+                  <button
+                    type="button"
+                    onClick={() => openCustomerProductExperience({ id: item.product.id, name: item.product.name })}
+                    aria-label={`Open ${item.product.name} in Discovery Hub`}
+                    className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-muted sm:size-32">
+                    <Image src={item.variant.image} alt={item.product.name} fill sizes="128px" className="object-cover transition hover:scale-105" />
+                  </button>
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link href={`/products/${item.product.slug}`} className="line-clamp-2 text-sm font-black hover:underline sm:text-base">{item.product.name}</Link><p className="mt-1 text-xs text-muted-foreground">{item.variant.label}</p></div><p className="shrink-0 text-sm font-black sm:text-base">{currency.format(item.variant.price * item.quantity)}</p></div>
+                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><button type="button" onClick={() => openCustomerProductExperience({ id: item.product.id, name: item.product.name })} className="line-clamp-2 text-left text-sm font-black hover:underline sm:text-base">{item.product.name}</button><p className="mt-1 text-xs text-muted-foreground">{item.variant.label}</p></div><p className="shrink-0 text-sm font-black sm:text-base">{currency.format(item.variant.price * item.quantity)}</p></div>
                     <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-4">
                       <div className="inline-flex items-center rounded-full border border-border/70 bg-background p-1"><button type="button" disabled={busy || item.quantity <= 1} onClick={() => void runItemAction(item.id, () => updateQuantity({ itemId: item.id, quantity: item.quantity - 1 }))} aria-label={`Decrease ${item.product.name} quantity`} className="grid size-8 place-items-center rounded-full transition hover:bg-muted disabled:opacity-35"><Minus className="size-3.5" /></button><span className="min-w-8 text-center text-xs font-black">{item.quantity}</span><button type="button" disabled={busy || item.quantity >= item.variant.stockLeft} onClick={() => void runItemAction(item.id, () => updateQuantity({ itemId: item.id, quantity: item.quantity + 1 }))} aria-label={`Increase ${item.product.name} quantity`} className="grid size-8 place-items-center rounded-full transition hover:bg-muted disabled:opacity-35"><Plus className="size-3.5" /></button></div>
                       <button type="button" disabled={busy} onClick={() => void runItemAction(item.id, () => removeFromCart(item.id))} className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold text-destructive transition hover:bg-destructive/10 disabled:opacity-50">{busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />} Remove from list</button>

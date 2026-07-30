@@ -96,7 +96,7 @@ function parseVariants(formData: FormData): ProductStudioVariant[] {
   return variants;
 }
 
-async function resolveInput(formData: FormData) {
+async function resolveInput(formData: FormData, productId?: string) {
   const access = await requireVendorPermission('product:manage');
   const workspaceId = access.workspace.id;
   const vendorProfileId = access.vendor.id;
@@ -141,6 +141,8 @@ async function resolveInput(formData: FormData) {
     throw new Error('The selected brand is unavailable.');
   }
 
+  const mediaSelectionTouched =
+    text(formData, 'mediaSelectionTouched') === 'true';
   const mediaAssetIds = uniqueValues(
     formData.getAll('mediaAssetIds').map(value => String(value))
   );
@@ -193,8 +195,18 @@ async function resolveInput(formData: FormData) {
   const status =
     requestedStatus === 'PENDING_REVIEW' ? 'PENDING_REVIEW' : 'DRAFT';
 
+  const retainedImageCount =
+    productId && !mediaSelectionTouched
+      ? await prisma.productImage.count({
+          where: {
+            productId,
+            product: { workspaceId, vendorProfileId }
+          }
+        })
+      : 0;
+
   if (status === 'PENDING_REVIEW') {
-    if (mediaAssetIds.length === 0) {
+    if (mediaAssetIds.length === 0 && retainedImageCount === 0) {
       throw new Error('Add at least one product image before submitting for approval.');
     }
 
@@ -209,7 +221,7 @@ async function resolveInput(formData: FormData) {
     vendorProfileId,
     mediaAssetIds,
     mediaById,
-    mediaSelectionTouched: text(formData, 'mediaSelectionTouched') === 'true',
+    mediaSelectionTouched,
     variants,
     data: {
       workspaceId,
@@ -495,7 +507,7 @@ export async function updateVendorProduct(
   productId: string,
   formData: FormData
 ): Promise<void> {
-  const input = await resolveInput(formData);
+  const input = await resolveInput(formData, productId);
   const [owned, conflict] = await Promise.all([
     prisma.product.findFirst({
       where: {

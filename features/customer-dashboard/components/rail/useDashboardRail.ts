@@ -8,248 +8,173 @@ import {
   type KeyboardEvent
 } from 'react';
 
+const EDGE_TOLERANCE = 4;
+
+function directRailItems(viewport: HTMLDivElement): HTMLElement[] {
+  return Array.from(viewport.children).filter(
+    (element): element is HTMLElement =>
+      element instanceof HTMLElement && element.hasAttribute('data-rail-item')
+  );
+}
+
 export function useDashboardRail() {
-  const viewportElementRef =
-    useRef<HTMLDivElement | null>(null);
-
-  const [viewportElement, setViewportElement] =
-    useState<HTMLDivElement | null>(null);
-
-  const [activeIndex, setActiveIndex] =
-    useState(0);
-
-  const [itemCount, setItemCount] =
-    useState(0);
-
-  const viewportRef = useCallback(
-    (element: HTMLDivElement | null) => {
-      viewportElementRef.current =
-        element;
-
-      setViewportElement(element);
-    },
-    []
-  );
-
-  const getItems = useCallback(
-    (
-      viewport: HTMLDivElement
-    ): HTMLElement[] =>
-      Array.from(
-        viewport.querySelectorAll<HTMLElement>(
-          '[data-rail-item]'
-        )
-      ),
-    []
-  );
+  const viewportElementRef = useRef<HTMLDivElement | null>(null);
+  const [viewportElement, setViewportElement] = useState<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [itemCount, setItemCount] = useState(0);
+  const [canPrevious, setCanPrevious] = useState(false);
+  const [canNext, setCanNext] = useState(false);
 
   const sync = useCallback(() => {
-    const viewport =
-      viewportElementRef.current;
+    const viewport = viewportElementRef.current;
 
     if (!viewport) {
       setItemCount(0);
       setActiveIndex(0);
-
+      setCanPrevious(false);
+      setCanNext(false);
       return;
     }
 
-    const items =
-      getItems(viewport);
+    const items = directRailItems(viewport);
+    const maximumScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
 
     setItemCount(items.length);
 
     if (items.length === 0) {
       setActiveIndex(0);
-
+      setCanPrevious(false);
+      setCanNext(false);
       return;
     }
 
-    const viewportLeft =
-      viewport.getBoundingClientRect().left;
-
+    const firstOffset = items[0]?.offsetLeft ?? 0;
+    const currentScroll = viewport.scrollLeft;
     const nearest = items.reduce(
       (best, item, index) => {
-        const distance =
-          Math.abs(
-            item.getBoundingClientRect()
-              .left - viewportLeft
-          );
-
-        return distance <
-          best.distance
-          ? {
-              index,
-              distance
-            }
-          : best;
+        const normalizedOffset = Math.max(0, item.offsetLeft - firstOffset);
+        const distance = Math.abs(normalizedOffset - currentScroll);
+        return distance < best.distance ? { index, distance } : best;
       },
-      {
-        index: 0,
-        distance:
-          Number.POSITIVE_INFINITY
-      }
+      { index: 0, distance: Number.POSITIVE_INFINITY }
     );
 
-    setActiveIndex(
-      nearest.index
+    setActiveIndex(nearest.index);
+    setCanPrevious(currentScroll > EDGE_TOLERANCE || nearest.index > 0);
+    setCanNext(
+      items.length > 1 &&
+        (maximumScroll - currentScroll > EDGE_TOLERANCE || nearest.index < items.length - 1)
     );
-  }, [getItems]);
+  }, []);
+
+  const viewportRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      viewportElementRef.current = element;
+      setViewportElement(element);
+
+      if (element) {
+        window.requestAnimationFrame(sync);
+      }
+    },
+    [sync]
+  );
 
   useEffect(() => {
-    if (!viewportElement) {
-      return;
+    if (!viewportElement) return;
+
+    let frame = 0;
+    const scheduleSync = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(sync);
+    };
+
+    scheduleSync();
+    viewportElement.addEventListener('scroll', scheduleSync, { passive: true });
+
+    const resizeObserver = new ResizeObserver(scheduleSync);
+    resizeObserver.observe(viewportElement);
+
+    for (const item of directRailItems(viewportElement)) {
+      resizeObserver.observe(item);
     }
 
-    sync();
-
-    viewportElement.addEventListener(
-      'scroll',
-      sync,
-      {
-        passive: true
+    const mutationObserver = new MutationObserver(() => {
+      for (const item of directRailItems(viewportElement)) {
+        resizeObserver.observe(item);
       }
-    );
+      scheduleSync();
+    });
+    mutationObserver.observe(viewportElement, { childList: true });
 
-    const resizeObserver =
-      new ResizeObserver(sync);
-
-    resizeObserver.observe(
-      viewportElement
-    );
-
-    const mutationObserver =
-      new MutationObserver(sync);
-
-    mutationObserver.observe(
-      viewportElement,
-      {
-        childList: true,
-        subtree: true
-      }
-    );
+    window.addEventListener('resize', scheduleSync);
 
     return () => {
-      viewportElement.removeEventListener(
-        'scroll',
-        sync
-      );
-
+      window.cancelAnimationFrame(frame);
+      viewportElement.removeEventListener('scroll', scheduleSync);
       resizeObserver.disconnect();
       mutationObserver.disconnect();
+      window.removeEventListener('resize', scheduleSync);
     };
-  }, [
-    sync,
-    viewportElement
-  ]);
+  }, [sync, viewportElement]);
 
-  const scrollToIndex =
-    useCallback(
-      (index: number) => {
-        const viewport =
-          viewportElementRef.current;
+  const scrollToIndex = useCallback((index: number) => {
+    const viewport = viewportElementRef.current;
+    if (!viewport) return;
 
-        if (!viewport) {
-          return;
-        }
+    const items = directRailItems(viewport);
+    const target = items[index];
+    const first = items[0];
+    if (!target || !first) return;
 
-        const items =
-          getItems(viewport);
+    viewport.scrollTo({
+      left: Math.max(0, target.offsetLeft - first.offsetLeft),
+      behavior: 'smooth'
+    });
+  }, []);
 
-        if (
-          index < 0 ||
-          index >= items.length
-        ) {
-          return;
-        }
+  const scrollByCard = useCallback(
+    (direction: 'previous' | 'next') => {
+      const viewport = viewportElementRef.current;
+      if (!viewport) return;
 
-        items[
-          index
-        ]?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'start'
-        });
-      },
-      [getItems]
-    );
+      const items = directRailItems(viewport);
+      if (items.length === 0) return;
 
-  const previous =
-    useCallback(() => {
-      scrollToIndex(
-        Math.max(
-          activeIndex - 1,
-          0
-        )
-      );
-    }, [
-      activeIndex,
-      scrollToIndex
-    ]);
+      const targetIndex =
+        direction === 'previous'
+          ? Math.max(0, activeIndex - 1)
+          : Math.min(items.length - 1, activeIndex + 1);
 
-  const next =
-    useCallback(() => {
-      scrollToIndex(
-        Math.min(
-          activeIndex + 1,
-          Math.max(
-            itemCount - 1,
-            0
-          )
-        )
-      );
-    }, [
-      activeIndex,
-      itemCount,
-      scrollToIndex
-    ]);
+      scrollToIndex(targetIndex);
+    },
+    [activeIndex, scrollToIndex]
+  );
 
-  const onKeyDown =
-    useCallback(
-      (
-        event: KeyboardEvent<HTMLDivElement>
-      ) => {
-        if (
-          event.key ===
-          'ArrowLeft'
-        ) {
-          event.preventDefault();
-          previous();
+  const previous = useCallback(() => scrollByCard('previous'), [scrollByCard]);
+  const next = useCallback(() => scrollByCard('next'), [scrollByCard]);
 
-          return;
-        }
-
-        if (
-          event.key ===
-          'ArrowRight'
-        ) {
-          event.preventDefault();
-          next();
-        }
-      },
-      [
-        next,
-        previous
-      ]
-    );
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        previous();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        next();
+      }
+    },
+    [next, previous]
+  );
 
   return {
     viewportRef,
-
     activeIndex,
     itemCount,
-
     previous,
     next,
     scrollToIndex,
     onKeyDown,
-
-    canPrevious:
-      activeIndex > 0,
-
-    canNext:
-      itemCount > 0 &&
-      activeIndex <
-        itemCount - 1
+    canPrevious,
+    canNext
   };
 }

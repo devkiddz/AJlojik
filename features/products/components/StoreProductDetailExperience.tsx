@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 
 import { useCart } from '@/features/cart';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { useWishlist } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
 import type { ProductType, ProductVariantType } from '@/types/types';
@@ -334,8 +335,20 @@ export function StoreProductDetailExperience({
               products={relatedProducts}
               ariaLabel="Related products"
               className="mt-5"
-              onOpenExperience={related => router.push(`/products/${related.slug}`)}
-              onPreview={related => router.push(`/products/${related.slug}`)}
+              onOpenExperience={related =>
+                openCustomerProductExperience({
+                  id: related.id,
+                  name: related.name,
+                  shortDescription: related.shortDescription
+                })
+              }
+              onPreview={related =>
+                openCustomerProductExperience({
+                  id: related.id,
+                  name: related.name,
+                  shortDescription: related.shortDescription
+                })
+              }
               onAddToCart={addRelatedProduct}
             />
           </section>

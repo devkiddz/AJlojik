@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Heart, LoaderCircle, RefreshCw, ShoppingBag, Tra
 
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { useWishlist } from '@/features/wishlist';
 
 import type { ProductType } from '@/types/types';
@@ -137,9 +138,19 @@ function WishlistCard({ product, busy, onRemove, onAddToCart }: {
   return (
     <article className="group w-[72vw] max-w-[250px] shrink-0 snap-start rounded-3xl border border-border/55 bg-card p-3 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-auto sm:max-w-none">
       <div className="relative aspect-square overflow-hidden rounded-[1.25rem] bg-muted">
-        <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
+        <button
+          type="button"
+          onClick={() =>
+            openCustomerProductExperience({
+              id: product.id,
+              name: product.name,
+              shortDescription: product.shortDescription
+            })
+          }
+          aria-label={`Open ${product.name} in Discovery Hub`}
+          className="absolute inset-0">
           <Image src={variant?.image ?? '/products/placeholder.webp'} alt={product.name} fill sizes="(max-width: 640px) 72vw, 240px" className="object-cover transition duration-500 group-hover:scale-105" />
-        </Link>
+        </button>
         <button
           type="button"
           disabled={busy}
@@ -152,7 +163,18 @@ function WishlistCard({ product, busy, onRemove, onAddToCart }: {
       </div>
 
       <div className="px-1 pb-1 pt-3">
-        <Link href={`/products/${product.slug}`} className="line-clamp-1 text-sm font-black hover:underline">{product.name}</Link>
+        <button
+          type="button"
+          onClick={() =>
+            openCustomerProductExperience({
+              id: product.id,
+              name: product.name,
+              shortDescription: product.shortDescription
+            })
+          }
+          className="line-clamp-1 text-left text-sm font-black hover:underline">
+          {product.name}
+        </button>
         <p className="mt-1 line-clamp-2 min-h-8 text-xs leading-4 text-muted-foreground">{product.shortDescription}</p>
         <div className="mt-3 flex items-center justify-between gap-2">
           <div>

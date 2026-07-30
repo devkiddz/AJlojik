@@ -77,7 +77,7 @@ export async function getStoreStudioAdminDashboard(workspaceId: string): Promise
   return {
     workspace: { id: workspace.id, name: workspace.name, mode: workspace.mode },
     campaigns,
-    products: products.map(product => ({ id: product.id, label: product.name, href: `/products/${product.slug}` })),
+    products: products.map(product => ({ id: product.id, label: product.name, href: `/store?product=${encodeURIComponent(product.id)}` })),
     promotions: promotions.map(promotion => ({ id: promotion.id, label: promotion.title, href: `/promos/${promotion.slug}` })),
     collections: collectionRecords.map(collection => ({ id: collection.id, label: collection.title, href: `/store?collection=${encodeURIComponent(collection.id)}` })),
     media: media.map(asset => ({ id: asset.id, secureUrl: asset.secureUrl, resourceType: mapMediaType(asset.resourceType as 'IMAGE' | 'VIDEO'), displayName: asset.displayName, originalFilename: asset.originalFilename })),

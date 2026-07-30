@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
-import { Geist, Geist_Mono, Inter } from 'next/font/google';
 
 import type { ReactNode } from 'react';
 
 import './globals.css';
 
 import ApplicationShell from '@/components/layout/ApplicationShell';
+import PWARegistration from '@/components/pwa/PWARegistration';
 
 import { ActionFeedbackProvider } from '@/features/action-feedback';
 
@@ -24,25 +24,36 @@ import SearchProvider from '@/providers/SearchProvider';
 import ThemeProvider from '@/providers/ThemeProvider';
 import { ShoppingListRuntimeProvider } from '@/features/shopping-lists';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter'
-});
-
-const geistSans = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist-sans'
-});
-
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono'
-});
-
 export const metadata: Metadata = {
-  title: 'eSupermarket - AJ Logik',
+  applicationName: 'AJ Logik',
+  title: {
+    default: 'AJ Logik — Premium Commerce Experience',
+    template: '%s · AJ Logik'
+  },
+  description: 'Your personalized, discovery-led shopping workspace.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'AJ Logik'
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/pwa/apple-touch-icon.png'
+  },
+  formatDetection: {
+    telephone: false
+  }
+};
 
-  description: 'Your personalized modular shopping workspace.'
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fbf7ef' },
+    { media: '(prefers-color-scheme: dark)', color: '#050814' }
+  ]
 };
 
 type RootLayoutProps = Readonly<{
@@ -54,15 +65,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(
-        'h-full',
-        'font-sans antialiased',
-        inter.variable,
-        geistSans.variable,
-        geistMono.variable
-      )}>
-      <body className="min-h-svh bg-background text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      className={cn('h-full', 'font-sans antialiased')}>
+      <body className="app-ui-normalized min-h-svh bg-background text-foreground">
+        <PWARegistration />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <IdentityProvider>
             <ActionFeedbackProvider>
               <WorkspaceProvider>

@@ -521,6 +521,12 @@ model ShoppingList {
   visibility ShoppingListVisibility @default(PRIVATE)
   status     ShoppingListStatus     @default(ACTIVE)
 
+  publicationStatus      ShoppingListPublicationStatus @default(PRIVATE)
+  publicationSubmittedAt DateTime?
+  publicationReviewedAt  DateTime?
+  publicationPublishedAt DateTime?
+  publicationReviewNote  String?
+
   position Int @default(0)
 
   items ShoppingListItem[]
@@ -530,6 +536,7 @@ model ShoppingList {
 
   @@unique([workspaceId, userId, name])
   @@index([workspaceId, userId, status, updatedAt])
+  @@index([workspaceId, visibility, publicationStatus, updatedAt])
   @@index([userId, updatedAt])
   @@map("shopping_list")
 }
@@ -609,6 +616,13 @@ enum ShoppingListVisibility {
 enum ShoppingListStatus {
   ACTIVE
   ARCHIVED
+}
+
+enum ShoppingListPublicationStatus {
+  PRIVATE
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
 }
 
 enum StockMovementType {
@@ -1136,6 +1150,7 @@ enum AdminTargetType {
   TRACKING_EVENT
   USER
   STAFF
+  SHOPPING_LIST
   OTHER
 }
 

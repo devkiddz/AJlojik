@@ -117,11 +117,13 @@ export type UpdateShoppingListPayload = {
   description?:
     string | null;
 
-  visibility?:
-    'PRIVATE' | 'SHARED';
-
   status?:
     'ACTIVE' | 'ARCHIVED';
+};
+
+export type ShoppingListPublicationPayload = {
+  workspaceId: string;
+  action: 'SUBMIT' | 'WITHDRAW';
 };
 
 export type AddShoppingListItemPayload = {
@@ -213,19 +215,6 @@ export function parseUpdateShoppingListPayload(
     );
   }
 
-  const visibility =
-    body.visibility;
-
-  if (
-    visibility !== undefined &&
-    visibility !== 'PRIVATE' &&
-    visibility !== 'SHARED'
-  ) {
-    throw new ShoppingListRouteError(
-      'visibility is invalid.'
-    );
-  }
-
   const status =
     body.status;
 
@@ -256,9 +245,23 @@ export function parseUpdateShoppingListPayload(
             'description'
           ),
 
-    visibility,
-
     status
+  };
+}
+
+export function parseShoppingListPublicationPayload(
+  value: unknown
+): ShoppingListPublicationPayload {
+  const body = readObject(value);
+  const action = body.action;
+
+  if (action !== 'SUBMIT' && action !== 'WITHDRAW') {
+    throw new ShoppingListRouteError('A valid publication action is required.');
+  }
+
+  return {
+    workspaceId: readRequiredString(body.workspaceId, 'workspaceId'),
+    action
   };
 }
 

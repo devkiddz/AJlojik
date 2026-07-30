@@ -1,5 +1,7 @@
+'use client';
+
 import { Button } from '../ui/button';
-import { categories } from '@/data/categories';
+import { useCatalog } from '@/features/catalog';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -8,6 +10,8 @@ type Props = {
 };
 
 export default function StoreCategoriesPill({ selectedCategory, onSelectCategory }: Props) {
+  const { categories } = useCatalog();
+
   return (
     <div className="w-full overflow-x-auto scrollbar-hide">
       <div className="flex w-max min-w-full gap-3 py-1">

@@ -118,7 +118,8 @@ function parseVariants(formData: FormData): ProductStudioVariant[] {
 
 async function resolveProductInput(
   formData: FormData,
-  permission: 'product:create' | 'product:update'
+  permission: 'product:create' | 'product:update',
+  productId?: string
 ) {
   const access = await requireAdminPermission(permission);
   const workspaceId = access.membership.workspaceId;
@@ -196,6 +197,8 @@ async function resolveProductInput(
     );
   }
 
+  const mediaSelectionTouched =
+    text(formData, 'mediaSelectionTouched') === 'true';
   const mediaAssetIds = uniqueValues(
     formData.getAll('mediaAssetIds').map(value => String(value))
   );
@@ -252,9 +255,22 @@ async function resolveProductInput(
     throw new Error('A selected variant image is unavailable for this product owner.');
   }
 
+  const retainedImageCount =
+    permission === 'product:update' &&
+    productId &&
+    !mediaSelectionTouched
+      ? await prisma.productImage.count({
+          where: {
+            productId,
+            product: { workspaceId }
+          }
+        })
+      : 0;
+
   if (
     ['PUBLISHED', 'PENDING_REVIEW'].includes(effectiveStatus) &&
-    mediaAssetIds.length === 0
+    mediaAssetIds.length === 0 &&
+    retainedImageCount === 0
   ) {
     throw new Error('Add at least one product image before publishing or submitting.');
   }
@@ -272,7 +288,7 @@ async function resolveProductInput(
     vendorProfileId,
     mediaAssetIds,
     mediaById,
-    mediaSelectionTouched: text(formData, 'mediaSelectionTouched') === 'true',
+    mediaSelectionTouched,
     variants,
     data: {
       name,
@@ -553,12 +569,13 @@ export async function createProduct(formData: FormData): Promise<void> {
 }
 
 export async function updateProduct(formData: FormData): Promise<void> {
-  const input = await resolveProductInput(formData, 'product:update');
   const id = text(formData, 'id');
 
   if (!id) {
     throw new Error('Product ID is required.');
   }
+
+  const input = await resolveProductInput(formData, 'product:update', id);
 
   const [existing, conflict] = await Promise.all([
     prisma.product.findFirst({

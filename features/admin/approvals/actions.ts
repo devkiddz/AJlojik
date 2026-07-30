@@ -127,6 +127,21 @@ export async function reviewAdminApproval(formData: FormData) {
       } else if (request.targetType === 'CAMPAIGN' || request.targetType === 'EXPERIENCE') {
         await tx.storeStudioCampaign.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'APPROVED', active: true } });
         executed = true;
+      } else if (request.targetType === 'SHOPPING_LIST') {
+        await tx.shoppingList.update({
+          where: {
+            id: request.targetId,
+            workspaceId: access.membership.workspaceId
+          },
+          data: {
+            visibility: 'SHARED',
+            publicationStatus: 'APPROVED',
+            publicationReviewedAt: new Date(),
+            publicationPublishedAt: new Date(),
+            publicationReviewNote: reviewNote || null
+          }
+        });
+        executed = true;
       }
     } else if (decision === 'REJECTED' && request.action === 'PUBLISH_LIVE') {
       if (request.targetType === 'PRODUCT') {
@@ -139,6 +154,20 @@ export async function reviewAdminApproval(formData: FormData) {
         await tx.vendorProfile.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
       } else if (request.targetType === 'CAMPAIGN' || request.targetType === 'EXPERIENCE') {
         await tx.storeStudioCampaign.update({ where: { id: request.targetId, workspaceId: access.membership.workspaceId }, data: { status: 'REJECTED', active: false } });
+      } else if (request.targetType === 'SHOPPING_LIST') {
+        await tx.shoppingList.update({
+          where: {
+            id: request.targetId,
+            workspaceId: access.membership.workspaceId
+          },
+          data: {
+            visibility: 'PRIVATE',
+            publicationStatus: 'REJECTED',
+            publicationReviewedAt: new Date(),
+            publicationPublishedAt: null,
+            publicationReviewNote: reviewNote || 'The list was not approved for public Store placement.'
+          }
+        });
       }
     }
 
@@ -179,4 +208,9 @@ export async function reviewAdminApproval(formData: FormData) {
   revalidatePath('/vendor/reels');
   revalidatePath('/vendor/submissions');
   revalidatePath('/store');
+  revalidatePath('/account');
+  revalidatePath('/account/lists');
+  if (request.targetType === 'SHOPPING_LIST') {
+    revalidatePath(`/account/lists/${request.targetId}`);
+  }
 }

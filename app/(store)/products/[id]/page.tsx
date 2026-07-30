@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
-import { StoreProductDetailExperience } from '@/features/products/components/StoreProductDetailExperience';
 import { getStoreProductDetail } from '@/features/products/server';
 
 type StoreProductPageProps = {
@@ -40,13 +39,5 @@ export default async function StoreProductPage({
     notFound();
   }
 
-  const resolvedDetail = detail as NonNullable<typeof detail>;
-
-  return (
-    <StoreProductDetailExperience
-      product={resolvedDetail.product}
-      gallery={resolvedDetail.gallery}
-      relatedProducts={resolvedDetail.relatedProducts}
-    />
-  );
+  redirect(`/store?product=${encodeURIComponent(detail.product.id)}`);
 }

@@ -1,8 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
-
 import { useState } from 'react';
 
 import {
@@ -18,6 +16,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { openCustomerProductExperience } from '@/features/customer-experience';
 import { useProductCartQuantity } from '@/features/products/cards/useProductCartQuantity';
 import { WishlistButton } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
@@ -512,7 +511,15 @@ function PreviewContent({
             </Button>
 
             <Button
-              render={<Link href={`/products/${product.slug}`} onClick={onClose} />}
+              type="button"
+              onClick={() => {
+                openCustomerProductExperience({
+                  id: product.id,
+                  name: product.name,
+                  shortDescription: product.shortDescription
+                });
+                onClose();
+              }}
               variant="outline"
               className="
                 h-10 gap-2 rounded-full

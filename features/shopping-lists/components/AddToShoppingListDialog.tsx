@@ -4,6 +4,8 @@ import { Check, ListPlus, LoaderCircle, Plus, X } from 'lucide-react';
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
+
 import { createPortal } from 'react-dom';
 
 import type { ProductType, ProductVariantType } from '@/types/types';
@@ -20,6 +22,7 @@ type Props = {
 };
 
 export function AddToShoppingListDialog({ open, product, variant, onClose }: Props) {
+  const searchParams = useSearchParams();
   const context = useOptionalShoppingLists();
 
   const [mounted, setMounted] = useState(false);
@@ -31,6 +34,8 @@ export function AddToShoppingListDialog({ open, product, variant, onClose }: Pro
   const [success, setSuccess] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+
+  const preferredListId = searchParams.get('shoppingList');
 
   const selectedVariant = useMemo(
     () => variant ?? product.variants.find(item => item.stockLeft > 0) ?? product.variants[0] ?? null,
@@ -75,6 +80,14 @@ export function AddToShoppingListDialog({ open, product, variant, onClose }: Pro
   }
 
   const { lists, mutating, createList, addItem } = context;
+
+  const orderedLists = preferredListId
+    ? [...lists].sort((first, second) => {
+        if (first.id === preferredListId) return -1;
+        if (second.id === preferredListId) return 1;
+        return first.position - second.position;
+      })
+    : lists;
 
   async function addToList(listId: string): Promise<void> {
     if (mutating || !selectedVariant) {
@@ -185,7 +198,7 @@ export function AddToShoppingListDialog({ open, product, variant, onClose }: Pro
 
           <div className="mt-5 max-h-80 space-y-2 overflow-y-auto pr-1">
             {lists.length > 0 ? (
-              lists.map(list => {
+              orderedLists.map(list => {
                 const isBusy = mutating && selectedId === list.id;
 
                 const done = success === list.id;
@@ -217,6 +230,7 @@ export function AddToShoppingListDialog({ open, product, variant, onClose }: Pro
                       <span className="block truncate font-semibold">{list.name}</span>
 
                       <span className="mt-1 block text-xs text-muted-foreground">
+                        {list.id === preferredListId ? 'Selected plan · ' : ''}
                         {list.itemCount} {list.itemCount === 1 ? 'product' : 'products'}
                       </span>
                     </span>

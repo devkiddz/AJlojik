@@ -1,7 +1,7 @@
 'use client';
 
 import { UtensilsCrossed, Wine, PartyPopper, ArrowRight } from 'lucide-react';
-import { categories } from '@/data/categories';
+import { useCatalog } from '@/features/catalog';
 
 type Props = {
   onSelect: (category: string) => void;
@@ -14,6 +14,8 @@ const icons = {
 };
 
 export default function SearchCategories({ onSelect }: Props) {
+  const { categories } = useCatalog();
+
   if (!categories.length) return null;
 
   return (

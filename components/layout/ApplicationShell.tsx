@@ -3,6 +3,7 @@ import { Suspense, type ReactNode } from 'react';
 import FooterComponent from '@/components/FooterComponent';
 import NavbarComponent from '@/components/Navbar';
 
+import ApplicationShellBoundary from '@/components/layout/ApplicationShellBoundary';
 import CustomerExperienceShell from '@/components/layout/CustomerExperienceShell';
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
 
@@ -17,19 +18,25 @@ type ApplicationShellProps = {
 };
 
 export default function ApplicationShell({ children }: ApplicationShellProps) {
-  return (
+  const customerShell = (
     <SidebarProvider defaultOpen>
       <AppSidebar />
 
-      <SidebarInset className="min-w-0 overflow-x-hidden">
+      <SidebarInset className="min-w-0 overflow-x-clip">
         <div className="flex min-h-svh min-w-0 flex-col">
-          <header className="sticky top-0 z-50 shrink-0">
+          <header className="sticky top-0 z-[100] shrink-0" data-app-navbar>
             <Suspense fallback={null}>
               <NavbarComponent brandName="AJ" brandSlug="Logik" />
             </Suspense>
           </header>
 
-          <main className="flex min-w-0 flex-1 flex-col">
+          <main className="relative flex min-w-0 flex-1 flex-col">
+            <div
+              id="customer-experience-back-slot"
+              className="pointer-events-none sticky top-[calc(var(--app-navbar-height)+0.55rem)] z-[90] h-0 w-fit pl-[var(--app-page-gutter)]"
+              aria-live="polite"
+            />
+
             <MobileApplicationShell>
               <CustomerExperienceShell>{children}</CustomerExperienceShell>
             </MobileApplicationShell>
@@ -41,5 +48,12 @@ export default function ApplicationShell({ children }: ApplicationShellProps) {
 
       <SearchMobileOverlay />
     </SidebarProvider>
+  );
+
+  return (
+    <ApplicationShellBoundary
+      customerShell={customerShell}
+      operationalShell={<div className="min-h-dvh min-w-0 bg-background">{children}</div>}
+    />
   );
 }

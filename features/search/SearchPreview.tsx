@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ArrowUpRight, ShoppingCart, Tag, Sparkles, ChevronDown, Check, Heart } from 'lucide-react';
 import { ProductType, ProductVariantType } from '@/types/types';
-import { categories } from '@/data/categories';
+import { useCatalog } from '@/features/catalog';
 import { useSearch } from '@/providers/SearchProvider';
 import LikedComponent from '@/components/shared/LikedComponent';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ type Props = {
 };
 
 export default function SearchPreview({ product }: Props) {
+  const { categories } = useCatalog();
   const { selectProduct } = useSearch();
 
   // Global action hooks (Connect your active state dispatchers here)

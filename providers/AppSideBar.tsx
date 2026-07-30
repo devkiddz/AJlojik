@@ -18,7 +18,7 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar';
 
-import { categories } from '@/data/categories';
+import { useCatalog } from '@/features/catalog';
 
 import { useCart } from '@/features/cart';
 import { useWishlist } from '@/features/wishlist';
@@ -28,6 +28,7 @@ import { useIdentity } from '@/providers/IdentityProvider';
 import SidebarHeaderContent from '@/providers/SidebarHeaderContent';
 
 function SidebarShopMenu() {
+  const { categories } = useCatalog();
   const router = useRouter();
   const searchParams = useSearchParams();
 

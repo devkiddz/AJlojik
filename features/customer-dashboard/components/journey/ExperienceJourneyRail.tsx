@@ -48,7 +48,7 @@ export function ExperienceJourneyRail({
         code="RV"
         title="Recent Views"
         count={recentProducts.length}
-        href="/dashboard/journey/recent-views"
+        href="/account/journey/recent-views"
         icon={<Clock3 />}
         tone="slate"
         products={recentProducts}
@@ -60,7 +60,7 @@ export function ExperienceJourneyRail({
         code="WL"
         title="Wishlist"
         count={wishlistProducts.length}
-        href="/dashboard/journey/wishlist"
+        href="/account/journey/wishlist"
         icon={<Heart className="fill-current" />}
         tone="rose"
         products={wishlistProducts}
@@ -72,7 +72,7 @@ export function ExperienceJourneyRail({
         code="CT"
         title="Cart"
         count={cartQuantity}
-        href="/dashboard/journey/cart"
+        href="/account/journey/cart"
         icon={<ShoppingBag />}
         tone="amber"
         items={cartItems}
@@ -84,7 +84,7 @@ export function ExperienceJourneyRail({
         code="AA"
         title="Activity Archive"
         count={history.length}
-        href="/dashboard/journey/activity"
+        href="/account/journey/activity"
         icon={<History />}
         tone="rose"
         supportingLabel="Recorded activities"
@@ -96,7 +96,7 @@ export function ExperienceJourneyRail({
         code="OH"
         title="Order History"
         count={orders.length}
-        href="/dashboard/journey/orders"
+        href="/account/journey/orders"
         icon={<ReceiptText />}
         tone="violet"
         supportingLabel={orders.length === 1 ? 'Completed order' : 'Completed orders'}
@@ -108,7 +108,7 @@ export function ExperienceJourneyRail({
         code="OD"
         title="On Delivery"
         count={activeDeliveries.length}
-        href="/dashboard/journey/deliveries"
+        href="/account/journey/deliveries"
         icon={<Truck />}
         tone="emerald"
         supportingLabel={activeDeliveries.length === 1 ? 'Active delivery' : 'Active deliveries'}

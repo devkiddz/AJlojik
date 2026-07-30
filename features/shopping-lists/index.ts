@@ -12,14 +12,16 @@ export {
   getShoppingLists,
   removeShoppingListItem,
   updateShoppingList,
-  updateShoppingListItem
+  updateShoppingListItem,
+  updateShoppingListPublication
 } from './client';
 
 export type {
   AddShoppingListItemInput,
   CreateShoppingListInput,
   UpdateShoppingListInput,
-  UpdateShoppingListItemInput
+  UpdateShoppingListItemInput,
+  UpdateShoppingListPublicationInput
 } from './client';
 
 export type {
@@ -28,11 +30,15 @@ export type {
   ShoppingListMutationResponse,
   ShoppingListPromotion,
   ShoppingListStatus,
-  ShoppingListVisibility
+  ShoppingListVisibility,
+  ShoppingListPublicationAction,
+  ShoppingListPublicationStatus
 } from './shoppingListTypes';
 export {
   AddToShoppingListDialog,
   ShoppingListDetail,
   ShoppingListFormDialog,
-  ShoppingListsWorkspace
+  ShoppingListsWorkspace,
+  ShoppingListPublicationToggle,
+  ShoppingListPublicationStatusIcon
 } from './components';
