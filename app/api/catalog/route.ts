@@ -17,14 +17,17 @@ export async function GET(request: Request) {
       url.searchParams.get('workspaceId');
 
     const workspace =
-      await resolveCatalogWorkspace(requestedWorkspaceId);
+      await resolveCatalogWorkspace(
+        requestedWorkspaceId
+      );
 
     if (!workspace) {
       return NextResponse.json(
         {
           workspaceId: null,
           products: [],
-          categories: await getCatalogCategories(),
+          categories:
+            await getCatalogCategories(),
           collections: []
         },
         {
@@ -36,12 +39,22 @@ export async function GET(request: Request) {
       );
     }
 
-    const [products, categories, collections] =
-      await Promise.all([
-        getCatalog(workspace),
-        getCatalogCategories(),
-        getCatalogCollections(workspace)
-      ]);
+    /*
+     * Keep the catalog queries deliberately sequential.
+     *
+     * Product, category and collection reads previously ran through
+     * Promise.all. During development, repeated navigation/focus events
+     * could therefore multiply one client refresh into several concurrent
+     * database operations and exhaust the local driver pool.
+     */
+    const products =
+      await getCatalog(workspace);
+
+    const categories =
+      await getCatalogCategories();
+
+    const collections =
+      await getCatalogCollections(workspace);
 
     return NextResponse.json(
       {
@@ -58,7 +71,10 @@ export async function GET(request: Request) {
       }
     );
   } catch (error) {
-    console.error('Failed to load catalog:', error);
+    console.error(
+      'Failed to load catalog:',
+      error
+    );
 
     return NextResponse.json(
       {

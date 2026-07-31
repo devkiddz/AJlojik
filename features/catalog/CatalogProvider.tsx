@@ -11,37 +11,61 @@ import {
   type ReactNode
 } from 'react';
 
-import { usePathname } from 'next/navigation';
+import {
+  categories as fallbackCategories
+} from '@/data/categories';
 
-import { categories as fallbackCategories } from '@/data/categories';
-import type { CollectionType } from '@/data/collections';
-import { useWorkspace } from '@/features/workspace';
-import type { CategoryType, ProductType } from '@/types/types';
+import type {
+  CollectionType
+} from '@/data/collections';
 
-import { resolveCatalogCategoryIcon } from './catalogCategoryIcons';
+import {
+  useWorkspace
+} from '@/features/workspace';
+
+import type {
+  CategoryType,
+  ProductType
+} from '@/types/types';
+
+import {
+  resolveCatalogCategoryIcon
+} from './catalogCategoryIcons';
+
 import {
   CATALOG_REFRESH_EVENT,
   CATALOG_REFRESH_STORAGE_KEY
 } from './catalogEvents';
+
 import type {
   CatalogPayload,
   CatalogState
 } from './catalogTypes';
 
-type CatalogContextValue = CatalogState & {
-  refreshCatalog: () => Promise<void>;
-  setProducts: React.Dispatch<React.SetStateAction<ProductType[]>>;
-};
+type CatalogContextValue =
+  CatalogState & {
+    refreshCatalog: () => Promise<void>;
+
+    setProducts:
+      React.Dispatch<
+        React.SetStateAction<
+          ProductType[]
+        >
+      >;
+  };
 
 type CatalogProviderProps = {
   children: ReactNode;
+
   initialProducts?: ProductType[];
   initialCategories?: CategoryType[];
   initialCollections?: CollectionType[];
 };
 
 const CatalogContext =
-  createContext<CatalogContextValue | null>(null);
+  createContext<
+    CatalogContextValue | null
+  >(null);
 
 function mergeCatalogCategories(
   categories: CategoryType[]
@@ -49,7 +73,8 @@ function mergeCatalogCategories(
   const incomingSlugs =
     new Set(
       categories.map(
-        category => category.slug
+        category =>
+          category.slug
       )
     );
 
@@ -57,7 +82,9 @@ function mergeCatalogCategories(
     fallbackCategories.filter(
       category =>
         category.slug === 'all' &&
-        !incomingSlugs.has(category.slug)
+        !incomingSlugs.has(
+          category.slug
+        )
     );
 
   return [
@@ -70,9 +97,10 @@ async function readJsonResponse<T>(
   response: Response
 ): Promise<T> {
   const data =
-    (await response.json()) as T & {
-      error?: string;
-    };
+    (await response.json()) as
+      T & {
+        error?: string;
+      };
 
   if (!response.ok) {
     throw new Error(
@@ -84,15 +112,18 @@ async function readJsonResponse<T>(
   return data;
 }
 
+type InFlightCatalogRequest = {
+  workspaceId: string;
+  promise: Promise<void>;
+};
+
 export function CatalogProvider({
   children,
   initialProducts = [],
-  initialCategories = fallbackCategories,
+  initialCategories =
+    fallbackCategories,
   initialCollections = []
 }: CatalogProviderProps) {
-  const pathname =
-    usePathname();
-
   const {
     activeWorkspace,
     loading: workspaceLoading
@@ -103,6 +134,11 @@ export function CatalogProvider({
 
   const refreshSequenceRef =
     useRef(0);
+
+  const inFlightRequestRef =
+    useRef<
+      InFlightCatalogRequest | null
+    >(null);
 
   const productsRef =
     useRef<ProductType[]>(
@@ -115,183 +151,249 @@ export function CatalogProvider({
   const [
     workspaceId,
     setWorkspaceId
-  ] = useState<string | null>(null);
+  ] =
+    useState<string | null>(
+      null
+    );
 
   const [
     products,
     setProducts
-  ] = useState<ProductType[]>(
-    initialProducts
-  );
+  ] =
+    useState<ProductType[]>(
+      initialProducts
+    );
 
   const [
     categories,
     setCategories
-  ] = useState<CategoryType[]>(
-    initialCategories
-  );
+  ] =
+    useState<CategoryType[]>(
+      initialCategories
+    );
 
   const [
     collections,
     setCollections
-  ] = useState<CollectionType[]>(
-    initialCollections
-  );
+  ] =
+    useState<CollectionType[]>(
+      initialCollections
+    );
 
   const [
     loading,
     setLoading
-  ] = useState(
-    initialProducts.length === 0
-  );
+  ] =
+    useState(
+      initialProducts.length === 0
+    );
 
   const [
     error,
     setError
-  ] = useState<string | null>(
-    null
-  );
+  ] =
+    useState<string | null>(
+      null
+    );
 
   const refreshCatalog =
-    useCallback(async () => {
-      if (
-        workspaceLoading ||
-        !requestedWorkspaceId
-      ) {
-        return;
-      }
-
-      const sequence =
-        refreshSequenceRef.current + 1;
-
-      refreshSequenceRef.current =
-        sequence;
-
-      const workspaceChanged =
-        loadedWorkspaceIdRef.current !==
-        requestedWorkspaceId;
-
-      setLoading(
-        workspaceChanged ||
-          productsRef.current.length === 0
-      );
-
-      setError(null);
-
-      try {
-        const response =
-          await fetch(
-            `/api/catalog?workspaceId=${encodeURIComponent(
-              requestedWorkspaceId
-            )}`,
-            {
-              method: 'GET',
-              cache: 'no-store'
-            }
-          );
-
-        const catalog =
-          await readJsonResponse<CatalogPayload>(
-            response
-          );
-
+    useCallback(
+      async (): Promise<void> => {
         if (
-          refreshSequenceRef.current !==
-          sequence
+          workspaceLoading ||
+          !requestedWorkspaceId
         ) {
           return;
         }
 
-        productsRef.current =
-          catalog.products;
+        const existingRequest =
+          inFlightRequestRef.current;
 
-        loadedWorkspaceIdRef.current =
+        if (
+          existingRequest?.workspaceId ===
+          requestedWorkspaceId
+        ) {
+          return existingRequest.promise;
+        }
+
+        const sequence =
+          refreshSequenceRef.current + 1;
+
+        refreshSequenceRef.current =
+          sequence;
+
+        const workspaceChanged =
+          loadedWorkspaceIdRef.current !==
           requestedWorkspaceId;
 
-        setWorkspaceId(
-          catalog.workspaceId
+        setLoading(
+          workspaceChanged ||
+            productsRef.current.length === 0
         );
 
-        setProducts(
-          catalog.products
-        );
+        setError(null);
 
-        setCollections(
-          catalog.collections
-        );
+        const request =
+          (async () => {
+            try {
+              const response =
+                await fetch(
+                  `/api/catalog?workspaceId=${encodeURIComponent(
+                    requestedWorkspaceId
+                  )}`,
+                  {
+                    method: 'GET',
+                    cache: 'no-store'
+                  }
+                );
 
-        setCategories(
-          mergeCatalogCategories(
-            catalog.categories.map(
-              category => ({
-                id: category.id,
-                slug: category.slug,
-                label: category.label,
-                icon:
-                  resolveCatalogCategoryIcon(
-                    category.iconName
-                  ),
-                image:
-                  category.image,
-                coverImages:
-                  category.coverImages,
-                shortDescription:
-                  category.shortDescription,
-                description:
-                  category.description,
-                ...(category.accentColor
-                  ? {
-                      accentColor:
-                        category.accentColor
-                    }
-                  : {}),
-                subcategories:
-                  category.subcategories,
-                ...(category.className
-                  ? {
-                      className:
-                        category.className
-                    }
-                  : {})
-              })
-            )
-          )
-        );
-      } catch (catalogError) {
-        if (
-          refreshSequenceRef.current !==
-          sequence
-        ) {
-          return;
+              const catalog =
+                await readJsonResponse<
+                  CatalogPayload
+                >(response);
+
+              if (
+                refreshSequenceRef
+                  .current !==
+                sequence
+              ) {
+                return;
+              }
+
+              productsRef.current =
+                catalog.products;
+
+              loadedWorkspaceIdRef.current =
+                requestedWorkspaceId;
+
+              setWorkspaceId(
+                catalog.workspaceId
+              );
+
+              setProducts(
+                catalog.products
+              );
+
+              setCollections(
+                catalog.collections
+              );
+
+              setCategories(
+                mergeCatalogCategories(
+                  catalog.categories.map(
+                    category => ({
+                      id:
+                        category.id,
+
+                      slug:
+                        category.slug,
+
+                      label:
+                        category.label,
+
+                      icon:
+                        resolveCatalogCategoryIcon(
+                          category.iconName
+                        ),
+
+                      image:
+                        category.image,
+
+                      coverImages:
+                        category.coverImages,
+
+                      shortDescription:
+                        category.shortDescription,
+
+                      description:
+                        category.description,
+
+                      ...(category.accentColor
+                        ? {
+                            accentColor:
+                              category.accentColor
+                          }
+                        : {}),
+
+                      subcategories:
+                        category.subcategories,
+
+                      ...(category.className
+                        ? {
+                            className:
+                              category.className
+                          }
+                        : {})
+                    })
+                  )
+                )
+              );
+            } catch (
+              catalogError
+            ) {
+              if (
+                refreshSequenceRef
+                  .current !==
+                sequence
+              ) {
+                return;
+              }
+
+              const message =
+                catalogError instanceof
+                Error
+                  ? catalogError.message
+                  : 'Unable to load catalog.';
+
+              setError(message);
+            } finally {
+              if (
+                refreshSequenceRef
+                  .current ===
+                sequence
+              ) {
+                setLoading(false);
+              }
+            }
+          })();
+
+        inFlightRequestRef.current = {
+          workspaceId:
+            requestedWorkspaceId,
+
+          promise:
+            request
+        };
+
+        try {
+          await request;
+        } finally {
+          if (
+            inFlightRequestRef
+              .current?.promise ===
+            request
+          ) {
+            inFlightRequestRef.current =
+              null;
+          }
         }
-
-        const message =
-          catalogError instanceof Error
-            ? catalogError.message
-            : 'Unable to load catalog.';
-
-        setError(message);
-      } finally {
-        if (
-          refreshSequenceRef.current ===
-          sequence
-        ) {
-          setLoading(false);
-        }
-      }
-    }, [
-      requestedWorkspaceId,
-      workspaceLoading
-    ]);
+      },
+      [
+        requestedWorkspaceId,
+        workspaceLoading
+      ]
+    );
 
   useEffect(() => {
     const handleRefreshRequest =
-      () => {
+      (): void => {
         void refreshCatalog();
       };
 
     const handleStorage =
-      (event: StorageEvent) => {
+      (
+        event: StorageEvent
+      ): void => {
         if (
           event.key ===
           CATALOG_REFRESH_STORAGE_KEY
@@ -301,7 +403,7 @@ export function CatalogProvider({
       };
 
     const handleVisibility =
-      () => {
+      (): void => {
         if (
           document.visibilityState ===
           'visible'
@@ -355,23 +457,30 @@ export function CatalogProvider({
     refreshCatalog
   ]);
 
+  /*
+   * The catalog is workspace-scoped, not pathname-scoped.
+   * Route and search-query changes must not create new database reads.
+   */
   useEffect(() => {
     void refreshCatalog();
   }, [
-    pathname,
     refreshCatalog
   ]);
 
   const value =
-    useMemo<CatalogContextValue>(
+    useMemo<
+      CatalogContextValue
+    >(
       () => ({
         workspaceId,
         products,
         categories,
         collections,
+
         loading:
           loading ||
           workspaceLoading,
+
         error,
         refreshCatalog,
         setProducts
@@ -398,7 +507,9 @@ export function CatalogProvider({
 
 export function useCatalog() {
   const context =
-    useContext(CatalogContext);
+    useContext(
+      CatalogContext
+    );
 
   if (!context) {
     throw new Error(

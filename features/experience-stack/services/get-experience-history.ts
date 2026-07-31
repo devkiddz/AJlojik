@@ -1,15 +1,16 @@
-import { mapExperienceHistoryEntry } from '../resolvers/map-experience-history-entry';
 import { prisma } from '@/lib/prisma';
 
 import type {
   ExperienceStackState
 } from '../experienceStackTypes';
 
+import { mapExperienceHistoryEntry } from '../resolvers/map-experience-history-entry';
+import { ensureExperienceHistorySettings } from './ensure-experience-history-settings';
+
 type GetExperienceHistoryInput = {
   userId: string;
   workspaceId: string;
 };
-
 
 export async function getExperienceHistory(
   input: GetExperienceHistoryInput
@@ -24,33 +25,18 @@ export async function getExperienceHistory(
         lte: now
       }
     }
-  });  const settings =
-    await prisma.experienceHistorySettings.upsert({
-      where: {
-        workspaceId_userId: {
-          workspaceId: input.workspaceId,
-          userId: input.userId
-        }
-      },
-      update: {},
-      create: {
-        workspaceId: input.workspaceId,
-        userId: input.userId,
-        enabled: true,
-        retention: 'SEVEN_DAYS',
-        maxEntries: 20
-      }
-    });
+  });
 
-  const resolvedSettings = settings;
+  const settings =
+    await ensureExperienceHistorySettings(input);
 
-  if (!resolvedSettings.enabled) {
+  if (!settings.enabled) {
     return {
       entries: [],
       settings: {
         enabled: false,
-        retention: resolvedSettings.retention,
-        maxEntries: resolvedSettings.maxEntries
+        retention: settings.retention,
+        maxEntries: settings.maxEntries
       },
       canGoBack: false,
       currentEntry: null
@@ -63,27 +49,23 @@ export async function getExperienceHistory(
         workspaceId: input.workspaceId,
         userId: input.userId
       },
-
       orderBy: {
         visitedAt: 'desc'
       },
-
-      take: resolvedSettings.maxEntries
+      take: settings.maxEntries
     });
 
-const mappedEntries = entries.map(mapExperienceHistoryEntry);
+  const mappedEntries =
+    entries.map(mapExperienceHistoryEntry);
 
   return {
     entries: mappedEntries,
-
     settings: {
-      enabled: resolvedSettings.enabled,
-      retention: resolvedSettings.retention,
-      maxEntries: resolvedSettings.maxEntries
+      enabled: settings.enabled,
+      retention: settings.retention,
+      maxEntries: settings.maxEntries
     },
-
     canGoBack: mappedEntries.length > 1,
-
     currentEntry: mappedEntries[0] ?? null
   };
 }
