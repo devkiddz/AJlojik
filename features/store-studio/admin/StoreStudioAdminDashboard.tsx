@@ -26,6 +26,7 @@ import {
   Video
 } from 'lucide-react';
 
+import { StudioDestinationPicker, StudioSelectField } from '@/features/studio-controls';
 import { cn } from '@/lib/utils';
 
 import {
@@ -140,7 +141,6 @@ const inputClassName =
   'h-11 w-full rounded-xl border border-border/70 bg-background px-3 text-xs outline-none transition placeholder:text-muted-foreground/60 focus:border-primary';
 const textareaClassName =
   'min-h-24 w-full resize-y rounded-xl border border-border/70 bg-background px-3 py-3 text-xs leading-5 outline-none transition placeholder:text-muted-foreground/60 focus:border-primary';
-const selectClassName = inputClassName;
 
 export function StoreStudioAdminDashboard({
   data,
@@ -192,7 +192,7 @@ export function StoreStudioAdminDashboard({
                   {canReview ? 'Publishing authority' : 'Campaign manager'}
                 </span>
 
-                <StoreStudioPreviewer />
+                <StoreStudioPreviewer campaigns={data.campaigns} />
 
                 <Link
                   href="/store"
@@ -563,11 +563,15 @@ function CampaignFields({
     <>
       {!campaign ? (
         <Field label="Campaign type">
-          <select name="campaignType" className={selectClassName} defaultValue="BANNER">
-            <option value="BANNER">Banner</option>
-            <option value="STORY">Story</option>
-            <option value="REEL">Reel</option>
-          </select>
+          <StudioSelectField
+            name="campaignType"
+            defaultValue="BANNER"
+            options={[
+              { value: 'BANNER', label: 'Banner' },
+              { value: 'STORY', label: 'Story' },
+              { value: 'REEL', label: 'Reel' }
+            ]}
+          />
         </Field>
       ) : null}
 
@@ -592,37 +596,36 @@ function CampaignFields({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Status">
-          <select
+          <StudioSelectField
             name="status"
             defaultValue={editableStatus.toUpperCase().replaceAll('-', '_')}
-            className={selectClassName}
-          >
-            <option value="DRAFT">Draft</option>
-            <option value="PENDING_REVIEW">Pending review</option>
-            {canReview ? (
-              <>
-                <option value="APPROVED">Approved</option>
-                <option value="SCHEDULED">Scheduled</option>
-                <option value="ACTIVE">Active</option>
-                <option value="PAUSED">Paused</option>
-                <option value="EXPIRED">Expired</option>
-                <option value="REJECTED">Rejected</option>
-              </>
-            ) : null}
-          </select>
+            options={[
+              { value: 'DRAFT', label: 'Draft' },
+              { value: 'PENDING_REVIEW', label: 'Pending review' },
+              ...(canReview
+                ? [
+                    { value: 'SCHEDULED', label: 'Scheduled' },
+                    { value: 'ACTIVE', label: 'Active' },
+                    { value: 'PAUSED', label: 'Paused' },
+                    { value: 'EXPIRED', label: 'Expired' },
+                    { value: 'REJECTED', label: 'Rejected' }
+                  ]
+                : [])
+            ]}
+          />
         </Field>
 
         <Field label="Placement tier">
-          <select
+          <StudioSelectField
             name="placementTier"
             defaultValue={(campaign?.placementTier ?? 'standard').toUpperCase()}
-            className={selectClassName}
-          >
-            <option value="STANDARD">Standard</option>
-            <option value="FEATURED">Featured</option>
-            <option value="PREMIUM">Premium</option>
-            <option value="SPONSORED">Sponsored</option>
-          </select>
+            options={[
+              { value: 'STANDARD', label: 'Standard' },
+              { value: 'FEATURED', label: 'Featured' },
+              { value: 'PREMIUM', label: 'Premium' },
+              { value: 'SPONSORED', label: 'Sponsored' }
+            ]}
+          />
         </Field>
       </div>
 
@@ -693,15 +696,15 @@ function AssetFields({
     <>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Media type">
-          <select
+          <StudioSelectField
             name="mediaType"
             defaultValue={reel ? 'VIDEO' : (asset?.mediaType ?? 'image').toUpperCase()}
             disabled={reel}
-            className={selectClassName}
-          >
-            <option value="IMAGE">Image</option>
-            <option value="VIDEO">Video</option>
-          </select>
+            options={[
+              { value: 'IMAGE', label: 'Image' },
+              { value: 'VIDEO', label: 'Video' }
+            ]}
+          />
           {reel ? <input type="hidden" name="mediaType" value="VIDEO" /> : null}
         </Field>
 
@@ -777,30 +780,14 @@ function AssetFields({
       </Field>
 
       <Field label="Commerce destination" optional>
-        <select name="destination" defaultValue={destinationValue} className={selectClassName}>
-          <option value="">No linked destination</option>
-          {destinations.products.length ? (
-            <optgroup label="Products">
-              {destinations.products.map(option => (
-                <DestinationOption key={`product:${option.id}`} prefix="product" option={option} />
-              ))}
-            </optgroup>
-          ) : null}
-          {destinations.promotions.length ? (
-            <optgroup label="Promotions">
-              {destinations.promotions.map(option => (
-                <DestinationOption key={`promotion:${option.id}`} prefix="promotion" option={option} />
-              ))}
-            </optgroup>
-          ) : null}
-          {destinations.collections.length ? (
-            <optgroup label="Collections">
-              {destinations.collections.map(option => (
-                <DestinationOption key={`collection:${option.id}`} prefix="collection" option={option} />
-              ))}
-            </optgroup>
-          ) : null}
-        </select>
+        <StudioDestinationPicker
+          initialValue={destinationValue}
+          options={[
+            ...destinations.products.map(option => ({ ...option, type: 'product' as const })),
+            ...destinations.promotions.map(option => ({ ...option, type: 'promotion' as const })),
+            ...destinations.collections.map(option => ({ ...option, type: 'collection' as const }))
+          ]}
+        />
       </Field>
 
       <div className="grid gap-3 sm:grid-cols-2">

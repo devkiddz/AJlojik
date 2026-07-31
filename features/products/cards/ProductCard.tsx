@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 
@@ -157,6 +158,15 @@ export function ProductCard({
             {product.name}
           </h3>
         </button>
+
+        {product.merchant ? (
+          <Link
+            href={`/shops/${encodeURIComponent(product.merchant.slug)}`}
+            onClick={event => event.stopPropagation()}
+            className="mt-0.5 block truncate text-[0.58rem] font-semibold text-muted-foreground transition hover:text-primary">
+            Sold by {product.merchant.name}
+          </Link>
+        ) : null}
 
         <ProductActionTray
           product={product}

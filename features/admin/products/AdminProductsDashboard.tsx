@@ -7,7 +7,6 @@ import {
   ArrowRight,
   BarChart3,
   Boxes,
-  ChevronDown,
   CircleDollarSign,
   FileDown,
   Layers3,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 
+import { StudioSelectField } from '@/features/studio-controls';
 import { cn } from '@/lib/utils';
 
 export type AdminProductRecord = {
@@ -213,7 +213,17 @@ function TinyBadge({ children }: { children: ReactNode }) { return <span classNa
 function MiniStat({ label, value }: { label: string; value: string }) { return <div><p className="text-[8px] text-muted-foreground">{label}</p><p className="mt-1 text-xs font-bold">{value}</p></div>; }
 
 function Select({ value, onChange, options }: { value: string; onChange: (value: string) => void; options: string[] }) {
-  return <label className="relative"><select value={value} onChange={event => onChange(event.target.value)} className="h-10 w-full appearance-none rounded-full border border-border/70 bg-background px-4 pr-9 text-xs font-semibold outline-none sm:w-44">{options.map(option => <option key={option} value={option}>{option === 'all' ? 'All categories' : option}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 top-3 size-4 text-muted-foreground" /></label>;
+  return (
+    <StudioSelectField
+      value={value}
+      onValueChange={onChange}
+      options={options.map(option => ({
+        value: option,
+        label: option === 'all' ? 'All categories' : option
+      }))}
+      className="h-10 rounded-full text-xs font-semibold sm:w-44"
+    />
+  );
 }
 
 type Tone = 'violet' | 'blue' | 'emerald' | 'amber' | 'rose';

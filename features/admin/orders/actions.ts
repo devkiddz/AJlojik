@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
+import { notifyOrderStatusChanged } from '@/features/notifications/server/notificationEngine';
 import { prisma } from '@/lib/prisma';
 
 const ORDER_STATUSES = [
@@ -51,7 +52,8 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
       id: true,
       orderNumber: true,
       status: true,
-      paymentStatus: true
+      paymentStatus: true,
+      userId: true
     }
   });
 
@@ -103,10 +105,20 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
         }
       }
     });
+
+    await notifyOrderStatusChanged(transaction, {
+      workspaceId: access.membership.workspaceId,
+      userId: existing.userId,
+      orderId: existing.id,
+      orderNumber: existing.orderNumber,
+      status: requestedStatus
+    });
   });
 
   revalidatePath('/admin/orders');
   revalidatePath('/admin/deliveries');
   revalidatePath('/admin/analytics');
   revalidatePath('/admin/customers');
+  revalidatePath('/notifications');
+  revalidatePath('/orders');
 }

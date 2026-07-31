@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getAdminApiAccess } from '@/features/admin/auth/adminPermissions';
+import { mergeStudioCropRecipe, parseStudioCropRecipe } from '@/features/studio-controls/server/cropRecipeValidation';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary';
 import { prisma } from '@/lib/prisma';
 
@@ -52,10 +53,21 @@ export async function PATCH(
   }
 
   const body = (await request.json().catch(() => null)) as
-    | { displayName?: string; altText?: string }
+    | {
+        displayName?: string;
+        altText?: string;
+        cropRecipe?: unknown;
+      }
     | null;
-  const displayName = body?.displayName?.trim() || null;
-  const altText = body?.altText?.trim() || null;
+
+  const displayName =
+    body?.displayName === undefined
+      ? asset.displayName
+      : body.displayName.trim() || null;
+  const altText =
+    body?.altText === undefined
+      ? asset.altText
+      : body.altText.trim() || null;
 
   if ((displayName?.length ?? 0) > 160 || (altText?.length ?? 0) > 500) {
     return NextResponse.json(
@@ -64,20 +76,55 @@ export async function PATCH(
     );
   }
 
+  const cropRecipe =
+    body?.cropRecipe === undefined
+      ? null
+      : parseStudioCropRecipe(body.cropRecipe);
+
+  if (body?.cropRecipe !== undefined && !cropRecipe) {
+    return NextResponse.json(
+      { error: 'The crop recipe is invalid or incomplete.' },
+      { status: 400 }
+    );
+  }
+
+  if (cropRecipe && asset.resourceType !== 'IMAGE') {
+    return NextResponse.json(
+      { error: 'Only image assets can store crop recipes.' },
+      { status: 400 }
+    );
+  }
+
   const updated = await prisma.$transaction(async transaction => {
     const result = await transaction.mediaAsset.update({
       where: { id: asset.id },
-      data: { displayName, altText }
+      data: {
+        displayName,
+        altText,
+        ...(cropRecipe
+          ? { metadata: mergeStudioCropRecipe(asset.metadata, cropRecipe) }
+          : {})
+      }
     });
 
     await transaction.adminAuditEvent.create({
       data: {
         workspaceId: access.membership.workspaceId,
         actorId: access.session.user.id,
-        action: 'MEDIA_METADATA_UPDATED',
+        action: cropRecipe
+          ? 'MEDIA_CROP_UPDATED'
+          : 'MEDIA_METADATA_UPDATED',
         targetType: 'MEDIA',
         targetId: asset.id,
-        summary: `${displayName ?? asset.publicId} media details were updated.`
+        summary: cropRecipe
+          ? `${displayName ?? asset.publicId} received a ${cropRecipe.purpose} crop recipe.`
+          : `${displayName ?? asset.publicId} media details were updated.`,
+        metadata: cropRecipe
+          ? {
+              purpose: cropRecipe.purpose,
+              aspect: cropRecipe.aspect
+            }
+          : undefined
       }
     });
 

@@ -50,6 +50,7 @@ export default async function AdminMediaPage() {
     displayName: asset.displayName,
     originalFilename: asset.originalFilename,
     altText: asset.altText,
+    metadata: asset.metadata,
     createdAt: asset.createdAt.toISOString(),
     uploadedBy: asset.uploadedBy,
     vendorProfile: asset.vendorProfile,

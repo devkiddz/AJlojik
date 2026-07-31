@@ -60,7 +60,7 @@ export async function updateWorkspaceSettings(formData: FormData) {
     vendorApplicationsOpen &&
     access.membership.workspace.commerceMode !== 'MULTI_VENDOR'
   ) {
-    throw new Error('Vendor applications cannot open in single-vendor mode.');
+    throw new Error('Vendor applications cannot open in Single Merchant mode.');
   }
 
   await prisma.$transaction([
@@ -97,4 +97,5 @@ export async function updateWorkspaceSettings(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/vendor');
   revalidatePath('/store');
+  revalidatePath('/shops');
 }

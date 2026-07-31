@@ -8,6 +8,10 @@ import { redirect } from 'next/navigation';
 import type {
   ProductStudioVariant
 } from '@/features/admin/products/ProductStudioFields';
+import {
+  cancelApprovalRequestsForTarget,
+  createOrResubmitApprovalRequest
+} from '@/features/admin/approvals/approvalRequestRepository';
 import { requireVendorPermission } from '@/features/vendor/auth/vendorAccess';
 import type { Prisma } from '@/lib/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -410,36 +414,28 @@ async function synchronizeApproval(
   productId: string,
   title: string
 ): Promise<void> {
-  await prisma.adminApprovalRequest.updateMany({
-    where: {
-      workspaceId: input.workspaceId,
-      targetType: 'PRODUCT',
-      targetId: productId,
-      status: 'PENDING'
-    },
-    data: {
-      status: 'CANCELLED',
-      reviewNote:
-        input.data.status === 'PENDING_REVIEW'
-          ? 'Superseded by a newer vendor submission.'
-          : 'The vendor returned this product to draft.'
+  await prisma.$transaction(async transaction => {
+    if (input.data.status !== 'PENDING_REVIEW') {
+      await cancelApprovalRequestsForTarget(transaction, {
+        workspaceId: input.workspaceId,
+        actorId: input.access.session.user.id,
+        targetType: 'PRODUCT',
+        targetId: productId,
+        note: 'The vendor returned this product to draft.'
+      });
+      return;
     }
-  });
 
-  if (input.data.status !== 'PENDING_REVIEW') {
-    return;
-  }
-
-  await prisma.adminApprovalRequest.create({
-    data: {
+    await createOrResubmitApprovalRequest(transaction, {
       workspaceId: input.workspaceId,
       requestedById: input.access.session.user.id,
+      source: 'VENDOR',
       action: 'PUBLISH_LIVE',
       targetType: 'PRODUCT',
       targetId: productId,
       reason: `${input.access.vendor.name} submitted ${title} for publication.`,
       payload: { vendorProfileId: input.vendorProfileId }
-    }
+    });
   });
 }
 

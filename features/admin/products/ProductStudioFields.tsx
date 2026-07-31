@@ -4,13 +4,20 @@ import { ArrowDown, ArrowUp, ImagePlus, PackagePlus, Trash2 } from 'lucide-react
 import { useMemo, useState } from 'react';
 
 import { MediaQuickUploader } from '@/features/admin/media';
+import {
+  StudioMediaCropDialog,
+  StudioSelectField
+} from '@/features/studio-controls';
 import type { StudioMediaAsset } from '@/features/admin/media';
 import { cn } from '@/lib/utils';
 
 export type ProductStudioMedia = Pick<
   StudioMediaAsset,
   'id' | 'secureUrl' | 'displayName' | 'originalFilename'
-> & { resourceType?: 'IMAGE' | 'VIDEO' | 'RAW' };
+> & {
+  metadata?: unknown;
+  resourceType?: 'IMAGE' | 'VIDEO' | 'RAW';
+};
 
 export type ProductStudioVariant = {
   id?: string;
@@ -128,6 +135,15 @@ export function ProductStudioFields({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={asset.secureUrl} alt="" className="size-full object-cover" />
                     <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[8px] font-bold text-white">{index === 0 ? 'PRIMARY' : index + 1}</span>
+                    <span className="absolute right-2 top-2">
+                      <StudioMediaCropDialog
+                        assetId={asset.id}
+                        imageUrl={asset.secureUrl}
+                        metadata={asset.metadata}
+                        initialPurpose={index === 0 ? 'product-square' : 'product-gallery'}
+                        compact
+                      />
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-1 p-2">
                     <button type="button" onClick={() => moveMedia(index, -1)} disabled={index === 0} className="grid size-8 place-items-center rounded-xl bg-muted disabled:opacity-30" aria-label="Move image earlier"><ArrowUp className="size-3.5" /></button>
@@ -150,11 +166,23 @@ export function ProductStudioFields({
           {imageMedia.map(asset => {
             const selected = selectedMediaIds.includes(asset.id);
             return (
-              <button key={asset.id} type="button" onClick={() => toggleMedia(asset.id)} className={cn('relative aspect-square overflow-hidden rounded-2xl border transition', selected ? 'border-primary ring-2 ring-primary/20' : 'border-border/60 opacity-75 hover:opacity-100')}>
+              <div key={asset.id} className={cn('relative aspect-square overflow-hidden rounded-2xl border transition', selected ? 'border-primary ring-2 ring-primary/20' : 'border-border/60 opacity-75 hover:opacity-100')}>
+                <button type="button" onClick={() => toggleMedia(asset.id)} className="absolute inset-0 z-0">
+                  <span className="sr-only">Select {asset.displayName ?? asset.originalFilename ?? asset.id}</span>
+                </button>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={asset.secureUrl} alt={asset.displayName ?? asset.originalFilename ?? ''} className="size-full object-cover" />
-                {selected ? <span className="absolute inset-0 grid place-items-center bg-primary/25 text-xs font-black text-white">SELECTED</span> : null}
-              </button>
+                <img src={asset.secureUrl} alt={asset.displayName ?? asset.originalFilename ?? ''} className="pointer-events-none size-full object-cover" />
+                <span className="absolute right-2 top-2 z-10">
+                  <StudioMediaCropDialog
+                    assetId={asset.id}
+                    imageUrl={asset.secureUrl}
+                    metadata={asset.metadata}
+                    initialPurpose="product-gallery"
+                    compact
+                  />
+                </span>
+                {selected ? <span className="pointer-events-none absolute inset-0 grid place-items-center bg-primary/25 text-xs font-black text-white">SELECTED</span> : null}
+              </div>
             );
           })}
         </div>
@@ -188,7 +216,20 @@ export function ProductStudioFields({
                 <Field label="Quantity"><input type="number" min="0" value={variant.quantity} onChange={event => updateVariant(index, 'quantity', Number(event.target.value))} className={fieldClass} /></Field>
                 <Field label="Reserved"><input type="number" min="0" value={variant.reserved} onChange={event => updateVariant(index, 'reserved', Number(event.target.value))} className={fieldClass} /></Field>
                 <Field label="Reorder level"><input type="number" min="0" value={variant.reorderLevel} onChange={event => updateVariant(index, 'reorderLevel', Number(event.target.value))} className={fieldClass} /></Field>
-                <Field label="Variant image"><select value={variant.mediaAssetId ?? ''} onChange={event => updateVariant(index, 'mediaAssetId', event.target.value || null)} className={fieldClass}><option value="">Use primary image</option>{imageMedia.map(asset => <option key={asset.id} value={asset.id}>{asset.displayName ?? asset.originalFilename ?? asset.id}</option>)}</select></Field>
+                <Field label="Variant image">
+                  <StudioSelectField
+                    value={variant.mediaAssetId ?? ''}
+                    onValueChange={value => updateVariant(index, 'mediaAssetId', value || null)}
+                    options={[
+                      { value: '', label: 'Use primary image' },
+                      ...imageMedia.map(asset => ({
+                        value: asset.id,
+                        label: asset.displayName ?? asset.originalFilename ?? asset.id
+                      }))
+                    ]}
+                    className="h-10 rounded-xl text-xs"
+                  />
+                </Field>
               </div>
               <label className="mt-3 flex items-center gap-2 text-[10px] font-bold"><input type="checkbox" checked={variant.active} onChange={event => updateVariant(index, 'active', event.target.checked)} /> Active variant</label>
             </article>

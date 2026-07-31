@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { createOrResubmitApprovalRequest } from '@/features/admin/approvals/approvalRequestRepository';
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 import { prisma } from '@/lib/prisma';
 
@@ -158,7 +159,7 @@ export async function savePromotion(formData: FormData) {
     vendorProfileId &&
     (!vendor || access.membership.workspace.commerceMode !== 'MULTI_VENDOR')
   ) {
-    throw new Error('Vendor promotions are unavailable in single-vendor mode.');
+    throw new Error('Vendor promotions are unavailable in Single Merchant mode.');
   }
 
   if (conflict) {
@@ -216,27 +217,14 @@ export async function savePromotion(formData: FormData) {
     }
 
     if (status === 'PENDING_REVIEW') {
-      await transaction.adminApprovalRequest.updateMany({
-        where: {
-          workspaceId,
-          targetType: 'PROMOTION',
-          targetId: promotion.id,
-          status: 'PENDING'
-        },
-        data: {
-          status: 'CANCELLED',
-          reviewNote: 'Superseded by a newer Promotion Studio submission.'
-        }
-      });
-      await transaction.adminApprovalRequest.create({
-        data: {
-          workspaceId,
-          requestedById: access.session.user.id,
-          action: 'PUBLISH_LIVE',
-          targetType: 'PROMOTION',
-          targetId: promotion.id,
-          reason: `Publish ${title} from Promotion Studio.`
-        }
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'PROMOTION',
+        targetId: promotion.id,
+        reason: `Publish ${title} from Promotion Studio.`
       });
     }
 
@@ -256,6 +244,7 @@ export async function savePromotion(formData: FormData) {
   revalidatePath('/admin/approvals');
   revalidatePath('/vendor/promotions');
   revalidatePath('/store');
+  revalidatePath('/shops');
 }
 
 export async function setPromotionStatus(formData: FormData) {
@@ -280,7 +269,7 @@ export async function setPromotionStatus(formData: FormData) {
     promotion.vendorProfileId &&
     access.membership.workspace.commerceMode !== 'MULTI_VENDOR'
   ) {
-    throw new Error('Multivendor mode must be active before publishing this promotion.');
+    throw new Error('Multi Vendor mode must be active before publishing this promotion.');
   }
 
   await prisma.promotion.update({
@@ -292,4 +281,5 @@ export async function setPromotionStatus(formData: FormData) {
   revalidatePath('/admin/approvals');
   revalidatePath('/vendor/promotions');
   revalidatePath('/store');
+  revalidatePath('/shops');
 }

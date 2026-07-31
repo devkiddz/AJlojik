@@ -8,7 +8,6 @@ import { LoaderCircle } from 'lucide-react';
 import { useActionFeedback } from '@/features/action-feedback';
 import PromoModal from '@/components/promos/PromoModal';
 
-import { collections } from '@/data/collections';
 import { promos, type Promo } from '@/data/promos';
 
 import { useCart } from '@/features/cart';
@@ -58,6 +57,7 @@ function FeedExperienceWorkspaceContent({
   const {
     products: catalogProducts,
     categories: catalogCategories,
+    collections: catalogCollections,
     loading: catalogLoading,
     error: catalogError
   } = useCatalog();
@@ -259,7 +259,7 @@ function FeedExperienceWorkspaceContent({
       catalog: {
         products: catalogProducts,
         categories: catalogCategories,
-        collections,
+        collections: catalogCollections,
         promotions: promos
       },
 
@@ -298,7 +298,7 @@ function FeedExperienceWorkspaceContent({
         now: new Date().toISOString()
       }
     }),
-    [activeProfile, catalogCategories, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, storeStudio, wishlistProductIds]
+    [activeProfile, catalogCategories, catalogCollections, catalogProducts, cartProductIds, isAuthenticated, normalizedTier, storeStudio, wishlistProductIds]
   );
 
   // ============================================================

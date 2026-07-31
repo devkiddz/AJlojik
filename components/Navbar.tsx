@@ -8,6 +8,7 @@ import {
 import {
   ChevronUp,
   LayoutGrid,
+  Store,
   PartyPopper,
   TextSearch,
   UtensilsCrossed,
@@ -27,7 +28,7 @@ import SidebarToggle from '@/components/shared/SidebarToggle';
 import StoreCategoriesPill from '@/components/store/StoreCategoriesPill';
 import { Button } from '@/components/ui/button';
 import PremiumStoreButton from '@/components/ui/premium-store-button';
-import { PWAInstallControl } from '@/features/pwa';
+import { MarketplaceLink } from '@/features/commerce-mode/components/MarketplaceLink';
 import { MobileSearchButton } from '@/features/search';
 
 import { CartLogics } from './shared/CartLogics';
@@ -111,7 +112,7 @@ export default function NavbarComponent({
   }, [router, searchParams]);
 
   return (
-    <div className="relative isolate w-full overflow-hidden border-b border-white/[0.1] bg-background/78 shadow-[0_14px_46px_rgba(0,0,0,0.22)] backdrop-blur-[34px] backdrop-saturate-[195%] supports-[backdrop-filter]:bg-background/60">
+    <div className="relative isolate w-full overflow-visible border-b border-white/[0.1] bg-background/78 shadow-[0_14px_46px_rgba(0,0,0,0.22)] backdrop-blur-[34px] backdrop-saturate-[195%] supports-[backdrop-filter]:bg-background/60">
       <div className="header-ambient-light opacity-80" />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent" />
@@ -172,6 +173,11 @@ export default function NavbarComponent({
                 active={isStorePage}
                 onClick={openStore}
               />
+
+              <MarketplaceLink className="inline-flex h-10 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-muted-foreground transition hover:bg-background/70 hover:text-foreground">
+                <Store className="size-4" />
+                <span>Shops</span>
+              </MarketplaceLink>
             </nav>
 
             <div className="mx-1.5 h-7 w-px shrink-0 bg-border/70" />
@@ -199,10 +205,6 @@ export default function NavbarComponent({
               <TextSearch className="size-[1.15rem]" />
             )}
           </button>
-
-          <div className="hidden lg:block">
-            <PWAInstallControl />
-          </div>
 
           <CartLogics />
 
@@ -236,6 +238,11 @@ export default function NavbarComponent({
                 })
               }
             />
+
+            <MarketplaceLink className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/70 text-xs font-bold text-foreground">
+              <Store className="size-4" />
+              Browse verified shops
+            </MarketplaceLink>
           </div>
         </div>
       </div>

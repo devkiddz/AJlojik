@@ -288,6 +288,9 @@ export function buildStoreDiscoveryExperience(
         mediaUrl: story.mediaUrl,
         coverUrl: story.coverUrl,
         posterUrl: story.posterUrl ?? undefined,
+        mediaObjectPosition: story.mediaObjectPosition,
+        coverObjectPosition: story.coverObjectPosition,
+        posterObjectPosition: story.posterObjectPosition,
         actionType,
         productIds:
           story.productIds.length > 0
@@ -414,23 +417,13 @@ export function buildStoreDiscoveryExperience(
               filteredProductIds.has(product.id)
             );
 
-      const collectionCategorySlugs = new Set(
-        scopedProducts.map(product => product.category)
-      );
-
-      const enrichmentPool =
-        scopedProducts.length === 0
-          ? []
-          : selectedCategory === 'all'
-            ? catalog.products.filter(product =>
-                collectionCategorySlugs.has(product.category)
-              )
-            : filteredProducts;
-
-      const collectionProducts = uniqueProducts([
-        ...scopedProducts,
-        ...enrichmentPool
-      ]).slice(0, COLLECTION_PRODUCT_LIMIT);
+      // A Collection is an intentional merchandising set.
+      // Never enrich it with unrelated category products: the Feed rail
+      // previews the assigned products and the dedicated Collection page
+      // owns the complete product grid.
+      const collectionProducts = uniqueProducts(
+        scopedProducts
+      ).slice(0, COLLECTION_PRODUCT_LIMIT);
 
       const controlledCollection =
         collection as CollectionWithPresentationControls;

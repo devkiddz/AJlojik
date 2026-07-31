@@ -57,18 +57,25 @@ type PushExperienceHistoryInput = {
 
 export async function pushExperienceHistory(
   input: PushExperienceHistoryInput
-) {
-  const settings =
-    await prisma.experienceHistorySettings.findUnique({
+) {  const settings =
+    await prisma.experienceHistorySettings.upsert({
       where: {
         workspaceId_userId: {
           workspaceId: input.workspaceId,
           userId: input.userId
         }
+      },
+      update: {},
+      create: {
+        workspaceId: input.workspaceId,
+        userId: input.userId,
+        enabled: true,
+        retention: 'SEVEN_DAYS',
+        maxEntries: 20
       }
     });
 
-  if (!settings?.enabled) {
+  if (!settings.enabled) {
     return null;
   }
 

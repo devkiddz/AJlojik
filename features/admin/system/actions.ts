@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { getCommerceModeDowngradeImpact } from '@/features/commerce-mode/server/getCommerceModeDowngradeImpact';
 import { requireDeveloperAdmin } from '@/features/admin/auth/adminPermissions';
 import { prisma } from '@/lib/prisma';
 
@@ -10,13 +11,20 @@ export async function updateWorkspaceCommerceMode(formData: FormData) {
   const workspaceId = String(formData.get('workspaceId') ?? '').trim();
   const mode = String(formData.get('commerceMode') ?? '').trim();
 
-  if (!workspaceId || !['SINGLE_VENDOR', 'MULTI_VENDOR'].includes(mode)) {
-    throw new Error('Workspace and commerce mode are required.');
+  if (
+    !workspaceId ||
+    !['SINGLE_MERCHANT', 'MULTI_VENDOR'].includes(mode)
+  ) {
+    throw new Error('Workspace and Commerce Mode are required.');
   }
 
   const current = await prisma.workspace.findUnique({
     where: { id: workspaceId },
-    select: { id: true, name: true, commerceMode: true }
+    select: {
+      id: true,
+      name: true,
+      commerceMode: true
+    }
   });
 
   if (!current) {
@@ -27,12 +35,33 @@ export async function updateWorkspaceCommerceMode(formData: FormData) {
     return;
   }
 
+  const downgrading =
+    current.commerceMode === 'MULTI_VENDOR' &&
+    mode === 'SINGLE_MERCHANT';
+
+  const downgradeImpact = downgrading
+    ? await getCommerceModeDowngradeImpact(workspaceId)
+    : null;
+
+  const acknowledged =
+    formData.get('acknowledgeDowngrade') === 'on' ||
+    formData.get('acknowledgeDowngrade') === 'true';
+
+  if (
+    downgradeImpact?.requiresAcknowledgement &&
+    !acknowledged
+  ) {
+    throw new Error(
+      'Confirm the marketplace downgrade impact before changing this workspace to Single Merchant mode.'
+    );
+  }
+
   await prisma.$transaction([
     prisma.workspace.update({
       where: { id: workspaceId },
       data: {
-        commerceMode: mode as 'SINGLE_VENDOR' | 'MULTI_VENDOR',
-        ...(mode === 'SINGLE_VENDOR'
+        commerceMode: mode as 'SINGLE_MERCHANT' | 'MULTI_VENDOR',
+        ...(mode === 'SINGLE_MERCHANT'
           ? { vendorApplicationsOpen: false }
           : {})
       }
@@ -48,7 +77,8 @@ export async function updateWorkspaceCommerceMode(formData: FormData) {
         metadata: {
           previousCommerceMode: current.commerceMode,
           commerceMode: mode,
-          developerAdminId: access.actor.id
+          developerAdminId: access.actor.id,
+          downgradeImpact
         }
       }
     })
@@ -60,4 +90,5 @@ export async function updateWorkspaceCommerceMode(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/vendor');
   revalidatePath('/store');
+  revalidatePath('/shops');
 }

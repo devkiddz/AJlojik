@@ -11,6 +11,7 @@ import HeroBackgroundMedia from '@/components/home/HeroBackgroundMedia';
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 import { updateStorefrontHero } from '@/features/admin/hero/actions';
 import { MediaChoiceGrid } from '@/features/admin/media/MediaChoiceGrid';
+import { StudioSelectField } from '@/features/studio-controls';
 import { prisma } from '@/lib/prisma';
 
 const fallbackVideo = 'https://www.youtube.com/watch?v=WN_fa23hasc';
@@ -138,14 +139,14 @@ export default async function AdminHeroPage() {
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Field label="External media type">
-                    <select
+                    <StudioSelectField
                       name="mediaType"
                       defaultValue={mediaType}
-                      className={inputClass}
-                    >
-                      <option value="VIDEO">Video / YouTube</option>
-                      <option value="IMAGE">Image</option>
-                    </select>
+                      options={[
+                        { value: 'VIDEO', label: 'Video / YouTube' },
+                        { value: 'IMAGE', label: 'Image' }
+                      ]}
+                    />
                   </Field>
 
                   <Field label="External background media URL">

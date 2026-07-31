@@ -19,10 +19,6 @@ export type CategoryType = {
   className?: string;
 };
 
-/**
- * Backward-compatible alias retained while older category consumers
- * migrate to the canonical PascalCase type name.
- */
 export type categoryType = CategoryType;
 
 export type ProductVariantType = {
@@ -33,10 +29,21 @@ export type ProductVariantType = {
   stockLeft: number;
 };
 
+export type ProductMerchantType = {
+  id: string;
+  slug: string;
+  name: string;
+  logoUrl?: string;
+};
+
 export type ProductType = {
   id: string;
   slug: string;
   name: string;
+
+  ownership?: 'platform' | 'vendor';
+  merchant?: ProductMerchantType;
+
   shortDescription: string;
   longDescription: string;
   category: string;

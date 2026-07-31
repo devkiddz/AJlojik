@@ -11,9 +11,13 @@ export type StoreStudioAdminAsset = {
   mediaType: StoreStudioMediaType;
   mediaUrl: string;
   mediaAssetId: string | null;
+  mediaAssetMetadata?: unknown;
   mobileMediaAssetId: string | null;
+  mobileMediaAssetMetadata?: unknown;
   coverMediaAssetId: string | null;
+  coverMediaAssetMetadata?: unknown;
   posterMediaAssetId: string | null;
+  posterMediaAssetMetadata?: unknown;
   mobileMediaUrl: string | null;
   coverUrl: string | null;
   posterUrl: string | null;
@@ -25,6 +29,9 @@ export type StoreStudioAdminAsset = {
   productId: string | null;
   promotionId: string | null;
   collectionId: string | null;
+  product: { id: string; name: string; imageUrl: string | null } | null;
+  promotion: { id: string; title: string; imageUrl: string | null } | null;
+  collection: { id: string; title: string; imageUrl: string | null } | null;
   durationSeconds: number | null;
   autoplay: boolean;
   muted: boolean;
@@ -60,20 +67,20 @@ export type StoreStudioAdminMediaAsset = {
   resourceType: 'image' | 'video';
   displayName: string | null;
   originalFilename: string | null;
+  metadata?: unknown;
 };
 
 export type StoreStudioDestinationOption = {
   id: string;
   label: string;
   href: string;
+  imageUrl: string | null;
+  description: string | null;
+  available: boolean;
 };
 
 export type StoreStudioAdminDashboardData = {
-  workspace: {
-    id: string;
-    name: string;
-    mode: string;
-  };
+  workspace: { id: string; name: string; mode: string };
   campaigns: StoreStudioAdminCampaign[];
   products: StoreStudioDestinationOption[];
   promotions: StoreStudioDestinationOption[];
@@ -85,6 +92,9 @@ export type StoreStudioAdminDashboardData = {
     scheduled: number;
     drafts: number;
     awaitingReview: number;
+    paused: number;
+    rejected: number;
+    inactive: number;
     banners: number;
     stories: number;
     reels: number;

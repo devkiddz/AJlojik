@@ -13,9 +13,19 @@ async function credentialAccount(userId: string) {
 }
 
 async function ensureTargetAccess(actorId: string, targetId: string) {
-  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, isGhostDeveloper: true } });
+  const target = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: {
+      id: true,
+      email: true,
+      emailVerified: true,
+      isGhostDeveloper: true
+    }
+  });
+
   if (!target) throw new Error('Account was not found.');
   if (target.isGhostDeveloper && actorId !== target.id) throw new Error('This protected account is not available.');
+
   return target;
 }
 
@@ -45,7 +55,7 @@ export async function updateOwnAdminAccount(formData: FormData) {
 export async function updateManagedAccount(formData: FormData) {
   const access = await requireAdminPermission('system:manage');
   const userId = text(formData, 'userId');
-  await ensureTargetAccess(access.session.user.id, userId);
+  const target = await ensureTargetAccess(access.session.user.id, userId);
   const name = text(formData, 'name');
   const email = text(formData, 'email').toLowerCase();
   const tier = text(formData, 'tier') || 'member';
@@ -53,6 +63,13 @@ export async function updateManagedAccount(formData: FormData) {
   const reason = text(formData, 'restrictionReason') || null;
   const lockHours = Math.max(Number(text(formData, 'lockHours')) || 0, 0);
   const newPassword = text(formData, 'newPassword');
+  const submittedVerification = formData.get('emailVerified');
+  const emailVerified =
+    submittedVerification !== null &&
+    !['false', '0', 'off', 'no'].includes(String(submittedVerification).trim().toLowerCase());
+  const emailChanged = target.email.toLowerCase() !== email;
+  const verificationChanged = target.emailVerified !== emailVerified;
+
   if (!name || !email) throw new Error('Name and email are required.');
   if (newPassword && newPassword.length < 8) throw new Error('Replacement passwords must contain at least 8 characters.');
   const conflict = await prisma.user.findFirst({ where: { email, id: { not: userId } }, select: { id: true } });
@@ -62,8 +79,17 @@ export async function updateManagedAccount(formData: FormData) {
   await prisma.$transaction(async tx => {
     await tx.user.update({ where: { id: userId }, data: { name, email, tier, emailVerified: formData.get('emailVerified') === 'on', accountState: state, restrictionReason: state === 'ACTIVE' ? null : reason, lockedUntil: state === 'LOCKED' && lockHours ? new Date(Date.now() + lockHours * 3_600_000) : null } });
     if (newPassword && account) await tx.account.update({ where: { id: account.id }, data: { password: await hashPassword(newPassword) } });
-    if (state !== 'ACTIVE' || newPassword) await tx.session.deleteMany({ where: { userId } });
-    await tx.adminAuditEvent.create({ data: { workspaceId: access.membership.workspaceId, actorId: access.session.user.id, action: 'USER_ACCOUNT_UPDATED', targetType: 'USER', targetId: userId, summary: `${name}'s account was updated by Super Admin.`, metadata: { accountState: state, tier, passwordReset: Boolean(newPassword) } } });
+    if (state !== 'ACTIVE' || newPassword || verificationChanged || emailChanged) {
+      await tx.session.deleteMany({ where: { userId } });
+    }
+    await tx.adminAuditEvent.create({ data: { workspaceId: access.membership.workspaceId, actorId: access.session.user.id, action: 'USER_ACCOUNT_UPDATED', targetType: 'USER', targetId: userId, summary: `${name}'s account was updated by Super Admin.`, metadata: {
+      accountState: state,
+      tier,
+      passwordReset: Boolean(newPassword),
+      emailVerified,
+      verificationChanged,
+      emailChanged
+    } } });
   });
   revalidatePath('/admin/accounts');
   revalidatePath(`/admin/accounts/${userId}`);

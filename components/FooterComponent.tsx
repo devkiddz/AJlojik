@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Aperture, AtSign, Clock3, MapPin, ShieldCheck } from 'lucide-react';
 
 import { PWAInstallButton } from '@/components/pwa/PWAInstallButton';
+import { MarketplaceLink } from '@/features/commerce-mode/components/MarketplaceLink';
 
 const quickLinks = [
   { href: '/', label: 'Home' },
@@ -51,7 +52,22 @@ export default function FooterComponent({
             </div>
           </section>
 
-          <FooterLinks title="Discover" links={quickLinks} />
+          <section>
+            <h3 className="text-sm font-black">Discover</h3>
+            <nav className="mt-4 flex flex-col items-start gap-3" aria-label="Discover">
+              {quickLinks.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-muted-foreground transition hover:text-foreground">
+                  {link.label}
+                </Link>
+              ))}
+              <MarketplaceLink className="text-sm text-muted-foreground transition hover:text-foreground">
+                Verified shops
+              </MarketplaceLink>
+            </nav>
+          </section>
           <FooterLinks title="Your account" links={accountLinks} />
 
           <section>

@@ -19,6 +19,11 @@ import { useMemo, useRef, useState, type FormEvent } from 'react';
 
 import { cn } from '@/lib/utils';
 import {
+  StudioMediaCropDialog,
+  StudioSelectField,
+  type StudioCropRecipe
+} from '@/features/studio-controls';
+import {
   type StudioMediaPurpose,
   uploadStudioMediaFile
 } from './mediaUploadClient';
@@ -37,6 +42,7 @@ export type MediaStudioAsset = {
   displayName: string | null;
   originalFilename: string | null;
   altText: string | null;
+  metadata: unknown;
   createdAt: string;
   uploadedBy: { name: string };
   vendorProfile: { name: string } | null;
@@ -91,17 +97,18 @@ export function MediaStudioDashboard({
   const [editingAsset, setEditingAsset] = useState<MediaStudioAsset | null>(null);
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [localAssets, setLocalAssets] = useState(assets);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return assets.filter(asset => {
+    return localAssets.filter(asset => {
       if (type !== 'ALL' && asset.resourceType !== type) return false;
       if (!normalized) return true;
       return [asset.displayName, asset.originalFilename, asset.publicId, asset.altText, asset.vendorProfile?.name]
         .filter(Boolean)
         .some(value => String(value).toLowerCase().includes(normalized));
     });
-  }, [assets, query, type]);
+  }, [localAssets, query, type]);
 
   const updateUpload = (id: string, patch: Partial<UploadState>) => {
     setUploads(current => current.map(item => (item.id === id ? { ...item, ...patch } : item)));
@@ -208,9 +215,12 @@ export function MediaStudioDashboard({
             </div>
             <label className="block w-full sm:w-56">
               <span className="mb-2 block text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Destination folder</span>
-              <select value={purpose} onChange={event => setPurpose(event.target.value as StudioMediaPurpose)} className="h-11 w-full rounded-2xl border border-border/70 bg-background px-3 text-xs outline-none">
-                {purposeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+              <StudioSelectField
+                value={purpose}
+                onValueChange={value => setPurpose(value as StudioMediaPurpose)}
+                options={purposeOptions.map(([value, label]) => ({ value, label }))}
+                className="text-xs"
+              />
             </label>
           </div>
 
@@ -284,6 +294,44 @@ export function MediaStudioDashboard({
                 <span className="absolute left-2 top-2 grid size-8 place-items-center rounded-xl bg-black/55 text-white backdrop-blur-md">
                   {asset.resourceType === 'VIDEO' ? <FileVideo2 className="size-4" /> : <FileImage className="size-4" />}
                 </span>
+                {canUpload && asset.resourceType === 'IMAGE' ? (
+                  <div className="absolute right-[5.5rem] top-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                    <StudioMediaCropDialog
+                      assetId={asset.id}
+                      imageUrl={asset.secureUrl}
+                      metadata={asset.metadata}
+                      compact
+                      onSaved={(recipe: StudioCropRecipe) => {
+                        setLocalAssets(current =>
+                          current.map(item =>
+                            item.id === asset.id
+                              ? {
+                                  ...item,
+                                  metadata: {
+                                    ...(item.metadata && typeof item.metadata === 'object'
+                                      ? item.metadata as Record<string, unknown>
+                                      : {}),
+                                    studioCrops: {
+                                      ...(
+                                        item.metadata &&
+                                        typeof item.metadata === 'object' &&
+                                        'studioCrops' in item.metadata &&
+                                        item.metadata.studioCrops &&
+                                        typeof item.metadata.studioCrops === 'object'
+                                          ? item.metadata.studioCrops as Record<string, unknown>
+                                          : {}
+                                      ),
+                                      [recipe.purpose]: recipe
+                                    }
+                                  }
+                                }
+                              : item
+                          )
+                        );
+                      }}
+                    />
+                  </div>
+                ) : null}
                 {canUpload ? (
                   <button
                     type="button"

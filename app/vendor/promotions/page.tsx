@@ -15,6 +15,8 @@ import {
   MediaChoiceGrid,
   saveVendorPromotion
 } from '@/features/vendor/studios';
+import { StudioProductPicker, StudioProductSummary, StudioSelectField } from '@/features/studio-controls';
+import { resolveStudioProducts } from '@/features/studio-controls/server/resolveStudioProducts';
 import { prisma } from '@/lib/prisma';
 
 type VendorPromotionsPageProps = {
@@ -48,16 +50,7 @@ export default async function VendorPromotionsPage({
       },
       orderBy: { updatedAt: 'desc' }
     }),
-    prisma.product.findMany({
-      where: {
-        workspaceId: access.workspace.id,
-        vendorProfileId: access.vendor.id,
-        status: 'PUBLISHED',
-        active: true
-      },
-      orderBy: { name: 'asc' },
-      select: { id: true, name: true }
-    }),
+    resolveStudioProducts({ workspaceId: access.workspace.id, vendorProfileId: access.vendor.id }),
     prisma.mediaAsset.findMany({
       where: {
         workspaceId: access.workspace.id,
@@ -125,15 +118,7 @@ export default async function VendorPromotionsPage({
               </Field>
 
               <Field label="Offer type">
-                <select
-                  name="type"
-                  defaultValue={editing?.type ?? 'PERCENTAGE'}
-                  className={adminFieldClass}>
-                  <option value="PERCENTAGE">Percentage discount</option>
-                  <option value="FIXED_AMOUNT">Fixed amount</option>
-                  <option value="FIXED_PRICE">Fixed price</option>
-                  <option value="FEATURED">Featured placement</option>
-                </select>
+                <StudioSelectField name="type" defaultValue={editing?.type ?? 'PERCENTAGE'} options={[{ value: 'PERCENTAGE', label: 'Percentage discount' }, { value: 'FIXED_AMOUNT', label: 'Fixed amount' }, { value: 'FIXED_PRICE', label: 'Fixed price' }, { value: 'FEATURED', label: 'Featured placement' }]} />
               </Field>
 
               <Field label="Discount value">
@@ -226,23 +211,11 @@ export default async function VendorPromotionsPage({
                 <legend className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                   Eligible products
                 </legend>
-                <div className="grid max-h-64 gap-2 overflow-y-auto rounded-3xl border border-border/60 p-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {products.map(product => (
-                    <label
-                      key={product.id}
-                      className="flex items-center gap-2 rounded-xl p-2 text-xs hover:bg-muted">
-                      <input
-                        type="checkbox"
-                        name="productIds"
-                        value={product.id}
-                        defaultChecked={editing?.products.some(
-                          item => item.productId === product.id
-                        )}
-                      />
-                      <span className="truncate">{product.name}</span>
-                    </label>
-                  ))}
-                </div>
+                <StudioProductPicker
+                  products={products}
+                  initialIds={editing?.products.map(item => item.productId) ?? []}
+                  description="Choose from your published products. Images, stock and product status remain visible during selection."
+                />
               </fieldset>
 
               <div className="flex flex-wrap gap-3 lg:col-span-3">
@@ -299,6 +272,7 @@ export default async function VendorPromotionsPage({
                   {promotion.products.length} products ·{' '}
                   {promotion.type.replaceAll('_', ' ').toLowerCase()}
                 </p>
+                <StudioProductSummary products={products.filter(product => promotion.products.some(item => item.productId === product.id))} className="mt-4" />
                 <div className="mt-4 flex gap-2">
                   <Link
                     href={`/vendor/promotions?edit=${promotion.id}`}

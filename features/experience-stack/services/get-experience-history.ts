@@ -24,23 +24,25 @@ export async function getExperienceHistory(
         lte: now
       }
     }
-  });
-
-  const settings =
-    await prisma.experienceHistorySettings.findUnique({
+  });  const settings =
+    await prisma.experienceHistorySettings.upsert({
       where: {
         workspaceId_userId: {
           workspaceId: input.workspaceId,
           userId: input.userId
         }
+      },
+      update: {},
+      create: {
+        workspaceId: input.workspaceId,
+        userId: input.userId,
+        enabled: true,
+        retention: 'SEVEN_DAYS',
+        maxEntries: 20
       }
     });
 
-  const resolvedSettings = settings ?? {
-    enabled: true,
-    retention: 'SEVEN_DAYS' as const,
-    maxEntries: 20
-  };
+  const resolvedSettings = settings;
 
   if (!resolvedSettings.enabled) {
     return {

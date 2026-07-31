@@ -26,6 +26,7 @@ import {
   AdminPanel,
   adminFieldClass
 } from '@/features/admin/components';
+import { StudioSelectField } from '@/features/studio-controls';
 import { prisma } from '@/lib/prisma';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +46,7 @@ export default async function AdminCategoriesPage({ searchParams }: { searchPara
 
   const { edit, editSub } = await searchParams;
 
-  const [categories, editingCategory, editingSubcategory] = await Promise.all([
+  const [categories, editingCategory, editingSubcategory, media] = await Promise.all([
     prisma.category.findMany({
       include: {
         subcategories: {
@@ -62,7 +63,17 @@ export default async function AdminCategoriesPage({ searchParams }: { searchPara
       : Promise.resolve(null),
     editSub
       ? prisma.subcategory.findUnique({ where: { id: editSub } })
-      : Promise.resolve(null)
+      : Promise.resolve(null),
+    prisma.mediaAsset.findMany({
+      where: {
+        workspaceId: access.membership.workspaceId,
+        vendorProfileId: null,
+        status: 'ACTIVE',
+        resourceType: 'IMAGE'
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 180
+    })
   ]);
 
   const activeCount = categories.filter(category => category.active).length;
@@ -115,7 +126,7 @@ export default async function AdminCategoriesPage({ searchParams }: { searchPara
           <AdminPanel
             title={editingCategory ? `Edit ${editingCategory.label}` : 'Compose a category'}
             description="The preview responds while you type. Saving updates the catalog and customer Store projections.">
-            <CategoryComposer editing={composerValue} />
+            <CategoryComposer editing={composerValue} media={media} />
           </AdminPanel>
         ) : null}
 
@@ -127,15 +138,14 @@ export default async function AdminCategoriesPage({ searchParams }: { searchPara
               {editingSubcategory ? <input type="hidden" name="id" value={editingSubcategory.id} /> : null}
 
               <Field label="Parent category">
-                <select
+                <StudioSelectField
                   name="categoryId"
-                  required
                   defaultValue={editingSubcategory?.categoryId ?? editingCategory?.id ?? categories[0]?.id ?? ''}
-                  className={adminFieldClass}>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>{category.label}</option>
-                  ))}
-                </select>
+                  options={categories.map(category => ({
+                    value: category.id,
+                    label: category.label
+                  }))}
+                />
               </Field>
 
               <Field label="Label">

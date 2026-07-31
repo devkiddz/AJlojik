@@ -10,9 +10,15 @@ import {
   ACTIVE_WORKSPACE_COOKIE_MAX_AGE
 } from '@/features/workspace/workspaceConstants';
 
-import { getUserWorkspaces } from '@/features/workspace/services/get-user-workspaces';
+import {
+  getGuestWorkspaceRuntime,
+  getUserWorkspaces
+} from '@/features/workspace/services/get-user-workspaces';
 
 import { auth } from '@/lib/auth';
+
+const WORKSPACE_CACHE_CONTROL =
+  'no-store, no-cache, must-revalidate, proxy-revalidate';
 
 function setWorkspaceCookie(
   response: NextResponse,
@@ -46,11 +52,11 @@ export async function GET() {
 
     if (!userId) {
       return NextResponse.json(
+        await getGuestWorkspaceRuntime(),
         {
-          error: 'Authentication is required.'
-        },
-        {
-          status: 401
+          headers: {
+            'Cache-Control': WORKSPACE_CACHE_CONTROL
+          }
         }
       );
     }
@@ -69,6 +75,11 @@ export async function GET() {
 
     const response =
       NextResponse.json(runtime);
+
+    response.headers.set(
+      'Cache-Control',
+      WORKSPACE_CACHE_CONTROL
+    );
 
     if (runtime.activeWorkspace) {
       setWorkspaceCookie(
@@ -156,6 +167,11 @@ export async function POST(request: Request) {
 
     const response =
       NextResponse.json(runtime);
+
+    response.headers.set(
+      'Cache-Control',
+      WORKSPACE_CACHE_CONTROL
+    );
 
     setWorkspaceCookie(
       response,

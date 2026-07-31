@@ -191,6 +191,14 @@ export function StoreProductDetailExperience({
                 <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-4xl">
                   {product.name}
                 </h1>
+
+                {product.merchant ? (
+                  <Link
+                    href={`/shops/${encodeURIComponent(product.merchant.slug)}`}
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-primary">
+                    Sold by {product.merchant.name}
+                  </Link>
+                ) : null}
               </div>
 
               <button

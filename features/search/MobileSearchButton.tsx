@@ -14,7 +14,7 @@ export default function MobileSearchButton() {
         setOpen(true);
       }}
       aria-label="Open search"
-      className="flex h-12 w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 shadow-sm transition-all duration-200 active:scale-[0.98] lg:hidden">
+      className="flex h-12 w-full items-center justify-between rounded-2xl border border-border/60 bg-background px-4 shadow-sm transition-all duration-200 active:scale-[0.98] xl:hidden">
       <div className="flex items-center gap-3">
         <Search className="h-5 w-5 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Search products, wines...</span>

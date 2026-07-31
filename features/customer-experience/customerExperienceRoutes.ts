@@ -207,6 +207,27 @@ export function resolveCustomerSurface(
     return 'tracking';
   }
 
+
+  if (
+    pathname ===
+      '/shops' ||
+    pathname.startsWith(
+      '/shops/'
+    )
+  ) {
+    return 'shop';
+  }
+
+  if (
+    pathname ===
+      '/collections' ||
+    pathname.startsWith(
+      '/collections/'
+    )
+  ) {
+    return 'collection';
+  }
+
   if (
     pathname.startsWith(
       '/products/'

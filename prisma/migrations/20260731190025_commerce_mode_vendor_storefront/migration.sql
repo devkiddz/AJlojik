@@ -1,0 +1,5 @@
+-- RenameIndex
+ALTER INDEX "admin_approval_request_workspaceId_status_priority_createdAt_id" RENAME TO "admin_approval_request_workspaceId_status_priority_createdA_idx";
+
+-- RenameIndex
+ALTER INDEX "shopping_list_workspaceId_visibility_publicationStatus_updatedA" RENAME TO "shopping_list_workspaceId_visibility_publicationStatus_upda_idx";

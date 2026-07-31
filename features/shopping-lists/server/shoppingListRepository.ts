@@ -1,4 +1,17 @@
 import {
+  cancelApprovalRequestsForTarget,
+  createOrResubmitApprovalRequest
+} from '@/features/admin/approvals/approvalRequestRepository';
+import {
+  completeOperationalTodos
+} from '@/features/admin/todos/adminTodoRepository';
+
+import {
+  notifyShoppingListPublicationSubmitted,
+  notifyShoppingListPublicationWithdrawn
+} from '@/features/notifications/server/notificationEngine';
+
+import {
   prisma
 } from '@/lib/prisma';
 
@@ -102,19 +115,6 @@ async function requeueApprovedPublication(
   }
 
   await prisma.$transaction(async transaction => {
-    await transaction.adminApprovalRequest.updateMany({
-      where: {
-        workspaceId,
-        targetType: 'SHOPPING_LIST',
-        targetId: listId,
-        status: 'PENDING'
-      },
-      data: {
-        status: 'CANCELLED',
-        reviewNote: 'Replaced by a newer shopping-list revision.'
-      }
-    });
-
     await transaction.shoppingList.update({
       where: { id: listId },
       data: {
@@ -126,31 +126,27 @@ async function requeueApprovedPublication(
       }
     });
 
-    const request = await transaction.adminApprovalRequest.create({
-      data: {
-        workspaceId,
-        requestedById: userId,
-        action: 'PUBLISH_LIVE',
-        targetType: 'SHOPPING_LIST',
-        targetId: listId,
-        reason: `${list.name} changed after publication and requires a new review.`,
-        payload: {
-          source: 'CUSTOMER_SHOPPING_LIST',
-          revisionReason: reason
-        }
+    const request = await createOrResubmitApprovalRequest(transaction, {
+      workspaceId,
+      requestedById: userId,
+      source: 'CUSTOMER',
+      action: 'PUBLISH_LIVE',
+      targetType: 'SHOPPING_LIST',
+      targetId: listId,
+      reason: `${list.name} changed after publication and requires a new review.`,
+      payload: {
+        source: 'CUSTOMER_SHOPPING_LIST',
+        revisionReason: reason
       }
     });
 
-    await transaction.adminTodo.create({
-      data: {
-        workspaceId,
-        title: 'Shopping list requires re-approval',
-        description: `${list.name} changed after publication.`,
-        source: 'APPROVAL',
-        priority: 'MEDIUM',
-        targetType: 'SHOPPING_LIST',
-        targetId: listId
-      }
+    await notifyShoppingListPublicationSubmitted(transaction, {
+      workspaceId,
+      userId,
+      listId,
+      listName: list.name,
+      revision: true,
+      eventKey: request.id
     });
 
     await transaction.adminAuditEvent.create({
@@ -355,20 +351,15 @@ export const ShoppingListRepository = {
       });
 
     if (input.status === 'ARCHIVED') {
-      await prisma.$transaction([
-        prisma.adminApprovalRequest.updateMany({
-          where: {
-            workspaceId,
-            targetType: 'SHOPPING_LIST',
-            targetId: listId,
-            status: 'PENDING'
-          },
-          data: {
-            status: 'CANCELLED',
-            reviewNote: 'The customer archived this shopping list.'
-          }
-        }),
-        prisma.shoppingList.update({
+      await prisma.$transaction(async transaction => {
+        await cancelApprovalRequestsForTarget(transaction, {
+          workspaceId,
+          actorId: userId,
+          targetType: 'SHOPPING_LIST',
+          targetId: listId,
+          note: 'The customer archived this shopping list.'
+        });
+        await transaction.shoppingList.update({
           where: { id: listId },
           data: {
             visibility: 'PRIVATE',
@@ -378,8 +369,8 @@ export const ShoppingListRepository = {
             publicationPublishedAt: null,
             publicationReviewNote: null
           }
-        })
-      ]);
+        });
+      });
     } else {
       await requeueApprovedPublication(
         userId,
@@ -444,19 +435,6 @@ export const ShoppingListRepository = {
     }
 
     await prisma.$transaction(async transaction => {
-      await transaction.adminApprovalRequest.updateMany({
-        where: {
-          workspaceId,
-          targetType: 'SHOPPING_LIST',
-          targetId: listId,
-          status: 'PENDING'
-        },
-        data: {
-          status: 'CANCELLED',
-          reviewNote: 'Replaced by a new customer publication request.'
-        }
-      });
-
       await transaction.shoppingList.update({
         where: { id: listId },
         data: {
@@ -469,33 +447,28 @@ export const ShoppingListRepository = {
         }
       });
 
-      const request = await transaction.adminApprovalRequest.create({
-        data: {
-          workspaceId,
-          requestedById: userId,
-          action: 'PUBLISH_LIVE',
-          targetType: 'SHOPPING_LIST',
-          targetId: listId,
-          reason: `${ownedList.name} was shared publicly by its owner and requires Store approval.`,
-          payload: {
-            source: 'CUSTOMER_SHOPPING_LIST',
-            listName: ownedList.name,
-            description: ownedList.description,
-            itemCount: ownedList._count.items
-          }
+      const request = await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: userId,
+        source: 'CUSTOMER',
+        action: 'PUBLISH_LIVE',
+        targetType: 'SHOPPING_LIST',
+        targetId: listId,
+        reason: `${ownedList.name} was shared publicly by its owner and requires Store approval.`,
+        payload: {
+          source: 'CUSTOMER_SHOPPING_LIST',
+          listName: ownedList.name,
+          description: ownedList.description,
+          itemCount: ownedList._count.items
         }
       });
 
-      await transaction.adminTodo.create({
-        data: {
-          workspaceId,
-          title: 'Review public shopping list',
-          description: `${ownedList.name} contains ${ownedList._count.items} product${ownedList._count.items === 1 ? '' : 's'}.`,
-          source: 'APPROVAL',
-          priority: 'MEDIUM',
-          targetType: 'SHOPPING_LIST',
-          targetId: listId
-        }
+      await notifyShoppingListPublicationSubmitted(transaction, {
+        workspaceId,
+        userId,
+        listId,
+        listName: ownedList.name,
+        eventKey: request.id
       });
 
       await transaction.adminAuditEvent.create({
@@ -548,17 +521,12 @@ export const ShoppingListRepository = {
     }
 
     await prisma.$transaction(async transaction => {
-      await transaction.adminApprovalRequest.updateMany({
-        where: {
-          workspaceId,
-          targetType: 'SHOPPING_LIST',
-          targetId: listId,
-          status: 'PENDING'
-        },
-        data: {
-          status: 'CANCELLED',
-          reviewNote: 'The customer withdrew the list from public review.'
-        }
+      await cancelApprovalRequestsForTarget(transaction, {
+        workspaceId,
+        actorId: userId,
+        targetType: 'SHOPPING_LIST',
+        targetId: listId,
+        note: 'The customer withdrew the list from public review.'
       });
 
       await transaction.shoppingList.update({
@@ -573,7 +541,14 @@ export const ShoppingListRepository = {
         }
       });
 
-      await transaction.adminAuditEvent.create({
+      await completeOperationalTodos(transaction, {
+        workspaceId,
+        source: 'APPROVAL',
+        targetType: 'SHOPPING_LIST',
+        targetId: listId
+      });
+
+      const withdrawalEvent = await transaction.adminAuditEvent.create({
         data: {
           workspaceId,
           actorId: userId,
@@ -582,6 +557,14 @@ export const ShoppingListRepository = {
           targetId: listId,
           summary: `${ownedList.name} was returned to private visibility.`
         }
+      });
+
+      await notifyShoppingListPublicationWithdrawn(transaction, {
+        workspaceId,
+        userId,
+        listId,
+        listName: ownedList.name,
+        eventKey: withdrawalEvent.id
       });
     });
 

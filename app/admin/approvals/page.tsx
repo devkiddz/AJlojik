@@ -1,205 +1,164 @@
 import {
+  AlertTriangle,
   CheckCircle2,
   Clock3,
-  ListChecks,
+  PauseCircle,
   ShieldCheck,
-  XCircle
+  UsersRound
 } from 'lucide-react';
 
-import { reviewAdminApproval } from '@/features/admin/approvals/actions';
+import { resolveApprovalInspection } from '@/features/admin/approvals/approvalInspectionResolver';
+import { ApprovalOperationsDashboard } from '@/features/admin/approvals/components/ApprovalOperationsDashboard';
+import type {
+  ApprovalOperationsItem,
+  ApprovalReviewerOption
+} from '@/features/admin/approvals/approvalTypes';
 import { getAdminAccess } from '@/features/admin/auth/adminPermissions';
 import { AdminMetric, AdminPage, AdminPageHeader } from '@/features/admin/components';
 import { prisma } from '@/lib/prisma';
 
+const REVIEWER_ROLES = ['SUPPORT', 'MANAGER', 'ADMIN', 'OWNER', 'SUPER_ADMIN'] as const;
+
+async function resolveInspectionsInBatches<T, TResult>(
+  items: T[],
+  resolver: (item: T) => Promise<TResult>,
+  batchSize = 12
+): Promise<TResult[]> {
+  const resolved: TResult[] = [];
+
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    resolved.push(...(await Promise.all(batch.map(resolver))));
+  }
+
+  return resolved;
+}
+
 export default async function AdminApprovalsPage() {
   const access = await getAdminAccess();
-
   if (!access.permissions.has('approval:view')) {
     throw new Error('Approval access is required.');
   }
 
-  const requests = await prisma.adminApprovalRequest.findMany({
-    where: { workspaceId: access.membership.workspaceId },
-    include: {
-      requestedBy: { select: { name: true, email: true } },
-      reviewedBy: { select: { name: true } }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 150
-  });
+  const now = new Date();
 
-  const shoppingListIds = requests
-    .filter(request => request.targetType === 'SHOPPING_LIST')
-    .map(request => request.targetId);
-
-  const shoppingLists = shoppingListIds.length
-    ? await prisma.shoppingList.findMany({
-        where: {
-          workspaceId: access.membership.workspaceId,
-          id: { in: shoppingListIds }
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          publicationStatus: true,
-          user: { select: { name: true, email: true } },
-          items: {
-            orderBy: { position: 'asc' },
-            take: 4,
-            select: { product: { select: { name: true } } }
-          },
-          _count: { select: { items: true } }
+  const [requests, memberships] = await Promise.all([
+    prisma.adminApprovalRequest.findMany({
+      where: { workspaceId: access.membership.workspaceId },
+      include: {
+        requestedBy: { select: { id: true, name: true, email: true } },
+        reviewedBy: { select: { id: true, name: true } },
+        assignedReviewer: { select: { id: true, name: true, email: true } },
+        events: {
+          include: { actor: { select: { id: true, name: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 100
         }
-      })
-    : [];
+      },
+      orderBy: [{ priority: 'desc' }, { dueAt: 'asc' }, { createdAt: 'desc' }],
+      take: 120
+    }),
+    prisma.workspaceMembership.findMany({
+      where: {
+        workspaceId: access.membership.workspaceId,
+        active: true,
+        role: { in: [...REVIEWER_ROLES] },
+        user: { accountState: 'ACTIVE' }
+      },
+      select: {
+        role: true,
+        user: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: [{ role: 'desc' }, { user: { name: 'asc' } }]
+    })
+  ]);
 
-  const shoppingListById = new Map(shoppingLists.map(list => [list.id, list]));
-  const pending = requests.filter(request => request.status === 'PENDING').length;
-  const approved = requests.filter(request => ['APPROVED', 'EXECUTED'].includes(request.status)).length;
-  const rejected = requests.filter(request => request.status === 'REJECTED').length;
+  const inspections = await resolveInspectionsInBatches(
+    requests,
+    request =>
+      resolveApprovalInspection(prisma, {
+        workspaceId: access.membership.workspaceId,
+        targetType: request.targetType,
+        targetId: request.targetId
+      })
+  );
+
+  const items: ApprovalOperationsItem[] = requests.map((request, index) => ({
+    id: request.id,
+    source: request.source,
+    priority: request.priority,
+    action: request.action,
+    targetType: request.targetType,
+    targetId: request.targetId,
+    reason: request.reason,
+    payload: request.payload,
+    status: request.status,
+    reviewNote: request.reviewNote,
+    internalNote: request.internalNote,
+    revision: request.revision,
+    dueAt: request.dueAt?.toISOString() ?? null,
+    holdUntil: request.holdUntil?.toISOString() ?? null,
+    inspectionStartedAt: request.inspectionStartedAt?.toISOString() ?? null,
+    reviewedAt: request.reviewedAt?.toISOString() ?? null,
+    executedAt: request.executedAt?.toISOString() ?? null,
+    pausedAt: request.pausedAt?.toISOString() ?? null,
+    reactivatedAt: request.reactivatedAt?.toISOString() ?? null,
+    revertedAt: request.revertedAt?.toISOString() ?? null,
+    expiredAt: request.expiredAt?.toISOString() ?? null,
+    createdAt: request.createdAt.toISOString(),
+    updatedAt: request.updatedAt.toISOString(),
+    requestedBy: request.requestedBy,
+    reviewedBy: request.reviewedBy,
+    assignedReviewer: request.assignedReviewer,
+    inspection: inspections[index]!,
+    events: request.events.map(event => ({
+      id: event.id,
+      type: event.type,
+      fromStatus: event.fromStatus,
+      toStatus: event.toStatus,
+      note: event.note,
+      createdAt: event.createdAt.toISOString(),
+      actor: event.actor
+    }))
+  }));
+
+  const reviewers: ApprovalReviewerOption[] = memberships.map(membership => ({
+    id: membership.user.id,
+    name: membership.user.name,
+    email: membership.user.email,
+    role: membership.role
+  }));
+
+  const active = requests.filter(request => ['PENDING', 'IN_INSPECTION', 'ON_HOLD', 'CHANGES_REQUESTED'].includes(request.status));
+  const overdue = active.filter(request => request.dueAt && request.dueAt < now).length;
+  const completed = requests.filter(request => ['APPROVED', 'EXECUTED'].includes(request.status)).length;
+  const paused = requests.filter(request => ['ON_HOLD', 'PAUSED', 'CHANGES_REQUESTED'].includes(request.status)).length;
 
   return (
     <AdminPage>
       <div className="space-y-5">
         <AdminPageHeader
-          eyebrow="Moderation and governance"
-          title="Approval Studio"
-          description="Review controlled catalogue, campaign, vendor and customer shopping-list publication requests from one queue."
+          eyebrow="Operations governance"
+          title="Approval Operations Studio"
+          description="Inspect, assign, deadline, hold, revise, approve, pause, reactivate, reject and safely revert Customer, Vendor and administrative requests from one lifecycle authority."
         />
 
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminMetric icon={Clock3} label="Pending" value={pending} />
-          <AdminMetric icon={CheckCircle2} label="Approved or executed" value={approved} />
-          <AdminMetric icon={XCircle} label="Rejected" value={rejected} />
-          <AdminMetric icon={ShieldCheck} label="Total requests" value={requests.length} />
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <AdminMetric icon={Clock3} label="Active queue" value={active.length} />
+          <AdminMetric icon={AlertTriangle} label="Overdue" value={overdue} />
+          <AdminMetric icon={CheckCircle2} label="Approved or executed" value={completed} />
+          <AdminMetric icon={PauseCircle} label="Held or paused" value={paused} />
+          <AdminMetric icon={UsersRound} label="Reviewers" value={reviewers.length} />
+          <AdminMetric icon={ShieldCheck} label="All requests" value={requests.length} />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
-          {requests.map(request => {
-            const shoppingList =
-              request.targetType === 'SHOPPING_LIST'
-                ? shoppingListById.get(request.targetId)
-                : undefined;
-
-            return (
-              <article
-                key={request.id}
-                className="rounded-[1.75rem] border border-border/60 bg-card/75 p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-                      {request.targetType} · {request.action.replaceAll('_', ' ')}
-                    </p>
-                    <h2 className="mt-2 text-sm font-black">{request.reason}</h2>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Requested by {request.requestedBy.name} ·{' '}
-                      {request.createdAt.toLocaleString('en-NG')}
-                    </p>
-                  </div>
-                  <StatusBadge status={request.status} />
-                </div>
-
-                {shoppingList ? (
-                  <div className="mt-4 rounded-2xl border bg-background/65 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-primary">
-                          <ListChecks className="size-4" />
-                          <span className="text-xs font-bold uppercase tracking-[0.12em]">
-                            Customer public list
-                          </span>
-                        </div>
-                        <h3 className="mt-2 truncate font-bold">{shoppingList.name}</h3>
-                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                          {shoppingList.description ?? 'No description supplied.'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-full border px-2.5 py-1">
-                        {shoppingList._count.items} products
-                      </span>
-                      <span className="rounded-full border px-2.5 py-1">
-                        Owner: {shoppingList.user.name}
-                      </span>
-                      <span className="rounded-full border px-2.5 py-1">
-                        {shoppingList.publicationStatus.replaceAll('_', ' ')}
-                      </span>
-                    </div>
-                    {shoppingList.items.length ? (
-                      <div className="mt-3 space-y-1.5">
-                        {shoppingList.items.map((item, index) => (
-                          <p key={`${item.product.name}-${index}`} className="text-xs text-muted-foreground">
-                            {index + 1}. {item.product.name}
-                          </p>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {request.reviewNote ? (
-                  <p className="mt-4 rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
-                    {request.reviewNote}
-                  </p>
-                ) : null}
-
-                {request.status === 'PENDING' && access.permissions.has('approval:review') ? (
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    <Decision id={request.id} decision="APPROVED" />
-                    <Decision id={request.id} decision="REJECTED" />
-                  </div>
-                ) : null}
-
-                {request.reviewedBy ? (
-                  <p className="mt-4 text-[10px] text-muted-foreground">
-                    Reviewed by {request.reviewedBy.name}
-                  </p>
-                ) : null}
-              </article>
-            );
-          })}
-        </section>
+        <ApprovalOperationsDashboard
+          items={items}
+          reviewers={reviewers}
+          canReview={access.permissions.has('approval:review')}
+          nowTimestamp={now.getTime()}
+        />
       </div>
     </AdminPage>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const className =
-    status === 'PENDING'
-      ? 'bg-amber-500/10 text-amber-600'
-      : status === 'REJECTED'
-        ? 'bg-rose-500/10 text-rose-600'
-        : 'bg-emerald-500/10 text-emerald-600';
-
-  return (
-    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${className}`}>
-      {status}
-    </span>
-  );
-}
-
-function Decision({ id, decision }: { id: string; decision: 'APPROVED' | 'REJECTED' }) {
-  return (
-    <form action={reviewAdminApproval} className="rounded-2xl border border-border/60 p-3">
-      <input type="hidden" name="id" value={id} />
-      <input type="hidden" name="decision" value={decision} />
-      <textarea
-        name="reviewNote"
-        rows={2}
-        placeholder={`${decision === 'APPROVED' ? 'Approval' : 'Rejection'} note`}
-        className="w-full resize-none rounded-xl border border-border/60 bg-background p-2 text-xs outline-none"
-      />
-      <button
-        className={
-          decision === 'APPROVED'
-            ? 'mt-2 h-9 w-full rounded-full bg-foreground text-xs font-bold text-background'
-            : 'mt-2 h-9 w-full rounded-full border border-border text-xs font-bold'
-        }>
-        {decision === 'APPROVED' ? 'Approve and publish' : 'Reject request'}
-      </button>
-    </form>
   );
 }

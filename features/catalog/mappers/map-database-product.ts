@@ -16,6 +16,14 @@ type DatabaseProductWithRelations = DatabaseProduct & {
   subcategory: { slug: string } | null;
   images: ProductImage[];
   variants: DatabaseVariant[];
+  vendorProfile: {
+    id: string;
+    slug: string;
+    name: string;
+    logoMediaAsset: {
+      secureUrl: string;
+    } | null;
+  } | null;
 };
 
 export function mapDatabaseProduct(
@@ -35,6 +43,23 @@ export function mapDatabaseProduct(
     id: product.id,
     slug: product.slug,
     name: product.name,
+
+    ownership: product.vendorProfile ? 'vendor' : 'platform',
+
+    ...(product.vendorProfile
+      ? {
+          merchant: {
+            id: product.vendorProfile.id,
+            slug: product.vendorProfile.slug,
+            name: product.vendorProfile.name,
+            ...(product.vendorProfile.logoMediaAsset?.secureUrl
+              ? {
+                  logoUrl: product.vendorProfile.logoMediaAsset.secureUrl
+                }
+              : {})
+          }
+        }
+      : {}),
 
     shortDescription:
       product.shortDescription ?? '',

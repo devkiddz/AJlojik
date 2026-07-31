@@ -972,9 +972,10 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
   {
     id: 'notification-settings',
     groupId: 'settings',
+    componentKey: 'notification-runtime',
     layout: 'summary',
     title: 'Notifications',
-    description: 'Manage alerts, delivery updates, and offers.',
+    description: 'Verified in-app commerce and operational updates.',
     defaultPriority: 100,
     pagePriority: {
       settings: 250,
@@ -984,12 +985,12 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
     meta: 'Alerts',
     stats: [
       {
-        label: 'Push',
-        value: 'Enabled'
+        label: 'In-app',
+        value: 'Database-backed'
       },
       {
-        label: 'Deals',
-        value: 'On'
+        label: 'Push',
+        value: 'Not enabled'
       }
     ],
     action: {

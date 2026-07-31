@@ -10,6 +10,11 @@ import type {
 export const productMappingInclude = {
   category: true,
   subcategory: true,
+  vendorProfile: {
+    include: {
+      logoMediaAsset: true
+    }
+  },
 
   images: {
     orderBy: {
@@ -110,6 +115,23 @@ export function mapProductRecord(
     id: product.id,
     slug: product.slug,
     name: product.name,
+
+    ownership: product.vendorProfile ? 'vendor' : 'platform',
+
+    ...(product.vendorProfile
+      ? {
+          merchant: {
+            id: product.vendorProfile.id,
+            slug: product.vendorProfile.slug,
+            name: product.vendorProfile.name,
+            ...(product.vendorProfile.logoMediaAsset?.secureUrl
+              ? {
+                  logoUrl: product.vendorProfile.logoMediaAsset.secureUrl
+                }
+              : {})
+          }
+        }
+      : {}),
 
     shortDescription:
       product.shortDescription ??

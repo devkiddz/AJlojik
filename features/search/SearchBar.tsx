@@ -38,7 +38,7 @@ export default function SearchBar() {
     function handleClick(event: MouseEvent) {
       // 🚀 MOBILE SAFEGUARD: If the viewport width is less than 1024px (lg breakpoint),
       // do absolutely nothing! The mobile full-screen view handles its own boundaries.
-      if (window.innerWidth < 1024) return;
+      if (window.innerWidth < 1280) return;
 
       const target = event.target as HTMLElement;
       if (!wrapperRef.current) return;
@@ -106,7 +106,7 @@ export default function SearchBar() {
           </Button>
         )}
 
-        <kbd className="mr-2 hidden rounded-md border bg-muted px-2 py-1 text-[10px] text-muted-foreground lg:block">
+        <kbd className="mr-2 hidden rounded-md border bg-muted px-2 py-1 text-[10px] text-muted-foreground xl:block">
           Ctrl K
         </kbd>
       </form>

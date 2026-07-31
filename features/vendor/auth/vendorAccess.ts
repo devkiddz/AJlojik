@@ -3,6 +3,7 @@ import 'server-only';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { resolveCommerceCapabilities } from '@/features/commerce-mode';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -40,7 +41,7 @@ async function resolveVendorAccess(requestHeaders: Headers) {
       vendor: {
         active: true,
         status: 'ACTIVE',
-        workspace: { active: true, commerceMode: 'MULTI_VENDOR' }
+        workspace: { active: true }
       }
     },
     include: { vendor: { include: { workspace: true } } },
@@ -48,11 +49,24 @@ async function resolveVendorAccess(requestHeaders: Headers) {
   });
   if (!membership) return null;
 
+  const capabilities = resolveCommerceCapabilities(
+    membership.vendor.workspace.commerceMode,
+    {
+      vendorApplicationsOpen:
+        membership.vendor.workspace.vendorApplicationsOpen
+    }
+  );
+
+  if (!capabilities.vendorStudioAllowed) {
+    return null;
+  }
+
   return {
     session,
     membership,
     vendor: membership.vendor,
     workspace: membership.vendor.workspace,
+    capabilities,
     permissions: new Set<VendorPermission>(permissionsByRole[membership.role])
   };
 }

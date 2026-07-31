@@ -49,11 +49,7 @@ export default function CollectionSection({
     }
   };
 
-  const isTonightsPour = collection.slug === 'tonights-pour';
-
-  const showBanner = !isTonightsPour && presentation.banner.visible && Boolean(collection.banner);
-
-  const productCount = products.length;
+  const showBanner = presentation.banner.visible && Boolean(collection.banner);
 
   return (
     <section
@@ -63,7 +59,7 @@ export default function CollectionSection({
         'bg-card shadow-lg'
       )}>
       {showBanner && collection.banner ? (
-        <CollectionBanner banner={collection.banner} title={collection.title} count={productCount} />
+        <CollectionBanner banner={collection.banner} title={collection.title} />
       ) : null}
 
       <div className="min-w-0 px-3 py-4 sm:px-4">

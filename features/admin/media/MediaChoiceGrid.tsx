@@ -3,6 +3,11 @@
 import { FileImage, FileVideo2, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  StudioMediaCropDialog,
+  mergeStudioCropRecipeMetadata
+} from '@/features/studio-controls';
+import type { StudioCropPurpose } from '@/features/studio-controls';
 import { cn } from '@/lib/utils';
 import { MediaQuickUploader } from './MediaQuickUploader';
 import type {
@@ -13,6 +18,16 @@ import type {
 } from './mediaUploadClient';
 
 export type MediaChoiceAsset = StudioMediaAsset;
+
+function cropPurposeForMediaPurpose(purpose: StudioMediaPurpose): StudioCropPurpose {
+  if (purpose === 'products') return 'product-square';
+  if (purpose === 'banners') return 'banner-desktop';
+  if (purpose === 'stories') return 'story';
+  if (purpose === 'reels') return 'reel-cover';
+  if (purpose === 'collections') return 'collection-cover';
+  if (purpose === 'promotions') return 'promotion-banner';
+  return 'product-gallery';
+}
 
 function isAccepted(
   asset: MediaChoiceAsset,
@@ -32,6 +47,7 @@ export function MediaChoiceGrid({
   canUpload = true,
   uploadAccept = 'image-and-video',
   acceptedResourceTypes = ['IMAGE', 'VIDEO'],
+  cropPurpose,
   autoSelectUploaded = true,
   onSelectionChange,
   onAssetUploaded
@@ -46,6 +62,7 @@ export function MediaChoiceGrid({
   canUpload?: boolean;
   uploadAccept?: StudioMediaAccept;
   acceptedResourceTypes?: StudioMediaResourceType[];
+  cropPurpose?: StudioCropPurpose;
   autoSelectUploaded?: boolean;
   onSelectionChange?: (ids: string[]) => void;
   onAssetUploaded?: (asset: MediaChoiceAsset) => void;
@@ -163,11 +180,8 @@ export function MediaChoiceGrid({
             const selected = selectedIds.includes(asset.id);
 
             return (
-              <button
+              <div
                 key={asset.id}
-                type="button"
-                onClick={() => select(asset.id)}
-                aria-pressed={selected}
                 className={cn(
                   'group relative aspect-square overflow-hidden rounded-2xl border bg-muted text-left transition',
                   selected
@@ -175,37 +189,48 @@ export function MediaChoiceGrid({
                     : 'border-border/60 opacity-80 hover:opacity-100'
                 )}
               >
+                <button type="button" onClick={() => select(asset.id)} aria-pressed={selected} className="absolute inset-0 z-0">
+                  <span className="sr-only">Select {asset.displayName ?? asset.originalFilename ?? asset.id}</span>
+                </button>
                 {asset.resourceType === 'VIDEO' ? (
-                  <video
-                    src={asset.secureUrl}
-                    muted
-                    playsInline
-                    preload="metadata"
-                    className="size-full object-cover"
-                  />
+                  <video src={asset.secureUrl} muted playsInline preload="metadata" className="pointer-events-none size-full object-cover" />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={asset.secureUrl} alt="" className="size-full object-cover" />
+                  <img src={asset.secureUrl} alt="" className="pointer-events-none size-full object-cover" />
                 )}
-
-                <span className="absolute left-2 top-2 grid size-7 place-items-center rounded-xl bg-black/55 text-white backdrop-blur-md">
-                  {asset.resourceType === 'VIDEO' ? (
-                    <FileVideo2 className="size-3.5" />
-                  ) : (
-                    <FileImage className="size-3.5" />
-                  )}
+                <span className="pointer-events-none absolute left-2 top-2 grid size-7 place-items-center rounded-xl bg-black/55 text-white backdrop-blur-md">
+                  {asset.resourceType === 'VIDEO' ? <FileVideo2 className="size-3.5" /> : <FileImage className="size-3.5" />}
                 </span>
-
-                <span className="absolute inset-x-0 bottom-0 truncate bg-black/70 px-2 py-1.5 text-[8px] font-bold text-white">
-                  {asset.displayName ?? asset.originalFilename ?? asset.id}
-                </span>
-
-                {selected ? (
-                  <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-1 text-[7px] font-black text-primary-foreground">
-                    SELECTED
+                {asset.resourceType === 'IMAGE' ? (
+                  <span className="absolute right-2 top-2 z-10">
+                    <StudioMediaCropDialog
+                      assetId={asset.id}
+                      imageUrl={asset.secureUrl}
+                      metadata={asset.metadata}
+                      apiBasePath={apiBasePath}
+                      initialPurpose={cropPurpose ?? cropPurposeForMediaPurpose(purpose)}
+                      compact
+                      onSaved={recipe => {
+                        setAssets(current =>
+                          current.map(item =>
+                            item.id === asset.id
+                              ? {
+                                  ...item,
+                                  metadata: mergeStudioCropRecipeMetadata(
+                                    item.metadata,
+                                    recipe
+                                  )
+                                }
+                              : item
+                          )
+                        );
+                      }}
+                    />
                   </span>
                 ) : null}
-              </button>
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-black/70 px-2 py-1.5 text-[8px] font-bold text-white">{asset.displayName ?? asset.originalFilename ?? asset.id}</span>
+                {selected ? <span className="pointer-events-none absolute left-2 top-11 rounded-full bg-primary px-2 py-1 text-[7px] font-black text-primary-foreground">SELECTED</span> : null}
+              </div>
             );
           })}
         </div>

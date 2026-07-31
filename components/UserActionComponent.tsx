@@ -7,6 +7,7 @@ import {
 } from 'next/navigation';
 
 import {
+  Bell,
   CreditCard,
   Heart,
   LogIn,
@@ -40,8 +41,8 @@ import {
 } from '@/features/cart';
 
 import {
-  PWAInstallControl
-} from '@/features/pwa';
+  useNotificationSummary
+} from '@/features/notifications';
 
 import {
   WorkspaceSwitcher
@@ -186,6 +187,11 @@ export default function UserActionComponent() {
   const [open, setOpen] = React.useState(false);
   const [signingOut, setSigningOut] = React.useState(false);
 
+  const {
+    unreadCount,
+    loading: notificationsLoading
+  } = useNotificationSummary(1, open);
+
   React.useEffect(() => {
     const closeSheet = () => {
       setOpen(false);
@@ -321,10 +327,6 @@ export default function UserActionComponent() {
               aria-live="polite"
             />
 
-            <div className="lg:hidden">
-              <PWAInstallControl presentation="account-sheet" />
-            </div>
-
             <div className="space-y-1">
               <MenuItem
                 icon={<User className="size-4" />}
@@ -366,6 +368,22 @@ export default function UserActionComponent() {
                 disabled={!isAuthenticated}
                 onClick={() =>
                   navigateTo('/orders')
+                }
+              />
+
+              <MenuItem
+                icon={<Bell className="size-4" />}
+                label="Notifications"
+                badge={
+                  notificationsLoading
+                    ? '…'
+                    : unreadCount > 99
+                      ? '99+'
+                      : unreadCount
+                }
+                disabled={!isAuthenticated}
+                onClick={() =>
+                  navigateTo('/notifications')
                 }
               />
 

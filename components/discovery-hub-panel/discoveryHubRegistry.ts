@@ -2,6 +2,8 @@ import type {
   ComponentType
 } from 'react';
 
+import { NotificationHubWidget } from '@/features/notifications';
+
 import ActiveDeliveryWidget from './widgets/ActiveDeliveryWidget';
 
 import CartSummaryWidget from './widgets/CartSummaryWidget';
@@ -59,5 +61,9 @@ export const discoveryHubRegistry =
     [
       'shopping-lists-runtime',
       ShoppingListsWidget
+    ],
+    [
+      'notification-runtime',
+      NotificationHubWidget
     ]
   ]);

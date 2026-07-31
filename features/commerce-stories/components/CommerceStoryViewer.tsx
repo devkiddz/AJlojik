@@ -369,6 +369,7 @@ export function CommerceStoryViewer({
                     setMediaFailed(true);
                     setPlaying(false);
                   }}
+                  style={{ objectPosition: activeStory.mediaObjectPosition }}
                   onTimeUpdate={event => {
                     const video = event.currentTarget;
 
@@ -392,6 +393,7 @@ export function CommerceStoryViewer({
                     setMediaFailed(true);
                     setPlaying(false);
                   }}
+                  style={{ objectPosition: activeStory.mediaObjectPosition }}
                   className="object-contain sm:object-cover"
                 />
               )}

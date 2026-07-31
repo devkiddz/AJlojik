@@ -1,6 +1,10 @@
 import 'server-only';
 
+import { resolveCommerceCapabilities } from '@/features/commerce-mode';
 import { prisma } from '@/lib/prisma';
+import {
+  resolveStudioCroppedMedia
+} from '@/features/studio-controls/cropMetadata';
 
 import type {
   StoreStudioAction,
@@ -50,6 +54,11 @@ export async function getStoreStudioProjection(
     where: { id: workspaceId },
     select: { commerceMode: true }
   });
+
+  const vendorCampaignsVisible = workspace
+    ? resolveCommerceCapabilities(workspace.commerceMode)
+        .vendorCampaignsVisible
+    : false;
 
   const campaigns =
     await prisma.storeStudioCampaign.findMany({
@@ -101,6 +110,13 @@ export async function getStoreStudioProjection(
 
           orderBy: {
             position: 'asc'
+          },
+
+          include: {
+            mediaAsset: { select: { metadata: true } },
+            mobileMediaAsset: { select: { metadata: true } },
+            coverMediaAsset: { select: { metadata: true } },
+            posterMediaAsset: { select: { metadata: true } }
           }
         },
 
@@ -135,7 +151,12 @@ export async function getStoreStudioProjection(
     StoreStudioProjection['reels'] = [];
 
   for (const campaign of campaigns) {
-    if (campaign.vendorProfileId && (workspace?.commerceMode !== 'MULTI_VENDOR' || campaign.vendorProfile?.status !== 'ACTIVE' || !campaign.vendorProfile.active)) {
+    if (
+      campaign.vendorProfileId &&
+      (!vendorCampaignsVisible ||
+        campaign.vendorProfile?.status !== 'ACTIVE' ||
+        !campaign.vendorProfile.active)
+    ) {
       continue;
     }
     const campaignPriority =
@@ -154,6 +175,26 @@ export async function getStoreStudioProjection(
       if (
         campaign.type === 'BANNER'
       ) {
+        const desktopMedia = resolveStudioCroppedMedia(
+          asset.mediaUrl,
+          asset.mediaAsset?.metadata,
+          'banner-desktop'
+        );
+        const mobileMedia = asset.mobileMediaUrl
+          ? resolveStudioCroppedMedia(
+              asset.mobileMediaUrl,
+              asset.mobileMediaAsset?.metadata,
+              'banner-mobile'
+            )
+          : null;
+        const posterMedia = asset.posterUrl
+          ? resolveStudioCroppedMedia(
+              asset.posterUrl,
+              asset.posterMediaAsset?.metadata,
+              'video-poster'
+            )
+          : null;
+
         banners.push({
           id: asset.id,
           campaignId: campaign.id,
@@ -164,13 +205,22 @@ export async function getStoreStudioProjection(
               : 'image',
 
           mediaUrl:
-            asset.mediaUrl,
+            desktopMedia.url,
 
           mobileMediaUrl:
-            asset.mobileMediaUrl,
+            mobileMedia?.url ?? asset.mobileMediaUrl,
 
           posterUrl:
-            asset.posterUrl,
+            posterMedia?.url ?? asset.posterUrl,
+
+          desktopObjectPosition:
+            desktopMedia.objectPosition,
+
+          mobileObjectPosition:
+            mobileMedia?.objectPosition,
+
+          posterObjectPosition:
+            posterMedia?.objectPosition,
 
           eyebrow:
             asset.eyebrow,
@@ -208,6 +258,35 @@ export async function getStoreStudioProjection(
       if (
         campaign.type === 'STORY'
       ) {
+        const storyMedia = resolveStudioCroppedMedia(
+          asset.mediaUrl,
+          asset.mediaAsset?.metadata,
+          'story'
+        );
+        const coverSource =
+          asset.coverUrl ?? asset.posterUrl ?? asset.mediaUrl;
+        const coverMetadata =
+          asset.coverMediaAsset?.metadata ??
+          asset.posterMediaAsset?.metadata ??
+          asset.mediaAsset?.metadata;
+        const coverPurpose = asset.coverUrl
+          ? 'story'
+          : asset.posterUrl
+            ? 'video-poster'
+            : 'story';
+        const storyCover = resolveStudioCroppedMedia(
+          coverSource,
+          coverMetadata,
+          coverPurpose
+        );
+        const storyPoster = asset.posterUrl
+          ? resolveStudioCroppedMedia(
+              asset.posterUrl,
+              asset.posterMediaAsset?.metadata,
+              'video-poster'
+            )
+          : null;
+
         stories.push({
           id: asset.id,
           campaignId: campaign.id,
@@ -236,15 +315,22 @@ export async function getStoreStudioProjection(
               : 'image',
 
           mediaUrl:
-            asset.mediaUrl,
+            storyMedia.url,
 
           coverUrl:
-            asset.coverUrl ??
-            asset.posterUrl ??
-            asset.mediaUrl,
+            storyCover.url,
 
           posterUrl:
-            asset.posterUrl,
+            storyPoster?.url ?? asset.posterUrl,
+
+          mediaObjectPosition:
+            storyMedia.objectPosition,
+
+          coverObjectPosition:
+            storyCover.objectPosition,
+
+          posterObjectPosition:
+            storyPoster?.objectPosition,
 
           durationMs:
             resolveDurationMs(
@@ -276,6 +362,16 @@ export async function getStoreStudioProjection(
         campaign.type === 'REEL' &&
         asset.mediaType === 'VIDEO'
       ) {
+        const reelPosterSource = asset.posterUrl ?? asset.coverUrl;
+        const reelPoster = reelPosterSource
+          ? resolveStudioCroppedMedia(
+              reelPosterSource,
+              asset.posterMediaAsset?.metadata ??
+                asset.coverMediaAsset?.metadata,
+              asset.posterMediaAsset ? 'video-poster' : 'reel-cover'
+            )
+          : null;
+
         reels.push({
           id: asset.id,
           campaignId: campaign.id,
@@ -301,8 +397,10 @@ export async function getStoreStudioProjection(
             asset.mediaUrl,
 
           posterUrl:
-            asset.posterUrl ??
-            asset.coverUrl,
+            reelPoster?.url ?? reelPosterSource,
+
+          posterObjectPosition:
+            reelPoster?.objectPosition,
 
           durationMs:
             asset.durationSeconds &&

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { resolveCommerceCapabilities } from '@/features/commerce-mode';
 import {
   mapProductRecord,
   productMappingInclude
@@ -91,9 +92,32 @@ export async function getStoreReelDetail(
     return null;
   }
 
-  if (asset.campaign.vendorProfileId && (asset.campaign.workspace.commerceMode !== 'MULTI_VENDOR' || asset.campaign.vendorProfile?.status !== 'ACTIVE' || !asset.campaign.vendorProfile.active)) {
+  const capabilities = resolveCommerceCapabilities(
+    asset.campaign.workspace.commerceMode
+  );
+  const vendorCatalogVisible = capabilities.vendorCatalogVisible;
+
+  if (
+    asset.campaign.vendorProfileId &&
+    (!capabilities.vendorCampaignsVisible ||
+      asset.campaign.vendorProfile?.status !== 'ACTIVE' ||
+      !asset.campaign.vendorProfile.active)
+  ) {
     return null;
   }
+
+  const productOwnershipWhere = vendorCatalogVisible
+    ? {
+        OR: [
+          { vendorProfileId: null },
+          {
+            vendorProfile: {
+              is: { active: true, status: 'ACTIVE' as const }
+            }
+          }
+        ]
+      }
+    : { vendorProfileId: null };
 
   const productRecord = asset.productId
     ? await prisma.product.findFirst({
@@ -102,15 +126,7 @@ export async function getStoreReelDetail(
           workspaceId: asset.campaign.workspaceId,
           active: true,
           status: 'PUBLISHED',
-          OR: [
-            { vendorProfileId: null },
-            {
-              vendorProfile: {
-                is: { active: true, status: 'ACTIVE' }
-              },
-              workspace: { commerceMode: 'MULTI_VENDOR' }
-            }
-          ]
+          ...productOwnershipWhere
         },
         include: productMappingInclude
       })

@@ -13,6 +13,9 @@ export type AdminPermission =
   | 'inventory:manage'
   | 'activity:view'
   | 'analytics:view'
+  | 'todo:view'
+  | 'todo:manage'
+  | 'todo:assign'
   | 'delivery:view'
   | 'order:view'
   | 'order:manage'
@@ -56,6 +59,8 @@ const levelOne: AdminPermission[] = [
   'inventory:view',
   'activity:view',
   'analytics:view',
+  'todo:view',
+  'todo:manage',
   'delivery:view',
   'order:view',
   'customer:view',
@@ -84,7 +89,8 @@ const levelTwo: AdminPermission[] = [
   'featured:manage',
   'deletion:request',
   'delivery:update:request',
-  'delivery:update:routine'
+  'delivery:update:routine',
+  'todo:assign'
 ];
 
 const levelThree: AdminPermission[] = [

@@ -1,20 +1,16 @@
 import 'server-only';
 
+import {
+  ACTIVE_ADMIN_TODO_STATUSES
+} from '@/features/admin/todos/adminTodoConstants';
+import {
+  upsertOperationalTodo
+} from '@/features/admin/todos/adminTodoRepository';
 import { prisma } from '@/lib/prisma';
 
-const ACTIVE_TODO_STATUSES = ['OPEN', 'IN_PROGRESS', 'BLOCKED'] as const;
-
-export async function generateAdminTodos(workspaceId: string): Promise<void> {
-  if (
-    !prisma.productVariant?.findMany ||
-    !prisma.delivery?.findMany ||
-    !prisma.adminTodo?.findFirst ||
-    !prisma.adminTodo?.create
-  ) {
-    console.warn('Admin todo generation is waiting for the latest Prisma client.');
-    return;
-  }
-
+export async function generateAdminTodos(
+  workspaceId: string
+): Promise<void> {
   const [inventoryCandidates, delayedDeliveries] = await Promise.all([
     prisma.productVariant.findMany({
       where: {
@@ -60,7 +56,7 @@ export async function generateAdminTodos(workspaceId: string): Promise<void> {
     })
   ]).catch(error => {
     console.error(
-      'Admin todo generation skipped because operational data is unavailable.',
+      'Admin Todo generation skipped because operational data is unavailable.',
       error
     );
 
@@ -99,142 +95,141 @@ export async function generateAdminTodos(workspaceId: string): Promise<void> {
 
   const lowStockProductIds = [...lowStockProducts.keys()];
   const delayedDeliveryIds = delayedDeliveries.map(delivery => delivery.id);
+  const inventoryScanComplete = inventoryCandidates.length < 250;
+  const deliveryScanComplete = delayedDeliveries.length < 50;
   const completedAt = new Date();
 
   await prisma.$transaction(async transaction => {
-    await transaction.adminTodo.updateMany({
-      where: {
-        workspaceId,
-        source: 'INVENTORY',
-        targetType: 'PRODUCT',
-        status: {
-          in: [...ACTIVE_TODO_STATUSES]
-        },
-        ...(lowStockProductIds.length
-          ? {
-              targetId: {
-                notIn: lowStockProductIds
-              }
-            }
-          : {})
-      },
-      data: {
-        status: 'COMPLETED',
-        completedAt
-      }
-    });
-
-    await transaction.adminTodo.updateMany({
-      where: {
-        workspaceId,
-        source: 'DELIVERY',
-        targetType: 'DELIVERY',
-        status: {
-          in: [...ACTIVE_TODO_STATUSES]
-        },
-        ...(delayedDeliveryIds.length
-          ? {
-              targetId: {
-                notIn: delayedDeliveryIds
-              }
-            }
-          : {})
-      },
-      data: {
-        status: 'COMPLETED',
-        completedAt
-      }
-    });
-
-    for (const item of lowStockProducts.values()) {
-      const existing = await transaction.adminTodo.findFirst({
+    if (inventoryScanComplete) {
+      await transaction.adminTodo.updateMany({
         where: {
           workspaceId,
           source: 'INVENTORY',
           targetType: 'PRODUCT',
-          targetId: item.productId,
           status: {
-            in: [...ACTIVE_TODO_STATUSES]
-          }
+            in: [...ACTIVE_ADMIN_TODO_STATUSES]
+          },
+          ...(lowStockProductIds.length
+            ? {
+                targetId: {
+                  notIn: lowStockProductIds
+                }
+              }
+            : {})
         },
-        select: {
-          id: true
+        data: {
+          status: 'COMPLETED',
+          completedAt,
+          dismissedAt: null,
+          snoozedUntil: null,
+          activeDedupeKey: null
         }
       });
 
-      const description = `${item.quantity} units remain; reorder level is ${item.reorderLevel}.`;
-      const priority = item.quantity <= 0 ? 'URGENT' : 'HIGH';
-
-      if (existing) {
-        await transaction.adminTodo.update({
-          where: {
-            id: existing.id
+      await transaction.adminTodo.updateMany({
+        where: {
+          workspaceId,
+          source: 'INVENTORY',
+          targetType: 'PRODUCT',
+          status: 'DISMISSED',
+          activeDedupeKey: {
+            not: null
           },
-          data: {
-            title: `Restock ${item.productName}`,
-            description,
-            priority,
-            completedAt: null
-          }
-        });
-      } else {
-        await transaction.adminTodo.create({
-          data: {
-            workspaceId,
-            title: `Restock ${item.productName}`,
-            description,
-            source: 'INVENTORY',
-            priority,
-            targetType: 'PRODUCT',
-            targetId: item.productId
-          }
-        });
-      }
+          ...(lowStockProductIds.length
+            ? {
+                targetId: {
+                  notIn: lowStockProductIds
+                }
+              }
+            : {})
+        },
+        data: {
+          activeDedupeKey: null
+        }
+      });
     }
 
-    for (const delivery of delayedDeliveries) {
-      const existing = await transaction.adminTodo.findFirst({
+    if (deliveryScanComplete) {
+      await transaction.adminTodo.updateMany({
         where: {
           workspaceId,
           source: 'DELIVERY',
           targetType: 'DELIVERY',
-          targetId: delivery.id,
           status: {
-            in: [...ACTIVE_TODO_STATUSES]
-          }
+            in: [...ACTIVE_ADMIN_TODO_STATUSES]
+          },
+          ...(delayedDeliveryIds.length
+            ? {
+                targetId: {
+                  notIn: delayedDeliveryIds
+                }
+              }
+            : {})
         },
-        select: {
-          id: true
+        data: {
+          status: 'COMPLETED',
+          completedAt,
+          dismissedAt: null,
+          snoozedUntil: null,
+          activeDedupeKey: null
         }
       });
 
-      if (existing) {
-        await transaction.adminTodo.update({
-          where: {
-            id: existing.id
+      await transaction.adminTodo.updateMany({
+        where: {
+          workspaceId,
+          source: 'DELIVERY',
+          targetType: 'DELIVERY',
+          status: 'DISMISSED',
+          activeDedupeKey: {
+            not: null
           },
-          data: {
-            title: `Review delayed delivery ${delivery.trackingCode}`,
-            description:
-              'The estimated arrival time has passed while delivery remains active.',
-            priority: 'URGENT',
-            completedAt: null
-          }
-        });
-      } else {
-        await transaction.adminTodo.create({
-          data: {
-            workspaceId,
-            title: `Review delayed delivery ${delivery.trackingCode}`,
-            description:
-              'The estimated arrival time has passed while delivery remains active.',
-            source: 'DELIVERY',
-            priority: 'URGENT',
-            targetType: 'DELIVERY',
-            targetId: delivery.id
-          }
-        });
-      }
+          ...(delayedDeliveryIds.length
+            ? {
+                targetId: {
+                  notIn: delayedDeliveryIds
+                }
+              }
+            : {})
+        },
+        data: {
+          activeDedupeKey: null
+        }
+      });
+    }
+
+    for (const item of lowStockProducts.values()) {
+      await upsertOperationalTodo(transaction, {
+        workspaceId,
+        title: `Restock ${item.productName}`,
+        description: `${item.quantity} units remain; reorder level is ${item.reorderLevel}.`,
+        source: 'INVENTORY',
+        priority: item.quantity <= 0 ? 'URGENT' : 'HIGH',
+        targetType: 'PRODUCT',
+        targetId: item.productId,
+        dedupeKey: `inventory:product:${item.productId}:low-stock`,
+        metadata: {
+          quantity: item.quantity,
+          reorderLevel: item.reorderLevel
+        }
+      });
+    }
+
+    for (const delivery of delayedDeliveries) {
+      await upsertOperationalTodo(transaction, {
+        workspaceId,
+        title: `Review delayed delivery ${delivery.trackingCode}`,
+        description:
+          'The estimated arrival time has passed while delivery remains active.',
+        source: 'DELIVERY',
+        priority: 'URGENT',
+        targetType: 'DELIVERY',
+        targetId: delivery.id,
+        dedupeKey: `delivery:${delivery.id}:delayed`,
+        metadata: {
+          trackingCode: delivery.trackingCode
+        }
+      });
     }
   });
 }

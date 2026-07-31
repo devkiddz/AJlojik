@@ -80,6 +80,12 @@ function routeTitle(
     case 'promotion':
       return 'Promotion';
 
+    case 'collection':
+      return 'Collections';
+
+    case 'shop':
+      return 'Merchant storefront';
+
     case 'reel':
       return 'Reel experience';
 
@@ -378,6 +384,67 @@ export function resolveCustomerRouteIntent(
 
       title:
         'Product experience',
+
+      createdAt
+    };
+  }
+
+  if (
+    pathname === '/shops' ||
+    pathname.startsWith('/shops/')
+  ) {
+    const vendorSlug =
+      pathname === '/shops'
+        ? null
+        : decodeURIComponent(
+            pathname.slice('/shops/'.length).split('/')[0] ?? ''
+          );
+
+    return {
+      id: vendorSlug
+        ? `route:${route}:shop:${vendorSlug}`
+        : `route:${route}:shops`,
+      type: 'home',
+      source: 'route',
+      ...(vendorSlug ? { targetId: vendorSlug } : {}),
+      route,
+      surface,
+      title: vendorSlug ? 'Merchant storefront' : 'Verified shops',
+      createdAt
+    };
+  }
+
+  if (
+    pathname.startsWith(
+      '/collections/'
+    )
+  ) {
+    const collectionSlug =
+      decodeURIComponent(
+        pathname.slice(
+          '/collections/'.length
+        )
+      );
+
+    return {
+      id:
+        `route:${route}:collection:${collectionSlug}`,
+
+      type:
+        'collection',
+
+      source:
+        'route',
+
+      targetId:
+        collectionSlug,
+
+      route,
+
+      surface,
+
+      title:
+        'Collection experience',
 
       createdAt
     };

@@ -15,6 +15,8 @@ import {
   MediaChoiceGrid,
   saveVendorCollection
 } from '@/features/vendor/studios';
+import { StudioProductPicker, StudioProductSummary, StudioSelectField } from '@/features/studio-controls';
+import { resolveStudioProducts } from '@/features/studio-controls/server/resolveStudioProducts';
 import { prisma } from '@/lib/prisma';
 
 type VendorCollectionsPageProps = {
@@ -48,16 +50,7 @@ export default async function VendorCollectionsPage({
       },
       orderBy: { updatedAt: 'desc' }
     }),
-    prisma.product.findMany({
-      where: {
-        workspaceId: access.workspace.id,
-        vendorProfileId: access.vendor.id,
-        status: 'PUBLISHED',
-        active: true
-      },
-      orderBy: { name: 'asc' },
-      select: { id: true, name: true }
-    }),
+    resolveStudioProducts({ workspaceId: access.workspace.id, vendorProfileId: access.vendor.id }),
     prisma.mediaAsset.findMany({
       where: {
         workspaceId: access.workspace.id,
@@ -125,15 +118,7 @@ export default async function VendorCollectionsPage({
               </Field>
 
               <Field label="Layout">
-                <select
-                  name="layout"
-                  defaultValue={editing?.layout ?? 'CAROUSEL'}
-                  className={adminFieldClass}>
-                  <option value="CAROUSEL">Carousel</option>
-                  <option value="FEATURED">Featured</option>
-                  <option value="GRID">Grid</option>
-                  <option value="SPOTLIGHT">Spotlight</option>
-                </select>
+                <StudioSelectField name="layout" defaultValue={editing?.layout ?? 'CAROUSEL'} options={[{ value: 'CAROUSEL', label: 'Carousel' }, { value: 'FEATURED', label: 'Featured' }, { value: 'GRID', label: 'Grid' }, { value: 'SPOTLIGHT', label: 'Spotlight' }]} />
               </Field>
 
               <Field label="Subtitle">
@@ -145,17 +130,7 @@ export default async function VendorCollectionsPage({
               </Field>
 
               <Field label="Featured product">
-                <select
-                  name="featuredProductId"
-                  defaultValue={editing?.featuredProductId ?? ''}
-                  className={adminFieldClass}>
-                  <option value="">No featured product</option>
-                  {products.map(product => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
+                <StudioSelectField name="featuredProductId" defaultValue={editing?.featuredProductId ?? ''} options={[{ value: '', label: 'No featured product' }, ...products.map(product => ({ value: product.id, label: product.name }))]} />
               </Field>
 
               <Field label="Requested priority (0–10)">
@@ -215,23 +190,11 @@ export default async function VendorCollectionsPage({
                 <legend className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                   Collection products
                 </legend>
-                <div className="grid max-h-64 gap-2 overflow-y-auto rounded-3xl border border-border/60 p-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {products.map(product => (
-                    <label
-                      key={product.id}
-                      className="flex items-center gap-2 rounded-xl p-2 text-xs hover:bg-muted">
-                      <input
-                        type="checkbox"
-                        name="productIds"
-                        value={product.id}
-                        defaultChecked={editing?.products.some(
-                          item => item.productId === product.id
-                        )}
-                      />
-                      <span className="truncate">{product.name}</span>
-                    </label>
-                  ))}
-                </div>
+                <StudioProductPicker
+                  products={products}
+                  initialIds={editing?.products.map(item => item.productId) ?? []}
+                  description="Choose from your published products. Images, stock and product status remain visible during selection."
+                />
               </fieldset>
 
               <div className="flex flex-wrap gap-3 lg:col-span-3">
@@ -287,6 +250,7 @@ export default async function VendorCollectionsPage({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {collection.products.length} products · {collection.layout.toLowerCase()}
                 </p>
+                <StudioProductSummary products={products.filter(product => collection.products.some(item => item.productId === product.id))} className="mt-4" />
                 <div className="mt-4 flex gap-2">
                   <Link
                     href={`/vendor/collections?edit=${collection.id}`}

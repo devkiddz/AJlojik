@@ -22,6 +22,7 @@ export type StudioMediaAsset = {
   height?: number | null;
   duration?: number | null;
   bytes?: number;
+  metadata?: unknown;
 };
 
 export type MediaUploadSignature = {

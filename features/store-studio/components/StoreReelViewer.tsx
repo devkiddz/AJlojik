@@ -88,7 +88,8 @@ function ReelPreviewTile({
           aria-hidden="true"
           className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
           style={{
-            backgroundImage: `url(${JSON.stringify(reel.posterUrl)})`
+            backgroundImage: `url(${JSON.stringify(reel.posterUrl)})`,
+            backgroundPosition: reel.posterObjectPosition
           }}
         />
       ) : (
@@ -315,7 +316,8 @@ export function StoreReelViewer({
                   aria-hidden="true"
                   className="absolute inset-0 scale-110 bg-cover bg-center opacity-25 blur-3xl"
                   style={{
-                    backgroundImage: `url(${JSON.stringify(activeReel.posterUrl)})`
+                    backgroundImage: `url(${JSON.stringify(activeReel.posterUrl)})`,
+                    backgroundPosition: activeReel.posterObjectPosition
                   }}
                 />
               ) : null}
@@ -326,6 +328,7 @@ export function StoreReelViewer({
                   ref={videoRef}
                   src={activeReel.videoUrl}
                   poster={activeReel.posterUrl ?? undefined}
+                  style={{ objectPosition: activeReel.posterObjectPosition }}
                   autoPlay
                   playsInline
                   muted={muted}

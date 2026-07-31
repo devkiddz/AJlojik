@@ -1,3 +1,0 @@
-export {
-  recordProductView
-} from './productActivityService';

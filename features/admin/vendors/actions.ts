@@ -2,6 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 
+import {
+  createOrResubmitApprovalRequest,
+  synchronizeDirectApprovalDecision
+} from '@/features/admin/approvals/approvalRequestRepository';
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 import { prisma } from '@/lib/prisma';
 
@@ -32,7 +36,7 @@ async function validLogo(
 
 export async function createVendor(formData: FormData): Promise<void> {
   const access = await requireAdminPermission('vendor:manage');
-  if (access.membership.workspace.commerceMode !== 'MULTI_VENDOR') throw new Error('Developer Admin must activate multivendor mode before vendors can be created.');
+  if (access.membership.workspace.commerceMode !== 'MULTI_VENDOR') throw new Error('Developer Admin must activate Multi Vendor mode before vendors can be created.');
   const name = text(formData, 'name');
   const slug = slugify(text(formData, 'slug') || name);
   const ownerEmail = text(formData, 'ownerEmail').toLowerCase();
@@ -68,18 +72,29 @@ export async function createVendor(formData: FormData): Promise<void> {
       select: { id: true }
     });
     await tx.vendorMembership.create({ data: { vendorId: created.id, userId: owner.id, role: 'OWNER', active: true } });
-    if (!canApprove) await tx.adminApprovalRequest.create({ data: { workspaceId: access.membership.workspaceId, requestedById: access.session.user.id, action: 'PUBLISH_LIVE', targetType: 'VENDOR', targetId: created.id, reason: `Approve vendor ${name} for workspace commerce.` } });
+    if (!canApprove) {
+      await createOrResubmitApprovalRequest(tx, {
+        workspaceId: access.membership.workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'VENDOR',
+        targetId: created.id,
+        reason: `Approve vendor ${name} for workspace commerce.`
+      });
+    }
     await tx.adminAuditEvent.create({ data: { workspaceId: access.membership.workspaceId, actorId: access.session.user.id, action: 'VENDOR_CREATED', targetType: 'VENDOR', targetId: created.id, summary: `${name} was created with ${owner.name} as owner.` } });
     return created;
   });
 
   revalidatePath('/admin/vendors');
   revalidatePath('/admin/approvals');
+  revalidatePath('/shops');
 }
 
 export async function updateVendorProfile(vendorId: string, formData: FormData) {
   const access = await requireAdminPermission('vendor:manage');
-  const existing = await prisma.vendorProfile.findFirst({ where: { id: vendorId, workspaceId: access.membership.workspaceId }, select: { id: true } });
+  const existing = await prisma.vendorProfile.findFirst({ where: { id: vendorId, workspaceId: access.membership.workspaceId }, select: { id: true, slug: true } });
   if (!existing) throw new Error('The vendor profile was not found.');
   const name = text(formData, 'name');
   const slug = slugify(text(formData, 'slug') || name);
@@ -95,6 +110,9 @@ export async function updateVendorProfile(vendorId: string, formData: FormData) 
   await prisma.adminAuditEvent.create({ data: { workspaceId: access.membership.workspaceId, actorId: access.session.user.id, action: 'VENDOR_UPDATED', targetType: 'VENDOR', targetId: vendorId, summary: `${name} vendor profile was updated.` } });
   revalidatePath('/admin/vendors');
   revalidatePath(`/admin/vendors/${vendorId}`);
+  revalidatePath('/shops');
+  revalidatePath(`/shops/${existing.slug}`);
+  revalidatePath(`/shops/${slug}`);
 }
 
 export async function adminAddVendorMember(vendorId: string, formData: FormData) {
@@ -148,7 +166,7 @@ export async function setVendorStatus(formData: FormData) {
   const id = text(formData, 'id');
   const status = text(formData, 'status');
   if (!id || !['ACTIVE', 'SUSPENDED', 'REJECTED', 'ARCHIVED'].includes(status)) throw new Error('A valid vendor decision is required.');
-  if (status === 'ACTIVE' && access.membership.workspace.commerceMode !== 'MULTI_VENDOR') throw new Error('Multivendor mode must be active before a vendor can be approved.');
+  if (status === 'ACTIVE' && access.membership.workspace.commerceMode !== 'MULTI_VENDOR') throw new Error('Multi Vendor mode must be active before a vendor can be approved.');
   await prisma.$transaction(async transaction => {
     const updated = await transaction.vendorProfile.update({
       where: { id, workspaceId: access.membership.workspaceId },
@@ -161,20 +179,21 @@ export async function setVendorStatus(formData: FormData) {
       select: { name: true }
     });
 
-    await transaction.adminApprovalRequest.updateMany({
-      where: {
-        workspaceId: access.membership.workspaceId,
-        targetType: 'VENDOR',
-        targetId: id,
-        status: 'PENDING'
-      },
-      data: {
-        status: status === 'ACTIVE' ? 'EXECUTED' : 'CANCELLED',
-        reviewedById: access.session.user.id,
-        reviewedAt: new Date(),
-        executedAt: status === 'ACTIVE' ? new Date() : null,
-        reviewNote: `Vendor status changed directly to ${status}.`
-      }
+    await synchronizeDirectApprovalDecision(transaction, {
+      workspaceId: access.membership.workspaceId,
+      actorId: access.session.user.id,
+      targetType: 'VENDOR',
+      targetId: id,
+      status:
+        status === 'ACTIVE'
+          ? 'EXECUTED'
+          : status === 'SUSPENDED'
+            ? 'PAUSED'
+            : status === 'REJECTED'
+              ? 'REJECTED'
+              : 'CANCELLED',
+      note: `Vendor status changed directly to ${status}.`,
+      resultSnapshot: { status, active: status === 'ACTIVE' }
     });
 
     await transaction.adminAuditEvent.create({
@@ -193,4 +212,5 @@ export async function setVendorStatus(formData: FormData) {
   revalidatePath('/admin/vendors');
   revalidatePath(`/admin/vendors/${id}`);
   revalidatePath('/store');
+  revalidatePath('/shops');
 }

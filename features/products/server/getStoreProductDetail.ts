@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { resolvePublicCommerceWorkspace } from '@/features/commerce-mode/server/resolvePublicCommerceWorkspace';
 import {
   mapProductRecord,
   productMappingInclude
@@ -28,25 +29,43 @@ export async function getStoreProductDetail(
     return null;
   }
 
+  const workspace = await resolvePublicCommerceWorkspace();
+
+  if (!workspace) {
+    return null;
+  }
+
+  const ownershipWhere = workspace.capabilities.vendorCatalogVisible
+    ? {
+        OR: [
+          { vendorProfileId: null },
+          {
+            vendorProfile: {
+              is: {
+                active: true,
+                status: 'ACTIVE' as const
+              }
+            }
+          }
+        ]
+      }
+    : {
+        vendorProfileId: null
+      };
+
   const productRecord = await prisma.product.findFirst({
     where: {
+      workspaceId: workspace.id,
       active: true,
       status: 'PUBLISHED',
-      workspace: {
-        active: true,
-        mode: 'LIVE'
-      },
       AND: [
-        { OR: [{ id: normalizedIdentifier }, { slug: normalizedIdentifier }] },
         {
           OR: [
-            { vendorProfileId: null },
-            {
-              vendorProfile: { is: { active: true, status: 'ACTIVE' } },
-              workspace: { commerceMode: 'MULTI_VENDOR' }
-            }
+            { id: normalizedIdentifier },
+            { slug: normalizedIdentifier }
           ]
-        }
+        },
+        ownershipWhere
       ]
     },
     include: productMappingInclude
@@ -58,13 +77,10 @@ export async function getStoreProductDetail(
 
   const relatedRecords = await prisma.product.findMany({
     where: {
-      workspaceId: productRecord.workspaceId,
+      workspaceId: workspace.id,
       active: true,
       status: 'PUBLISHED',
-      OR: [
-        { vendorProfileId: null },
-        { vendorProfile: { is: { active: true, status: 'ACTIVE' } }, workspace: { commerceMode: 'MULTI_VENDOR' } }
-      ],
+      ...ownershipWhere,
       id: {
         not: productRecord.id
       },

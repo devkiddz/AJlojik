@@ -9,7 +9,7 @@ export default function SearchBarComponent() {
       {' '}
       {/* Added relative wrapper to align the dropdown context */}
       <SearchBar />
-      <div className="hidden lg:flex">
+      <div className="hidden xl:flex">
         <SearchResultsDropdown />
       </div>
     </div>

@@ -43,6 +43,9 @@ export type CommerceStory = {
    * Falls back to coverUrl when omitted.
    */
   posterUrl?: string;
+  mediaObjectPosition?: string;
+  coverObjectPosition?: string;
+  posterObjectPosition?: string;
 
   actionType: CommerceStoryActionType;
 

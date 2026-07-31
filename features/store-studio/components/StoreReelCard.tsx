@@ -229,6 +229,7 @@ export function StoreReelCard({ reel, order, actions, onExpand }: StoreReelCardP
           }}
           onEnded={() => pauseReel(reel.id)}
           onError={handleMediaError}
+          style={{ objectPosition: reel.posterObjectPosition }}
           className={cn(
             'absolute inset-0 size-full object-cover transition duration-500',
             mediaReady || reel.posterUrl ? 'opacity-100' : 'opacity-0'

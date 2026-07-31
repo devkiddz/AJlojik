@@ -39,7 +39,7 @@ export default async function AdminBrandsPage({ searchParams }: { searchParams: 
   const { edit } = await searchParams;
   const workspaceId = access.membership.workspaceId;
 
-  const [brands, editingBrand, unbrandedProductCount] = await Promise.all([
+  const [brands, editingBrand, unbrandedProductCount, media] = await Promise.all([
     prisma.brand.findMany({
       include: {
         _count: {
@@ -61,6 +61,16 @@ export default async function AdminBrandsPage({ searchParams }: { searchParams: 
         status: { not: 'ARCHIVED' },
         brandId: null
       }
+    }),
+    prisma.mediaAsset.findMany({
+      where: {
+        workspaceId,
+        vendorProfileId: null,
+        status: 'ACTIVE',
+        resourceType: 'IMAGE'
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 180
     })
   ]);
 
@@ -110,7 +120,7 @@ export default async function AdminBrandsPage({ searchParams }: { searchParams: 
           <AdminPanel
             title={editingBrand ? `Edit ${editingBrand.name}` : 'Compose a brand'}
             description="Create reusable brand identity once, then assign it from Admin or Vendor Product Studio.">
-            <BrandComposer editing={composerValue} />
+            <BrandComposer editing={composerValue} media={media} />
           </AdminPanel>
         ) : null}
 

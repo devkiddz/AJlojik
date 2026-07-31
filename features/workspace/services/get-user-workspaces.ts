@@ -1,3 +1,4 @@
+import { resolveCommerceCapabilities } from '@/features/commerce-mode';
 import { prisma } from '@/lib/prisma';
 
 import type {
@@ -112,6 +113,18 @@ export async function getUserWorkspaces(
         name: membership.workspace.name,
 
         mode: membership.workspace.mode,
+        commerceMode: membership.workspace.commerceMode,
+        commerceCapabilities: resolveCommerceCapabilities(
+          membership.workspace.commerceMode,
+          {
+            vendorApplicationsOpen:
+              membership.workspace.vendorApplicationsOpen
+          }
+        ),
+        vendorApplicationsOpen:
+          membership.workspace.vendorApplicationsOpen,
+        currency: membership.workspace.currency,
+        timezone: membership.workspace.timezone,
 
         active: membership.workspace.active,
         resettable: membership.workspace.resettable,
@@ -152,6 +165,65 @@ export async function getUserWorkspaces(
     isSandbox:
       activeWorkspace?.mode === 'SANDBOX',
 
+    switchingWorkspace: false,
+    error: null
+  };
+}
+export async function getGuestWorkspaceRuntime(): Promise<WorkspaceRuntime> {
+  const workspace = await prisma.workspace.findFirst({
+    where: {
+      active: true,
+      mode: 'LIVE'
+    },
+    orderBy: {
+      createdAt: 'asc'
+    }
+  });
+
+  if (!workspace) {
+    return {
+      activeWorkspace: null,
+      availableWorkspaces: [],
+      isLive: false,
+      isDemo: false,
+      isPractice: false,
+      isSandbox: false,
+      switchingWorkspace: false,
+      error: 'The live AJ Logik workspace is unavailable.'
+    };
+  }
+
+  const publicWorkspace: Workspace = {
+    id: workspace.id,
+    slug: workspace.slug,
+    name: workspace.name,
+    mode: workspace.mode,
+    commerceMode: workspace.commerceMode,
+    commerceCapabilities: resolveCommerceCapabilities(
+      workspace.commerceMode,
+      {
+        vendorApplicationsOpen: workspace.vendorApplicationsOpen
+      }
+    ),
+    vendorApplicationsOpen: workspace.vendorApplicationsOpen,
+    currency: workspace.currency,
+    timezone: workspace.timezone,
+    active: workspace.active,
+    resettable: false,
+    membership: {
+      role: 'MEMBER',
+      active: true
+    },
+    wallet: null
+  };
+
+  return {
+    activeWorkspace: publicWorkspace,
+    availableWorkspaces: [publicWorkspace],
+    isLive: true,
+    isDemo: false,
+    isPractice: false,
+    isSandbox: false,
     switchingWorkspace: false,
     error: null
   };

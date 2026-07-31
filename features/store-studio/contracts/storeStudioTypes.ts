@@ -49,6 +49,9 @@ export type StoreStudioBannerSlideProjection = {
   mediaUrl: string;
   mobileMediaUrl: string | null;
   posterUrl: string | null;
+  desktopObjectPosition?: string;
+  mobileObjectPosition?: string;
+  posterObjectPosition?: string;
   eyebrow: string | null;
   title: string;
   description: string | null;
@@ -71,6 +74,9 @@ export type StoreStudioStoryProjection = {
   mediaUrl: string;
   coverUrl: string;
   posterUrl: string | null;
+  mediaObjectPosition?: string;
+  coverObjectPosition?: string;
+  posterObjectPosition?: string;
   durationMs: number;
   action: StoreStudioAction | null;
   productIds: string[];
@@ -89,6 +95,7 @@ export type StoreStudioReelProjection = {
   caption: string | null;
   videoUrl: string;
   posterUrl: string | null;
+  posterObjectPosition?: string;
   durationMs: number | null;
   autoplay: boolean;
   action: StoreStudioAction | null;

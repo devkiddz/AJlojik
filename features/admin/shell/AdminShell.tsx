@@ -15,6 +15,7 @@ import {
   GalleryVerticalEnd,
   Grid2X2Plus,
   LayoutDashboard,
+  ListTodo,
   Menu,
   PackageSearch,
   Settings2,
@@ -38,6 +39,7 @@ export type AdminShellPermission =
   | 'inventory:view'
   | 'activity:view'
   | 'analytics:view'
+  | 'todo:view'
   | 'delivery:view'
   | 'order:view'
   | 'customer:view'
@@ -83,6 +85,7 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
       { href: '/admin/assistant', label: 'AJ Studio Manager', icon: BrainCircuit, permission: 'commerce:view' },
       { href: '/admin/activity', label: 'Activity', icon: Activity, permission: 'activity:view' },
       { href: '/admin/analytics', label: 'Analytics', icon: ChartNoAxesCombined, permission: 'analytics:view' },
+      { href: '/admin/todos', label: 'Todos', icon: ListTodo, permission: 'todo:view' },
       { href: '/admin/approvals', label: 'Approvals', icon: ShieldCheck, permission: 'approval:view' }
     ]
   },

@@ -1,3 +1,5 @@
+import type { CommerceCapabilities, CommerceMode } from '@/features/commerce-mode';
+
 export type WorkspaceMode =
   | 'LIVE'
   | 'DEMO'
@@ -30,6 +32,11 @@ export type Workspace = {
   name: string;
 
   mode: WorkspaceMode;
+  commerceMode: CommerceMode;
+  commerceCapabilities: CommerceCapabilities;
+  vendorApplicationsOpen: boolean;
+  currency: string;
+  timezone: string;
 
   active: boolean;
   resettable: boolean;

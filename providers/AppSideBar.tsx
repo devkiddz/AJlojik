@@ -21,6 +21,7 @@ import {
 import { useCatalog } from '@/features/catalog';
 
 import { useCart } from '@/features/cart';
+import { PWAInstallControl } from '@/features/pwa';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 
@@ -144,7 +145,9 @@ export function AppSidebar() {
           </div>
         </SidebarContent>
 
-        <SidebarFooter className="mt-auto p-3">
+        <SidebarFooter className="mt-auto space-y-2 p-3">
+          <PWAInstallControl presentation="sidebar" />
+
           <div className="rounded-3xl border border-white/5 bg-background/50 p-4">
             {isPending ? (
               <div className="space-y-3">

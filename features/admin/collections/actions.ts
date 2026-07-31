@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { createOrResubmitApprovalRequest } from '@/features/admin/approvals/approvalRequestRepository';
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 import { prisma } from '@/lib/prisma';
 
@@ -51,10 +52,17 @@ export async function saveStoreCollection(formData: FormData): Promise<void> {
     text(formData, 'status'),
     access.permissions.has('approval:review')
   );
-  const productIds = Array.from(
-    new Set(formData.getAll('productIds').map(String).filter(Boolean))
-  );
+  const submittedProductIds = formData
+    .getAll('productIds')
+    .map(String)
+    .filter(Boolean);
   const featuredProductId = text(formData, 'featuredProductId') || null;
+  const productIds = Array.from(
+    new Set([
+      ...submittedProductIds,
+      ...(featuredProductId ? [featuredProductId] : [])
+    ])
+  );
   const coverMediaAssetId = text(formData, 'coverMediaAssetId') || null;
   const vendorProfileId = text(formData, 'vendorProfileId') || null;
   const startsAt = dateOrNull(text(formData, 'startsAt'));
@@ -66,10 +74,6 @@ export async function saveStoreCollection(formData: FormData): Promise<void> {
 
   if (startsAt && endsAt && endsAt <= startsAt) {
     throw new Error('The collection end date must be later than its start date.');
-  }
-
-  if (featuredProductId && !productIds.includes(featuredProductId)) {
-    throw new Error('The featured product must also be included in the collection.');
   }
 
   const [products, cover, vendor, conflict] = await Promise.all([
@@ -134,7 +138,7 @@ export async function saveStoreCollection(formData: FormData): Promise<void> {
     vendorProfileId &&
     (!vendor || access.membership.workspace.commerceMode !== 'MULTI_VENDOR')
   ) {
-    throw new Error('Vendor collections are unavailable in single-vendor mode.');
+    throw new Error('Vendor collections are unavailable in Single Merchant mode.');
   }
 
   if (conflict) {
@@ -195,27 +199,14 @@ export async function saveStoreCollection(formData: FormData): Promise<void> {
     }
 
     if (status === 'PENDING_REVIEW') {
-      await transaction.adminApprovalRequest.updateMany({
-        where: {
-          workspaceId,
-          targetType: 'COLLECTION',
-          targetId: record.id,
-          status: 'PENDING'
-        },
-        data: {
-          status: 'CANCELLED',
-          reviewNote: 'Superseded by a newer Collection Studio submission.'
-        }
-      });
-      await transaction.adminApprovalRequest.create({
-        data: {
-          workspaceId,
-          requestedById: access.session.user.id,
-          action: 'PUBLISH_LIVE',
-          targetType: 'COLLECTION',
-          targetId: record.id,
-          reason: `Publish ${title} from Collection Studio.`
-        }
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'COLLECTION',
+        targetId: record.id,
+        reason: `Publish ${title} from Collection Studio.`
       });
     }
 
@@ -237,6 +228,8 @@ export async function saveStoreCollection(formData: FormData): Promise<void> {
   revalidatePath('/admin/approvals');
   revalidatePath('/vendor/collections');
   revalidatePath('/store');
+  revalidatePath('/shops');
+  revalidatePath('/api/catalog');
 }
 
 export async function setStoreCollectionStatus(formData: FormData) {
@@ -251,7 +244,26 @@ export async function setStoreCollectionStatus(formData: FormData) {
 
   const collection = await prisma.storeCollection.findFirst({
     where: { id, workspaceId: access.membership.workspaceId },
-    select: { id: true, vendorProfileId: true }
+    include: {
+      products: {
+        select: {
+          product: {
+            select: {
+              id: true,
+              active: true,
+              status: true,
+              vendorProfileId: true,
+              vendorProfile: {
+                select: {
+                  status: true,
+                  active: true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   });
 
   if (!collection) throw new Error('The collection was not found.');
@@ -261,7 +273,31 @@ export async function setStoreCollectionStatus(formData: FormData) {
     collection.vendorProfileId &&
     access.membership.workspace.commerceMode !== 'MULTI_VENDOR'
   ) {
-    throw new Error('Multivendor mode must be active before publishing this collection.');
+    throw new Error('Multi Vendor mode must be active before publishing this collection.');
+  }
+
+  if (status === 'PUBLISHED') {
+    const visibleProducts = collection.products.filter(({ product }) => {
+      if (!product.active || product.status !== 'PUBLISHED') {
+        return false;
+      }
+
+      if (!product.vendorProfileId) {
+        return true;
+      }
+
+      return (
+        access.membership.workspace.commerceMode === 'MULTI_VENDOR' &&
+        product.vendorProfile?.status === 'ACTIVE' &&
+        product.vendorProfile.active
+      );
+    });
+
+    if (visibleProducts.length === 0) {
+      throw new Error(
+        'Publish at least one active, published product before publishing this collection.'
+      );
+    }
   }
 
   await prisma.storeCollection.update({
@@ -273,4 +309,6 @@ export async function setStoreCollectionStatus(formData: FormData) {
   revalidatePath('/admin/approvals');
   revalidatePath('/vendor/collections');
   revalidatePath('/store');
+  revalidatePath('/shops');
+  revalidatePath('/api/catalog');
 }

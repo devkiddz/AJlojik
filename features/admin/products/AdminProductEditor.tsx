@@ -9,7 +9,13 @@ import {
   Store
 } from 'lucide-react';
 
-import { ProductStudioFields, type ProductStudioMedia, type ProductStudioVariant } from './ProductStudioFields';
+import { StudioSelectField } from '@/features/studio-controls';
+import { ProductSavedPreview } from './ProductSavedPreview';
+import {
+  ProductStudioFields,
+  type ProductStudioMedia,
+  type ProductStudioVariant
+} from './ProductStudioFields';
 import { createProduct, updateProduct } from './actions';
 
 type EditorProduct = {
@@ -80,11 +86,21 @@ export default function AdminProductEditor({
             <EditorCard icon={<Boxes />} title="Product identity" description="Customer-facing title, URL, taxonomy, ownership and descriptions.">
               <div className="grid gap-4 sm:grid-cols-2"><Field label="Product name"><input name="name" required defaultValue={product?.name} className={inputClass} /></Field><Field label="URL slug"><input name="slug" required defaultValue={product?.slug} className={inputClass} /></Field></div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label="Category"><select name="categoryId" required defaultValue={product?.categoryId} className={inputClass}><option value="">Select category</option>{taxonomy.categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
-                <Field label="Subcategory"><select name="subcategoryId" defaultValue={product?.subcategoryId ?? ''} className={inputClass}><option value="">No subcategory</option>{taxonomy.categories.flatMap(category => category.subcategories.map(subcategory => <option key={subcategory.id} value={subcategory.id}>{category.label} · {subcategory.label}</option>))}</select></Field>
-                <Field label="Brand"><select name="brandId" defaultValue={product?.brandId ?? ''} className={inputClass}><option value="">No brand</option>{taxonomy.brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></Field>
+                <Field label="Category">
+                  <StudioSelectField name="categoryId" defaultValue={product?.categoryId ?? ''} options={[{ value: '', label: 'Select category' }, ...taxonomy.categories.map(category => ({ value: category.id, label: category.label }))]} />
+                </Field>
+                <Field label="Subcategory">
+                  <StudioSelectField name="subcategoryId" defaultValue={product?.subcategoryId ?? ''} options={[{ value: '', label: 'No subcategory' }, ...taxonomy.categories.flatMap(category => category.subcategories.map(subcategory => ({ value: subcategory.id, label: `${category.label} · ${subcategory.label}` })))]} />
+                </Field>
+                <Field label="Brand">
+                  <StudioSelectField name="brandId" defaultValue={product?.brandId ?? ''} options={[{ value: '', label: 'No brand' }, ...taxonomy.brands.map(brand => ({ value: brand.id, label: brand.name }))]} />
+                </Field>
               </div>
-              {multivendorEnabled ? <Field label="Vendor owner"><select name="vendorProfileId" defaultValue={product?.vendorProfileId ?? ''} className={inputClass}><option value="">AJ Logik workspace product</option>{taxonomy.vendors.map(vendor => <option key={vendor.id} value={vendor.id}>{vendor.name}</option>)}</select></Field> : null}
+              {multivendorEnabled ? (
+                <Field label="Vendor owner">
+                  <StudioSelectField name="vendorProfileId" defaultValue={product?.vendorProfileId ?? ''} options={[{ value: '', label: 'AJ Logik workspace product' }, ...taxonomy.vendors.map(vendor => ({ value: vendor.id, label: vendor.name }))]} />
+                </Field>
+              ) : null}
               <Field label="Short description"><input name="shortDescription" defaultValue={product?.shortDescription ?? ''} className={inputClass} /></Field>
               <Field label="Long description"><textarea name="longDescription" defaultValue={product?.longDescription ?? ''} rows={6} className={inputClass} /></Field>
             </EditorCard>
@@ -100,13 +116,17 @@ export default function AdminProductEditor({
           <aside className="space-y-5 xl:sticky xl:top-5 xl:self-start">
             <EditorCard icon={<CheckCircle2 />} title="Publishing" description="Control review, availability and merchandising signals.">
               <Field label="Product status">
-                <select name="status" defaultValue={product?.status ?? 'DRAFT'} className={inputClass}>
-                  <option value="DRAFT">Draft</option>
-                  <option value="PENDING_REVIEW">Pending review</option>
-                  {canPublish ? <option value="PUBLISHED">Published</option> : null}
-                  <option value="PAUSED">Paused</option>
-                  <option value="ARCHIVED">Archived</option>
-                </select>
+                <StudioSelectField
+                  name="status"
+                  defaultValue={product?.status ?? 'DRAFT'}
+                  options={[
+                    { value: 'DRAFT', label: 'Draft' },
+                    { value: 'PENDING_REVIEW', label: 'Pending review' },
+                    ...(canPublish ? [{ value: 'PUBLISHED', label: 'Published' }] : []),
+                    { value: 'PAUSED', label: 'Paused' },
+                    { value: 'ARCHIVED', label: 'Archived' }
+                  ]}
+                />
               </Field>
               <Toggle name="active" label="Active product" description="Visible and purchasable after publication." defaultChecked={product?.active ?? false} />
               <Toggle name="featured" label="Featured" description="Eligible for premium featured placements." defaultChecked={product?.featured ?? false} />
@@ -115,6 +135,7 @@ export default function AdminProductEditor({
 
             <EditorCard icon={<Store />} title="Media workflow" description="All images are selected from the workspace Media Studio.">
               <Link href="/admin/media" className="inline-flex w-full items-center justify-center rounded-full border border-border/70 px-4 py-3 text-xs font-bold transition hover:bg-muted">Open Media Studio</Link>
+              <ProductSavedPreview product={product} media={media} />
             </EditorCard>
 
             <button type="submit" disabled={!canManage} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-bold text-background shadow-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"><Save className="size-4" /> {editing ? 'Save complete product' : 'Create product'}</button>
@@ -125,6 +146,7 @@ export default function AdminProductEditor({
     </main>
   );
 }
+
 
 const inputClass = 'min-h-11 w-full rounded-2xl border border-border/70 bg-background/70 px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10';
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block"><span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</span>{children}</label>; }

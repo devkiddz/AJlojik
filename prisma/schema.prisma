@@ -54,13 +54,18 @@ model User {
 
   staffProfile         StaffProfile?
   staffInvitations     StaffProfile[]          @relation("StaffInvitedBy")
-  approvalRequests     AdminApprovalRequest[]  @relation("ApprovalRequestedBy")
-  approvalReviews      AdminApprovalRequest[]  @relation("ApprovalReviewedBy")
+  approvalRequests      AdminApprovalRequest[] @relation("ApprovalRequestedBy")
+  approvalReviews       AdminApprovalRequest[] @relation("ApprovalReviewedBy")
+  approvalAssignments   AdminApprovalRequest[] @relation("ApprovalAssignedReviewer")
+  approvalEvents        AdminApprovalEvent[]
   adminAuditEvents     AdminAuditEvent[]
   assignedAdminTodos   AdminTodo[]             @relation("AdminTodoAssignee")
   createdAdminTodos    AdminTodo[]             @relation("AdminTodoCreator")
   dispatchedDeliveries Delivery[]              @relation("DeliveryDispatcher")
   deliveryEvents       DeliveryTrackingEvent[]
+  notifications        Notification[]
+  notificationPreferences NotificationPreference[]
+  notificationMutes    NotificationMute[]
 
   @@unique([email])
   @@index([accountState])
@@ -772,7 +777,7 @@ enum PlatformRole {
 }
 
 enum WorkspaceCommerceMode {
-  SINGLE_VENDOR
+  SINGLE_MERCHANT
   MULTI_VENDOR
 }
 
@@ -983,7 +988,7 @@ model Workspace {
 
   mode WorkspaceMode @default(LIVE)
 
-  commerceMode          WorkspaceCommerceMode @default(SINGLE_VENDOR)
+  commerceMode          WorkspaceCommerceMode @default(SINGLE_MERCHANT)
   vendorApplicationsOpen Boolean               @default(false)
   currency              String                @default("NGN")
   timezone              String                @default("Africa/Lagos")
@@ -1010,6 +1015,7 @@ model Workspace {
 
   staffProfiles        StaffProfile[]
   approvalRequests     AdminApprovalRequest[]
+  approvalEvents       AdminApprovalEvent[]
   adminAuditEvents     AdminAuditEvent[]
   adminTodos           AdminTodo[]
   deliveries           Delivery[]
@@ -1018,6 +1024,9 @@ model Workspace {
   mediaAssets          MediaAsset[]
   vendors              VendorProfile[]
   storeCollections     StoreCollection[]
+  notifications        Notification[]
+  notificationPreferences NotificationPreference[]
+  notificationMutes    NotificationMute[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1102,25 +1111,48 @@ model AdminApprovalRequest {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   requestedById String
-  requestedBy   User   @relation("ApprovalRequestedBy", fields: [requestedById], references: [id])
+  requestedBy   User @relation("ApprovalRequestedBy", fields: [requestedById], references: [id])
 
   reviewedById String?
-  reviewedBy   User?   @relation("ApprovalReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedBy   User? @relation("ApprovalReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
+  assignedReviewerId String?
+  assignedReviewer   User? @relation("ApprovalAssignedReviewer", fields: [assignedReviewerId], references: [id], onDelete: SetNull)
+
+  source     AdminApprovalSource   @default(ADMIN)
+  priority   AdminApprovalPriority @default(NORMAL)
   action     AdminApprovalAction
   targetType AdminTargetType
   targetId   String
   reason     String
   payload    Json?
   status     AdminApprovalStatus @default(PENDING)
-  reviewNote String?
-  reviewedAt DateTime?
-  executedAt DateTime?
+
+  reviewNote    String?
+  internalNote  String?
+  targetSnapshot Json?
+  resultSnapshot Json?
+  revision       Int @default(1)
+
+  dueAt               DateTime?
+  holdUntil            DateTime?
+  inspectionStartedAt DateTime?
+  changesRequestedAt  DateTime?
+  reviewedAt           DateTime?
+  executedAt           DateTime?
+  pausedAt             DateTime?
+  reactivatedAt        DateTime?
+  revertedAt           DateTime?
+  expiredAt            DateTime?
+
+  events AdminApprovalEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([workspaceId, status, createdAt])
+  @@index([workspaceId, status, priority, createdAt])
+  @@index([workspaceId, source, status, createdAt])
+  @@index([assignedReviewerId, status, dueAt])
   @@index([requestedById, createdAt])
   @@index([targetType, targetId])
   @@map("admin_approval_request")
@@ -1156,10 +1188,73 @@ enum AdminTargetType {
 
 enum AdminApprovalStatus {
   PENDING
+  IN_INSPECTION
+  ON_HOLD
+  CHANGES_REQUESTED
   APPROVED
+  EXECUTED
+  PAUSED
   REJECTED
   CANCELLED
+  EXPIRED
+  REVERTED
+}
+
+enum AdminApprovalSource {
+  CUSTOMER
+  VENDOR
+  ADMIN
+  SYSTEM
+}
+
+enum AdminApprovalPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AdminApprovalEventType {
+  CREATED
+  INSPECTION_STARTED
+  ASSIGNED
+  DEADLINE_CHANGED
+  NOTE_UPDATED
+  HELD
+  REACTIVATED
+  CHANGES_REQUESTED
+  APPROVED
   EXECUTED
+  PAUSED
+  REJECTED
+  CANCELLED
+  EXPIRED
+  REVERTED
+}
+
+model AdminApprovalEvent {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  requestId String
+  request   AdminApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  type       AdminApprovalEventType
+  fromStatus AdminApprovalStatus?
+  toStatus   AdminApprovalStatus?
+  note       String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([requestId, createdAt])
+  @@index([workspaceId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("admin_approval_event")
 }
 
 model AdminAuditEvent {
@@ -1204,12 +1299,22 @@ model AdminTodo {
   status      AdminTodoStatus   @default(OPEN)
   targetType  AdminTargetType?
   targetId    String?
-  dueAt       DateTime?
-  completedAt DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+
+  dedupeKey       String?
+  activeDedupeKey String? @unique
+  metadata        Json?
+
+  dueAt          DateTime?
+  snoozedUntil   DateTime?
+  lastTriggeredAt DateTime @default(now())
+  completedAt    DateTime?
+  dismissedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([workspaceId, status, priority])
+  @@index([workspaceId, status, snoozedUntil, priority])
+  @@index([workspaceId, dedupeKey])
   @@index([assigneeId, status])
   @@map("admin_todo")
 }
@@ -1219,8 +1324,11 @@ enum AdminTodoSource {
   AI
   STAFF
   APPROVAL
+  ORDER
   DELIVERY
   INVENTORY
+  SHOPPING_LIST
+  SUPPORT
 }
 
 enum AdminTodoPriority {
@@ -1236,6 +1344,111 @@ enum AdminTodoStatus {
   BLOCKED
   COMPLETED
   DISMISSED
+}
+
+// ============================================================
+// CUSTOMER NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  topic    NotificationTopic
+  priority NotificationPriority @default(NORMAL)
+
+  title   String
+  message String
+  href    String?
+
+  targetType AdminTargetType?
+  targetId   String?
+  scopeKey   String?
+  dedupeKey  String
+  metadata   Json?
+
+  readAt     DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([workspaceId, userId, dedupeKey])
+  @@index([workspaceId, userId, archivedAt, createdAt])
+  @@index([workspaceId, userId, readAt, createdAt])
+  @@index([targetType, targetId])
+  @@map("notification")
+}
+
+model NotificationPreference {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  inAppEnabled       Boolean @default(true)
+  orderUpdates       Boolean @default(true)
+  deliveryUpdates    Boolean @default(true)
+  shoppingListUpdates Boolean @default(true)
+  supportUpdates     Boolean @default(true)
+  systemUpdates      Boolean @default(true)
+  promotionUpdates   Boolean @default(false)
+  mutedUntil         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId, updatedAt])
+  @@map("notification_preference")
+}
+
+model NotificationMute {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  scopeKey   String
+  topic      NotificationTopic
+  targetType AdminTargetType?
+  targetId   String?
+  mutedUntil DateTime?
+  reason     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId, scopeKey])
+  @@index([workspaceId, userId, topic])
+  @@index([targetType, targetId])
+  @@map("notification_mute")
+}
+
+enum NotificationTopic {
+  ORDER
+  DELIVERY
+  SHOPPING_LIST
+  SUPPORT
+  SYSTEM
+  PROMOTION
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
 // ============================================================

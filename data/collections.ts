@@ -1,3 +1,5 @@
+import type { ProductMerchantType } from '@/types/types';
+
 export type CollectionIcon = {
   type: 'lucide' | 'image';
 
@@ -50,6 +52,8 @@ export type CollectionType = {
   priority: number;
 
   theme?: CollectionTheme;
+
+  merchant?: ProductMerchantType;
 };
 
 export const collections: CollectionType[] = [

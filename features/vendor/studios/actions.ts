@@ -2,6 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 
+import {
+  cancelApprovalRequestsForTarget,
+  createOrResubmitApprovalRequest
+} from '@/features/admin/approvals/approvalRequestRepository';
 import { requireVendorPermission } from '@/features/vendor/auth/vendorAccess';
 import { prisma } from '@/lib/prisma';
 
@@ -81,27 +85,26 @@ function validateSchedule(startsAt: Date | null, endsAt: Date | null): void {
 
 async function cancelPendingApproval({
   workspaceId,
+  userId,
   targetType,
   targetId,
   note
 }: {
   workspaceId: string;
+  userId: string;
   targetType: VendorApprovalTarget;
   targetId: string;
   note: string;
 }): Promise<void> {
-  await prisma.adminApprovalRequest.updateMany({
-    where: {
+  await prisma.$transaction(transaction =>
+    cancelApprovalRequestsForTarget(transaction, {
       workspaceId,
+      actorId: userId,
       targetType,
       targetId,
-      status: 'PENDING'
-    },
-    data: {
-      status: 'CANCELLED',
-      reviewNote: note
-    }
-  });
+      note
+    })
+  );
 }
 
 async function submitApproval({
@@ -119,24 +122,18 @@ async function submitApproval({
   reason: string;
   vendorProfileId: string;
 }): Promise<void> {
-  await cancelPendingApproval({
-    workspaceId,
-    targetType,
-    targetId,
-    note: 'Superseded by a newer vendor submission.'
-  });
-
-  await prisma.adminApprovalRequest.create({
-    data: {
+  await prisma.$transaction(transaction =>
+    createOrResubmitApprovalRequest(transaction, {
       workspaceId,
       requestedById: userId,
+      source: 'VENDOR',
       action: 'PUBLISH_LIVE',
       targetType,
       targetId,
       reason,
       payload: { vendorProfileId }
-    }
-  });
+    })
+  );
 }
 
 export async function saveVendorCollection(formData: FormData): Promise<void> {
@@ -310,6 +307,7 @@ export async function saveVendorCollection(formData: FormData): Promise<void> {
     });
   } else {
     await cancelPendingApproval({
+      userId: access.session.user.id,
       workspaceId: access.workspace.id,
       targetType: 'COLLECTION',
       targetId: record.id,
@@ -512,6 +510,7 @@ export async function saveVendorPromotion(formData: FormData): Promise<void> {
     });
   } else {
     await cancelPendingApproval({
+      userId: access.session.user.id,
       workspaceId: access.workspace.id,
       targetType: 'PROMOTION',
       targetId: record.id,
@@ -615,7 +614,6 @@ export async function saveVendorCampaign(
             workspaceId: access.workspace.id,
             vendorProfileId: access.vendor.id,
             type,
-            status: { not: 'EXPIRED' }
           },
           select: { id: true }
         })
@@ -752,6 +750,7 @@ export async function saveVendorCampaign(
     });
   } else {
     await cancelPendingApproval({
+      userId: access.session.user.id,
       workspaceId: access.workspace.id,
       targetType: 'CAMPAIGN',
       targetId: campaign.id,
@@ -838,17 +837,12 @@ export async function archiveVendorRecord(
       }
     }
 
-    await transaction.adminApprovalRequest.updateMany({
-      where: {
-        workspaceId: access.workspace.id,
-        targetType,
-        targetId: id,
-        status: 'PENDING'
-      },
-      data: {
-        status: 'CANCELLED',
-        reviewNote: 'The vendor archived this submission.'
-      }
+    await cancelApprovalRequestsForTarget(transaction, {
+      workspaceId: access.workspace.id,
+      actorId: access.session.user.id,
+      targetType,
+      targetId: id,
+      note: 'The vendor archived this submission.'
     });
 
     await transaction.adminAuditEvent.create({

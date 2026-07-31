@@ -18,7 +18,6 @@ import {
 } from '@/features/customer-experience/customerExperienceEvents';
 import { resolveCustomerRouteIntent } from '@/features/customer-experience/resolveCustomerRouteIntent';
 
-import { collections } from '@/data/collections';
 
 import { promos } from '@/data/promos';
 
@@ -97,7 +96,12 @@ export default function GlobalExperienceRuntime({
   const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const activeWorkspaceId = activeWorkspace?.id ?? null;
 
-  const { products, categories: catalogCategories, loading: catalogLoading } = useCatalog();
+  const {
+    products,
+    categories: catalogCategories,
+    collections: catalogCollections,
+    loading: catalogLoading
+  } = useCatalog();
 
   const { items: cartItems, addToCart } = useCart();
 
@@ -329,7 +333,7 @@ export default function GlobalExperienceRuntime({
 
         categories: catalogCategories,
 
-        collections,
+        collections: catalogCollections,
 
         promotions: promos
       },
@@ -395,6 +399,7 @@ export default function GlobalExperienceRuntime({
   }, [
     activeWorkspace,
     catalogCategories,
+    catalogCollections,
     cartProductIds,
     commerceProjection,
     dashboardRecentProductIds,

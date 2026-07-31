@@ -1,1 +1,0 @@
-export { ProductDetailsModule } from './ProductDetailsModule';

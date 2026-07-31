@@ -75,6 +75,7 @@ export function CommerceStoryCard({
             alt=""
             fill
             sizes="80px"
+            style={{ objectPosition: story.coverObjectPosition }}
             className="
               object-cover
               transition duration-500

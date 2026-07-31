@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { useRouter } from 'next/navigation';
 
+import { resolveCommerceCapabilities } from '@/features/commerce-mode';
+
 import type { Workspace, WorkspaceRuntime } from './workspaceTypes';
 
 type WorkspaceContextValue = WorkspaceRuntime & {
@@ -37,6 +39,11 @@ const guestWorkspace: Workspace = {
   name: 'AJ Logik',
 
   mode: 'LIVE',
+  commerceMode: 'SINGLE_MERCHANT',
+  commerceCapabilities: resolveCommerceCapabilities('SINGLE_MERCHANT'),
+  vendorApplicationsOpen: false,
+  currency: 'NGN',
+  timezone: 'Africa/Lagos',
 
   active: true,
   resettable: false,

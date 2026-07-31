@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 
 import {
+  StudioDestinationPicker
+} from '@/features/studio-controls';
+import {
   AdminMetric,
   AdminPage,
   AdminPageHeader,
@@ -18,6 +21,7 @@ import { prisma } from '@/lib/prisma';
 
 import { archiveVendorRecord, saveVendorCampaign } from './actions';
 import { MediaChoiceGrid } from './MediaChoiceGrid';
+import { VendorCampaignPreviewButton } from './VendorCampaignPreviewButton';
 
 function dateTimeValue(value: Date | null | undefined) {
   if (!value) return '';
@@ -45,10 +49,17 @@ export async function VendorCampaignStudio({
           workspaceId: access.workspace.id,
           vendorProfileId: access.vendor.id,
           type,
-          status: { not: 'EXPIRED' }
         },
         include: {
-          assets: { orderBy: { position: 'asc' } }
+          assets: {
+            orderBy: { position: 'asc' },
+            include: {
+              mediaAsset: { select: { metadata: true } },
+              mobileMediaAsset: { select: { metadata: true } },
+              coverMediaAsset: { select: { metadata: true } },
+              posterMediaAsset: { select: { metadata: true } }
+            }
+          }
         },
         orderBy: { updatedAt: 'desc' }
       }),
@@ -73,7 +84,21 @@ export async function VendorCampaignStudio({
           active: true
         },
         orderBy: { name: 'asc' },
-        select: { id: true, name: true }
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          active: true,
+          images: {
+            orderBy: [{ primary: 'desc' }, { position: 'asc' }],
+            take: 1,
+            select: { url: true }
+          },
+          variants: {
+            where: { active: true },
+            include: { inventory: true }
+          }
+        }
       }),
       prisma.promotion.findMany({
         where: {
@@ -83,7 +108,12 @@ export async function VendorCampaignStudio({
           active: true
         },
         orderBy: { title: 'asc' },
-        select: { id: true, title: true }
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          bannerMediaAsset: { select: { secureUrl: true } }
+        }
       }),
       prisma.storeCollection.findMany({
         where: {
@@ -93,7 +123,12 @@ export async function VendorCampaignStudio({
           active: true
         },
         orderBy: { title: 'asc' },
-        select: { id: true, title: true }
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          coverMediaAsset: { select: { secureUrl: true } }
+        }
       }),
       editId
         ? prisma.storeStudioCampaign.findFirst({
@@ -104,7 +139,15 @@ export async function VendorCampaignStudio({
               type
             },
             include: {
-              assets: { orderBy: { position: 'asc' } }
+              assets: {
+            orderBy: { position: 'asc' },
+            include: {
+              mediaAsset: { select: { metadata: true } },
+              mobileMediaAsset: { select: { metadata: true } },
+              coverMediaAsset: { select: { metadata: true } },
+              posterMediaAsset: { select: { metadata: true } }
+            }
+          }
             }
           })
         : null
@@ -143,7 +186,7 @@ export async function VendorCampaignStudio({
             label="Public"
             value={
               campaigns.filter(item =>
-                ['ACTIVE', 'SCHEDULED', 'APPROVED'].includes(item.status)
+                ['ACTIVE', 'SCHEDULED'].includes(item.status)
               ).length
             }
           />
@@ -171,46 +214,38 @@ export async function VendorCampaignStudio({
               </Field>
 
               <Field label="Destination">
-                <select
-                  name="destination"
-                  defaultValue={destinationValue}
-                  className={adminFieldClass}
-                >
-                  <option value="">No commerce destination</option>
-                  {products.length ? (
-                    <optgroup label="Products">
-                      {products.map(product => (
-                        <option key={product.id} value={`product:${product.id}`}>
-                          {product.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                  {collections.length ? (
-                    <optgroup label="Collections">
-                      {collections.map(collection => (
-                        <option
-                          key={collection.id}
-                          value={`collection:${collection.id}`}
-                        >
-                          {collection.title}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                  {promotions.length ? (
-                    <optgroup label="Promotions">
-                      {promotions.map(promotion => (
-                        <option
-                          key={promotion.id}
-                          value={`promotion:${promotion.id}`}
-                        >
-                          {promotion.title}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null}
-                </select>
+                <StudioDestinationPicker
+                  initialValue={destinationValue}
+                  options={[
+                    ...products.map(product => ({
+                      id: product.id,
+                      type: 'product' as const,
+                      label: product.name,
+                      description: `${product.status.replaceAll('_', ' ')} · ${product.variants.reduce((sum, variant) => sum + Math.max(0, (variant.inventory?.quantity ?? 0) - (variant.inventory?.reserved ?? 0)), 0)} available`,
+                      imageUrl: product.images[0]?.url ?? null,
+                      href: `/store?product=${encodeURIComponent(product.id)}`,
+                      available: product.active && product.status === 'PUBLISHED'
+                    })),
+                    ...collections.map(collection => ({
+                      id: collection.id,
+                      type: 'collection' as const,
+                      label: collection.title,
+                      description: 'Published collection',
+                      imageUrl: collection.coverMediaAsset?.secureUrl ?? null,
+                      href: `/store?collection=${encodeURIComponent(collection.id)}`,
+                      available: true
+                    })),
+                    ...promotions.map(promotion => ({
+                      id: promotion.id,
+                      type: 'promotion' as const,
+                      label: promotion.title,
+                      description: 'Published promotion',
+                      imageUrl: promotion.bannerMediaAsset?.secureUrl ?? null,
+                      href: `/promos/${promotion.slug}`,
+                      available: true
+                    }))
+                  ]}
+                />
               </Field>
 
               <Field label="Requested priority">
@@ -343,7 +378,8 @@ export async function VendorCampaignStudio({
                     {campaign.assets.length} asset
                     {campaign.assets.length === 1 ? '' : 's'}
                   </p>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <VendorCampaignPreviewButton campaign={campaign} />
                     <Link
                       href={`${route}?edit=${campaign.id}`}
                       className="rounded-full bg-foreground px-3 py-2 text-[9px] font-bold text-background"

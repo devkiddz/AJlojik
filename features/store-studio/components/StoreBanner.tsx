@@ -155,6 +155,7 @@ export function StoreBanner({ slides }: StoreBannerProps) {
               onError={event =>
                 markSourceFailed(event.currentTarget.currentSrc || desktopSource || mobileSource)
               }
+              style={{ objectPosition: activeSlide.desktopObjectPosition }}
               className="size-full object-cover">
               {mobileMediaAvailable ? (
                 <source src={mobileSource} media="(max-width: 639px)" />
@@ -175,6 +176,7 @@ export function StoreBanner({ slides }: StoreBannerProps) {
                 unoptimized={directRemoteMedia(mobileSource)}
                 sizes="100vw"
                 onError={() => markSourceFailed(mobileSource)}
+                style={{ objectPosition: activeSlide.mobileObjectPosition }}
                 className="object-cover sm:hidden"
               />
             ) : null}
@@ -188,6 +190,7 @@ export function StoreBanner({ slides }: StoreBannerProps) {
                 unoptimized={directRemoteMedia(desktopSource)}
                 sizes="(max-width: 768px) 100vw, 1200px"
                 onError={() => markSourceFailed(desktopSource)}
+                style={{ objectPosition: activeSlide.desktopObjectPosition }}
                 className={cn('object-cover', mobileMediaAvailable && 'hidden sm:block')}
               />
             ) : null}
@@ -202,6 +205,7 @@ export function StoreBanner({ slides }: StoreBannerProps) {
             unoptimized={directRemoteMedia(posterSource)}
             sizes="100vw"
             onError={() => markSourceFailed(posterSource)}
+            style={{ objectPosition: activeSlide.posterObjectPosition }}
             className="object-cover motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500"
           />
         ) : null}

@@ -15,12 +15,12 @@ export default function SearchMobileOverlay() {
       className="
         fixed
         inset-0
-        z-[100]
+        z-[220]
         flex
         flex-col
         bg-background/80
         backdrop-blur-xl
-        lg:hidden
+        xl:hidden
         animate-in
         fade-in
         duration-200

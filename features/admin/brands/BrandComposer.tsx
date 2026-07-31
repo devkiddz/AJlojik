@@ -5,6 +5,10 @@ import { Save, Tags } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { adminFieldClass } from '@/features/admin/components';
+import {
+  MediaUrlPicker,
+  type MediaChoiceAsset
+} from '@/features/admin/media';
 import { cn } from '@/lib/utils';
 
 import { saveBrand } from './actions';
@@ -26,7 +30,13 @@ function makeSlug(value: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
-export function BrandComposer({ editing }: { editing: BrandComposerValue | null }) {
+export function BrandComposer({
+  editing,
+  media
+}: {
+  editing: BrandComposerValue | null;
+  media: MediaChoiceAsset[];
+}) {
   const [name, setName] = useState(editing?.name ?? '');
   const [slug, setSlug] = useState(editing?.slug ?? '');
   const [slugEdited, setSlugEdited] = useState(Boolean(editing?.slug));
@@ -68,23 +78,29 @@ export function BrandComposer({ editing }: { editing: BrandComposerValue | null 
           />
         </Field>
 
-        <Field label="Logo URL" className="sm:col-span-2">
-          <input
+        <Field label="Brand logo" className="sm:col-span-2">
+          <MediaUrlPicker
+            media={media}
             name="logo"
-            value={logo}
-            onChange={event => setLogo(event.target.value)}
-            placeholder="Cloudinary or public logo URL"
-            className={adminFieldClass}
+            initialUrls={logo ? [logo] : []}
+            purpose="general"
+            cropPurpose="brand-cover"
+            emptyLabel="No brand logo selected"
+            manualLabel="Legacy or external logo URL"
+            onUrlsChange={urls => setLogo(urls[0] ?? '')}
           />
         </Field>
 
-        <Field label="Brand image URL" className="sm:col-span-2">
-          <input
+        <Field label="Brand cover image" className="sm:col-span-2">
+          <MediaUrlPicker
+            media={media}
             name="image"
-            value={image}
-            onChange={event => setImage(event.target.value)}
-            placeholder="Optional lifestyle or campaign image"
-            className={adminFieldClass}
+            initialUrls={image ? [image] : []}
+            purpose="banners"
+            cropPurpose="brand-cover"
+            emptyLabel="No brand cover selected"
+            manualLabel="Legacy or external cover URL"
+            onUrlsChange={urls => setImage(urls[0] ?? '')}
           />
         </Field>
 

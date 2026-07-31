@@ -59,7 +59,7 @@ const globalForPrisma = globalThis as unknown as {
   prismaSchemaVersion?: string;
 };
 
-const PRISMA_SCHEMA_VERSION = '20260729110000';
+const PRISMA_SCHEMA_VERSION = '20260731073000';
 
 function supportsCurrentSchema(
   client: PrismaClient | undefined,
@@ -74,6 +74,9 @@ function supportsCurrentSchema(
 
   return [
     'adminTodo',
+    'notification',
+    'notificationPreference',
+    'notificationMute',
     'adminApprovalRequest',
     'adminAuditEvent',
     'delivery',

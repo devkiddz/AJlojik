@@ -5,6 +5,11 @@ import { randomUUID } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
+import {
+  cancelApprovalRequestsForTarget,
+  createOrResubmitApprovalRequest,
+  synchronizeDirectApprovalDecision
+} from '@/features/admin/approvals/approvalRequestRepository';
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 import type { Prisma } from '@/lib/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -195,6 +200,12 @@ function resolveStatus({
 }): CampaignStatus {
   if (!canReview && !['DRAFT', 'PENDING_REVIEW'].includes(requestedStatus)) {
     return 'PENDING_REVIEW';
+  }
+
+  if (requestedStatus === 'APPROVED') {
+    return startsAt && startsAt.getTime() > Date.now()
+      ? 'SCHEDULED'
+      : 'ACTIVE';
   }
 
   if (requestedStatus === 'SCHEDULED') {
@@ -389,7 +400,7 @@ async function assertVendorCampaignPublication({
     !vendor.active
   ) {
     throw new Error(
-      'Vendor campaigns cannot be approved or activated until multivendor mode is enabled and the vendor is active.'
+      'Vendor campaigns cannot be approved or activated until Multi Vendor mode is enabled and the vendor is active.'
     );
   }
 }
@@ -663,6 +674,7 @@ async function recordAudit({
 
 function revalidateStoreStudio(): void {
   revalidatePath('/store');
+  revalidatePath('/shops');
   revalidatePath('/admin');
   revalidatePath('/admin/store-studio');
 }
@@ -711,42 +723,58 @@ export async function createStoreStudioCampaign(
 
   const campaignId = randomUUID();
 
-  await prisma.storeStudioCampaign.create({
-    data: {
-      id: campaignId,
-      workspaceId,
-      type: campaignType,
-      status,
-      placementTier: enumValue(
-        formData,
-        'placementTier',
-        PLACEMENT_TIERS,
-        'STANDARD'
-      ),
-      title,
-      description: nullableText(formData, 'campaignDescription'),
-      startsAt:
-        status === 'ACTIVE' && !startsAt
-          ? new Date()
-          : startsAt,
-      endsAt,
-      requestedPriority: integerValue(
-        formData,
-        'requestedPriority',
-        0,
-        -100,
-        100
-      ),
-      adminWeight: canReview
-        ? integerValue(formData, 'adminWeight', 0, -100, 100)
-        : 0,
-      active: true,
-      assets: {
-        create: {
-          ...asset,
-          position: 0
+  await prisma.$transaction(async transaction => {
+    await transaction.storeStudioCampaign.create({
+      data: {
+        id: campaignId,
+        workspaceId,
+        type: campaignType,
+        status,
+        placementTier: enumValue(
+          formData,
+          'placementTier',
+          PLACEMENT_TIERS,
+          'STANDARD'
+        ),
+        title,
+        description: nullableText(formData, 'campaignDescription'),
+        startsAt:
+          status === 'ACTIVE' && !startsAt
+            ? new Date()
+            : startsAt,
+        endsAt,
+        requestedPriority: integerValue(
+          formData,
+          'requestedPriority',
+          0,
+          -100,
+          100
+        ),
+        adminWeight: canReview
+          ? integerValue(formData, 'adminWeight', 0, -100, 100)
+          : 0,
+        active: !['PAUSED', 'EXPIRED', 'REJECTED'].includes(status),
+        assets: {
+          create: {
+            ...asset,
+            position: 0
+          }
         }
       }
+    });
+
+    if (status === 'PENDING_REVIEW') {
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'CAMPAIGN',
+        targetId: campaignId,
+        reason: `Review Store Studio ${campaignType.toLowerCase()} campaign “${title}”.`,
+        payload: { campaignType, assetId: asset.id },
+        priority: 'NORMAL'
+      });
     }
   });
 
@@ -778,13 +806,15 @@ export async function updateStoreStudioCampaign(
   const campaign = await prisma.storeStudioCampaign.findFirst({
     where: {
       id: campaignId,
-      workspaceId,
-      active: true
+      workspaceId
     },
     select: {
       id: true,
       type: true,
       status: true,
+      active: true,
+      startsAt: true,
+      endsAt: true,
       title: true,
       vendorProfileId: true
     }
@@ -822,35 +852,84 @@ export async function updateStoreStudioCampaign(
     status
   });
 
-  await prisma.storeStudioCampaign.update({
-    where: {
-      id: campaign.id
-    },
-    data: {
-      title,
-      description: nullableText(formData, 'campaignDescription'),
-      status,
-      placementTier: enumValue(
-        formData,
-        'placementTier',
-        PLACEMENT_TIERS,
-        'STANDARD'
-      ),
-      startsAt:
-        status === 'ACTIVE' && !startsAt
-          ? new Date()
-          : startsAt,
-      endsAt,
-      requestedPriority: integerValue(
-        formData,
-        'requestedPriority',
-        0,
-        -100,
-        100
-      ),
-      adminWeight: canReview
-        ? integerValue(formData, 'adminWeight', 0, -100, 100)
-        : undefined
+  await prisma.$transaction(async transaction => {
+    const snapshot = {
+      status: campaign.status,
+      active: campaign.active,
+      startsAt: campaign.startsAt,
+      endsAt: campaign.endsAt
+    };
+    const result = await transaction.storeStudioCampaign.update({
+      where: { id: campaign.id },
+      data: {
+        title,
+        description: nullableText(formData, 'campaignDescription'),
+        status,
+        placementTier: enumValue(
+          formData,
+          'placementTier',
+          PLACEMENT_TIERS,
+          'STANDARD'
+        ),
+        startsAt:
+          status === 'ACTIVE' && !startsAt
+            ? new Date()
+            : startsAt,
+        endsAt,
+        requestedPriority: integerValue(
+          formData,
+          'requestedPriority',
+          0,
+          -100,
+          100
+        ),
+        adminWeight: canReview
+          ? integerValue(formData, 'adminWeight', 0, -100, 100)
+          : undefined,
+        active: !['PAUSED', 'EXPIRED', 'REJECTED'].includes(status)
+      },
+      select: { id: true, status: true, active: true, startsAt: true, endsAt: true }
+    });
+
+    if (status === 'PENDING_REVIEW') {
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'CAMPAIGN',
+        targetId: campaign.id,
+        reason: `Review updated Store Studio campaign “${title}”.`,
+        priority: 'NORMAL'
+      });
+    } else if (status === 'DRAFT') {
+      await cancelApprovalRequestsForTarget(transaction, {
+        workspaceId,
+        actorId: access.session.user.id,
+        targetType: 'CAMPAIGN',
+        targetId: campaign.id,
+        note: 'The campaign returned to draft during editing.'
+      });
+    } else if (['ACTIVE', 'SCHEDULED', 'PAUSED', 'REJECTED', 'EXPIRED'].includes(status)) {
+      const approvalStatus =
+        status === 'PAUSED'
+          ? 'PAUSED'
+          : status === 'REJECTED'
+            ? 'REJECTED'
+            : status === 'EXPIRED'
+              ? 'EXPIRED'
+              : 'EXECUTED';
+
+      await synchronizeDirectApprovalDecision(transaction, {
+        workspaceId,
+        actorId: access.session.user.id,
+        targetType: 'CAMPAIGN',
+        targetId: campaign.id,
+        status: approvalStatus,
+        note: `Campaign updated directly to ${status}.`,
+        targetSnapshot: snapshot,
+        resultSnapshot: result
+      });
     }
   });
 
@@ -879,8 +958,7 @@ export async function addStoreStudioAsset(formData: FormData): Promise<void> {
   const campaign = await prisma.storeStudioCampaign.findFirst({
     where: {
       id: campaignId,
-      workspaceId,
-      active: true
+      workspaceId
     },
     include: {
       assets: {
@@ -922,12 +1000,18 @@ export async function addStoreStudioAsset(formData: FormData): Promise<void> {
 
     if (movedToReview) {
       await transaction.storeStudioCampaign.update({
-        where: {
-          id: campaign.id
-        },
-        data: {
-          status: 'PENDING_REVIEW'
-        }
+        where: { id: campaign.id },
+        data: { status: 'PENDING_REVIEW' }
+      });
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'CAMPAIGN',
+        targetId: campaign.id,
+        reason: `Review changes to Store Studio campaign “${campaign.title}”.`,
+        priority: 'NORMAL'
       });
     }
   });
@@ -959,8 +1043,7 @@ export async function updateStoreStudioAsset(formData: FormData): Promise<void> 
       id: assetId,
       campaign: {
         is: {
-          workspaceId,
-          active: true
+          workspaceId
         }
       }
     },
@@ -1026,12 +1109,18 @@ export async function updateStoreStudioAsset(formData: FormData): Promise<void> 
 
     if (movedToReview) {
       await transaction.storeStudioCampaign.update({
-        where: {
-          id: currentAsset.campaign.id
-        },
-        data: {
-          status: 'PENDING_REVIEW'
-        }
+        where: { id: currentAsset.campaign.id },
+        data: { status: 'PENDING_REVIEW' }
+      });
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'CAMPAIGN',
+        targetId: currentAsset.campaign.id,
+        reason: `Review changes to Store Studio campaign “${currentAsset.campaign.title}”.`,
+        priority: 'NORMAL'
       });
     }
   });
@@ -1068,8 +1157,7 @@ export async function moveStoreStudioAsset(formData: FormData): Promise<void> {
       id: assetId,
       campaign: {
         is: {
-          workspaceId,
-          active: true
+          workspaceId
         }
       }
     },
@@ -1123,12 +1211,18 @@ export async function moveStoreStudioAsset(formData: FormData): Promise<void> {
 
     if (movedToReview) {
       await transaction.storeStudioCampaign.update({
-        where: {
-          id: asset.campaign.id
-        },
-        data: {
-          status: 'PENDING_REVIEW'
-        }
+        where: { id: asset.campaign.id },
+        data: { status: 'PENDING_REVIEW' }
+      });
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'CAMPAIGN',
+        targetId: asset.campaign.id,
+        reason: 'Review the updated Store Studio asset order.',
+        priority: 'NORMAL'
       });
     }
   });
@@ -1173,8 +1267,7 @@ export async function transitionStoreStudioCampaign(
   const campaign = await prisma.storeStudioCampaign.findFirst({
     where: {
       id: campaignId,
-      workspaceId,
-      active: true
+      workspaceId
     }
   });
 
@@ -1194,7 +1287,8 @@ export async function transitionStoreStudioCampaign(
     case 'approve':
       status = campaign.startsAt && campaign.startsAt > new Date()
         ? 'SCHEDULED'
-        : 'APPROVED';
+        : 'ACTIVE';
+      startsAt = campaign.startsAt ?? new Date();
       break;
     case 'activate':
       status = campaign.startsAt && campaign.startsAt > new Date()
@@ -1226,17 +1320,54 @@ export async function transitionStoreStudioCampaign(
     status
   });
 
-  await prisma.storeStudioCampaign.update({
-    where: {
-      id: campaign.id
-    },
-    data: {
-      status,
-      startsAt,
-      endsAt:
-        status === 'EXPIRED'
-          ? new Date()
-          : campaign.endsAt
+  await prisma.$transaction(async transaction => {
+    const snapshot = {
+      status: campaign.status,
+      active: campaign.active,
+      startsAt: campaign.startsAt,
+      endsAt: campaign.endsAt
+    };
+    const result = await transaction.storeStudioCampaign.update({
+      where: { id: campaign.id },
+      data: {
+        status,
+        active: !['PAUSED', 'EXPIRED', 'REJECTED'].includes(status),
+        startsAt,
+        endsAt: status === 'EXPIRED' ? new Date() : campaign.endsAt
+      },
+      select: { id: true, status: true, active: true, startsAt: true, endsAt: true }
+    });
+
+    if (transition === 'submit') {
+      await createOrResubmitApprovalRequest(transaction, {
+        workspaceId,
+        requestedById: access.session.user.id,
+        source: campaign.vendorProfileId ? 'VENDOR' : 'ADMIN',
+        action: 'PUBLISH_LIVE',
+        targetType: 'CAMPAIGN',
+        targetId: campaign.id,
+        reason: `Review Store Studio campaign “${campaign.title}”.`,
+        priority: 'NORMAL'
+      });
+    } else {
+      const requestStatus =
+        transition === 'pause'
+          ? 'PAUSED'
+          : transition === 'reject'
+            ? 'REJECTED'
+            : transition === 'expire'
+              ? 'EXPIRED'
+              : 'EXECUTED';
+      await synchronizeDirectApprovalDecision(transaction, {
+        workspaceId,
+        actorId: access.session.user.id,
+        targetType: 'CAMPAIGN',
+        targetId: campaign.id,
+        status: requestStatus,
+        note: `Campaign moved directly from ${campaign.status} to ${status}.`,
+        targetSnapshot: snapshot,
+        resultSnapshot: result
+      });
     }
   });
 
@@ -1267,8 +1398,7 @@ export async function archiveStoreStudioCampaign(
   const campaign = await prisma.storeStudioCampaign.findFirst({
     where: {
       id: campaignId,
-      workspaceId,
-      active: true
+      workspaceId
     }
   });
 
@@ -1276,15 +1406,31 @@ export async function archiveStoreStudioCampaign(
     throw new Error('The Store Studio campaign is unavailable.');
   }
 
-  await prisma.storeStudioCampaign.update({
-    where: {
-      id: campaign.id
-    },
-    data: {
-      active: false,
+  await prisma.$transaction(async transaction => {
+    const result = await transaction.storeStudioCampaign.update({
+      where: { id: campaign.id },
+      data: {
+        active: false,
+        status: 'EXPIRED',
+        endsAt: campaign.endsAt ?? new Date()
+      },
+      select: { id: true, status: true, active: true, endsAt: true }
+    });
+    await synchronizeDirectApprovalDecision(transaction, {
+      workspaceId,
+      actorId: access.session.user.id,
+      targetType: 'CAMPAIGN',
+      targetId: campaign.id,
       status: 'EXPIRED',
-      endsAt: campaign.endsAt ?? new Date()
-    }
+      note: 'The campaign was archived in Store Studio.',
+      targetSnapshot: {
+        status: campaign.status,
+        active: campaign.active,
+        startsAt: campaign.startsAt,
+        endsAt: campaign.endsAt
+      },
+      resultSnapshot: result
+    });
   });
 
   await recordAudit({

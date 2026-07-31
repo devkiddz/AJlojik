@@ -5,6 +5,10 @@ import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import {
+  cancelApprovalRequestsForTarget,
+  createOrResubmitApprovalRequest
+} from '@/features/admin/approvals/approvalRequestRepository';
 import { requireAdminPermission } from '@/features/admin/auth/adminPermissions';
 import type { Prisma } from '@/lib/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -193,7 +197,7 @@ async function resolveProductInput(
     (!vendor || access.membership.workspace.commerceMode !== 'MULTI_VENDOR')
   ) {
     throw new Error(
-      'Vendor assignment is unavailable while multivendor mode is disabled.'
+      'Vendor assignment is unavailable while Multi Vendor mode is disabled.'
     );
   }
 
@@ -474,38 +478,28 @@ async function synchronizeProductApproval(
   input: Awaited<ReturnType<typeof resolveProductInput>>,
   productId: string
 ): Promise<void> {
-  await transaction.adminApprovalRequest.updateMany({
-    where: {
+  if (input.data.status !== 'PENDING_REVIEW') {
+    await cancelApprovalRequestsForTarget(transaction, {
       workspaceId: input.workspaceId,
+      actorId: input.access.session.user.id,
       targetType: 'PRODUCT',
       targetId: productId,
-      status: 'PENDING'
-    },
-    data: {
-      status: 'CANCELLED',
-      reviewNote:
-        input.data.status === 'PENDING_REVIEW'
-          ? 'Superseded by a newer Product Studio submission.'
-          : 'The product no longer requires this pending approval.'
-    }
-  });
-
-  if (input.data.status !== 'PENDING_REVIEW') {
+      note: 'The product no longer requires publication approval.'
+    });
     return;
   }
 
-  await transaction.adminApprovalRequest.create({
-    data: {
-      workspaceId: input.workspaceId,
-      requestedById: input.access.session.user.id,
-      action: 'PUBLISH_LIVE',
-      targetType: 'PRODUCT',
-      targetId: productId,
-      reason: `Publish the latest ${input.data.name} changes from Product Studio.`,
-      payload: input.vendorProfileId
-        ? { vendorProfileId: input.vendorProfileId }
-        : undefined
-    }
+  await createOrResubmitApprovalRequest(transaction, {
+    workspaceId: input.workspaceId,
+    requestedById: input.access.session.user.id,
+    source: input.vendorProfileId ? 'VENDOR' : 'ADMIN',
+    action: 'PUBLISH_LIVE',
+    targetType: 'PRODUCT',
+    targetId: productId,
+    reason: `Publish the latest ${input.data.name} changes from Product Studio.`,
+    payload: input.vendorProfileId
+      ? { vendorProfileId: input.vendorProfileId }
+      : undefined
   });
 }
 
@@ -565,6 +559,7 @@ export async function createProduct(formData: FormData): Promise<void> {
   revalidatePath('/admin/approvals');
   revalidatePath('/admin/analytics');
   revalidatePath('/store');
+  revalidatePath('/shops');
   redirect(`/admin/products/${product.id}`);
 }
 
@@ -640,4 +635,5 @@ export async function updateProduct(formData: FormData): Promise<void> {
   revalidatePath('/admin/approvals');
   revalidatePath('/admin/analytics');
   revalidatePath('/store');
+  revalidatePath('/shops');
 }

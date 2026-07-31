@@ -45,7 +45,7 @@ export default function SearchResultsDropdown({ mobile = false }: Props) {
       className={
         mobile
           ? 'flex h-full w-full flex-col overflow-y-auto bg-transparent'
-          : 'absolute left-0 -translate-x-1/2 top-full mt-3 w-[min(1180px,96vw)] overflow-hidden rounded-3xl border bg-background/95 backdrop-blur-xl shadow-2xl z-999'
+          : 'absolute left-1/2 top-full z-[180] mt-3 w-[min(1180px,96vw)] -translate-x-1/2 overflow-hidden rounded-3xl border bg-background/95 shadow-2xl backdrop-blur-xl'
       }>
       {loading ? (
         <SearchLoading />

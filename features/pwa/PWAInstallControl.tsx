@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { usePWARuntime } from './PWARuntimeProvider';
 
 type PWAInstallControlProps = {
-  presentation?: 'navbar' | 'account-sheet';
+  presentation?: 'navbar' | 'account-sheet' | 'sidebar';
 };
 
 export function PWAInstallControl({ presentation = 'navbar' }: PWAInstallControlProps) {
@@ -48,7 +48,7 @@ export function PWAInstallControl({ presentation = 'navbar' }: PWAInstallControl
       ? 'Share this AJ Logik experience'
       : label;
 
-  const accountSheet = presentation === 'account-sheet';
+  const expanded = presentation !== 'navbar';
 
   return (
     <button
@@ -58,7 +58,7 @@ export function PWAInstallControl({ presentation = 'navbar' }: PWAInstallControl
       onClick={action}
       className={cn(
         'relative inline-flex shrink-0 items-center justify-center gap-2 border text-xs font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        accountSheet
+        expanded
           ? ['h-12 w-full', 'justify-start', 'rounded-2xl', 'px-4']
           : ['h-10', 'rounded-full', 'px-3'],
         updateReady
@@ -79,9 +79,9 @@ export function PWAInstallControl({ presentation = 'navbar' }: PWAInstallControl
         <Icon className={cn('size-4', updateReady && 'animate-pulse')} />
       </span>
 
-      <span className={cn('whitespace-nowrap', accountSheet ? 'inline' : 'hidden sm:inline')}>{label}</span>
+      <span className={cn('whitespace-nowrap', expanded ? 'inline' : 'hidden sm:inline')}>{label}</span>
 
-      {accountSheet ? (
+      {expanded ? (
         <span className="ml-auto text-[10px] font-medium text-muted-foreground">
           {updateReady ? 'Ready' : isStandalone ? 'System share' : 'Available'}
         </span>

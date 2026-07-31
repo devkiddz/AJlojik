@@ -17,6 +17,11 @@ import {
 } from 'lucide-react';
 
 import { adminFieldClass } from '@/features/admin/components';
+import {
+  MediaUrlPicker,
+  type MediaChoiceAsset
+} from '@/features/admin/media';
+import { StudioSelectField } from '@/features/studio-controls';
 import { cn } from '@/lib/utils';
 
 import { saveCategory } from './actions';
@@ -56,7 +61,13 @@ function makeSlug(value: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
-export function CategoryComposer({ editing }: { editing: CategoryComposerValue | null }) {
+export function CategoryComposer({
+  editing,
+  media
+}: {
+  editing: CategoryComposerValue | null;
+  media: MediaChoiceAsset[];
+}) {
   const [label, setLabel] = useState(editing?.label ?? '');
   const [slug, setSlug] = useState(editing?.slug ?? '');
   const [slugEdited, setSlugEdited] = useState(Boolean(editing?.slug));
@@ -105,11 +116,15 @@ export function CategoryComposer({ editing }: { editing: CategoryComposerValue |
         </Field>
 
         <Field label="Icon">
-          <select name="iconName" value={iconName} onChange={event => setIconName(event.target.value)} className={adminFieldClass}>
-            {iconOptions.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+          <StudioSelectField
+            name="iconName"
+            value={iconName}
+            onValueChange={setIconName}
+            options={iconOptions.map(option => ({
+              value: option.value,
+              label: option.label
+            }))}
+          />
         </Field>
 
         <Field label="Position">
@@ -133,18 +148,33 @@ export function CategoryComposer({ editing }: { editing: CategoryComposerValue |
           <input name="className" defaultValue={editing?.className ?? ''} placeholder="e.g. category-wines" className={adminFieldClass} />
         </Field>
 
-        <Field label="Primary image URL" className="sm:col-span-2">
-          <input name="image" value={image} onChange={event => setImage(event.target.value)} placeholder="/assets/... or Cloudinary URL" className={adminFieldClass} />
+        <Field label="Primary category media" className="sm:col-span-2">
+          <MediaUrlPicker
+            media={media}
+            name="image"
+            initialUrls={image ? [image] : []}
+            purpose="collections"
+            cropPurpose="category-cover"
+            emptyLabel="No primary category image"
+            manualLabel="Legacy or external primary image URL"
+            onUrlsChange={urls => setImage(urls[0] ?? '')}
+          />
         </Field>
 
-        <Field label="Cover image URLs" className="sm:col-span-2">
-          <textarea
+        <Field label="Category cover gallery" className="sm:col-span-2">
+          <MediaUrlPicker
+            media={media}
             name="coverImages"
-            rows={4}
-            value={coverImages}
-            onChange={event => setCoverImages(event.target.value)}
-            placeholder="One image URL per line"
-            className={cn(adminFieldClass, 'h-auto py-3')}
+            initialUrls={coverImages
+              .split(/[\n,]+/)
+              .map(value => value.trim())
+              .filter(Boolean)}
+            multiple
+            purpose="collections"
+            cropPurpose="category-cover"
+            emptyLabel="No category cover images"
+            manualLabel="Additional external cover URLs"
+            onUrlsChange={urls => setCoverImages(urls.join('\n'))}
           />
         </Field>
 
