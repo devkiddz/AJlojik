@@ -1,0 +1,30 @@
+import { notFound } from 'next/navigation';
+import { Building2, Boxes, GalleryVerticalEnd, UsersRound } from 'lucide-react';
+
+import { getAdminAccess } from '@/features/admin/auth/adminPermissions';
+import { AdminMetric, AdminPage, AdminPageHeader, AdminPanel, adminFieldClass } from '@/features/admin/components';
+import { MediaChoiceGrid } from '@/features/admin/media';
+import { adminAddVendorMember, adminUpdateVendorMember, updateVendorProfile } from '@/features/admin/vendors/actions';
+import { prisma } from '@/lib/prisma';
+
+export default async function AdminVendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const access = await getAdminAccess();
+  if (!access.permissions.has('vendor:view')) throw new Error('Vendor access is required.');
+  const { id } = await params;
+  const [vendor, media] = await Promise.all([
+    prisma.vendorProfile.findFirst({
+      where: { id, workspaceId: access.membership.workspaceId },
+      include: {
+        ownerUser: { select: { name: true, email: true } },
+        members: { include: { user: { select: { name: true, email: true } } }, orderBy: [{ role: 'asc' }, { createdAt: 'asc' }] },
+        _count: { select: { products: true, promotions: true, collections: true, campaigns: true, mediaAssets: true } }
+      }
+    }),
+    prisma.mediaAsset.findMany({ where: { workspaceId: access.membership.workspaceId, status: 'ACTIVE', resourceType: 'IMAGE' }, orderBy: { createdAt: 'desc' }, take: 150 })
+  ]);
+  if (!vendor) notFound();
+  const updateAction = updateVendorProfile.bind(null, vendor.id);
+  const addMemberAction = adminAddVendorMember.bind(null, vendor.id);
+  return <AdminPage><div className="mx-auto max-w-[96rem] space-y-5"><AdminPageHeader eyebrow={vendor.status} title={vendor.name} description={`Owner: ${vendor.ownerUser.name} · ${vendor.ownerUser.email}`} backHref="/admin/vendors" backLabel="Vendors"/><section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><AdminMetric icon={Boxes} label="Products" value={vendor._count.products}/><AdminMetric icon={Building2} label="Campaigns and offers" value={vendor._count.campaigns+vendor._count.promotions+vendor._count.collections}/><AdminMetric icon={GalleryVerticalEnd} label="Owned media" value={vendor._count.mediaAssets}/><AdminMetric icon={UsersRound} label="Team members" value={vendor.members.length}/></section>{access.permissions.has('vendor:manage')?<AdminPanel title="Vendor profile" description="Update public identity and select the logo visually from Media Studio."><form action={updateAction} className="grid gap-4 lg:grid-cols-3"><Field label="Name"><input name="name" defaultValue={vendor.name} required className={adminFieldClass}/></Field><Field label="Slug"><input name="slug" defaultValue={vendor.slug} required className={adminFieldClass}/></Field><Field label="Public email"><input name="email" type="email" defaultValue={vendor.email??''} className={adminFieldClass}/></Field><Field label="Phone"><input name="phone" defaultValue={vendor.phone??''} className={adminFieldClass}/></Field><Field label="Description" className="lg:col-span-2"><textarea name="description" rows={3} defaultValue={vendor.description??''} className={adminFieldClass}/></Field><fieldset className="lg:col-span-3"><legend className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Logo gallery</legend><MediaChoiceGrid media={media} name="logoMediaAssetId" initialIds={vendor.logoMediaAssetId ? [vendor.logoMediaAssetId] : []} emptyLabel="No logo" purpose="general" uploadAccept="image" acceptedResourceTypes={['IMAGE']} /></fieldset><button className="h-12 rounded-full bg-foreground px-5 text-sm font-bold text-background lg:col-span-3">Save vendor profile</button></form></AdminPanel>:null}{access.permissions.has('vendor:manage')?<AdminPanel title="Add vendor team member" description="Membership stays vendor-scoped and never grants workspace approval rights."><form action={addMemberAction} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto]"><input name="email" type="email" required placeholder="member@example.com" className={adminFieldClass}/><select name="role" className={adminFieldClass}><option value="EDITOR">Editor</option><option value="MANAGER">Manager</option><option value="ANALYST">Analyst</option></select><button className="h-11 rounded-full bg-foreground px-5 text-xs font-bold text-background">Add member</button></form></AdminPanel>:null}<AdminPanel title="Vendor team"><div className="space-y-3">{vendor.members.map(member=><article key={member.id} className="flex flex-col gap-3 rounded-3xl border border-border/60 bg-background/55 p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{member.user.name}</p><p className="truncate text-[10px] text-muted-foreground">{member.user.email}</p></div>{member.role==='OWNER'?<span className="rounded-full bg-primary/10 px-3 py-2 text-[9px] font-black text-primary">OWNER</span>:access.permissions.has('vendor:manage')?<form action={adminUpdateVendorMember.bind(null,vendor.id)} className="flex flex-wrap items-center gap-2"><input type="hidden" name="membershipId" value={member.id}/><select name="role" defaultValue={member.role} className="h-10 rounded-full border border-border bg-background px-3 text-[10px] font-bold"><option value="EDITOR">Editor</option><option value="MANAGER">Manager</option><option value="ANALYST">Analyst</option></select><button name="active" value={member.active?'false':'true'} className="h-10 rounded-full border border-border px-3 text-[10px] font-bold">{member.active?'Deactivate':'Reactivate'}</button></form>:<span className="text-[9px] font-black">{member.role}</span>}</article>)}</div></AdminPanel></div></AdminPage>;
+}
+function Field({label,children,className=''}:{label:string;children:React.ReactNode;className?:string}){return <label className={className}><span className="mb-2 block text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</span>{children}</label>}

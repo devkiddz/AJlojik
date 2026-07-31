@@ -1,0 +1,58 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { categories } from '@/data/categories';
+import { ProductType } from '@/types/types';
+
+type Props = {
+  product: ProductType;
+};
+
+const FALLBACK_BANNER =
+  '/assets/Image-2.png';
+
+export default function SingleProductHero({ product }: Props) {
+
+  const category = useMemo(
+    () => categories.find(c => c.slug === product.category) ?? categories[0],
+    [product.category]
+  );
+
+  const covers = useMemo(
+    () => (category.coverImages?.length > 0 ? category.coverImages : [FALLBACK_BANNER]),
+    [category.coverImages]
+  );
+  const [currentCover, setCurrentCover] = useState(0);
+
+  useEffect(() => {
+    if (covers.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentCover(prev => (prev + 1) % covers.length);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [covers]);
+
+  return (
+    <section className="fixed top-0 w-full isolate overflow-hidden min-h-[400px] flex items-center">
+      {/* Background Slider */}
+      <div className="absolute inset-0 z-0">
+        {covers.map((cover, index) => (
+          <Image
+            key={cover}
+            src={cover}
+            alt={category.label}
+            fill
+            className={`object-cover transition-opacity duration-1000 ${
+              currentCover === index ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+        ))}
+        <div className="absolute inset-0 bg-black/70" />
+      </div>
+
+      {/* Content Container */}
+      <div className="flex flex-col relative z-10 mx-auto max-w-[80%] w-full md:py-12"></div>
+    </section>
+  );
+}

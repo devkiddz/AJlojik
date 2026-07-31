@@ -1,0 +1,1842 @@
+// This is your Prisma schema file.
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+model User {
+  storeStudioCampaigns StoreStudioCampaign[]
+  uploadedMediaAssets  MediaAsset[]           @relation("MediaUploadedBy")
+  ownedVendorProfiles  VendorProfile[]        @relation("VendorOwner")
+  vendorMemberships    VendorMembership[]
+  id                   String                @id
+  name                 String
+  email                String
+  emailVerified        Boolean               @default(false)
+  image                String?
+  tier                 String?               @default("member")
+  accountState         String                @default("ACTIVE")
+  lockedUntil          DateTime?
+  restrictionReason    String?
+  isGhostDeveloper     Boolean               @default(false)
+  platformRole        PlatformRole          @default(STANDARD)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  experienceProfile ExperienceProfile?
+
+  carts         Cart[]
+  wishlists     Wishlist[]
+  shoppingLists ShoppingList[]
+  orders        Order[]
+  addresses     Address[]
+  reviews       Review[]
+
+  recentlyViewed            RecentlyViewed[]
+  workspaceMemberships      WorkspaceMembership[]
+  demoWallets               DemoWallet[]
+  experienceEvents          ExperienceEvent[]
+  experienceHistoryEntries  ExperienceHistoryEntry[]
+  experienceHistorySettings ExperienceHistorySettings[]
+
+  staffProfile         StaffProfile?
+  staffInvitations     StaffProfile[]          @relation("StaffInvitedBy")
+  approvalRequests     AdminApprovalRequest[]  @relation("ApprovalRequestedBy")
+  approvalReviews      AdminApprovalRequest[]  @relation("ApprovalReviewedBy")
+  adminAuditEvents     AdminAuditEvent[]
+  assignedAdminTodos   AdminTodo[]             @relation("AdminTodoAssignee")
+  createdAdminTodos    AdminTodo[]             @relation("AdminTodoCreator")
+  dispatchedDeliveries Delivery[]              @relation("DeliveryDispatcher")
+  deliveryEvents       DeliveryTrackingEvent[]
+
+  @@unique([email])
+  @@index([accountState])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ============================================================
+// EXPERIENCE PROFILE
+// ============================================================
+
+model ExperienceProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  persona String @default("new-member")
+
+  preferredCategorySlugs String[] @default([])
+  preferredBrandSlugs    String[] @default([])
+
+  recentlyViewedProductIds String[] @default([])
+  searchedTerms            String[] @default([])
+  clickedCollectionIds     String[] @default([])
+
+  recommendationScore Int @default(0)
+  engagementScore     Int @default(0)
+  commerceScore       Int @default(0)
+
+  onboardingCompleted    Boolean @default(false)
+  personalizationEnabled Boolean @default(true)
+
+  experienceDensity     String  @default("immersive")
+  autoplayPreviews      Boolean @default(true)
+  discoveryEnabled      Boolean @default(true)
+  recommendationMode    String  @default("balanced")
+  shoppingNotifications Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("experience_profile")
+}
+
+// ============================================================
+// CATALOG
+// ============================================================
+
+model Category {
+  id    String @id
+  slug  String @unique
+  label String
+
+  iconName    String?
+  image       String?
+  coverImages String[] @default([])
+
+  shortDescription String?
+  description      String?
+  accentColor      String?
+  className        String?
+
+  active   Boolean @default(true)
+  position Int     @default(0)
+
+  subcategories Subcategory[]
+  products      Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, position])
+  @@map("category")
+}
+
+model Subcategory {
+  id    String @id @default(cuid())
+  slug  String
+  label String
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  products Product[]
+
+  active   Boolean @default(true)
+  position Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+  @@map("subcategory")
+}
+
+model Brand {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  description String?
+  logo        String?
+  image       String?
+
+  active Boolean @default(true)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("brand")
+}
+
+model Product {
+  id   String @id
+  slug String
+  name String
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  shortDescription String?
+  longDescription  String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  subcategoryId String?
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  tags String[] @default([])
+
+  rating       Float @default(0)
+  reviewsCount Int   @default(0)
+  soldCount    Int   @default(0)
+
+  featured Boolean       @default(false)
+  isNew    Boolean       @default(false)
+  active   Boolean       @default(true)
+  status   ProductStatus @default(PUBLISHED)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  submittedAt DateTime?
+  approvedAt  DateTime?
+
+  estimatedDelivery  String?
+  discountPercentage Int     @default(0)
+
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  cartItems         CartItem[]
+  wishlistItems     WishlistItem[]
+  shoppingListItems ShoppingListItem[]
+  orderItems        OrderItem[]
+  recentlyViewedBy  RecentlyViewed[]
+  reviews           Review[]
+
+  promotionProducts PromotionProduct[]
+  collectionProducts StoreCollectionProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, active])
+  @@index([workspaceId, active, featured])
+  @@index([workspaceId, active, isNew])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([brandId])
+  @@index([vendorProfileId, status])
+  @@map("product")
+}
+
+model ProductVariant {
+  id    String @id
+  label String
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku   String? @unique
+  image String?
+
+  mediaAssetId String?
+  mediaAsset   MediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+
+  price          Decimal  @db.Decimal(12, 2)
+  compareAtPrice Decimal? @db.Decimal(12, 2)
+
+  active   Boolean @default(true)
+  position Int     @default(0)
+
+  inventory         Inventory?
+  cartItems         CartItem[]
+  shoppingListItems ShoppingListItem[]
+  orderItems        OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([productId, active, position])
+  @@index([mediaAssetId])
+  @@map("product_variant")
+}
+
+model ProductImage {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url      String
+  alt      String?
+
+  mediaAssetId String?
+  mediaAsset   MediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  position Int     @default(0)
+  primary  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId, position])
+  @@index([mediaAssetId])
+  @@map("product_image")
+}
+
+model Promotion {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  slug        String
+  title       String
+  description String?
+
+  active   Boolean         @default(true)
+  status   PromotionStatus @default(PUBLISHED)
+  type     PromotionType   @default(PERCENTAGE)
+  startsAt DateTime?
+  endsAt   DateTime?
+  priority Int             @default(0)
+
+  discountValue Decimal? @db.Decimal(12, 2)
+  usageLimit    Int?
+  code          String?
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  bannerMediaAssetId String?
+  bannerMediaAsset   MediaAsset? @relation(fields: [bannerMediaAssetId], references: [id], onDelete: SetNull)
+
+  products PromotionProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, active, priority])
+  @@index([workspaceId, active, startsAt, endsAt])
+  @@index([startsAt, endsAt])
+  @@index([vendorProfileId, status])
+  @@index([bannerMediaAssetId])
+  @@map("promotion")
+}
+
+model PromotionProduct {
+  id String @id @default(cuid())
+
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  discountPercentage Int?
+  promotionalPrice   Decimal? @db.Decimal(12, 2)
+
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([promotionId, productId])
+  @@index([productId])
+  @@index([promotionId, position])
+  @@map("promotion_product")
+}
+
+// ============================================================
+// CART
+// ============================================================
+
+model Cart {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("cart")
+}
+
+model CartItem {
+  id String @id @default(cuid())
+
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  quantity Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+  @@index([cartId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("cart_item")
+}
+
+// ============================================================
+// WISHLIST
+// ============================================================
+
+model Wishlist {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items WishlistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("wishlist")
+}
+
+model WishlistItem {
+  id String @id @default(cuid())
+
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+  @@index([wishlistId])
+  @@index([productId])
+  @@map("wishlist_item")
+}
+
+// ============================================================
+// CUSTOMER SHOPPING LISTS
+// ============================================================
+
+model ShoppingList {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  visibility ShoppingListVisibility @default(PRIVATE)
+  status     ShoppingListStatus     @default(ACTIVE)
+
+  publicationStatus      ShoppingListPublicationStatus @default(PRIVATE)
+  publicationSubmittedAt DateTime?
+  publicationReviewedAt  DateTime?
+  publicationPublishedAt DateTime?
+  publicationReviewNote  String?
+
+  position Int @default(0)
+
+  items ShoppingListItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId, name])
+  @@index([workspaceId, userId, status, updatedAt])
+  @@index([workspaceId, visibility, publicationStatus, updatedAt])
+  @@index([userId, updatedAt])
+  @@map("shopping_list")
+}
+
+model ShoppingListItem {
+  id String @id @default(cuid())
+
+  shoppingListId String
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  quantity Int @default(1)
+  position Int @default(0)
+
+  note String?
+
+  addedAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shoppingListId, productId])
+  @@index([shoppingListId, position])
+  @@index([productId])
+  @@index([variantId])
+  @@map("shopping_list_item")
+}
+
+model StockMovement {
+  id String @id @default(cuid())
+
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  type      StockMovementType
+  quantity  Int
+  reason    String?
+  reference String?
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryId])
+  @@index([type])
+  @@map("stock_movement")
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+
+model Inventory {
+  id String @id @default(cuid())
+
+  variantId String         @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  quantity     Int @default(0)
+  reserved     Int @default(0)
+  reorderLevel Int @default(5)
+
+  movements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("inventory")
+}
+
+enum ShoppingListVisibility {
+  PRIVATE
+  SHARED
+}
+
+enum ShoppingListStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ShoppingListPublicationStatus {
+  PRIVATE
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  RETURN
+  ADJUSTMENT
+  RESERVATION
+  RELEASE
+}
+
+// ============================================================
+// ORDERS
+// ============================================================
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  subtotal       Decimal @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @db.Decimal(12, 2)
+  deliveryFee    Decimal @default(0) @db.Decimal(12, 2)
+  total          Decimal @db.Decimal(12, 2)
+
+  deliveryAddress Json?
+  notes           String?
+
+  items    OrderItem[]
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  mode       WorkspaceMode @default(LIVE)
+  dataSource DataSource    @default(REAL)
+
+  delivery Delivery?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@map("order")
+}
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  productName  String
+  variantLabel String
+  image        String?
+
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(12, 2)
+  totalPrice Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("order_item")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  READY
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  provider  String @default("paystack")
+  reference String @unique
+
+  amount Decimal       @db.Decimal(12, 2)
+  status PaymentStatus @default(PENDING)
+
+  paidAt   DateTime?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payment")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum WorkspaceMode {
+  LIVE
+  DEMO
+  PRACTICE
+  SANDBOX
+}
+
+enum WorkspaceRole {
+  MEMBER
+  PREMIUM_MEMBER
+  SUPPORT
+  MODERATOR
+  MANAGER
+  ADMIN
+  OWNER
+  SUPER_ADMIN
+}
+
+enum PlatformRole {
+  STANDARD
+  DEVELOPER_ADMIN
+}
+
+enum WorkspaceCommerceMode {
+  SINGLE_VENDOR
+  MULTI_VENDOR
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  PAUSED
+  REJECTED
+  ARCHIVED
+}
+
+enum PromotionStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  PAUSED
+  EXPIRED
+  REJECTED
+  ARCHIVED
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FIXED_PRICE
+  FEATURED
+}
+
+enum DataSource {
+  REAL
+  DEMO
+  PRACTICE
+  SYNTHETIC
+  IMPORTED
+}
+
+enum DemoScenarioType {
+  EMPTY
+  RETAIL
+  SUPERMARKET
+  FASHION
+  HOSPITALITY
+  EVENTS
+  CUSTOM
+}
+
+enum DemoProvisionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  RESETTING
+}
+
+enum ExperienceEventType {
+  PAGE_VIEW
+  PRODUCT_VIEW
+  CATEGORY_VIEW
+  SEARCH
+  COLLECTION_CLICK
+  CAMPAIGN_VIEW
+  CAMPAIGN_CLICK
+  ADD_TO_CART
+  REMOVE_FROM_CART
+  UPDATE_CART_QUANTITY
+  ADD_TO_WISHLIST
+  REMOVE_FROM_WISHLIST
+  SHOPPING_LIST_CREATED
+  SHOPPING_LIST_RENAMED
+  SHOPPING_LIST_ARCHIVED
+  ADD_TO_SHOPPING_LIST
+  REMOVE_FROM_SHOPPING_LIST
+  UPDATE_SHOPPING_LIST_QUANTITY
+  COUPON_APPLIED
+  COUPON_REJECTED
+  CHECKOUT_STARTED
+  PAYMENT_STARTED
+  PAYMENT_COMPLETED
+  PAYMENT_FAILED
+  ORDER_COMPLETED
+  DELIVERY_VIEWED
+  DELIVERY_STARTED
+  DELIVERY_COMPLETED
+  REVIEW_CREATED
+  REVIEW_APPROVED
+  REVIEW_REJECTED
+  PRODUCT_CREATED
+  PRODUCT_UPDATED
+  STOCK_ADJUSTED
+  DEMO_STARTED
+  DEMO_RESET
+  WORKSPACE_SWITCHED
+}
+
+enum ExperienceHistoryRetention {
+  SESSION
+  ONE_DAY
+  SEVEN_DAYS
+  THIRTY_DAYS
+  FOREVER
+}
+
+enum ExperienceHistorySource {
+  CATEGORY
+  DISCOVERY_HUB
+  SMART_PICK
+  CAMPAIGN
+  SEARCH
+  COLLECTION
+  PRODUCT
+  SYSTEM
+}
+
+// ============================================================
+// CUSTOMER
+// ============================================================
+
+model Address {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label         String?
+  recipientName String
+  phone         String
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  state         String
+  country       String  @default("Nigeria")
+  postalCode    String?
+
+  default Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("address")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  rating  Int
+  title   String?
+  comment String?
+
+  status ReviewStatus @default(PENDING)
+
+  moderationReason String?
+  moderatedAt      DateTime?
+  moderatedById    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId, status])
+  @@index([status, createdAt])
+  @@index([moderatedById])
+  @@map("review")
+}
+
+// ============================================================
+// EXPERIENCE ACTIVITY
+// ============================================================
+
+model RecentlyViewed {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  viewedAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId, viewedAt])
+  @@index([productId])
+  @@map("recently_viewed")
+}
+
+// ============================================================
+// RCENTZ WORKSPACE RUNTIME
+// ============================================================
+
+model Workspace {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  mode WorkspaceMode @default(LIVE)
+
+  commerceMode          WorkspaceCommerceMode @default(SINGLE_VENDOR)
+  vendorApplicationsOpen Boolean               @default(false)
+  currency              String                @default("NGN")
+  timezone              String                @default("Africa/Lagos")
+  defaultLowStockLevel  Int                   @default(5)
+  mediaFolderPrefix     String?
+
+  active     Boolean   @default(true)
+  resettable Boolean   @default(false)
+  expiresAt  DateTime?
+
+  memberships               WorkspaceMembership[]
+  demoWallets               DemoWallet[]
+  events                    ExperienceEvent[]
+  experienceHistoryEntries  ExperienceHistoryEntry[]
+  experienceHistorySettings ExperienceHistorySettings[]
+  provisions                DemoProvision[]
+
+  carts         Cart[]
+  wishlists     Wishlist[]
+  shoppingLists ShoppingList[]
+  orders        Order[]
+  products      Product[]
+  promotions    Promotion[]
+
+  staffProfiles        StaffProfile[]
+  approvalRequests     AdminApprovalRequest[]
+  adminAuditEvents     AdminAuditEvent[]
+  adminTodos           AdminTodo[]
+  deliveries           Delivery[]
+  storefrontHero       StorefrontHero?
+  storeStudioCampaigns StoreStudioCampaign[]
+  mediaAssets          MediaAsset[]
+  vendors              VendorProfile[]
+  storeCollections     StoreCollection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mode, active])
+  @@map("workspace")
+}
+
+model StorefrontHero {
+  id String @id @default(cuid())
+
+  workspaceId String    @unique
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  enabled        Boolean @default(true)
+  mediaType      String  @default("VIDEO")
+  mediaUrl       String? @default("https://www.youtube.com/watch?v=WN_fa23hasc")
+  posterUrl      String? @default("https://images.unsplash.com/photo-1575444758702-4a6b9222336e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
+
+  mediaAssetId String?
+  mediaAsset   MediaAsset? @relation("StorefrontHeroMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+
+  posterMediaAssetId String?
+  posterMediaAsset   MediaAsset? @relation("StorefrontHeroPosterMedia", fields: [posterMediaAssetId], references: [id], onDelete: SetNull)
+
+  eyebrow        String  @default("Your personal shopping experience")
+  title          String  @default("Every beautiful moment starts here.")
+  summary        String?
+  primaryLabel   String  @default("Create your experience")
+  primaryHref    String  @default("/sign-up")
+  secondaryLabel String  @default("Sign in")
+  secondaryHref  String  @default("/sign-in")
+  autoplay       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mediaAssetId])
+  @@index([posterMediaAssetId])
+  @@map("storefront_hero")
+}
+
+// ============================================================
+// ADMIN CONTROL PLANE
+// ============================================================
+
+model StaffProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  level        StaffLevel
+  employeeCode String     @unique
+  title        String?
+  department   String?
+  active       Boolean    @default(true)
+
+  invitedById String?
+  invitedBy   User?   @relation("StaffInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, level, active])
+  @@map("staff_profile")
+}
+
+enum StaffLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+}
+
+model AdminApprovalRequest {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  requestedById String
+  requestedBy   User   @relation("ApprovalRequestedBy", fields: [requestedById], references: [id])
+
+  reviewedById String?
+  reviewedBy   User?   @relation("ApprovalReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  action     AdminApprovalAction
+  targetType AdminTargetType
+  targetId   String
+  reason     String
+  payload    Json?
+  status     AdminApprovalStatus @default(PENDING)
+  reviewNote String?
+  reviewedAt DateTime?
+  executedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, createdAt])
+  @@index([requestedById, createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_approval_request")
+}
+
+enum AdminApprovalAction {
+  DELETE
+  DELIVERY_STATUS_UPDATE
+  DELIVERY_EXCEPTION
+  PUBLISH_LIVE
+  OTHER
+}
+
+enum AdminTargetType {
+  PRODUCT
+  PROMOTION
+  MEDIA
+  COLLECTION
+  CAMPAIGN
+  VENDOR
+  INVENTORY
+  WORKSPACE
+  EXPERIENCE
+  FEATURED_LAYOUT
+  ORDER
+  DELIVERY
+  TRACKING_EVENT
+  USER
+  STAFF
+  SHOPPING_LIST
+  OTHER
+}
+
+enum AdminApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXECUTED
+}
+
+model AdminAuditEvent {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  action     String
+  targetType AdminTargetType
+  targetId   String?
+  summary    String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime        @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_audit_event")
+}
+
+model AdminTodo {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  assigneeId  String?
+  assignee    User?   @relation("AdminTodoAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?   @relation("AdminTodoCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+  source      AdminTodoSource   @default(SYSTEM)
+  priority    AdminTodoPriority @default(MEDIUM)
+  status      AdminTodoStatus   @default(OPEN)
+  targetType  AdminTargetType?
+  targetId    String?
+  dueAt       DateTime?
+  completedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([workspaceId, status, priority])
+  @@index([assigneeId, status])
+  @@map("admin_todo")
+}
+
+enum AdminTodoSource {
+  SYSTEM
+  AI
+  STAFF
+  APPROVAL
+  DELIVERY
+  INVENTORY
+}
+
+enum AdminTodoPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum AdminTodoStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  DISMISSED
+}
+
+// ============================================================
+// DELIVERY AND TRACKING
+// ============================================================
+
+model Delivery {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  method           DeliveryMethod
+  status           DeliveryStatus @default(PENDING)
+  trackingCode     String         @unique
+  barcodeTokenHash String?
+  barcodeExpiresAt DateTime?
+
+  dispatcherId    String?
+  dispatcher      User?   @relation("DeliveryDispatcher", fields: [dispatcherId], references: [id], onDelete: SetNull)
+  dispatcherName  String?
+  dispatcherPhone String?
+
+  estimatedArrival DateTime?
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  trackingEnabled  Boolean   @default(false)
+  lastLatitude     Float?
+  lastLongitude    Float?
+  lastLocationAt   DateTime?
+
+  events DeliveryTrackingEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, createdAt])
+  @@index([dispatcherId, status])
+  @@map("delivery")
+}
+
+model DeliveryTrackingEvent {
+  id String @id @default(cuid())
+
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  status         DeliveryStatus
+  source         DeliveryEventSource
+  latitude       Float?
+  longitude      Float?
+  accuracyMeters Float?
+  note           String?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+
+  @@index([deliveryId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("delivery_tracking_event")
+}
+
+enum DeliveryMethod {
+  AJ_DELIVERY
+  PERSONAL_COURIER
+  STORE_PICKUP
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  BARCODE_SCANNED
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum DeliveryEventSource {
+  SYSTEM
+  STAFF
+  DISPATCHER_SCAN
+  DISPATCHER_GPS
+  CUSTOMER
+  APPROVAL
+}
+
+model WorkspaceMembership {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role   WorkspaceRole @default(MEMBER)
+  active Boolean       @default(true)
+
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId, role])
+  @@map("workspace_membership")
+}
+
+model DemoWallet {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currency String  @default("NGN")
+  balance  Decimal @default(500000) @db.Decimal(14, 2)
+  active   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("demo_wallet")
+}
+
+model ExperienceEvent {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  sessionId String?
+
+  type       ExperienceEventType
+  source     String?
+  dataSource DataSource          @default(REAL)
+
+  productId    String?
+  categorySlug String?
+  collectionId String?
+  campaignId   String?
+  searchTerm   String?
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, type, createdAt])
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("experience_event")
+}
+
+model DemoScenario {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  type DemoScenarioType
+
+  description   String?
+  configuration Json?
+  active        Boolean @default(true)
+
+  provisions DemoProvision[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("demo_scenario")
+}
+
+model DemoProvision {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  scenarioId String
+  scenario   DemoScenario @relation(fields: [scenarioId], references: [id])
+
+  status DemoProvisionStatus @default(PENDING)
+
+  seededRecords Int       @default(0)
+  metadata      Json?
+  completedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([scenarioId])
+  @@index([status])
+  @@map("demo_provision")
+}
+
+// ============================================================
+// EXPERIENCE STACK
+// ============================================================
+
+model ExperienceHistorySettings {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enabled    Boolean                    @default(true)
+  retention  ExperienceHistoryRetention @default(SEVEN_DAYS)
+  maxEntries Int                        @default(20)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("experience_history_settings")
+}
+
+model ExperienceHistoryEntry {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label    String
+  subtitle String?
+
+  categorySlug String
+
+  source ExperienceHistorySource
+
+  experienceId String?
+  campaignId   String?
+  collectionId String?
+  productId    String?
+
+  intentSnapshot  Json
+  contextSnapshot Json?
+
+  fingerprint String
+
+  visitedAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, userId, fingerprint])
+  @@index([workspaceId, userId, visitedAt])
+  @@index([userId, visitedAt])
+  @@index([expiresAt])
+  @@map("experience_history_entry")
+}
+
+enum StoreStudioCampaignType {
+  BANNER
+  STORY
+  REEL
+}
+
+enum StoreStudioCampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  EXPIRED
+  REJECTED
+}
+
+enum StoreStudioPlacementTier {
+  STANDARD
+  FEATURED
+  PREMIUM
+  SPONSORED
+}
+
+enum StoreStudioMediaType {
+  IMAGE
+  VIDEO
+}
+
+model StoreStudioCampaign {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  vendorId String?
+  vendor   User?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  type          StoreStudioCampaignType
+  status        StoreStudioCampaignStatus @default(DRAFT)
+  placementTier StoreStudioPlacementTier  @default(STANDARD)
+
+  title       String
+  description String?
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  requestedPriority Int     @default(0)
+  adminWeight       Int     @default(0)
+  active            Boolean @default(true)
+
+  assets StoreStudioAsset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, type, status, active])
+  @@index([vendorId])
+  @@index([vendorProfileId])
+  @@index([startsAt, endsAt])
+}
+
+model StoreStudioAsset {
+  id String @id @default(cuid())
+
+  campaignId String
+  campaign   StoreStudioCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  mediaType StoreStudioMediaType
+
+  mediaUrl       String
+  mobileMediaUrl String?
+  coverUrl       String?
+  posterUrl      String?
+
+  mediaAssetId String?
+  mediaAsset   MediaAsset? @relation("StoreStudioPrimaryMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+
+  mobileMediaAssetId String?
+  mobileMediaAsset   MediaAsset? @relation("StoreStudioMobileMedia", fields: [mobileMediaAssetId], references: [id], onDelete: SetNull)
+
+  coverMediaAssetId String?
+  coverMediaAsset   MediaAsset? @relation("StoreStudioCoverMedia", fields: [coverMediaAssetId], references: [id], onDelete: SetNull)
+
+  posterMediaAssetId String?
+  posterMediaAsset   MediaAsset? @relation("StoreStudioPosterMedia", fields: [posterMediaAssetId], references: [id], onDelete: SetNull)
+
+  eyebrow     String?
+  title       String?
+  description String?
+
+  actionLabel String?
+  actionHref  String?
+
+  productId    String?
+  promotionId  String?
+  collectionId String?
+
+  durationSeconds Int?
+  autoplay        Boolean @default(false)
+  muted           Boolean @default(true)
+  position        Int     @default(0)
+  active          Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId, position, active])
+  @@index([mediaAssetId])
+  @@index([mobileMediaAssetId])
+  @@index([coverMediaAssetId])
+  @@index([posterMediaAssetId])
+}
+
+
+// ============================================================
+// MEDIA, VENDORS, COLLECTIONS & PLATFORM MANAGEMENT
+// ============================================================
+
+enum MediaResourceType {
+  IMAGE
+  VIDEO
+  RAW
+}
+
+enum MediaAssetStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+model MediaAsset {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User @relation("MediaUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation("VendorMediaAssets", fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  cloudinaryAssetId String? @unique
+  publicId          String  @unique
+  secureUrl         String
+  resourceType      MediaResourceType
+  format            String?
+  width             Int?
+  height            Int?
+  duration          Float?
+  bytes             Int @default(0)
+  folder            String?
+  originalFilename  String?
+  displayName       String?
+  altText           String?
+  status            MediaAssetStatus @default(ACTIVE)
+  metadata          Json?
+
+  productImages ProductImage[]
+  productVariants ProductVariant[]
+  promotionBanners Promotion[]
+  collectionCovers StoreCollection[]
+  vendorLogos      VendorProfile[] @relation("VendorLogoMedia")
+
+  storeStudioPrimaryAssets StoreStudioAsset[] @relation("StoreStudioPrimaryMedia")
+  storeStudioMobileAssets  StoreStudioAsset[] @relation("StoreStudioMobileMedia")
+  storeStudioCoverAssets   StoreStudioAsset[] @relation("StoreStudioCoverMedia")
+  storeStudioPosterAssets  StoreStudioAsset[] @relation("StoreStudioPosterMedia")
+  storefrontHeroMedia      StorefrontHero[] @relation("StorefrontHeroMedia")
+  storefrontHeroPosters    StorefrontHero[] @relation("StorefrontHeroPosterMedia")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, createdAt])
+  @@index([uploadedById, createdAt])
+  @@index([vendorProfileId, status])
+  @@index([resourceType, status])
+  @@map("media_asset")
+}
+
+enum VendorStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+  ARCHIVED
+}
+
+enum VendorRole {
+  OWNER
+  MANAGER
+  EDITOR
+  ANALYST
+}
+
+model VendorProfile {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  ownerUserId String
+  ownerUser   User @relation("VendorOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+
+  name        String
+  slug        String
+  description String?
+  email       String?
+  phone       String?
+  status      VendorStatus @default(PENDING)
+  active      Boolean      @default(false)
+  approvedAt  DateTime?
+  suspendedAt DateTime?
+
+  logoMediaAssetId String?
+  logoMediaAsset   MediaAsset? @relation("VendorLogoMedia", fields: [logoMediaAssetId], references: [id], onDelete: SetNull)
+
+  members      VendorMembership[]
+  products     Product[]
+  promotions   Promotion[]
+  collections  StoreCollection[]
+  campaigns    StoreStudioCampaign[]
+  mediaAssets  MediaAsset[] @relation("VendorMediaAssets")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, status, active])
+  @@index([ownerUserId])
+  @@index([logoMediaAssetId])
+  @@map("vendor_profile")
+}
+
+model VendorMembership {
+  id String @id @default(cuid())
+
+  vendorId String
+  vendor   VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role   VendorRole @default(EDITOR)
+  active Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([vendorId, userId])
+  @@index([userId, active])
+  @@map("vendor_membership")
+}
+
+enum StoreCollectionStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  PAUSED
+  REJECTED
+  ARCHIVED
+}
+
+enum StoreCollectionLayout {
+  FEATURED
+  CAROUSEL
+  GRID
+  SPOTLIGHT
+}
+
+model StoreCollection {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  coverMediaAssetId String?
+  coverMediaAsset   MediaAsset? @relation(fields: [coverMediaAssetId], references: [id], onDelete: SetNull)
+
+  slug        String
+  title       String
+  subtitle    String?
+  description String?
+  layout      StoreCollectionLayout @default(CAROUSEL)
+  status      StoreCollectionStatus @default(DRAFT)
+  featuredProductId String?
+  active      Boolean @default(true)
+  priority    Int     @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+
+  products StoreCollectionProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, status, active, priority])
+  @@index([vendorProfileId, status])
+  @@index([coverMediaAssetId])
+  @@map("store_collection")
+}
+
+model StoreCollectionProduct {
+  id String @id @default(cuid())
+
+  collectionId String
+  collection   StoreCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([collectionId, productId])
+  @@index([collectionId, position])
+  @@index([productId])
+  @@map("store_collection_product")
+}

@@ -1,0 +1,45 @@
+:root {
+  --pwa-safe-top: env(safe-area-inset-top, 0px);
+  --pwa-safe-right: env(safe-area-inset-right, 0px);
+  --pwa-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --pwa-safe-left: env(safe-area-inset-left, 0px);
+
+  /*
+   * Slightly taller than the normalized website baseline.
+   * All existing sticky offsets continue to use this shared variable.
+   */
+  --app-navbar-height: clamp(4.125rem, 3.95rem + 0.55vw, 4.75rem);
+}
+
+html[data-pwa-display-mode='standalone'] {
+  min-height: 100%;
+  background: var(--background);
+}
+
+html[data-pwa-display-mode='standalone'] body {
+  min-height: 100dvh;
+  padding-bottom: var(--pwa-safe-bottom);
+  overscroll-behavior-y: none;
+}
+
+html[data-pwa-display-mode='standalone'] [data-app-navbar] {
+  top: 0;
+  padding-top: var(--pwa-safe-top);
+  background: color-mix(in oklab, var(--background) 86%, transparent);
+  box-shadow:
+    0 -2rem 0 var(--background),
+    0 12px 38px rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(34px) saturate(190%);
+}
+
+html[data-pwa-display-mode='standalone'] [data-pwa-safe-inline] {
+  padding-right: max(var(--app-page-gutter), var(--pwa-safe-right));
+  padding-left: max(var(--app-page-gutter), var(--pwa-safe-left));
+}
+
+@media (display-mode: standalone) {
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

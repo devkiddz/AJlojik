@@ -1,0 +1,80 @@
+.surface {
+  --premium-card-pointer-x: 50%;
+  --premium-card-pointer-y: 50%;
+  --premium-card-glow-size: 22rem;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+
+  pointer-events: none;
+  opacity: 0;
+
+  background: radial-gradient(
+    var(--premium-card-glow-size) circle at var(--premium-card-pointer-x) var(--premium-card-pointer-y),
+    color-mix(in oklab, var(--primary) 18%, transparent),
+    transparent 70%
+  );
+
+  transition: opacity 250ms ease;
+}
+
+.actionTray {
+  opacity: 1;
+  transform: translateY(0);
+
+  transition:
+    opacity 260ms ease,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .surface:hover {
+    transform: translateY(-0.25rem);
+
+    border-color: color-mix(in oklab, var(--primary) 24%, var(--border));
+
+    box-shadow:
+      0 1.5rem 3.75rem rgb(0 0 0 / 18%),
+      inset 0 1px 0 rgb(255 255 255 / 5%);
+  }
+
+  .surface:hover .glow,
+  .surface:focus-within .glow {
+    opacity: 1;
+  }
+
+  .actionTray {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+
+  .surface:hover .actionTray,
+  .surface:focus-within .actionTray {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface,
+  .glow,
+  .actionTray {
+    transition: none;
+  }
+
+  .surface:hover {
+    transform: none;
+  }
+}

@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  Download,
-  RefreshCcw,
-  Share2
-} from 'lucide-react';
+import { Download, RefreshCcw, Share2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { usePWARuntime } from './PWARuntimeProvider';
@@ -13,9 +9,7 @@ type PWAInstallControlProps = {
   presentation?: 'navbar' | 'account-sheet';
 };
 
-export function PWAInstallControl({
-  presentation = 'navbar'
-}: PWAInstallControlProps) {
+export function PWAInstallControl({ presentation = 'navbar' }: PWAInstallControlProps) {
   const {
     installMode,
     isStandalone,
@@ -43,7 +37,7 @@ export function PWAInstallControl({
   const label = updateReady
     ? 'Update AJ Logik'
     : isStandalone
-      ? 'Share this experience'
+      ? 'Share experience'
       : installMode === 'beta'
         ? 'Install AJ Logik Beta'
         : 'Install AJ Logik';
@@ -75,13 +69,7 @@ export function PWAInstallControl({
               'hover:bg-amber-500/15',
               'dark:text-amber-300'
             ]
-          : [
-              'border-border/70',
-              'bg-background/60',
-              'text-foreground',
-              'backdrop-blur-xl',
-              'hover:bg-muted'
-            ]
+          : ['border-border/70', 'bg-background/60', 'text-foreground', 'backdrop-blur-xl', 'hover:bg-muted']
       )}>
       <span
         className={cn(
@@ -91,9 +79,7 @@ export function PWAInstallControl({
         <Icon className={cn('size-4', updateReady && 'animate-pulse')} />
       </span>
 
-      <span className={cn('whitespace-nowrap', accountSheet ? 'inline' : 'hidden sm:inline')}>
-        {label}
-      </span>
+      <span className={cn('whitespace-nowrap', accountSheet ? 'inline' : 'hidden sm:inline')}>{label}</span>
 
       {accountSheet ? (
         <span className="ml-auto text-[10px] font-medium text-muted-foreground">
