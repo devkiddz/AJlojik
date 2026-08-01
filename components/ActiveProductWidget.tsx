@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
@@ -14,6 +16,7 @@ import {
   PackageCheck,
   Plus,
   ShoppingCart,
+  ListPlus,
   Sparkles,
   Star,
   Tag
@@ -22,6 +25,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/features/cart';
 import { useFeedExperience } from '@/features/feed-experience';
+
+import {
+  DiscoveryContinuityCarousel
+} from './discovery-hub-panel/components/DiscoveryContinuityCarousel';
+
+import {
+  useOptionalShoppingLists
+} from '@/features/shopping-lists';
+
 import { useWishlist } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +62,9 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
 
   const { toggleWishlist, isWishlisted, isMutating: isWishlistMutating } = useWishlist();
 
+  const shoppingLists =
+    useOptionalShoppingLists();
+
   const product = useMemo(() => {
     if (intent.type !== 'product' || !intent.targetId) {
       return undefined;
@@ -75,6 +90,11 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
     product && variantSelection?.productId === product.id
       ? variantSelection.variantId
       : product?.variants[0]?.id;
+
+  const [
+    shoppingListPickerOpen,
+    setShoppingListPickerOpen
+  ] = useState(false);
 
   const selectedVariant = useMemo(
     () => product?.variants.find(variant => variant.id === selectedVariantId) ?? product?.variants[0],
@@ -210,6 +230,37 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       name: product.name
     });
   };
+
+  const handleAddToShoppingList =
+    async (
+      listId: string
+    ): Promise<void> => {
+      if (
+        !shoppingLists ||
+        !selectedVariant ||
+        shoppingLists.mutating
+      ) {
+        return;
+      }
+
+      await shoppingLists.addItem(
+        listId,
+        {
+          productId:
+            product.id,
+
+          variantId:
+            selectedVariant.id,
+
+          quantity:
+            1
+        }
+      );
+
+      setShoppingListPickerOpen(
+        false
+      );
+    };
 
   const handleRevealInFeed = (): void => {
     /**
@@ -447,7 +498,7 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
 ================================================== */}
 
           <section className="rounded-2xl border border-border/70 bg-card/70 p-2 shadow-sm backdrop-blur">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
               {hasSelectedVariantInCart ? (
                 <div className="flex h-11 min-w-0 items-center justify-between rounded-xl border border-border bg-background px-1 shadow-sm">
                   <button
@@ -553,6 +604,53 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                   </span>
                 </button>
               )}
+              <button
+                type="button"
+                aria-label="Add to Shopping List"
+                aria-expanded={
+                  shoppingListPickerOpen
+                }
+                disabled={
+                  !shoppingLists ||
+                  shoppingLists.loading ||
+                  shoppingLists.mutating
+                }
+                onClick={() =>
+                  setShoppingListPickerOpen(
+                    value =>
+                      !value
+                  )
+                }
+                className={cn(
+                  `
+                    grid size-11 shrink-0
+                    place-items-center
+                    rounded-xl border
+                    shadow-sm
+                    transition-all duration-200
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-ring
+                    focus-visible:ring-offset-2
+                    focus-visible:ring-offset-background
+                    disabled:cursor-not-allowed
+                    disabled:opacity-45
+                  `,
+                  shoppingListPickerOpen
+                    ? 'border-primary/30 bg-primary/10 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground'
+                )}>
+                {
+                  shoppingLists?.mutating
+                    ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    )
+                    : (
+                      <ListPlus className="size-4" />
+                    )
+                }
+              </button>
+
 
               <button
                 type="button"
@@ -605,6 +703,102 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                 )}
               </button>
             </div>
+            {shoppingListPickerOpen ? (
+              <div className="mt-2 rounded-xl border border-border bg-background p-2 shadow-sm">
+                <div className="flex items-center justify-between gap-3 px-2 py-1.5">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">
+                      Add to Shopping List
+                    </p>
+
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      Choose the destination list.
+                    </p>
+                  </div>
+
+                  <ListPlus className="size-4 shrink-0 text-primary" />
+                </div>
+
+                {shoppingLists?.lists.some(
+                  list =>
+                    list.status ===
+                    'ACTIVE'
+                ) ? (
+                  <div className="mt-1 max-h-44 space-y-1 overflow-y-auto">
+                    {shoppingLists.lists
+                      .filter(
+                        list =>
+                          list.status ===
+                          'ACTIVE'
+                      )
+                      .map(
+                        list => {
+                          const alreadyAdded =
+                            list.items.some(
+                              item =>
+                                String(
+                                  item.productId
+                                ) ===
+                                  String(
+                                    product.id
+                                  ) &&
+                                String(
+                                  item.variantId
+                                ) ===
+                                  String(
+                                    selectedVariant?.id
+                                  )
+                            );
+
+                          return (
+                            <button
+                              key={
+                                list.id
+                              }
+                              type="button"
+                              disabled={
+                                shoppingLists.mutating
+                              }
+                              onClick={() => {
+                                void handleAddToShoppingList(
+                                  list.id
+                                );
+                              }}
+                              className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-muted disabled:opacity-50">
+                              <span className="min-w-0">
+                                <span className="block truncate text-xs font-semibold text-foreground">
+                                  {
+                                    list.name
+                                  }
+                                </span>
+
+                                <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                                  {
+                                    alreadyAdded
+                                      ? 'Already included · add one more'
+                                      : `${list.itemCount} ${list.itemCount === 1 ? 'item' : 'items'}`
+                                  }
+                                </span>
+                              </span>
+
+                              <ListPlus className="size-3.5 shrink-0 text-primary" />
+                            </button>
+                          );
+                        }
+                      )}
+                  </div>
+                ) : (
+                  <Link
+                    href="/account/lists"
+                    className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-dashed border-primary/20 bg-primary/5 px-3 py-3 text-xs font-semibold text-primary transition hover:bg-primary/10">
+                    Create your first Shopping List
+
+                    <ListPlus className="size-4" />
+                  </Link>
+                )}
+              </div>
+            ) : null}
+
 
             <div className="mt-2 flex min-w-0 items-center justify-between gap-3 px-1">
               <p className="truncate text-[10px] font-medium text-muted-foreground">
@@ -769,6 +963,10 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
               <p className="mt-2 text-xs leading-5 text-muted-foreground">{categoryDescription}</p>
             </section>
           ) : null}
+          {/* ==================================================
+              CONTINUITY — KEEP DISCOVERING
+          ================================================== */}
+          <DiscoveryContinuityCarousel />
         </div>
       </div>
 

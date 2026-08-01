@@ -232,13 +232,40 @@ export const AssistantRepository = {
       }
     });
 
+    const recentUserMessageRecords =
+      await prisma.aiAssistantMessage.findMany({
+        where: {
+          sessionId:
+            resolvedSessionId,
+          role:
+            'USER'
+        },
+        orderBy: {
+          createdAt:
+            'asc'
+        },
+        take:
+          12,
+        select: {
+          content:
+            true
+        }
+      });
+
+    const recentUserMessages =
+      recentUserMessageRecords.map(
+        record => record.content
+      );
+
     const payload =
       await runLocalAssistant({
         access,
         prompt:
           message,
         context:
-          input.context
+          input.context,
+        conversation:
+          recentUserMessages
       });
 
     const assistantMessage =

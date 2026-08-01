@@ -11,13 +11,13 @@ const profiles: Record<
     audience:
       'admin',
     eyebrow:
-      'AJ Logik · Admin workspace',
+      'AJ Logik · Admin Assistant',
     title:
-      'AJ Assistant for Admin',
+      'Admin Assistant',
     description:
-      'Practical workspace help for Product creation, catalog quality, Store planning and operational attention.',
+      'Clear, practical help for product creation, store planning and the work that needs attention first.',
     contextDescription:
-      'AJ uses the active workspace, your permissions, catalog, inventory, approvals, campaigns and operational records to prepare reviewable suggestions.',
+      'I use your permitted store records, products, inventory, approvals and operations to prepare clear suggestions for you to review.',
     capabilities: [
       {
         id:
@@ -76,10 +76,10 @@ const profiles: Record<
       'You review every suggestion before AJ Logik creates anything.',
       'Product drafts are inactive and cannot appear in the Store until Product Studio is completed and the normal publication process succeeds.',
       'AJ Logik cannot approve its own work, publish content, change prices or alter stock automatically.',
-      'Every accepted action remains inside the active workspace and your permission boundary.'
+      'Every accepted action stays within the store and permissions you are currently using.'
     ],
     preparationSteps: [
-      'Read the active workspace and permission context',
+      'Check the current store and your permissions',
       'Match live catalog and operational records',
       'Prepare a clear suggestion or draft',
       'Wait for your review and confirmation',
@@ -90,13 +90,13 @@ const profiles: Record<
     audience:
       'vendor',
     eyebrow:
-      'AJ Logik · Vendor workspace',
+      'AJ Logik · Vendor Assistant',
     title:
-      'AJ Assistant for Vendors',
+      'Vendor Assistant',
     description:
-      'Vendor-scoped help for Product creation, listing quality, campaign preparation and submission readiness.',
+      'Practical help for creating products, improving listings, preparing campaigns and getting submissions ready.',
     contextDescription:
-      'AJ sees only the active Vendor Profile’s Products, media, campaigns, submissions and permitted workspace records.',
+      'I use only the products, media, campaigns and submissions available to your current vendor account.',
     capabilities: [
       {
         id:
@@ -158,7 +158,7 @@ const profiles: Record<
       'Workspace approval remains required for controlled public changes.'
     ],
     preparationSteps: [
-      'Confirm Vendor ownership and permissions',
+      'Confirm your vendor account and permissions',
       'Read vendor-owned catalog and media signals',
       'Prepare a clear Product or campaign draft',
       'Wait for your review and confirmation',
@@ -169,13 +169,13 @@ const profiles: Record<
     audience:
       'customer',
     eyebrow:
-      'AJ Logik · Shopping help',
+      'AJ Logik · Store Assistant',
     title:
-      'Ask AJ',
+      'Store Assistant',
     description:
-      'Friendly shopping guidance for discovery, comparison, pairings, occasions and reusable Shopping Lists.',
+      'Friendly help for discovering products, comparing choices, planning occasions and building useful Shopping Lists.',
     contextDescription:
-      'Suggestions use the active workspace, available Products, current intent, recent views, Shopping Lists and permitted personalization signals.',
+      'I use available products, your current interests, recent views and Shopping Lists to prepare helpful suggestions.',
     capabilities: [
       {
         id:
@@ -231,7 +231,7 @@ const profiles: Record<
       }
     ],
     authorityRules: [
-      'Suggestions use Products available in the active workspace.',
+      'Suggestions use products currently available in this store.',
       'Your personalization and privacy choices remain respected.',
       'AJ may prepare a Shopping List but cannot place an Order or make a payment for you.',
       'AJ explains uncertainty when Product, stock or preference information is incomplete.'

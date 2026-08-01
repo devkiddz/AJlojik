@@ -24,6 +24,10 @@ import type {
   AssistantAccess
 } from './assistantAccess';
 
+import {
+  resolveCollaborativeIntentResponse
+} from './collaborativeIntentBuilder';
+
 const productInclude = {
   category: {
     select: {
@@ -74,6 +78,8 @@ type EngineInput = {
   prompt: string;
   context:
     AIAssistantRuntimeContext;
+  conversation?:
+    string[];
 };
 
 function normalize(
@@ -3585,6 +3591,20 @@ export async function runLocalAssistant(
   input:
     EngineInput
 ): Promise<AIAssistantResponsePayload> {
+  const collaborativeResponse =
+    resolveCollaborativeIntentResponse({
+      audience:
+        input.access.audience,
+      prompt:
+        input.prompt,
+      conversation:
+        input.conversation ?? []
+    });
+
+  if (collaborativeResponse) {
+    return collaborativeResponse;
+  }
+
   if (
     input.access.audience ===
     'customer'

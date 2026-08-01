@@ -157,6 +157,6 @@ export function DiscoveryHubRenderer() {
           );
         }
       )}
-    </div>
+</div>
   );
 }
