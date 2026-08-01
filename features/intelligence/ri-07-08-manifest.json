@@ -1,0 +1,25 @@
+{
+  "phase": "RI-07/08",
+  "title": "Resolution Workspace and Customer Intelligence",
+  "creates": [
+    "features/intelligence/client/intelligenceClient.ts",
+    "features/intelligence/client/useIntelligenceWorkspace.ts",
+    "features/intelligence/components/ResolutionStatusBadge.tsx",
+    "features/intelligence/components/ResolutionBucket.tsx",
+    "features/intelligence/components/ResolutionComposer.tsx",
+    "features/intelligence/components/ResolutionDetail.tsx",
+    "features/intelligence/components/IntelligenceWorkspace.tsx",
+    "features/intelligence/components/index.ts",
+    "features/intelligence/client/index.ts",
+    "features/intelligence/CURRENT_STATE.md",
+    "features/intelligence/IMPLEMENTATION_LEDGER.md",
+    "features/intelligence/NEXT_PHASE.md"
+  ],
+  "modifies": [
+    "features/ai-assistance/components/AssistantRuntimePage.tsx",
+    "features/intelligence/index.ts",
+    "features/intelligence/README.md"
+  ],
+  "databaseMigration": false,
+  "uiChanges": true
+}

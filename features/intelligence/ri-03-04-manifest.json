@@ -1,0 +1,26 @@
+{
+  "phase": "RI-03/04",
+  "title": "Context and Planning Engine",
+  "creates": [
+    "features/intelligence/context/contextContracts.ts",
+    "features/intelligence/context/defaultAdapters.ts",
+    "features/intelligence/context/contextResolver.ts",
+    "features/intelligence/context/fromAssistantAccess.ts",
+    "features/intelligence/planning/planningContracts.ts",
+    "features/intelligence/planning/resolutionPlanner.ts",
+    "features/intelligence/planning/applyPlanningResult.ts",
+    "features/intelligence/context/index.ts",
+    "features/intelligence/planning/index.ts",
+    "features/intelligence/ARCHITECTURE.md",
+    "features/intelligence/CURRENT_STATE.md",
+    "features/intelligence/IMPLEMENTATION_LEDGER.md",
+    "features/intelligence/DECISIONS.md",
+    "features/intelligence/NEXT_PHASE.md"
+  ],
+  "modifies": [
+    "features/intelligence/index.ts",
+    "features/intelligence/README.md"
+  ],
+  "databaseMigration": false,
+  "uiChanges": false
+}

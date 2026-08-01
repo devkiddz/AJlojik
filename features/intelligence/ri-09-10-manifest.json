@@ -1,0 +1,26 @@
+{
+  "phase": "RI-09/10",
+  "title": "Admin and Vendor Intelligence",
+  "creates": [
+    "features/intelligence/operations/operationContracts.ts",
+    "features/intelligence/operations/server/resolveOperationsSnapshot.ts",
+    "features/intelligence/operations/client/useOperationsIntelligence.ts",
+    "features/intelligence/operations/components/OperationsIntelligencePanel.tsx",
+    "features/intelligence/operations/index.ts",
+    "features/intelligence/operations/server/index.ts",
+    "app/api/intelligence/operations/route.ts",
+    "features/intelligence/CURRENT_STATE.md",
+    "features/intelligence/IMPLEMENTATION_LEDGER.md",
+    "features/intelligence/NEXT_PHASE.md"
+  ],
+  "modifies": [
+    "features/intelligence/components/IntelligenceWorkspace.tsx",
+    "features/intelligence/index.ts",
+    "features/intelligence/README.md",
+    "features/intelligence/CURRENT_STATE.md",
+    "features/intelligence/IMPLEMENTATION_LEDGER.md",
+    "features/intelligence/NEXT_PHASE.md"
+  ],
+  "databaseMigration": false,
+  "uiChanges": true
+}

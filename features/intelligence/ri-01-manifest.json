@@ -1,0 +1,21 @@
+{
+  "phase": "RI-01",
+  "title": "Intelligence Domain Foundation",
+  "creates": [
+    "features/intelligence/domain/contracts.ts",
+    "features/intelligence/domain/context.ts",
+    "features/intelligence/domain/resolutionStateMachine.ts",
+    "features/intelligence/domain/authority.ts",
+    "features/intelligence/domain/guards.ts",
+    "features/intelligence/domain/validation.ts",
+    "features/intelligence/domain/factories.ts",
+    "features/intelligence/compatibility/mapLegacyAssistantResolution.ts",
+    "features/intelligence/domain/index.ts",
+    "features/intelligence/compatibility/index.ts",
+    "features/intelligence/index.ts",
+    "features/intelligence/README.md"
+  ],
+  "modifiesExistingFiles": false,
+  "databaseMigration": false,
+  "uiChanges": false
+}

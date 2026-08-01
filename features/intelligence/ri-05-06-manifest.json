@@ -1,0 +1,31 @@
+{
+  "phase": "RI-05/06",
+  "title": "Action Registry and Resolution API",
+  "creates": [
+    "features/intelligence/actions/actionContracts.ts",
+    "features/intelligence/actions/legacyBridgeExecutor.ts",
+    "features/intelligence/actions/actionRegistry.ts",
+    "features/intelligence/actions/actionService.ts",
+    "features/intelligence/actions/index.ts",
+    "features/intelligence/api/intelligenceApi.ts",
+    "features/intelligence/api/index.ts",
+    "app/api/intelligence/resolutions/route.ts",
+    "app/api/intelligence/resolutions/[resolutionId]/route.ts",
+    "app/api/intelligence/resolutions/[resolutionId]/continue/route.ts",
+    "app/api/intelligence/resolutions/[resolutionId]/actions/route.ts",
+    "app/api/intelligence/resolutions/[resolutionId]/actions/[actionId]/approve/route.ts",
+    "app/api/intelligence/resolutions/[resolutionId]/actions/[actionId]/apply/route.ts",
+    "features/intelligence/NEXT_PHASE.md",
+    "features/intelligence/CURRENT_STATE.md",
+    "features/intelligence/IMPLEMENTATION_LEDGER.md"
+  ],
+  "modifies": [
+    "features/intelligence/index.ts",
+    "features/intelligence/README.md",
+    "features/intelligence/CURRENT_STATE.md",
+    "features/intelligence/IMPLEMENTATION_LEDGER.md",
+    "features/intelligence/NEXT_PHASE.md"
+  ],
+  "databaseMigration": false,
+  "uiChanges": false
+}

@@ -1,6 +1,10 @@
 'use client';
 
 import {
+  IntelligenceWorkspace
+} from '@/features/intelligence/components';
+
+import {
   useCallback,
   useEffect,
   useState,
@@ -39,6 +43,10 @@ import {
   getAssistantProfile
 } from '../assistantProfiles';
 
+import {
+  resolveAssistantSuggestedPrompts
+} from '../contextualPrompts';
+
 import type {
   AIAssistantApplicationView,
   AIAssistantAudience,
@@ -49,8 +57,55 @@ import type {
 } from '../contracts';
 
 import {
-  AssistantResponseCard
-} from './AssistantResponseCard';
+  GuidedAssistantExperience
+} from './GuidedAssistantExperience';
+
+const MS9_01_GUIDED_AI_INTERACTION = true;
+
+type AssistantActivityStage =
+  | 'understanding'
+  | 'checking-context'
+  | 'exploring-options'
+  | 'preparing-response';
+
+const ASSISTANT_ACTIVITY_STAGES: Array<{
+  id: AssistantActivityStage;
+  label: string;
+}> = [
+  {
+    id: 'understanding',
+    label: 'Thinking about what you need…'
+  },
+  {
+    id: 'checking-context',
+    label: 'Checking your current activity…'
+  },
+  {
+    id: 'exploring-options',
+    label: 'Looking through the strongest options…'
+  },
+  {
+    id: 'preparing-response',
+    label: 'Preparing something helpful…'
+  }
+];
+
+function createCapabilityLabel(prompt: string) {
+  const cleanPrompt = prompt.trim();
+
+  if (!cleanPrompt) {
+    return 'I can help you get started';
+  }
+
+  const lowerFirst =
+    cleanPrompt.charAt(0).toLowerCase() + cleanPrompt.slice(1);
+
+  if (/^(help|show|find|compare|create|build|plan|prepare|suggest|explain|summarise|summarize|continue|check|prioritise|prioritize|draft|improve|identify|submit|review|complete|use)/i.test(cleanPrompt)) {
+    return `I can ${lowerFirst}`;
+  }
+
+  return `I can help you ${lowerFirst}`;
+}
 
 type AssistantRuntimePageProps = {
   audience:
@@ -82,7 +137,7 @@ async function readJson<T>(
   if (!response.ok) {
     throw new Error(
       payload.error ??
-      'The intelligence request could not be completed.'
+      'The Store Assistant could not complete that request.'
     );
   }
 
@@ -196,6 +251,12 @@ export function AssistantRuntimePage({
     );
 
   const [
+    activityStageIndex,
+    setActivityStageIndex
+  ] =
+    useState(0);
+
+  const [
     sidebarOpen,
     setSidebarOpen
   ] =
@@ -274,7 +335,7 @@ export function AssistantRuntimePage({
             cause instanceof
             Error
               ? cause.message
-              : 'Intelligence sessions could not be loaded.'
+              : 'Your Store Assistant conversations could not be loaded.'
           );
         } finally {
           setLoading(
@@ -307,6 +368,32 @@ export function AssistantRuntimePage({
     [
       loadSessions
     ]
+  );
+
+  useEffect(
+    () => {
+      if (!sending) {
+        setActivityStageIndex(0);
+        return;
+      }
+
+      const interval =
+        window.setInterval(
+          () =>
+            setActivityStageIndex(
+              current =>
+                Math.min(
+                  current + 1,
+                  ASSISTANT_ACTIVITY_STAGES.length - 1
+                )
+            ),
+          1400
+        );
+
+      return () =>
+        window.clearInterval(interval);
+    },
+    [sending]
   );
 
   async function selectSession(
@@ -365,7 +452,7 @@ export function AssistantRuntimePage({
         cause instanceof
         Error
           ? cause.message
-          : 'The intelligence session could not be opened.'
+          : 'That Store Assistant conversation could not be opened.'
       );
     } finally {
       setLoading(
@@ -510,7 +597,7 @@ export function AssistantRuntimePage({
         cause instanceof
         Error
           ? cause.message
-          : 'The intelligence response could not be created.'
+          : 'The Store Assistant could not prepare a response.'
       );
     } finally {
       setSending(
@@ -727,13 +814,31 @@ export function AssistantRuntimePage({
   }
 
   const quickPrompts =
-    profile.capabilities.flatMap(
-      capability =>
-        capability.examples.slice(
-          0,
-          2
-        )
-    );
+    resolveAssistantSuggestedPrompts({
+      audience,
+      context: {
+        workspaceId,
+        vendorProfileId,
+        productId:
+          initialContext.productId ??
+          null,
+        category:
+          initialContext.category ??
+          null,
+        intent:
+          initialContext.intent ??
+          null,
+        mode:
+          initialContext.mode ??
+          null
+      }
+    });
+
+  const activeActivityStage =
+    ASSISTANT_ACTIVITY_STAGES[
+      activityStageIndex
+    ] ??
+    ASSISTANT_ACTIVITY_STAGES[0];
 
   if (
     audience ===
@@ -744,7 +849,7 @@ export function AssistantRuntimePage({
     )
   ) {
     return (
-      <main className="grid min-h-[75vh] place-items-center">
+    <main className="grid min-h-[75vh] place-items-center">
         <LoaderCircle className="size-8 animate-spin text-primary" />
       </main>
     );
@@ -857,7 +962,7 @@ export function AssistantRuntimePage({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                    Session history
+                    Conversations
                   </p>
 
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -983,7 +1088,7 @@ export function AssistantRuntimePage({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-black">
                     {activeSession?.title ??
-                      'New intelligence session'}
+                      'New Store Assistant conversation'}
                   </p>
 
                   <p className="mt-0.5 text-[9px] text-muted-foreground">
@@ -1009,123 +1114,8 @@ export function AssistantRuntimePage({
             </header>
 
             <div className="flex min-h-[38rem] flex-col">
-              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-5 sm:py-6">
-                {activeSession?.messages.length ? (
-                  activeSession.messages.map(
-                    message =>
-                      message.role ===
-                      'USER' ? (
-                        <div
-                          key={
-                            message.id
-                          }
-                          className="ml-auto max-w-3xl rounded-[1.5rem_1.5rem_0.45rem_1.5rem] bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground shadow-sm">
-                          {
-                            message.content
-                          }
-                        </div>
-                      ) : message.role ===
-                        'ASSISTANT' ? (
-                        <AssistantResponseCard
-                          key={
-                            message.id
-                          }
-                          audience={
-                            audience
-                          }
-                          workspaceId={
-                            workspaceId
-                          }
-                          vendorProfileId={
-                            vendorProfileId
-                          }
-                          message={
-                            message
-                          }
-                          onApplied={
-                            applicationApplied
-                          }
-                          onFeedback={(
-                            messageId,
-                            feedbackValue
-                          ) =>
-                            void feedback(
-                              messageId,
-                              feedbackValue
-                            )
-                          }
-                          onPrompt={
-                            setPrompt
-                          }
-                        />
-                      ) : null
-                  )
-                ) : (
-                  <section className="grid min-h-[28rem] place-items-center">
-                    <div className="max-w-4xl text-center">
-                      <span className="mx-auto grid size-14 place-items-center rounded-[1.5rem] bg-accent/12 text-accent">
-                        <Sparkles className="size-6" />
-                      </span>
-
-                      <h2 className="mt-5 text-2xl font-black sm:text-3xl">
-                        Ask from live
-                        AJ Logik
-                        context
-                      </h2>
-
-                      <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                        {
-                          profile.contextDescription
-                        }
-                      </p>
-
-                      <div className="mt-6 grid gap-2 sm:grid-cols-2">
-                        {quickPrompts
-                          .slice(
-                            0,
-                            8
-                          )
-                          .map(
-                            suggestion => (
-                              <button
-                                key={
-                                  suggestion
-                                }
-                                type="button"
-                                onClick={() =>
-                                  void sendPrompt(
-                                    suggestion
-                                  )
-                                }
-                                className="group flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/55 px-4 py-3 text-left text-xs font-bold transition hover:border-accent/35 hover:bg-muted/45">
-                                <span className="min-w-0">
-                                  {
-                                    suggestion
-                                  }
-                                </span>
-
-                                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-accent" />
-                              </button>
-                            )
-                          )}
-                      </div>
-                    </div>
-                  </section>
-                )}
-
-                {sending ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-accent/20 bg-accent/8 p-4 text-xs font-bold text-foreground">
-                    <LoaderCircle className="size-4 animate-spin" />
-
-                    Reading the live
-                    workspace and
-                    preparing your AJ
-                    Logik response…
-                  </div>
-                ) : null}
-              </div>
-
-              <footer className="border-t border-border/60 bg-background/75 p-3 backdrop-blur sm:p-4">
+              {/* MS9_02A_PROMPT_FIELD_ABOVE_RESULTS */}
+<footer className="border-b border-border/60 bg-background/75 p-3 backdrop-blur sm:p-4">
                 <div className="flex min-w-0 items-end gap-2 rounded-[1.5rem] border border-border/70 bg-card p-2 shadow-sm focus-within:border-accent/40">
                   <textarea
                     value={
@@ -1151,11 +1141,11 @@ export function AssistantRuntimePage({
                     placeholder={
                       audience ===
                       'customer'
-                        ? 'Ask for recommendations, comparisons, pairings or a Shopping List plan…'
+                        ? 'Tell me what you are shopping for, planning or trying to decide…'
                         : audience ===
                           'vendor'
-                          ? 'Ask to create a Product draft, improve a listing or prepare a campaign…'
-                          : 'Ask to create a Product draft, review operations or prepare a campaign…'
+                          ? 'Tell me what you want to create, improve or prepare…'
+                          : 'Tell me what needs attention, review or preparation…'
                     }
                     className="min-h-12 min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 outline-none"
                   />
@@ -1188,6 +1178,78 @@ export function AssistantRuntimePage({
                   Orders and payments.
                 </p>
               </footer>
+
+              <IntelligenceWorkspace
+                audience={
+                  audience
+                }
+                workspaceId={
+                  workspaceId
+                }
+                vendorProfileId={
+                  vendorProfileId
+                }
+                sessionId={
+                  activeSession?.id ??
+                  null
+                }
+                runtime={
+                  initialContext
+                }
+                conversation={
+                  <>
+                                  <GuidedAssistantExperience
+                                    audience={
+                                      audience
+                                    }
+                                    workspaceId={
+                                      workspaceId
+                                    }
+                                    vendorProfileId={
+                                      vendorProfileId
+                                    }
+                                    session={
+                                      activeSession
+                                    }
+                                    prompts={
+                                      quickPrompts
+                                    }
+                                    sending={
+                                      sending
+                                    }
+                                    activityLabel={
+                                      activeActivityStage.label
+                                    }
+                                    onPrompt={value =>
+                                      void sendPrompt(
+                                        value
+                                      )
+                                    }
+                                    onStartFresh={() => {
+                                      setActiveSession(
+                                        null
+                                      );
+                                      setPrompt('');
+                                      setError(
+                                        null
+                                      );
+                                    }}
+                                    onApplied={
+                                      applicationApplied
+                                    }
+                                    onFeedback={(
+                                      messageId,
+                                      feedbackValue
+                                    ) =>
+                                      void feedback(
+                                        messageId,
+                                        feedbackValue
+                                      )
+                                    }
+                                  />
+                  </>
+                }
+              />
             </div>
           </div>
         </section>

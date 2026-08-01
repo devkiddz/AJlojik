@@ -75,8 +75,11 @@ model User {
 
   shoppingListPreparationEvents ShoppingListPreparationEvent[]
 
-  aiAssistantSessions AiAssistantSession[] @relation("AiAssistantSessionUser")
-  aiAssistantApplications AiAssistantApplication[] @relation("AiAssistantApplicationUser")
+  aiAssistantSessions          AiAssistantSession[]         @relation("AiAssistantSessionUser")
+  aiAssistantApplications      AiAssistantApplication[]     @relation("AiAssistantApplicationUser")
+  ownedIntelligenceResolutions IntelligenceResolution[]     @relation("IntelligenceResolutionOwner")
+  approvedIntelligenceActions  IntelligencePreparedAction[] @relation("IntelligencePreparedActionApprover")
+
   @@unique([email])
   @@index([accountState])
   @@map("user")
@@ -1055,8 +1058,12 @@ model Workspace {
 
   shoppingListPreparationRequests ShoppingListPreparationRequest[]
 
-  aiAssistantSessions AiAssistantSession[] @relation("AiAssistantSessionWorkspace")
-  aiAssistantApplications AiAssistantApplication[] @relation("AiAssistantApplicationWorkspace")
+  aiAssistantSessions      AiAssistantSession[]      @relation("AiAssistantSessionWorkspace")
+  aiAssistantApplications  AiAssistantApplication[]  @relation("AiAssistantApplicationWorkspace")
+  intelligenceResolutions  IntelligenceResolution[]  @relation("IntelligenceResolutionWorkspace")
+  intelligenceProviderRuns IntelligenceProviderRun[] @relation("IntelligenceProviderRunWorkspace")
+  intelligenceAuditEvents  IntelligenceAuditEvent[]  @relation("IntelligenceAuditEventWorkspace")
+
   @@index([mode, active])
   @@map("workspace")
 }
@@ -1983,8 +1990,10 @@ model VendorProfile {
 
   preparationItems ShoppingListPreparationItem[]
 
-  aiAssistantSessions AiAssistantSession[] @relation("AiAssistantSessionVendor")
+  aiAssistantSessions     AiAssistantSession[]     @relation("AiAssistantSessionVendor")
   aiAssistantApplications AiAssistantApplication[] @relation("AiAssistantApplicationVendor")
+  intelligenceResolutions IntelligenceResolution[] @relation("IntelligenceResolutionVendor")
+
   @@unique([workspaceId, slug])
   @@index([workspaceId, status, active])
   @@index([ownerUserId])
@@ -2294,7 +2303,7 @@ model AiAssistantSession {
   workspace   Workspace @relation("AiAssistantSessionWorkspace", fields: [workspaceId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User @relation("AiAssistantSessionUser", fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation("AiAssistantSessionUser", fields: [userId], references: [id], onDelete: Cascade)
 
   vendorProfileId String?
   vendorProfile   VendorProfile? @relation("AiAssistantSessionVendor", fields: [vendorProfileId], references: [id], onDelete: SetNull)
@@ -2309,6 +2318,8 @@ model AiAssistantSession {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  intelligenceResolutionLinks IntelligenceResolutionSession[]
 
   @@index([workspaceId, userId, audience, updatedAt])
   @@index([vendorProfileId, updatedAt])
@@ -2325,13 +2336,14 @@ model AiAssistantMessage {
   content    String
   outputType AiAssistantOutputType?
   payload    Json?
-  provider   String @default("RCENTZ_LOCAL_V1")
+  provider   String                 @default("RCENTZ_LOCAL_V1")
   confidence Float?
   feedback   AiAssistantFeedback?
 
   createdAt DateTime @default(now())
 
   applications AiAssistantApplication[]
+
   @@index([sessionId, createdAt])
   @@map("ai_assistant_message")
 }
@@ -2364,7 +2376,7 @@ model AiAssistantApplication {
   workspace   Workspace @relation("AiAssistantApplicationWorkspace", fields: [workspaceId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User @relation("AiAssistantApplicationUser", fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation("AiAssistantApplicationUser", fields: [userId], references: [id], onDelete: Cascade)
 
   vendorProfileId String?
   vendorProfile   VendorProfile? @relation("AiAssistantApplicationVendor", fields: [vendorProfileId], references: [id], onDelete: SetNull)
@@ -2386,9 +2398,296 @@ model AiAssistantApplication {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  intelligencePreparedAction IntelligencePreparedAction? @relation("IntelligencePreparedActionApplication")
+
   @@index([messageId, createdAt])
   @@index([workspaceId, userId, createdAt])
   @@index([vendorProfileId, createdAt])
   @@index([status, createdAt])
   @@map("ai_assistant_application")
+}
+
+// ============================================================
+// RCENTZ INTELLIGENCE RESOLUTION RUNTIME
+// ============================================================
+
+enum IntelligenceResolutionType {
+  PRODUCT_DISCOVERY
+  PRODUCT_COMPARISON
+  PRODUCT_PAIRING
+  SHOPPING_PLAN
+  BASKET_OPTIMIZATION
+  SHOPPING_LIST_PREPARATION
+  DELIVERY_SUPPORT
+  CATALOG_IMPROVEMENT
+  PRODUCT_DRAFT
+  PRODUCT_REVISION
+  CAMPAIGN_PLAN
+  INVENTORY_INTERVENTION
+  REVIEW_MODERATION
+  VENDOR_INTERVENTION
+  OPERATIONS_BRIEF
+  GOVERNANCE_EXPLANATION
+  CUSTOM
+}
+
+enum IntelligenceResolutionStatus {
+  COLLECTING
+  PLANNING
+  READY
+  AWAITING_REVIEW
+  APPROVED
+  EXECUTING
+  APPLIED
+  PARTIALLY_APPLIED
+  BLOCKED
+  DISMISSED
+  STALE
+  ARCHIVED
+}
+
+enum IntelligenceRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IntelligenceUpdateType {
+  GOAL_CAPTURED
+  CONTEXT_COLLECTED
+  CONSTRAINT_IDENTIFIED
+  ASSUMPTION_ADDED
+  EVIDENCE_FOUND
+  PLAN_UPDATED
+  ACTION_PREPARED
+  APPROVAL_REQUIRED
+  ACTION_APPROVED
+  EXECUTION_STARTED
+  ACTION_APPLIED
+  ACTION_FAILED
+  OUTCOME_VERIFIED
+  RESOLUTION_COMPLETED
+  RESOLUTION_BLOCKED
+  RESOLUTION_DISMISSED
+  RESOLUTION_ARCHIVED
+}
+
+enum IntelligenceAuthorityClass {
+  READ_ONLY
+  RECOMMEND
+  PREPARE
+  APPLY_REVERSIBLE
+  REQUIRE_CONFIRMATION
+  REQUIRE_APPROVAL
+  PROHIBITED
+}
+
+enum IntelligencePreparedActionStatus {
+  PREPARED
+  AWAITING_CONFIRMATION
+  AWAITING_APPROVAL
+  APPROVED
+  EXECUTING
+  APPLIED
+  FAILED
+  CANCELLED
+}
+
+model IntelligenceResolution {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation("IntelligenceResolutionWorkspace", fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  ownerUserId String
+  ownerUser   User   @relation("IntelligenceResolutionOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation("IntelligenceResolutionVendor", fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  audience AiAssistantAudience
+  type     IntelligenceResolutionType
+  status   IntelligenceResolutionStatus @default(COLLECTING)
+
+  title           String
+  objective       String
+  expectedOutcome String
+
+  contextSnapshot Json
+  constraints     Json
+  assumptions     Json
+  evidence        Json
+  recommendations Json
+  plan            Json
+
+  confidence Float                 @default(0)
+  riskLevel  IntelligenceRiskLevel @default(LOW)
+  completion Int                   @default(0)
+
+  blockedReason String?
+  expiresAt     DateTime?
+  resolvedAt    DateTime?
+
+  updates      IntelligenceResolutionUpdate[]
+  actions      IntelligencePreparedAction[]
+  sessions     IntelligenceResolutionSession[]
+  providerRuns IntelligenceProviderRun[]
+  auditEvents  IntelligenceAuditEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, ownerUserId, audience, status, updatedAt])
+  @@index([vendorProfileId, status, updatedAt])
+  @@index([type, status, updatedAt])
+  @@index([expiresAt])
+  @@map("intelligence_resolution")
+}
+
+model IntelligenceResolutionUpdate {
+  id String @id @default(cuid())
+
+  resolutionId String
+  resolution   IntelligenceResolution @relation(fields: [resolutionId], references: [id], onDelete: Cascade)
+
+  type     IntelligenceUpdateType
+  title    String
+  detail   String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([resolutionId, createdAt])
+  @@index([type, createdAt])
+  @@map("intelligence_resolution_update")
+}
+
+model IntelligenceResolutionSession {
+  resolutionId String
+  resolution   IntelligenceResolution @relation(fields: [resolutionId], references: [id], onDelete: Cascade)
+
+  sessionId String
+  session   AiAssistantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  attachedAt DateTime @default(now())
+
+  @@id([resolutionId, sessionId])
+  @@index([sessionId, attachedAt])
+  @@map("intelligence_resolution_session")
+}
+
+model IntelligencePreparedAction {
+  id String @id @default(cuid())
+
+  resolutionId String
+  resolution   IntelligenceResolution @relation(fields: [resolutionId], references: [id], onDelete: Cascade)
+
+  applicationId String?                 @unique
+  application   AiAssistantApplication? @relation("IntelligencePreparedActionApplication", fields: [applicationId], references: [id], onDelete: SetNull)
+
+  approvedByUserId String?
+  approvedByUser   User?   @relation("IntelligencePreparedActionApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+
+  actionType     String
+  authorityClass IntelligenceAuthorityClass
+  status         IntelligencePreparedActionStatus @default(PREPARED)
+
+  label       String
+  description String
+
+  targetType String?
+  targetId   String?
+
+  input      Json
+  preview    Json
+  validation Json
+
+  idempotencyKey String @unique
+
+  approvedAt DateTime?
+  appliedAt  DateTime?
+  error      String?
+
+  auditEvents IntelligenceAuditEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resolutionId, status, createdAt])
+  @@index([approvedByUserId, createdAt])
+  @@index([status, createdAt])
+  @@map("intelligence_prepared_action")
+}
+
+enum IntelligenceProviderKind {
+  DETERMINISTIC
+  EXTERNAL
+}
+
+enum IntelligenceProviderRunStatus {
+  STARTED
+  SUCCEEDED
+  FAILED
+  FALLBACK
+}
+
+enum IntelligenceAuditSeverity {
+  INFO
+  WARNING
+  ERROR
+}
+
+model IntelligenceProviderRun {
+  id            String                        @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace                     @relation("IntelligenceProviderRunWorkspace", fields: [workspaceId], references: [id], onDelete: Cascade)
+  resolutionId  String?
+  resolution    IntelligenceResolution?       @relation(fields: [resolutionId], references: [id], onDelete: SetNull)
+  providerKey   String
+  providerKind  IntelligenceProviderKind
+  operation     String
+  model         String?
+  promptVersion String
+  status        IntelligenceProviderRunStatus @default(STARTED)
+  fallbackFrom  String?
+  latencyMs     Int?
+  inputTokens   Int?
+  outputTokens  Int?
+  costMicros    Int?
+  requestHash   String
+  responseHash  String?
+  errorCode     String?
+  metadata      Json?
+  startedAt     DateTime                      @default(now())
+  completedAt   DateTime?
+  createdAt     DateTime                      @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([providerKey, status, createdAt])
+  @@index([resolutionId, createdAt])
+  @@map("intelligence_provider_run")
+}
+
+model IntelligenceAuditEvent {
+  id               String                      @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace                   @relation("IntelligenceAuditEventWorkspace", fields: [workspaceId], references: [id], onDelete: Cascade)
+  resolutionId     String?
+  resolution       IntelligenceResolution?     @relation(fields: [resolutionId], references: [id], onDelete: SetNull)
+  preparedActionId String?
+  preparedAction   IntelligencePreparedAction? @relation(fields: [preparedActionId], references: [id], onDelete: SetNull)
+  actorUserId      String?
+  type             String
+  severity         IntelligenceAuditSeverity   @default(INFO)
+  traceId          String
+  message          String
+  metadata         Json?
+  createdAt        DateTime                    @default(now())
+
+  @@index([workspaceId, severity, createdAt])
+  @@index([resolutionId, createdAt])
+  @@index([preparedActionId, createdAt])
+  @@index([traceId])
+  @@map("intelligence_audit_event")
 }

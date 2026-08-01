@@ -1,0 +1,15 @@
+{
+  "phase": "RI-02",
+  "title": "Intelligence Persistence",
+  "migration": "prisma/migrations/20260801230000_add_intelligence_persistence/migration.sql",
+  "creates": [
+    "features/intelligence/server/intelligenceMapper.ts",
+    "features/intelligence/server/intelligenceRepository.ts",
+    "features/intelligence/server/index.ts"
+  ],
+  "modifies": [
+    "prisma/schema.prisma",
+    "features/intelligence/index.ts",
+    "features/intelligence/README.md"
+  ]
+}
