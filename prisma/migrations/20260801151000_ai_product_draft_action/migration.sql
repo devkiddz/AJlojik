@@ -1,0 +1,3 @@
+-- AddEnumValue
+ALTER TYPE "AiAssistantActionType"
+ADD VALUE IF NOT EXISTS 'PRODUCT_DRAFT_CREATE';

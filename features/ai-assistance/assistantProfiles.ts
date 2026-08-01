@@ -3,111 +3,134 @@ import type {
   AIAssistantProfile
 } from './contracts';
 
-const profiles: Record<AIAssistantAudience, AIAssistantProfile> = {
+const profiles: Record<
+  AIAssistantAudience,
+  AIAssistantProfile
+> = {
   admin: {
-    audience: 'admin',
-    eyebrow: 'AJ intelligence · Admin control plane',
-    title: 'AJ Studio Manager',
+    audience:
+      'admin',
+    eyebrow:
+      'AJ Logik · Admin workspace',
+    title:
+      'AJ Assistant for Admin',
     description:
-      'Workspace intelligence for catalog quality, merchandising, governance and operational attention.',
+      'Practical workspace help for Product creation, catalog quality, Store planning and operational attention.',
     contextDescription:
-      'The assistant will be grounded in the active workspace, the operator’s permissions, catalog records, inventory, approvals, campaigns, analytics and audit history.',
+      'AJ uses the active workspace, your permissions, catalog, inventory, approvals, campaigns and operational records to prepare reviewable suggestions.',
     capabilities: [
       {
-        id: 'admin-catalog',
-        title: 'Catalog quality drafts',
+        id:
+          'admin-products',
+        title:
+          'Create and improve Products',
         description:
-          'Prepare product copy, tags, category and brand placement, missing-data checks and listing improvements.',
+          'Recognise a Product from your request, match its existing category and brand, create an inactive draft, or prepare improvements for an existing listing.',
         examples: [
-          'Draft a stronger product description',
-          'Flag products missing media or variants',
-          'Suggest category and brand placement'
+          'Create a new Product called Moët Nectar Impérial under Wines',
+          'Draft a stronger Product description',
+          'Find Products missing media or variants'
         ]
       },
       {
-        id: 'admin-store',
-        title: 'Store planning',
+        id:
+          'admin-store',
+        title:
+          'Plan the Store',
         description:
-          'Propose collections, promotions, Stories, Reels, banners and discovery arrangements from current commerce signals.',
+          'Prepare Collections, Promotions, Stories, Reels and banners from current commerce signals.',
         examples: [
           'Draft a weekend campaign',
-          'Suggest products for a collection',
+          'Suggest Products for a Collection',
           'Prepare Story and Reel copy'
         ]
       },
       {
-        id: 'admin-operations',
-        title: 'Operational attention',
+        id:
+          'admin-operations',
+        title:
+          'Prioritise operations',
         description:
-          'Summarise approvals, low stock, delayed deliveries, customer activity and the most important work to do next.',
+          'Summarise approvals, low stock, delayed deliveries and the most important work to do next.',
         examples: [
           'Prioritise today’s management queue',
-          'Explain a stock or delivery warning',
+          'Explain this stock warning',
           'Summarise pending approvals'
         ]
       },
       {
-        id: 'admin-governance',
-        title: 'Governed recommendations',
+        id:
+          'admin-workflow',
+        title:
+          'Prepare the next step',
         description:
-          'Explain permissions, review requirements and the effects of a proposed action before an administrator accepts it.',
+          'Turn a reviewed response into a Product draft, Admin Todo, revision request or campaign draft.',
         examples: [
-          'Explain who can approve this',
-          'Prepare an approval-ready draft',
-          'Describe the expected Store impact'
+          'Create an Admin Todo from this',
+          'Submit this Product improvement for review',
+          'Create an unpublished campaign draft'
         ]
       }
     ],
     authorityRules: [
-      'Every output remains a reviewable draft until an authorised administrator explicitly accepts it.',
-      'The assistant cannot approve its own work, publish content, delete records, change prices or alter stock autonomously.',
-      'Recommendations must remain inside the active workspace and the operator’s permission boundary.',
-      'Accepted actions must continue through existing server actions, approvals and audit logging.'
+      'You review every suggestion before AJ Logik creates anything.',
+      'Product drafts are inactive and cannot appear in the Store until Product Studio is completed and the normal publication process succeeds.',
+      'AJ Logik cannot approve its own work, publish content, change prices or alter stock automatically.',
+      'Every accepted action remains inside the active workspace and your permission boundary.'
     ],
     preparationSteps: [
-      'Workspace and permission context resolver',
-      'Read-only commerce and operational signal projection',
-      'Structured suggestion and draft contract',
-      'Human acceptance and approval gate',
-      'Audit event and outcome feedback loop'
+      'Read the active workspace and permission context',
+      'Match live catalog and operational records',
+      'Prepare a clear suggestion or draft',
+      'Wait for your review and confirmation',
+      'Record the resulting action and destination'
     ]
   },
   vendor: {
-    audience: 'vendor',
-    eyebrow: 'AJ intelligence · Vendor Studio',
-    title: 'Vendor Studio Manager',
+    audience:
+      'vendor',
+    eyebrow:
+      'AJ Logik · Vendor workspace',
+    title:
+      'AJ Assistant for Vendors',
     description:
-      'A vendor-scoped assistant for listing quality, campaign preparation, submission readiness and performance guidance.',
+      'Vendor-scoped help for Product creation, listing quality, campaign preparation and submission readiness.',
     contextDescription:
-      'The assistant will see only the active vendor’s products, media, collections, promotions, campaigns, submissions and analytics inside the current workspace.',
+      'AJ sees only the active Vendor Profile’s Products, media, campaigns, submissions and permitted workspace records.',
     capabilities: [
       {
-        id: 'vendor-listings',
-        title: 'Listing assistance',
+        id:
+          'vendor-products',
+        title:
+          'Create and improve Products',
         description:
-          'Draft product titles, descriptions, tags, variants and media recommendations using vendor-owned records.',
+          'Recognise a new Product, prepare an inactive vendor-owned draft, improve listing copy and identify missing details.',
         examples: [
-          'Improve this product listing',
-          'Suggest missing product details',
+          'Create a new Product called Celebration Chocolate Box under Confectionery',
+          'Improve this Product listing',
           'Prepare a submission checklist'
         ]
       },
       {
-        id: 'vendor-campaigns',
-        title: 'Campaign drafts',
+        id:
+          'vendor-campaigns',
+        title:
+          'Prepare campaigns',
         description:
-          'Prepare promotion, collection, Story and Reel concepts from the vendor’s approved catalog and media.',
+          'Create Promotion, Collection, Story and Reel concepts using only vendor-owned records.',
         examples: [
-          'Draft a product Story',
+          'Draft a Product Story',
           'Build a Reel concept',
-          'Suggest a promotion bundle'
+          'Suggest a Promotion bundle'
         ]
       },
       {
-        id: 'vendor-readiness',
-        title: 'Submission readiness',
+        id:
+          'vendor-readiness',
+        title:
+          'Check readiness',
         description:
-          'Identify missing fields, policy conflicts and likely approval blockers before content is submitted.',
+          'Identify missing fields and likely approval blockers before a submission is made.',
         examples: [
           'Check whether this is ready',
           'Explain the approval blocker',
@@ -115,67 +138,78 @@ const profiles: Record<AIAssistantAudience, AIAssistantProfile> = {
         ]
       },
       {
-        id: 'vendor-insights',
-        title: 'Performance guidance',
+        id:
+          'vendor-guidance',
+        title:
+          'Use performance signals',
         description:
-          'Translate vendor analytics into practical recommendations without exposing another vendor’s data.',
+          'Translate vendor analytics into practical suggestions without exposing another Vendor’s information.',
         examples: [
-          'Summarise product interest',
+          'Summarise Product interest',
           'Suggest what to promote next',
           'Explain campaign performance'
         ]
       }
     ],
     authorityRules: [
-      'The assistant can access only records owned by the active vendor within the current workspace.',
-      'Drafts cannot be submitted or published until a vendor member explicitly accepts them.',
-      'Workspace approval remains mandatory for every controlled public change.',
-      'The assistant cannot expose competitor, customer-private or other vendor information.'
+      'AJ can access only records owned by the active Vendor Profile inside the current workspace.',
+      'A new Product is created only as an inactive vendor-owned Draft.',
+      'You must complete media, variants, price and stock before submitting the Product.',
+      'Workspace approval remains required for controlled public changes.'
     ],
     preparationSteps: [
-      'Vendor ownership and permission context resolver',
-      'Vendor-scoped catalog, media and analytics projection',
-      'Structured listing and campaign draft contract',
-      'Vendor acceptance and workspace submission gate',
-      'Approval-result learning signal'
+      'Confirm Vendor ownership and permissions',
+      'Read vendor-owned catalog and media signals',
+      'Prepare a clear Product or campaign draft',
+      'Wait for your review and confirmation',
+      'Continue through the normal submission workflow'
     ]
   },
   customer: {
-    audience: 'customer',
-    eyebrow: 'AJ intelligence · Customer experience',
-    title: 'AJ AI Suggestions',
+    audience:
+      'customer',
+    eyebrow:
+      'AJ Logik · Shopping help',
+    title:
+      'Ask AJ',
     description:
-      'Contextual shopping guidance for discovery, comparison, pairing, occasions and reusable shopping plans.',
+      'Friendly shopping guidance for discovery, comparison, pairings, occasions and reusable Shopping Lists.',
     contextDescription:
-      'Suggestions will use the active workspace, available catalog, current product or search intent, wishlist, recent views, shopping lists and the customer’s personalization settings.',
+      'Suggestions use the active workspace, available Products, current intent, recent views, Shopping Lists and permitted personalization signals.',
     capabilities: [
       {
-        id: 'customer-picks',
-        title: 'Smart product suggestions',
+        id:
+          'customer-picks',
+        title:
+          'Find suitable Products',
         description:
-          'Recommend relevant products from the live workspace using current intent and customer preference signals.',
+          'Recommend relevant Products from the live workspace using your current shopping intent.',
         examples: [
-          'Show similar products',
+          'Show similar Products',
           'Suggest something new',
-          'Continue from recent views'
+          'Continue from my recent views'
         ]
       },
       {
-        id: 'customer-compare',
-        title: 'Comparison guidance',
+        id:
+          'customer-compare',
+        title:
+          'Compare choices',
         description:
-          'Explain meaningful differences between products, variants, availability and intended use.',
+          'Explain useful differences between Products, variants, availability and intended use.',
         examples: [
-          'Compare these products',
+          'Compare these Products',
           'Explain the best variant',
           'Find an available alternative'
         ]
       },
       {
-        id: 'customer-pairing',
-        title: 'Pairings and occasions',
+        id:
+          'customer-pairing',
+        title:
+          'Plan pairings and occasions',
         description:
-          'Build drink, food, confectionery and occasion combinations from available products.',
+          'Build food, drink, confectionery, gift and celebration combinations from available Products.',
         examples: [
           'Create a dinner pairing',
           'Plan a celebration basket',
@@ -183,35 +217,40 @@ const profiles: Record<AIAssistantAudience, AIAssistantProfile> = {
         ]
       },
       {
-        id: 'customer-plans',
-        title: 'Shopping-list assistance',
+        id:
+          'customer-plans',
+        title:
+          'Build Shopping Lists',
         description:
-          'Help organise products, quantities and notes into reusable plans while the customer remains in control.',
+          'Organise Products into a reusable private plan while you remain in control.',
         examples: [
-          'Build a party shopping list',
-          'Complete this existing list',
+          'Build a party Shopping List',
+          'Complete this existing List',
           'Suggest missing essentials'
         ]
       }
     ],
     authorityRules: [
-      'Suggestions must use products currently available in the active workspace.',
-      'Personalization settings and customer privacy choices must be respected.',
-      'The assistant may prepare cart or shopping-list actions but cannot place orders or make payments without explicit customer action.',
-      'Recommendations must explain uncertainty when product, stock or preference information is incomplete.'
+      'Suggestions use Products available in the active workspace.',
+      'Your personalization and privacy choices remain respected.',
+      'AJ may prepare a Shopping List but cannot place an Order or make a payment for you.',
+      'AJ explains uncertainty when Product, stock or preference information is incomplete.'
     ],
     preparationSteps: [
-      'Customer intent and personalization context resolver',
-      'Live catalog and availability grounding',
-      'Structured recommendation and comparison response contract',
-      'Cart and shopping-list action proposals',
-      'Customer feedback and outcome signals'
+      'Understand the shopping request',
+      'Check the live catalog and availability',
+      'Prepare clear recommendations',
+      'Wait for your selection',
+      'Save only the action you explicitly confirm'
     ]
   }
 };
 
 export function getAssistantProfile(
-  audience: AIAssistantAudience
+  audience:
+    AIAssistantAudience
 ): AIAssistantProfile {
-  return profiles[audience];
+  return profiles[
+    audience
+  ];
 }

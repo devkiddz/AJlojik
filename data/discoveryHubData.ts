@@ -850,6 +850,7 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
   {
     id: 'ai-suggestions',
     groupId: 'ai',
+    componentKey: 'ai-intelligence-runtime',
     compact: {
       icons: [
         'recommendation',

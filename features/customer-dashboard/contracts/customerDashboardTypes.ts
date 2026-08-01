@@ -153,6 +153,10 @@ export type CommerceDelivery = {
   pickedUpAt: string | null;
   deliveredAt: string | null;
 
+  lastLatitude: number | null;
+  lastLongitude: number | null;
+  lastLocationAt: string | null;
+
   events: CommerceDeliveryEvent[];
 };
 

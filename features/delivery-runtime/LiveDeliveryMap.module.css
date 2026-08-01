@@ -1,0 +1,99 @@
+.map {
+  position: relative;
+  min-height: 23rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(
+      circle at 70% 20%,
+      hsl(var(--primary) / 0.16),
+      transparent 40%
+    ),
+    hsl(var(--muted) / 0.5);
+}
+
+.map :global(.maplibregl-map) {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map :global(.maplibregl-canvas-container),
+.map :global(.maplibregl-canvas) {
+  position: absolute;
+  inset: 0;
+}
+
+.map :global(.maplibregl-canvas) {
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+.map :global(.maplibregl-control-container) {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map :global(.maplibregl-ctrl-top-right) {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  pointer-events: auto;
+}
+
+.map :global(.maplibregl-ctrl-bottom-right) {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.5rem;
+  max-width: calc(100% - 1.5rem);
+  pointer-events: auto;
+}
+
+.map :global(.maplibregl-ctrl-group) {
+  overflow: hidden;
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 0.9rem;
+  background: hsl(var(--background) / 0.92);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.14);
+}
+
+.map :global(.maplibregl-ctrl-group button) {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 0;
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  background: transparent;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+
+.map :global(.maplibregl-ctrl-group button:last-child) {
+  border-bottom: 0;
+}
+
+.map :global(.maplibregl-ctrl-attrib) {
+  border-radius: 0.6rem;
+  background: hsl(var(--background) / 0.86);
+  padding: 0.2rem 0.45rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.6rem;
+}
+
+.map :global(.maplibregl-ctrl-attrib a) {
+  color: inherit;
+}
+
+.map :global(.maplibregl-marker) {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}

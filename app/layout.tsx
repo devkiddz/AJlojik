@@ -17,6 +17,14 @@ import {
 } from '@/features/action-feedback';
 
 import {
+  AssistantAccessButton
+} from '@/features/ai-assistance';
+
+import {
+  GlobalOverlayProvider
+} from '@/features/global-overlay';
+
+import {
   CartProvider
 } from '@/features/cart';
 
@@ -145,8 +153,10 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          <IdentityProvider>
+          <GlobalOverlayProvider>
+            <IdentityProvider>
             <ActionFeedbackProvider>
+              <GlobalOverlayProvider>
               <PWARuntimeProvider>
                 <WorkspaceProvider>
                   <ShoppingListRuntimeProvider>
@@ -161,6 +171,8 @@ export default function RootLayout({
                             </ApplicationShell>
 
                             <PWAGlobalStatus />
+
+                            <AssistantAccessButton />
                           </SearchProvider>
                         </CartProvider>
                       </WishlistProvider>
@@ -168,8 +180,10 @@ export default function RootLayout({
                   </ShoppingListRuntimeProvider>
                 </WorkspaceProvider>
               </PWARuntimeProvider>
+            </GlobalOverlayProvider>
             </ActionFeedbackProvider>
-          </IdentityProvider>
+            </IdentityProvider>
+          </GlobalOverlayProvider>
         </ThemeProvider>
       </body>
     </html>

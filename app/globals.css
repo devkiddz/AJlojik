@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -1006,5 +1007,104 @@
 
   .admin-control-plane main textarea {
     line-height: 1.5;
+  }
+}
+
+/* ============================================================
+   RCENTZ GLOBAL OVERLAY CANVAS
+   Isolated scale authority for dialogs, sheets and viewers.
+============================================================ */
+
+@layer utilities {
+  .rcentz-overlay-canvas {
+    --overlay-radius: clamp(1.25rem, 0.95rem + 0.7vw, 1.9rem);
+
+    --overlay-eyebrow: clamp(0.66rem, 0.64rem + 0.06cqi, 0.72rem);
+    --overlay-caption: clamp(0.7rem, 0.67rem + 0.08cqi, 0.76rem);
+    --overlay-description: clamp(0.76rem, 0.72rem + 0.1cqi, 0.84rem);
+    --overlay-description-leading: 1.38rem;
+    --overlay-body: clamp(0.82rem, 0.79rem + 0.09cqi, 0.9rem);
+    --overlay-title-compact: clamp(0.98rem, 0.9rem + 0.28cqi, 1.16rem);
+    --overlay-title: clamp(1.08rem, 0.96rem + 0.42cqi, 1.38rem);
+
+    --overlay-control-height: clamp(2.45rem, 2.34rem + 0.18cqi, 2.7rem);
+    --overlay-thumbnail: clamp(2.75rem, 8cqi, 3.75rem);
+    --overlay-media-max-height: min(52dvh, 32rem);
+    --overlay-reading-width: 68ch;
+
+    container-type: inline-size;
+    font-size: var(--overlay-body);
+    line-height: 1.5;
+
+    /*
+     * The overlay is portalled beneath the application body. These values
+     * deliberately override app-ui-normalized/admin scaling so the canvas
+     * keeps its own compact, predictable measure.
+     */
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .rcentz-overlay-canvas :where([class~='text-[8px]'], [class~='text-[9px]']) {
+    font-size: var(--overlay-caption) !important;
+    line-height: 1rem !important;
+  }
+
+  .rcentz-overlay-canvas :where([class~='text-[10px]'], [class~='text-[11px]']) {
+    font-size: var(--overlay-description) !important;
+    line-height: var(--overlay-description-leading) !important;
+  }
+
+  .rcentz-overlay-canvas :where([class~='text-xs']) {
+    font-size: var(--overlay-description) !important;
+    line-height: var(--overlay-description-leading) !important;
+  }
+
+  .rcentz-overlay-canvas :where([class~='text-sm']) {
+    font-size: var(--overlay-body) !important;
+    line-height: 1.45rem !important;
+  }
+
+  .rcentz-overlay-canvas :where(input, select, textarea, button) {
+    font-size: inherit;
+  }
+
+  .rcentz-overlay-canvas :where(input, select) {
+    min-height: var(--overlay-control-height);
+  }
+
+  .rcentz-overlay-canvas :where(img, video, canvas) {
+    max-inline-size: 100%;
+  }
+
+  .rcentz-overlay-contained-media {
+    max-block-size: var(--overlay-media-max-height);
+    inline-size: 100%;
+    object-fit: contain;
+  }
+
+  .rcentz-overlay-thumbnail {
+    block-size: var(--overlay-thumbnail);
+    inline-size: var(--overlay-thumbnail);
+    flex: 0 0 var(--overlay-thumbnail);
+  }
+
+  .rcentz-overlay-reading-measure {
+    max-inline-size: var(--overlay-reading-width);
+  }
+
+  .rcentz-overlay-body {
+    scrollbar-gutter: stable;
+  }
+}
+
+@media (max-height: 680px) and (min-width: 640px) {
+  .rcentz-overlay-canvas {
+    --overlay-radius: 1.2rem;
+    --overlay-title: 1.05rem;
+    --overlay-title-compact: 0.98rem;
+    --overlay-description: 0.74rem;
+    --overlay-body: 0.8rem;
+    --overlay-media-max-height: min(44dvh, 25rem);
   }
 }

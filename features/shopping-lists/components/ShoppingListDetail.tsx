@@ -36,6 +36,10 @@ import {
 } from '@/features/cart';
 
 import {
+  ShoppingListPreparationPanel
+} from '@/features/shopping-list-preparation/ShoppingListPreparationPanel';
+
+import {
   useShoppingLists
 } from '../client';
 
@@ -425,6 +429,19 @@ export function ShoppingListDetail({
           </div>
         </div>
       </section>
+
+      <ShoppingListPreparationPanel
+        list={{
+          id:
+            list.id,
+          workspaceId:
+            list.workspaceId,
+          name:
+            list.name,
+          itemCount:
+            list.itemCount
+        }}
+      />
 
       {error ? (
         <div className="mt-5 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">

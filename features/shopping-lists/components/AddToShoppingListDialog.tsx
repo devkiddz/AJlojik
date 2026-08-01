@@ -1,242 +1,347 @@
 'use client';
 
-import { Check, ListPlus, LoaderCircle, Plus, X } from 'lucide-react';
+import {
+  Check,
+  ListPlus,
+  LoaderCircle,
+  Plus
+} from 'lucide-react';
 
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useMemo,
+  useState
+} from 'react';
 
-import { useSearchParams } from 'next/navigation';
+import {
+  useSearchParams
+} from 'next/navigation';
 
-import { createPortal } from 'react-dom';
+import {
+  GlobalDialog
+} from '@/features/global-overlay';
 
-import type { ProductType, ProductVariantType } from '@/types/types';
+import type {
+  ProductType,
+  ProductVariantType
+} from '@/types/types';
 
-import { useOptionalShoppingLists } from '../client/ShoppingListProvider';
+import {
+  useOptionalShoppingLists
+} from '../client/ShoppingListProvider';
 
-import { ShoppingListFormDialog } from './ShoppingListFormDialog';
+import {
+  ShoppingListFormDialog
+} from './ShoppingListFormDialog';
 
 type Props = {
-  open: boolean;
-  product: ProductType;
-  variant?: ProductVariantType | null;
-  onClose: () => void;
+  open:
+    boolean;
+
+  product:
+    ProductType;
+
+  variant?:
+    ProductVariantType |
+    null;
+
+  onClose:
+    () => void;
 };
 
-export function AddToShoppingListDialog({ open, product, variant, onClose }: Props) {
-  const searchParams = useSearchParams();
-  const context = useOptionalShoppingLists();
+export function AddToShoppingListDialog({
+  open,
+  product,
+  variant,
+  onClose
+}: Props) {
+  const searchParams =
+    useSearchParams();
 
-  const [mounted, setMounted] = useState(false);
+  const context =
+    useOptionalShoppingLists();
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [
+    selectedId,
+    setSelectedId
+  ] =
+    useState<
+      string |
+      null
+    >(
+      null
+    );
 
-  const [creating, setCreating] = useState(false);
+  const [
+    creating,
+    setCreating
+  ] =
+    useState(
+      false
+    );
 
-  const [success, setSuccess] = useState<string | null>(null);
+  const [
+    success,
+    setSuccess
+  ] =
+    useState<
+      string |
+      null
+    >(
+      null
+    );
 
-  const [error, setError] = useState<string | null>(null);
+  const [
+    error,
+    setError
+  ] =
+    useState<
+      string |
+      null
+    >(
+      null
+    );
 
-  const preferredListId = searchParams.get('shoppingList');
+  const preferredListId =
+    searchParams.get(
+      'shoppingList'
+    );
 
-  const selectedVariant = useMemo(
-    () => variant ?? product.variants.find(item => item.stockLeft > 0) ?? product.variants[0] ?? null,
-    [product.variants, variant]
-  );
+  const selectedVariant =
+    useMemo(
+      () =>
+        variant ??
+        product.variants.find(
+          item =>
+            item.stockLeft >
+            0
+        ) ??
+        product.variants[0] ??
+        null,
+      [
+        product.variants,
+        variant
+      ]
+    );
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open) {
-      setSelectedId(null);
-      setSuccess(null);
-      setError(null);
-      setCreating(false);
-
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && !creating) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [creating, onClose, open]);
-
-  if (!mounted || !open || !context) {
+  if (!context) {
     return null;
   }
 
-  const { lists, mutating, createList, addItem } = context;
+  const {
+    lists,
+    mutating,
+    createList,
+    addItem
+  } =
+    context;
 
-  const orderedLists = preferredListId
-    ? [...lists].sort((first, second) => {
-        if (first.id === preferredListId) return -1;
-        if (second.id === preferredListId) return 1;
-        return first.position - second.position;
-      })
-    : lists;
+  const orderedLists =
+    preferredListId
+      ? [
+          ...lists
+        ].sort(
+          (
+            first,
+            second
+          ) => {
+            if (
+              first.id ===
+              preferredListId
+            ) {
+              return -1;
+            }
 
-  async function addToList(listId: string): Promise<void> {
-    if (mutating || !selectedVariant) {
+            if (
+              second.id ===
+              preferredListId
+            ) {
+              return 1;
+            }
+
+            return (
+              first.position -
+              second.position
+            );
+          }
+        )
+      : lists;
+
+  async function addToList(
+    listId:
+      string
+  ): Promise<void> {
+    if (
+      mutating ||
+      !selectedVariant
+    ) {
       return;
     }
 
-    setSelectedId(listId);
-    setSuccess(null);
-    setError(null);
+    setSelectedId(
+      listId
+    );
+
+    setSuccess(
+      null
+    );
+
+    setError(
+      null
+    );
 
     try {
-      await addItem(listId, {
-        productId: product.id,
-        variantId: selectedVariant.id,
-        quantity: 1
-      });
+      await addItem(
+        listId,
+        {
+          productId:
+            product.id,
 
-      setSuccess(listId);
+          variantId:
+            selectedVariant.id,
 
-      window.setTimeout(() => {
-        onClose();
-      }, 650);
-    } catch (addError) {
-      const message =
-        addError instanceof Error ? addError.message : 'Unable to add this product to the shopping list.';
+          quantity:
+            1
+        }
+      );
 
-      setError(message);
+      setSuccess(
+        listId
+      );
+
+      window.setTimeout(
+        () => {
+          onClose();
+        },
+        650
+      );
+    } catch (
+      addError
+    ) {
+      setError(
+        addError instanceof
+        Error
+          ? addError.message
+          : 'Unable to add this product to the shopping list.'
+      );
     } finally {
-      setSelectedId(null);
+      setSelectedId(
+        null
+      );
     }
   }
 
-  const dialog = (
+  return (
     <>
-      <div
-        className="
-          fixed inset-0 z-[110]
-          flex items-end justify-center
-          bg-black/55
-          backdrop-blur-sm
-          sm:items-center
-          sm:p-6
-        "
-        onMouseDown={event => {
-          if (event.target === event.currentTarget) {
-            onClose();
+      <GlobalDialog
+        id="add-to-shopping-list"
+        open={
+          open
+        }
+        onOpenChange={
+          nextOpen => {
+            if (
+              !nextOpen &&
+              !creating
+            ) {
+              onClose();
+            }
           }
-        }}>
-        <section
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="shopping-list-dialog-title"
-          className="
-            w-full max-w-lg
-            rounded-t-3xl
-            border bg-background
-            p-5 shadow-2xl
-            sm:rounded-3xl
-            sm:p-6
-          "
-          onMouseDown={event => {
-            event.stopPropagation();
-          }}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Save with purpose
-              </p>
+        }
+        eyebrow="Save with purpose"
+        title="Add to Shopping List"
+        description={
+          product.name
+        }
+        size="compact"
+        presentation="adaptive"
+        padding="compact"
+        scrollMode="body"
+        dismissible={
+          !mutating &&
+          !creating
+        }
+        footer={
+          <button
+            type="button"
+            disabled={
+              mutating
+            }
+            onClick={() =>
+              setCreating(
+                true
+              )
+            }
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-xs font-bold transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <ListPlus className="size-4" />
 
-              <h2 id="shopping-list-dialog-title" className="mt-1 text-xl font-semibold tracking-tight">
-                Add to Shopping List
-              </h2>
-
-              <p className="mt-2 line-clamp-1 text-sm text-muted-foreground">{product.name}</p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="
-                grid size-10 shrink-0
-                place-items-center
-                rounded-full border
-                transition-colors
-                hover:bg-muted
-                focus-visible:outline-none
-                focus-visible:ring-2
-                focus-visible:ring-ring
-              "
-              aria-label="Close">
-              <X className="size-4" />
-            </button>
+            Create a new list
+          </button>
+        }>
+        {error ? (
+          <div
+            role="alert"
+            className="mb-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {
+              error
+            }
           </div>
+        ) : null}
 
-          {error ? (
-            <div
-              role="alert"
-              className="
-                mt-4 rounded-xl
-                border border-destructive/30
-                bg-destructive/10
-                px-3 py-2
-                text-sm text-destructive
-              ">
-              {error}
-            </div>
-          ) : null}
+        <div className="space-y-2">
+          {lists.length >
+          0 ? (
+            orderedLists.map(
+              list => {
+                const busy =
+                  mutating &&
+                  selectedId ===
+                    list.id;
 
-          <div className="mt-5 max-h-80 space-y-2 overflow-y-auto pr-1">
-            {lists.length > 0 ? (
-              orderedLists.map(list => {
-                const isBusy = mutating && selectedId === list.id;
-
-                const done = success === list.id;
+                const done =
+                  success ===
+                  list.id;
 
                 return (
                   <button
-                    key={list.id}
+                    key={
+                      list.id
+                    }
                     type="button"
-                    disabled={mutating}
-                    onClick={() => {
-                      void addToList(list.id);
-                    }}
-                    className="
-                      flex w-full
-                      items-center justify-between
-                      gap-4 rounded-2xl
-                      border p-4
-                      text-left
-                      transition
-                      hover:border-foreground/25
-                      hover:bg-muted/40
-                      disabled:cursor-not-allowed
-                      disabled:opacity-60
-                      focus-visible:outline-none
-                      focus-visible:ring-2
-                      focus-visible:ring-ring
-                    ">
+                    disabled={
+                      mutating
+                    }
+                    onClick={() =>
+                      void addToList(
+                        list.id
+                      )
+                    }
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/45 p-3 text-left transition hover:border-foreground/20 hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <span className="min-w-0">
-                      <span className="block truncate font-semibold">{list.name}</span>
+                      <span className="block truncate font-bold">
+                        {
+                          list.name
+                        }
+                      </span>
 
-                      <span className="mt-1 block text-xs text-muted-foreground">
-                        {list.id === preferredListId ? 'Selected plan · ' : ''}
-                        {list.itemCount} {list.itemCount === 1 ? 'product' : 'products'}
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {list.id ===
+                        preferredListId
+                          ? 'Selected plan · '
+                          : ''}
+
+                        {
+                          list.itemCount
+                        }{' '}
+
+                        {list.itemCount ===
+                        1
+                          ? 'product'
+                          : 'products'}
                       </span>
                     </span>
 
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full border bg-background">
-                      {isBusy ? (
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full border bg-background">
+                      {busy ? (
                         <LoaderCircle className="size-4 animate-spin" />
                       ) : done ? (
                         <Check className="size-4" />
@@ -246,64 +351,59 @@ export function AddToShoppingListDialog({ open, product, variant, onClose }: Pro
                     </span>
                   </button>
                 );
-              })
-            ) : (
-              <div className="rounded-2xl border border-dashed p-6 text-center">
-                <ListPlus className="mx-auto size-6 text-muted-foreground" />
+              }
+            )
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-5 text-center">
+              <ListPlus className="mx-auto size-6 text-muted-foreground" />
 
-                <p className="mt-3 font-semibold">No lists yet</p>
+              <p className="mt-3 font-bold">
+                No lists yet
+              </p>
 
-                <p className="mt-1 text-sm text-muted-foreground">Create one without leaving this product.</p>
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            disabled={mutating}
-            onClick={() => {
-              setCreating(true);
-            }}
-            className="
-              mt-4 inline-flex
-              h-11 w-full
-              items-center justify-center
-              gap-2 rounded-xl
-              border text-sm font-semibold
-              transition-colors
-              hover:bg-muted
-              disabled:cursor-not-allowed
-              disabled:opacity-60
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-ring
-            ">
-            <ListPlus className="size-4" />
-            Create a new list
-          </button>
-        </section>
-      </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Create one without
+                leaving this product.
+              </p>
+            </div>
+          )}
+        </div>
+      </GlobalDialog>
 
       <ShoppingListFormDialog
-        open={creating}
-        busy={mutating}
-        onClose={() => {
-          setCreating(false);
-        }}
-        onSubmit={async input => {
-          const response = await createList(input);
+        open={
+          creating
+        }
+        busy={
+          mutating
+        }
+        onClose={() =>
+          setCreating(
+            false
+          )
+        }
+        onSubmit={
+          async input => {
+            const response =
+              await createList(
+                input
+              );
 
-          setCreating(false);
+            setCreating(
+              false
+            );
 
-          const created = response.affectedList;
+            const created =
+              response.affectedList;
 
-          if (created) {
-            await addToList(created.id);
+            if (created) {
+              await addToList(
+                created.id
+              );
+            }
           }
-        }}
+        }
       />
     </>
   );
-
-  return createPortal(dialog, document.body);
 }

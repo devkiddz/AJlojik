@@ -38,6 +38,10 @@ import {
 } from '@/features/customer-experience/customerJourneyRoutes';
 
 import {
+  CompactDeliveryMap
+} from '@/features/delivery-runtime/CompactDeliveryMap';
+
+import {
   cn
 } from '@/lib/utils';
 
@@ -404,6 +408,7 @@ function JourneyBody({
         <DeliveriesJourneyDetails
           orders={activeDeliveries}
           currency={currency}
+          workspaceId={data.workspace.id}
         />
       );
   }
@@ -2048,10 +2053,12 @@ function OrderJourneyCard({
 
 function DeliveriesJourneyDetails({
   orders,
-  currency
+  currency,
+  workspaceId
 }: {
   orders: CommerceOrder[];
   currency: string;
+  workspaceId: string;
 }) {
   if (orders.length === 0) {
     return (
@@ -2069,6 +2076,7 @@ function DeliveriesJourneyDetails({
           key={order.id}
           order={order}
           currency={currency}
+          workspaceId={workspaceId}
         />
       ))}
     </section>
@@ -2077,10 +2085,12 @@ function DeliveriesJourneyDetails({
 
 function DeliveryJourneyCard({
   order,
-  currency
+  currency,
+  workspaceId
 }: {
   order: CommerceOrder;
   currency: string;
+  workspaceId: string;
 }) {
   const delivery =
     order.delivery;
@@ -2187,6 +2197,21 @@ function DeliveryJourneyCard({
           </div>
         </div>
       </header>
+
+      {delivery ? (
+        <div className="border-b border-border/50 p-4 sm:p-5">
+          <CompactDeliveryMap
+            orderId={order.id}
+            workspaceId={workspaceId}
+            initialLatitude={delivery.lastLatitude}
+            initialLongitude={delivery.lastLongitude}
+            initialLastLocationAt={delivery.lastLocationAt}
+            initialStatus={delivery.status}
+            initialTrackingEnabled={delivery.trackingEnabled}
+            variant="journey"
+          />
+        </div>
+      ) : null}
 
       <div
         className="

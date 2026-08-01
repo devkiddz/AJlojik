@@ -1,5 +1,5 @@
 import {
-  AssistantFoundationPage
+  AssistantRuntimePage
 } from '@/features/ai-assistance';
 
 type AiPageProps = {
@@ -64,15 +64,12 @@ export default async function AiPage({
       mode
         ? `Mode: ${mode}`
         : null,
-
       intent
         ? `Intent: ${intent}`
         : null,
-
       productId
         ? `Product: ${productId}`
         : null,
-
       category
         ? `Category: ${category}`
         : null
@@ -86,16 +83,21 @@ export default async function AiPage({
     );
 
   return (
-    <AssistantFoundationPage
+    <AssistantRuntimePage
       audience="customer"
       contextLabel={
-        contextParts.length >
-        0
+        contextParts.length
           ? contextParts.join(
               ' · '
             )
           : 'Customer discovery, Wishlist and Shopping List context'
       }
+      initialContext={{
+        mode,
+        intent,
+        productId,
+        category
+      }}
     />
   );
 }

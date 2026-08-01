@@ -299,6 +299,10 @@ export function ExperienceStackProvider({
   const { actions, context, experience, intent } = useFeedExperience();
 
   const recordedIntentIdRef = useRef<string | null>(null);
+  const entriesRef = useRef<ExperienceHistoryEntry[]>(initialState.entries);
+  const suppressNextRecordRef = useRef(false);
+  const backClickGuardRef = useRef(false);
+  const backSyncQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const [entries, setEntries] = useState(initialState.entries);
   const [settings, setSettings] = useState(initialState.settings);
@@ -306,9 +310,14 @@ export function ExperienceStackProvider({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    entriesRef.current = entries;
+  }, [entries]);
+
   const canAccessExperienceModes = !isPending && Boolean(workspaceId);
 
   const applyStackState = useCallback((state: ExperienceStackState) => {
+    entriesRef.current = state.entries;
     setEntries(state.entries);
     setSettings(state.settings);
     setCurrentEntry(state.currentEntry);
@@ -328,25 +337,32 @@ export function ExperienceStackProvider({
 
   const restoreEntry = useCallback(
     (entry: ExperienceHistoryEntry) => {
+      const restoredIntent = entry.intentSnapshot as FeedIntent;
+
       const snapshotRoute =
-        typeof entry.intentSnapshot.route === 'string'
-          ? entry.intentSnapshot.route
+        typeof restoredIntent.route === 'string'
+          ? restoredIntent.route
           : typeof entry.contextSnapshot?.route === 'string'
             ? entry.contextSnapshot.route
             : null;
 
-      if (snapshotRoute && currentCustomerRoute() !== snapshotRoute) {
-        router.push(snapshotRoute, { scroll: false });
-      }
+      suppressNextRecordRef.current = true;
+      recordedIntentIdRef.current = restoredIntent.id;
 
-      actions.restoreExperience(entry.intentSnapshot as FeedIntent);
+      actions.restoreExperience(restoredIntent);
+
+      if (snapshotRoute && currentCustomerRoute() !== snapshotRoute) {
+        window.setTimeout(() => {
+          router.replace(snapshotRoute, { scroll: false });
+        }, 0);
+      }
 
       const scrollY = entry.contextSnapshot?.scrollY;
 
       if (typeof scrollY === 'number') {
-        window.setTimeout(() => {
+        window.requestAnimationFrame(() => {
           window.scrollTo({ top: scrollY, behavior: 'auto' });
-        }, 80);
+        });
       }
     },
     [actions, router]
@@ -498,6 +514,12 @@ export function ExperienceStackProvider({
       return;
     }
 
+    if (suppressNextRecordRef.current) {
+      suppressNextRecordRef.current = false;
+      recordedIntentIdRef.current = intent.id;
+      return;
+    }
+
     if (recordedIntentIdRef.current === intent.id) {
       return;
     }
@@ -522,55 +544,72 @@ export function ExperienceStackProvider({
     });
   }, [canAccessExperienceModes, context, experience.id, intent, pushExperience, settings.enabled]);
 
+  const enqueueAuthenticatedBackSync = useCallback(() => {
+    backSyncQueueRef.current = backSyncQueueRef.current
+      .then(async () => {
+        const response = await fetch('/api/experience-history/back', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaceId })
+        });
+
+        await readJsonResponse<{
+          previousEntry: ExperienceHistoryEntry | null;
+          removedEntryId: string | null;
+        }>(response);
+      })
+      .catch(syncError => {
+        setError(
+          syncError instanceof Error
+            ? `Your previous experience was restored, but history synchronization failed: ${syncError.message}`
+            : 'Your previous experience was restored, but history synchronization failed.'
+        );
+      });
+  }, [workspaceId]);
+
   const goBack = useCallback(async (): Promise<ExperienceHistoryEntry | null> => {
-    if (!requireExperienceAccess()) {
+    if (!requireExperienceAccess() || backClickGuardRef.current) {
       return null;
     }
 
-    if (!isAuthenticated) {
-      if (entries.length < 2) {
-        return null;
-      }
+    const currentEntries = entriesRef.current;
 
-      const nextEntries = entries.slice(1);
-      const previousEntry = nextEntries[0] ?? null;
-
-      setEntries(nextEntries);
-      setCurrentEntry(previousEntry);
-      persistGuestState(nextEntries);
-
-      if (previousEntry) {
-        restoreEntry(previousEntry);
-      }
-
-      return previousEntry;
+    if (currentEntries.length < 2) {
+      return null;
     }
 
-    return runOperation(async () => {
-      const response = await fetch('/api/experience-history/back', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workspaceId })
-      });
+    backClickGuardRef.current = true;
 
-      const result = await readJsonResponse<{
-        previousEntry: ExperienceHistoryEntry | null;
-        removedEntryId: string | null;
-      }>(response);
+    window.requestAnimationFrame(() => {
+      backClickGuardRef.current = false;
+    });
 
-      if (!result.previousEntry) {
-        return null;
-      }
+    const nextEntries = currentEntries.slice(1);
+    const previousEntry = nextEntries[0] ?? null;
 
-      setEntries(currentEntries =>
-        currentEntries.filter(entry => entry.id !== result.removedEntryId)
-      );
-      setCurrentEntry(result.previousEntry);
-      restoreEntry(result.previousEntry);
+    entriesRef.current = nextEntries;
+    setEntries(nextEntries);
+    setCurrentEntry(previousEntry);
+    setError(null);
 
-      return result.previousEntry;
-    }, null);
-  }, [entries, isAuthenticated, persistGuestState, requireExperienceAccess, restoreEntry, runOperation, workspaceId]);
+    if (previousEntry) {
+      restoreEntry(previousEntry);
+    }
+
+    if (!isAuthenticated) {
+      persistGuestState(nextEntries);
+    } else {
+      enqueueAuthenticatedBackSync();
+    }
+
+    return previousEntry;
+  }, [
+    enqueueAuthenticatedBackSync,
+    isAuthenticated,
+    persistGuestState,
+    requireExperienceAccess,
+    restoreEntry
+  ]);
 
   const jumpTo = useCallback(
     async (entryId: string): Promise<ExperienceHistoryEntry | null> => {

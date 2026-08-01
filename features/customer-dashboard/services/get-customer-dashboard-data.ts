@@ -246,6 +246,10 @@ export async function getCustomerDashboardData(
             pickedUpAt: true,
             deliveredAt: true,
 
+            lastLatitude: true,
+            lastLongitude: true,
+            lastLocationAt: true,
+
             events: {
               orderBy: {
                 createdAt: 'desc',
@@ -890,6 +894,11 @@ export async function getCustomerDashboardData(
           pickedUpAt: order.delivery.pickedUpAt?.toISOString() ?? null,
 
           deliveredAt: order.delivery.deliveredAt?.toISOString() ?? null,
+
+          lastLatitude: order.delivery.lastLatitude,
+          lastLongitude: order.delivery.lastLongitude,
+          lastLocationAt:
+            order.delivery.lastLocationAt?.toISOString() ?? null,
 
           events: order.delivery.events.map((event) => ({
             status: event.status,

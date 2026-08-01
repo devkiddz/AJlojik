@@ -20,6 +20,10 @@ import {
 } from 'next/navigation';
 
 import {
+  CompactDeliveryMap
+} from '@/features/delivery-runtime/CompactDeliveryMap';
+
+import {
   cn
 } from '@/lib/utils';
 
@@ -358,6 +362,19 @@ export default function ActiveDeliveryWidget() {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="mt-3">
+            <CompactDeliveryMap
+              orderId={activeOrder.id}
+              workspaceId={data?.workspaceId ?? ''}
+              initialLatitude={delivery.lastLatitude}
+              initialLongitude={delivery.lastLongitude}
+              initialLastLocationAt={delivery.lastLocationAt}
+              initialStatus={delivery.status}
+              initialTrackingEnabled={delivery.trackingEnabled}
+              variant="hub"
+            />
           </div>
 
           {events.length >

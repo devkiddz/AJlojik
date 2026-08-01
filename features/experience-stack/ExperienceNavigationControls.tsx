@@ -86,7 +86,7 @@ export function ExperienceBackControl() {
   }
 
   return (
-    <div className="pointer-events-none px-[var(--app-page-gutter)] pt-5 lg:hidden">
+    <div className="pointer-events-none px-[var(--app-page-gutter)] pt-3 sm:pt-4">
       <button
         type="button"
         disabled={
@@ -96,7 +96,7 @@ export function ExperienceBackControl() {
           void goBack()
         }
         aria-label="Return to the previous AJ Logik experience"
-        className="pointer-events-auto inline-flex h-10 items-center gap-2 rounded-full border border-white/[0.14] bg-background/55 px-3.5 text-sm font-semibold text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.13),0_14px_38px_rgba(0,0,0,0.24)] backdrop-blur-[28px] backdrop-saturate-[180%] transition supports-[backdrop-filter]:bg-background/42 hover:border-accent/35 hover:bg-background/68 disabled:cursor-wait disabled:opacity-60">
+        className="pointer-events-auto inline-flex h-10 items-center gap-2 rounded-full border border-border/70 bg-background/88 px-3.5 text-sm font-semibold text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.13),0_14px_38px_rgba(0,0,0,0.24)] backdrop-blur-[28px] backdrop-saturate-[180%] transition supports-[backdrop-filter]:bg-background/72 hover:border-primary/35 hover:bg-background disabled:cursor-wait disabled:opacity-60">
         {loading ? (
           <LoaderCircle className="size-4 animate-spin" />
         ) : (

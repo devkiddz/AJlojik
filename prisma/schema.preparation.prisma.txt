@@ -1,0 +1,196 @@
+// RELATION FIELDS TO ADD TO EXISTING MODELS
+
+// User
+shoppingListPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationCustomer")
+assignedPreparationRequests     ShoppingListPreparationRequest[] @relation("PreparationAssignedStaff")
+resolvedPreparationItems        ShoppingListPreparationItem[]    @relation("PreparationItemResolver")
+shoppingListPreparationEvents   ShoppingListPreparationEvent[]
+
+// Workspace
+shoppingListPreparationRequests ShoppingListPreparationRequest[]
+
+// ShoppingList
+preparationRequests ShoppingListPreparationRequest[]
+
+// ShoppingListItem
+preparationItems ShoppingListPreparationItem[]
+
+// Product
+preparationItems ShoppingListPreparationItem[]
+
+// ProductVariant
+originalPreparationItems ShoppingListPreparationItem[] @relation("PreparationOriginalVariant")
+resolvedPreparationItems ShoppingListPreparationItem[] @relation("PreparationResolvedVariant")
+
+// VendorProfile
+preparationItems ShoppingListPreparationItem[]
+
+// Order
+preparationRequest ShoppingListPreparationRequest?
+
+// NEW ENUMS AND MODELS
+
+enum ShoppingListPreparationStatus {
+  SUBMITTED
+  IN_PREPARATION
+  AWAITING_CUSTOMER_APPROVAL
+  READY_FOR_CHECKOUT
+  ORDER_CREATED
+  COMPLETED
+  CANCELLED
+}
+
+enum ShoppingListPreparationCustomerDecision {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+  CANCELLED
+}
+
+enum ShoppingListPreparationItemStatus {
+  PENDING
+  AVAILABLE
+  PARTIALLY_AVAILABLE
+  SUBSTITUTED
+  PRICE_CHANGED
+  UNAVAILABLE
+  PREPARED
+  REMOVED
+}
+
+enum ShoppingListPreparationItemDecision {
+  PENDING
+  NOT_REQUIRED
+  APPROVED
+  REJECTED
+}
+
+model ShoppingListPreparationRequest {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  shoppingListId String
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation("PreparationCustomer", fields: [userId], references: [id], onDelete: Cascade)
+
+  assignedStaffId String?
+  assignedStaff   User? @relation("PreparationAssignedStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+
+  orderId String? @unique
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  status           ShoppingListPreparationStatus           @default(SUBMITTED)
+  customerDecision ShoppingListPreparationCustomerDecision @default(PENDING)
+  priority Int @default(0)
+
+  customerNote         String?
+  staffNote            String?
+  customerDecisionNote String?
+
+  originalEstimatedTotal Decimal @default(0) @db.Decimal(12, 2)
+  quotedSubtotal         Decimal @default(0) @db.Decimal(12, 2)
+  approvedTotal          Decimal? @db.Decimal(12, 2)
+  quoteVersion           Int @default(1)
+
+  submittedAt         DateTime @default(now())
+  startedAt           DateTime?
+  approvalRequestedAt DateTime?
+  customerRespondedAt DateTime?
+  readyAt             DateTime?
+  convertedAt         DateTime?
+  completedAt         DateTime?
+  cancelledAt         DateTime?
+
+  items  ShoppingListPreparationItem[]
+  events ShoppingListPreparationEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, submittedAt])
+  @@index([userId, updatedAt])
+  @@index([shoppingListId, status])
+  @@index([assignedStaffId, status])
+  @@map("shopping_list_preparation_request")
+}
+
+model ShoppingListPreparationItem {
+  id String @id @default(cuid())
+
+  requestId String
+  request ShoppingListPreparationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  sourceShoppingListItemId String?
+  sourceShoppingListItem ShoppingListItem? @relation(fields: [sourceShoppingListItemId], references: [id], onDelete: SetNull)
+
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  originalVariantId String?
+  originalVariant ProductVariant? @relation("PreparationOriginalVariant", fields: [originalVariantId], references: [id], onDelete: SetNull)
+
+  resolvedVariantId String?
+  resolvedVariant ProductVariant? @relation("PreparationResolvedVariant", fields: [resolvedVariantId], references: [id], onDelete: SetNull)
+
+  vendorProfileId String?
+  vendorProfile VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  resolvedById String?
+  resolvedBy User? @relation("PreparationItemResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  productName          String
+  originalVariantLabel String?
+  resolvedVariantLabel String?
+  image                String?
+
+  requestedQuantity Int @default(1)
+  preparedQuantity  Int @default(1)
+
+  originalUnitPrice Decimal @default(0) @db.Decimal(12, 2)
+  quotedUnitPrice   Decimal @default(0) @db.Decimal(12, 2)
+
+  status           ShoppingListPreparationItemStatus   @default(PENDING)
+  customerDecision ShoppingListPreparationItemDecision @default(PENDING)
+
+  substitutionReason String?
+  staffNote           String?
+  customerNote        String?
+  position            Int @default(0)
+
+  resolvedAt          DateTime?
+  customerRespondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requestId, position])
+  @@index([productId])
+  @@index([resolvedVariantId])
+  @@index([vendorProfileId])
+  @@map("shopping_list_preparation_item")
+}
+
+model ShoppingListPreparationEvent {
+  id String @id @default(cuid())
+
+  requestId String
+  request ShoppingListPreparationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  type       String
+  fromStatus ShoppingListPreparationStatus?
+  toStatus   ShoppingListPreparationStatus?
+  note       String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId, createdAt])
+  @@map("shopping_list_preparation_event")
+}

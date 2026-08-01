@@ -6,6 +6,8 @@ import { NotificationHubWidget } from '@/features/notifications';
 
 import ActiveDeliveryWidget from './widgets/ActiveDeliveryWidget';
 
+import AIIntelligenceWidget from './widgets/AIIntelligenceWidget';
+
 import CartSummaryWidget from './widgets/CartSummaryWidget';
 
 import ContinueShoppingWidget from './widgets/ContinueShoppingWidget';
@@ -65,5 +67,9 @@ export const discoveryHubRegistry =
     [
       'notification-runtime',
       NotificationHubWidget
+    ],
+    [
+      'ai-intelligence-runtime',
+      AIIntelligenceWidget
     ]
   ]);
