@@ -73,6 +73,17 @@ model User {
   uploadedCommunicationAttachments  CommunicationAttachment[]    @relation("CommunicationAttachmentUploader")
   communicationStatusChanges        CommunicationStatusHistory[] @relation("CommunicationStatusActor")
 
+  customerSupportCases       SupportCase[]          @relation("SupportCaseCustomer")
+  assignedSupportCases       SupportCase[]          @relation("SupportCaseAssignedAgent")
+  supportAgentAssignments    SupportAssignment[]    @relation("SupportAssignmentAgent")
+  createdSupportAssignments  SupportAssignment[]    @relation("SupportAssignmentAssigner")
+  authoredSupportNotes       SupportNote[]          @relation("SupportNoteAuthor")
+  supportEscalationActions   SupportEscalation[]    @relation("SupportEscalationActor")
+  supportStatusChanges       SupportStatusHistory[] @relation("SupportStatusActor")
+  proposedSupportResolutions SupportResolution[]    @relation("SupportResolutionProposer")
+  approvedSupportResolutions SupportResolution[]    @relation("SupportResolutionApprover")
+  supportFeedbackEntries     SupportFeedback[]
+
   shoppingListPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationCustomer")
 
   assignedPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationAssignedStaff")
@@ -709,6 +720,7 @@ model Order {
   preparationRequest ShoppingListPreparationRequest?
 
   communicationContexts CommunicationContext[]
+  supportCases          SupportCase[]
 
   @@index([userId])
   @@index([status])
@@ -1064,6 +1076,8 @@ model Workspace {
   notificationMutes       NotificationMute[]
 
   communicationConversations CommunicationConversation[]
+  supportCases               SupportCase[]
+  supportSLAs                SupportSLA[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1462,6 +1476,7 @@ model CommunicationConversation {
   context       CommunicationContext?
   messages      CommunicationMessage[]
   statusHistory CommunicationStatusHistory[]
+  supportCase   SupportCase?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1614,6 +1629,296 @@ model CommunicationStatusHistory {
 }
 
 // ============================================================
+// RCENTZ SUPPORT
+// ============================================================
+
+enum SupportCaseCategory {
+  ORDER
+  DELIVERY
+  PAYMENT
+  PRODUCT
+  ACCOUNT
+  VENDOR
+  SHOPPING_LIST
+  TECHNICAL
+  OTHER
+}
+
+enum SupportCasePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportCaseStatus {
+  NEW
+  TRIAGED
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  WAITING_VENDOR
+  WAITING_INTERNAL
+  RESOLVED
+  CUSTOMER_CONFIRMED
+  CLOSED
+}
+
+enum SupportEscalationStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  CANCELLED
+}
+
+enum SupportResolutionType {
+  INFORMATION
+  DELIVERY_FOLLOWUP
+  ORDER_ADJUSTMENT
+  REFUND_REQUEST
+  REPLACEMENT
+  TECHNICAL_FIX
+  OTHER
+}
+
+enum SupportResolutionStatus {
+  PROPOSED
+  APPROVED
+  APPLIED
+  REJECTED
+  FAILED
+}
+
+model SupportCase {
+  id         String @id @default(cuid())
+  caseNumber String @unique
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  conversationId String                    @unique
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   User   @relation("SupportCaseCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  deliveryId String?
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+
+  assignedAgentId String?
+  assignedAgent   User?   @relation("SupportCaseAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  category SupportCaseCategory
+  priority SupportCasePriority @default(NORMAL)
+  status   SupportCaseStatus   @default(NEW)
+
+  subject     String
+  description String
+  metadata    Json?
+
+  assignedAt          DateTime?
+  firstResponseAt     DateTime?
+  dueAt               DateTime?
+  resolvedAt          DateTime?
+  customerConfirmedAt DateTime?
+  closedAt            DateTime?
+  resolutionSummary   String?
+
+  assignments   SupportAssignment[]
+  notes         SupportNote[]
+  escalations   SupportEscalation[]
+  statusHistory SupportStatusHistory[]
+  resolutions   SupportResolution[]
+  feedback      SupportFeedback?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status, priority, updatedAt])
+  @@index([customerId, updatedAt])
+  @@index([assignedAgentId, status, dueAt])
+  @@index([vendorProfileId, status])
+  @@index([orderId])
+  @@index([deliveryId])
+  @@map("support_case")
+}
+
+model SupportAssignment {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  agentId String
+  agent   User   @relation("SupportAssignmentAgent", fields: [agentId], references: [id], onDelete: Restrict)
+
+  assignedById String?
+  assignedBy   User?   @relation("SupportAssignmentAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  active Boolean @default(true)
+  reason String?
+
+  assignedAt DateTime  @default(now())
+  releasedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, active, assignedAt])
+  @@index([agentId, active])
+  @@map("support_assignment")
+}
+
+model SupportNote {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("SupportNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  body     String
+  internal Boolean @default(true)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("support_note")
+}
+
+model SupportEscalation {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("SupportEscalationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  fromPriority SupportCasePriority
+  toPriority   SupportCasePriority
+  status       SupportEscalationStatus @default(OPEN)
+
+  reason   String
+  metadata Json?
+
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([caseId, status, createdAt])
+  @@index([actorId, createdAt])
+  @@map("support_escalation")
+}
+
+model SupportStatusHistory {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("SupportStatusActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  fromStatus SupportCaseStatus?
+  toStatus   SupportCaseStatus
+
+  note     String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("support_status_history")
+}
+
+model SupportSLA {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  scopeKey String
+  category SupportCaseCategory?
+  priority SupportCasePriority
+
+  firstResponseMinutes Int
+  resolutionMinutes    Int
+  active               Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, scopeKey])
+  @@index([workspaceId, category, priority, active])
+  @@map("support_sla")
+}
+
+model SupportResolution {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  proposedById String?
+  proposedBy   User?   @relation("SupportResolutionProposer", fields: [proposedById], references: [id], onDelete: SetNull)
+
+  approvedById String?
+  approvedBy   User?   @relation("SupportResolutionApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  type   SupportResolutionType
+  status SupportResolutionStatus @default(PROPOSED)
+
+  summary       String
+  actionPayload Json?
+  resultPayload Json?
+  failureReason String?
+
+  proposedAt DateTime  @default(now())
+  approvedAt DateTime?
+  appliedAt  DateTime?
+  failedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, status, proposedAt])
+  @@index([proposedById, proposedAt])
+  @@index([approvedById, approvedAt])
+  @@map("support_resolution")
+}
+
+model SupportFeedback {
+  id String @id @default(cuid())
+
+  caseId String      @unique
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("support_feedback")
+}
+
+// ============================================================
 // CUSTOMER NOTIFICATIONS
 // ============================================================
 
@@ -1750,7 +2055,8 @@ model Delivery {
   lastLongitude    Float?
   lastLocationAt   DateTime?
 
-  events DeliveryTrackingEvent[]
+  events       DeliveryTrackingEvent[]
+  supportCases SupportCase[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2230,6 +2536,7 @@ model VendorProfile {
 
   communicationConversations CommunicationConversation[]
   communicationParticipants  CommunicationParticipant[]
+  supportCases               SupportCase[]
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, status, active])

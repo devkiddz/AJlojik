@@ -486,3 +486,20 @@ export async function getCommunicationConversationForVendor(
     unreadForVendor(record, vendorProfileId)
   );
 }
+export async function getCommunicationConversationForWorkspaceOperator(
+  conversationId: string,
+  workspaceId: string
+): Promise<CommunicationConversationDetail | null> {
+  const record =
+    await prisma.communicationConversation.findFirst({
+      where: {
+        id: conversationId,
+        workspaceId
+      },
+      include: detailInclude
+    });
+
+  if (!record) return null;
+
+  return mapDetail(record, 0);
+}
