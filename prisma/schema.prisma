@@ -2029,14 +2029,15 @@ model NotificationPreference {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  inAppEnabled        Boolean   @default(true)
-  orderUpdates        Boolean   @default(true)
-  deliveryUpdates     Boolean   @default(true)
-  shoppingListUpdates Boolean   @default(true)
-  supportUpdates      Boolean   @default(true)
-  systemUpdates       Boolean   @default(true)
-  promotionUpdates    Boolean   @default(false)
-  mutedUntil          DateTime?
+  inAppEnabled         Boolean   @default(true)
+  orderUpdates         Boolean   @default(true)
+  deliveryUpdates      Boolean   @default(true)
+  shoppingListUpdates  Boolean   @default(true)
+  supportUpdates       Boolean   @default(true)
+  communicationUpdates Boolean   @default(true)
+  systemUpdates        Boolean   @default(true)
+  promotionUpdates     Boolean   @default(false)
+  mutedUntil           DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2076,6 +2077,7 @@ enum NotificationTopic {
   DELIVERY
   SHOPPING_LIST
   SUPPORT
+  COMMUNICATION
   SYSTEM
   PROMOTION
 }

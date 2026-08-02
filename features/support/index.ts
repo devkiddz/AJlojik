@@ -57,3 +57,9 @@ export type {
   SupportIntelligenceSnapshot,
   SupportOperationsOverview
 } from './supportIntelligenceTypes';
+export { SupportAnalyticsDashboard } from './components/SupportAnalyticsDashboard';
+export type {
+  SupportAnalyticsMetric,
+  SupportAnalyticsSnapshot,
+  SupportAuditTimelineItem
+} from './supportAnalyticsTypes';

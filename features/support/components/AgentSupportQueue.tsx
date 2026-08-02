@@ -130,12 +130,19 @@ export function AgentSupportQueue({
               <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
                 Triage, assign and resolve customer cases while preserving conversation and commerce context.
               </p>
-              <Link
-                href="/admin/support/operations"
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-black text-slate-950">
-                <BrainCircuit className="size-3.5" />
-                Operations & Intelligence
-              </Link>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  href="/admin/support/operations"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-black text-slate-950">
+                  <BrainCircuit className="size-3.5" />
+                  Operations & Intelligence
+                </Link>
+                <Link
+                  href="/admin/support/analytics"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2.5 text-xs font-black text-white">
+                  Analytics & Audit
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

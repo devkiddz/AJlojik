@@ -63,6 +63,11 @@ const preferenceRows: Array<{
     description: 'Verified replies and status changes from Customer Care.'
   },
   {
+    key: 'communicationUpdates',
+    title: 'Inbox messages',
+    description: 'Customer and vendor marketplace conversation alerts.'
+  },
+  {
     key: 'systemUpdates',
     title: 'Important system updates',
     description: 'Account or commerce information that AJ Logik must surface.'

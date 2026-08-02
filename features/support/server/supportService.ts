@@ -22,6 +22,10 @@ import {
   getAgentSupportCase,
   getCustomerSupportCase
 } from './supportRepository';
+import {
+  notifySupportResolutionProposed,
+  notifySupportStatusChange
+} from './supportNotificationService';
 
 const MAX_SUBJECT_LENGTH = 180;
 const MAX_DESCRIPTION_LENGTH = 6000;
@@ -741,6 +745,19 @@ export async function changeSupportCaseStatus(
     );
   }
 
+  try {
+    await notifySupportStatusChange({
+      caseId: input.caseId,
+      workspaceId: input.workspaceId,
+      status: input.status
+    });
+  } catch (cause) {
+    console.error(
+      'Support status notification delivery failed.',
+      cause
+    );
+  }
+
   return result;
 }
 
@@ -927,6 +944,18 @@ export async function proposeSupportResolution(
     throw new SupportServiceError(
       'CASE_NOT_FOUND',
       'The Support Case could not be reloaded.'
+    );
+  }
+
+  try {
+    await notifySupportResolutionProposed({
+      caseId: input.caseId,
+      workspaceId: input.workspaceId
+    });
+  } catch (cause) {
+    console.error(
+      'Support resolution notification delivery failed.',
+      cause
     );
   }
 

@@ -14,6 +14,9 @@ import {
   getCommunicationConversationForUser,
   getCommunicationConversationForVendor
 } from './communicationRepository';
+import {
+  notifyCommunicationRecipients
+} from './communicationNotificationService';
 
 const MAX_SUBJECT_LENGTH = 180;
 const MAX_MESSAGE_LENGTH = 4000;
@@ -677,6 +680,28 @@ export async function sendCommunicationMessage(
       'CONVERSATION_NOT_FOUND',
       'The updated conversation could not be reloaded.'
     );
+  }
+
+  const sentMessage =
+    conversation.messages.at(-1);
+
+  if (sentMessage) {
+    try {
+      await notifyCommunicationRecipients({
+        workspaceId: input.workspaceId,
+        conversationId:
+          input.conversationId,
+        messageId: sentMessage.id,
+        senderUserId:
+          input.senderUserId,
+        body: sentMessage.body
+      });
+    } catch (cause) {
+      console.error(
+        'Communication notification delivery failed.',
+        cause
+      );
+    }
   }
 
   return conversation;

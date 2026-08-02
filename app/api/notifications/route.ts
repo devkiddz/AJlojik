@@ -25,6 +25,7 @@ const TOPICS: NotificationTopic[] = [
   'DELIVERY',
   'SHOPPING_LIST',
   'SUPPORT',
+  'COMMUNICATION',
   'SYSTEM',
   'PROMOTION'
 ];
@@ -209,6 +210,7 @@ export async function PATCH(request: NextRequest) {
         'deliveryUpdates',
         'shoppingListUpdates',
         'supportUpdates',
+        'communicationUpdates',
         'systemUpdates',
         'promotionUpdates'
       ] as const;
