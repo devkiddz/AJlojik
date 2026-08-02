@@ -27,6 +27,12 @@ import {
 } from '@/features/workspace';
 
 import {
+  clearQuickSupportSelectedCaseId,
+  readQuickSupportSelectedCaseId,
+  writeQuickSupportSelectedCaseId
+} from '../client/quickSupportSelectionStorage';
+
+import {
   invalidateQuickSupportSummary
 } from '../client/useQuickSupportSummary';
 
@@ -54,6 +60,10 @@ import {
 import {
   SupportLiveStatusBadge
 } from './SupportLiveStatusBadge';
+
+import {
+  QuickSupportCaseContinuityBar
+} from './QuickSupportCaseContinuityBar';
 
 const reusableStatuses:
   readonly SupportCaseStatusValue[] = [
@@ -134,6 +144,12 @@ export function QuickSupportChatWorkspace() {
     >(
       null
     );
+
+  const [
+    startingNew,
+    setStartingNew
+  ] =
+    useState(false);
 
   const [
     message,
@@ -245,6 +261,15 @@ export function QuickSupportChatWorkspace() {
           next
         );
 
+        if (
+          workspaceId
+        ) {
+          writeQuickSupportSelectedCaseId(
+            workspaceId,
+            next.id
+          );
+        }
+
         setAuthenticationRequired(
           false
         );
@@ -257,7 +282,9 @@ export function QuickSupportChatWorkspace() {
 
         return next;
       },
-      []
+      [
+        workspaceId
+      ]
     );
 
   const restoreConversation =
@@ -340,7 +367,32 @@ export function QuickSupportChatWorkspace() {
             return;
           }
 
+          const storedCaseId =
+            readQuickSupportSelectedCaseId(
+              workspaceId
+            );
+
+          const selectedCase =
+            storedCaseId
+              ? snapshot.recentCases.find(
+                  item =>
+                    item.id ===
+                    storedCaseId
+                ) ??
+                null
+              : null;
+
+          if (
+            storedCaseId &&
+            !selectedCase
+          ) {
+            clearQuickSupportSelectedCaseId(
+              workspaceId
+            );
+          }
+
           const activeCase =
+            selectedCase ??
             snapshot.activeCase;
 
           if (
@@ -350,12 +402,20 @@ export function QuickSupportChatWorkspace() {
               activeCase.id,
               true
             );
+
+            setStartingNew(
+              false
+            );
           } else {
             setSupportCase(
               null
             );
 
             setAuthenticationRequired(
+              false
+            );
+
+            setStartingNew(
               false
             );
           }
@@ -386,6 +446,49 @@ export function QuickSupportChatWorkspace() {
       restoreConversation
     ]
   );
+
+  const selectSupportCase =
+    useCallback(
+      async (
+        caseId: string
+      ): Promise<void> => {
+        setLoading(
+          true
+        );
+
+        setError(
+          null
+        );
+
+        try {
+          await loadCase(
+            caseId,
+            true
+          );
+
+          setStartingNew(
+            false
+          );
+
+          setMessage(
+            ''
+          );
+        } catch (cause) {
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : 'AJ Logik could not switch Support conversations.'
+          );
+        } finally {
+          setLoading(
+            false
+          );
+        }
+      },
+      [
+        loadCase
+      ]
+    );
 
   const applyLiveEvent =
     useCallback(
@@ -433,6 +536,34 @@ export function QuickSupportChatWorkspace() {
       onEvent:
         applyLiveEvent
     });
+
+  const startAnotherConversation =
+    useCallback(
+      (): void => {
+        live.setTyping(
+          false
+        );
+
+        setSupportCase(
+          null
+        );
+
+        setStartingNew(
+          true
+        );
+
+        setMessage(
+          ''
+        );
+
+        setError(
+          null
+        );
+      },
+      [
+        live
+      ]
+    );
 
   useEffect(
     () => {
@@ -559,6 +690,19 @@ export function QuickSupportChatWorkspace() {
             next
           );
 
+          if (
+            workspaceId
+          ) {
+            writeQuickSupportSelectedCaseId(
+              workspaceId,
+              next.id
+            );
+          }
+
+          setStartingNew(
+            false
+          );
+
           setMessage(
             ''
           );
@@ -588,7 +732,8 @@ export function QuickSupportChatWorkspace() {
         busy,
         live,
         message,
-        supportCase
+        supportCase,
+        workspaceId
       ]
     );
 
@@ -642,17 +787,44 @@ export function QuickSupportChatWorkspace() {
   ) {
     return (
       <div className="space-y-4">
+        <QuickSupportCaseContinuityBar
+          selectedCaseId={
+            null
+          }
+          startingNew={
+            startingNew
+          }
+          onSelectCase={
+            caseId => {
+              void selectSupportCase(
+                caseId
+              );
+            }
+          }
+          onStartNew={
+            startAnotherConversation
+          }
+        />
+
         <section className="rounded-[1.5rem] border border-emerald-500/20 bg-emerald-500/8 p-4">
           <span className="grid size-10 place-items-center rounded-2xl bg-emerald-500/12 text-emerald-600">
             <Headphones className="size-4" />
           </span>
 
           <h3 className="mt-4 text-base font-black">
-            How can we help?
+            {
+              startingNew
+                ? 'Start another conversation'
+                : 'How can we help?'
+            }
           </h3>
 
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            Send your first message. AJ Logik will silently create a secure Support Case and connect this panel to the live Support workspace.
+            {
+              startingNew
+                ? 'Your existing cases remain intact. Send a new first message to open a separate Support Case.'
+                : 'Send your first message. AJ Logik will silently create a secure Support Case and connect this panel to the live Support workspace.'
+            }
           </p>
         </section>
 
@@ -729,6 +901,25 @@ export function QuickSupportChatWorkspace() {
 
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-border/60 bg-background shadow-sm">
+      <QuickSupportCaseContinuityBar
+        selectedCaseId={
+          supportCase.id
+        }
+        startingNew={
+          startingNew
+        }
+        onSelectCase={
+          caseId => {
+            void selectSupportCase(
+              caseId
+            );
+          }
+        }
+        onStartNew={
+          startAnotherConversation
+        }
+      />
+
       <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-card/70 p-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[10px] font-black uppercase tracking-[0.15em] text-primary">

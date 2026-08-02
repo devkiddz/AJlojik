@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type {
+  CommunicationParticipantRole,
   SupportCaseStatus
 } from '@/lib/generated/prisma/client';
 
@@ -10,6 +11,7 @@ import {
 
 import type {
   QuickSupportCaseContinuity,
+  QuickSupportMessageDirection,
   QuickSupportReplyPreview,
   QuickSupportSummary
 } from '../quickSupportTypes';
@@ -24,6 +26,9 @@ const reusableStatuses:
     'WAITING_VENDOR',
     'WAITING_INTERNAL'
   ];
+
+const recentCaseLimit =
+  20;
 
 function messagePreview(
   body: string
@@ -45,6 +50,29 @@ function messagePreview(
     : normalized;
 }
 
+function messageDirection(
+  role:
+    CommunicationParticipantRole
+): QuickSupportMessageDirection {
+  if (
+    role ===
+    'CUSTOMER'
+  ) {
+    return 'CUSTOMER';
+  }
+
+  if (
+    role ===
+      'SUPPORT_AGENT' ||
+    role ===
+      'ADMIN'
+  ) {
+    return 'SUPPORT';
+  }
+
+  return 'SYSTEM';
+}
+
 export async function getCustomerQuickSupportSummary(
   userId: string,
   workspaceId: string
@@ -59,6 +87,8 @@ export async function getCustomerQuickSupportSummary(
       select: {
         id: true,
         caseNumber: true,
+        conversationId:
+          true,
         subject: true,
         status: true,
         updatedAt: true,
@@ -84,13 +114,7 @@ export async function getCustomerQuickSupportSummary(
             messages: {
               where: {
                 removedAt:
-                  null,
-                senderRole: {
-                  in: [
-                    'SUPPORT_AGENT',
-                    'ADMIN'
-                  ]
-                }
+                  null
               },
               orderBy: {
                 createdAt:
@@ -99,20 +123,14 @@ export async function getCustomerQuickSupportSummary(
               take:
                 1,
               select: {
-                id: true,
-                body: true,
-                createdAt:
+                id:
                   true,
-                sender: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email:
-                      true,
-                    image:
-                      true
-                  }
-                }
+                body:
+                  true,
+                senderRole:
+                  true,
+                createdAt:
+                  true
               }
             }
           }
@@ -125,6 +143,59 @@ export async function getCustomerQuickSupportSummary(
       take:
         100
     });
+
+  const conversationIds =
+    records.map(
+      item =>
+        item.conversationId
+    );
+
+  const latestAgentMessage =
+    conversationIds.length >
+      0
+      ? await prisma.communicationMessage.findFirst({
+          where: {
+            conversationId: {
+              in:
+                conversationIds
+            },
+            removedAt:
+              null,
+            senderRole: {
+              in: [
+                'SUPPORT_AGENT',
+                'ADMIN'
+              ]
+            }
+          },
+          orderBy: {
+            createdAt:
+              'desc'
+          },
+          select: {
+            id:
+              true,
+            conversationId:
+              true,
+            body:
+              true,
+            createdAt:
+              true,
+            sender: {
+              select: {
+                id:
+                  true,
+                name:
+                  true,
+                email:
+                  true,
+                image:
+                  true
+              }
+            }
+          }
+        })
+      : null;
 
   const continuity =
     records
@@ -139,6 +210,13 @@ export async function getCustomerQuickSupportSummary(
                 0
               ];
 
+          const latestMessage =
+            record
+              .conversation
+              .messages[
+                0
+              ];
+
           return {
             id:
               record.id,
@@ -148,6 +226,10 @@ export async function getCustomerQuickSupportSummary(
               record.subject,
             status:
               record.status,
+            reusable:
+              reusableStatuses.includes(
+                record.status
+              ),
             unreadCount:
               participant
                 ?.unreadCount ??
@@ -163,6 +245,19 @@ export async function getCustomerQuickSupportSummary(
                 .lastMessageAt
                 ?.toISOString() ??
               null,
+            lastMessagePreview:
+              latestMessage
+                ? messagePreview(
+                    latestMessage.body
+                  )
+                : null,
+            lastMessageDirection:
+              latestMessage
+                ? messageDirection(
+                    latestMessage
+                      .senderRole
+                  )
+                : null,
             updatedAt:
               record
                 .updatedAt
@@ -197,83 +292,68 @@ export async function getCustomerQuickSupportSummary(
   const activeCase =
     continuity.find(
       item =>
-        reusableStatuses.includes(
-          item.status
-        )
+        item.reusable
     ) ??
     null;
 
-  const replyCandidates =
-    records
-      .flatMap(
-        record => {
-          const message =
-            record
-              .conversation
-              .messages[
-                0
-              ];
+  let latestAgentReply:
+    QuickSupportReplyPreview |
+    null =
+      null;
 
-          if (!message) {
-            return [];
-          }
-
-          const preview:
-            QuickSupportReplyPreview = {
-              caseId:
-                record.id,
-              caseNumber:
-                record.caseNumber,
-              messageId:
-                message.id,
-              bodyPreview:
-                messagePreview(
-                  message.body
-                ),
-              sender:
-                message.sender
-                  ? {
-                      id:
-                        message
-                          .sender
-                          .id,
-                      name:
-                        message
-                          .sender
-                          .name,
-                      email:
-                        message
-                          .sender
-                          .email,
-                      image:
-                        message
-                          .sender
-                          .image
-                    }
-                  : null,
-              createdAt:
-                message
-                  .createdAt
-                  .toISOString()
-            };
-
-          return [
-            preview
-          ];
-        }
-      )
-      .sort(
-        (
-          left,
-          right
-        ) =>
-          Date.parse(
-            right.createdAt
-          ) -
-          Date.parse(
-            left.createdAt
-          )
+  if (
+    latestAgentMessage
+  ) {
+    const supportCase =
+      records.find(
+        item =>
+          item.conversationId ===
+          latestAgentMessage
+            .conversationId
       );
+
+    if (
+      supportCase
+    ) {
+      latestAgentReply = {
+        caseId:
+          supportCase.id,
+        caseNumber:
+          supportCase.caseNumber,
+        messageId:
+          latestAgentMessage.id,
+        bodyPreview:
+          messagePreview(
+            latestAgentMessage.body
+          ),
+        sender:
+          latestAgentMessage.sender
+            ? {
+                id:
+                  latestAgentMessage
+                    .sender
+                    .id,
+                name:
+                  latestAgentMessage
+                    .sender
+                    .name,
+                email:
+                  latestAgentMessage
+                    .sender
+                    .email,
+                image:
+                  latestAgentMessage
+                    .sender
+                    .image
+              }
+            : null,
+        createdAt:
+          latestAgentMessage
+            .createdAt
+            .toISOString()
+      };
+    }
+  }
 
   return {
     workspaceId,
@@ -288,6 +368,11 @@ export async function getCustomerQuickSupportSummary(
           item.status !==
           'CLOSED'
       ).length,
+    historyCount:
+      continuity.filter(
+        item =>
+          !item.reusable
+      ).length,
     unreadCount:
       continuity.reduce(
         (
@@ -299,10 +384,11 @@ export async function getCustomerQuickSupportSummary(
         0
       ),
     activeCase,
-    latestAgentReply:
-      replyCandidates[
-        0
-      ] ??
-      null
+    recentCases:
+      continuity.slice(
+        0,
+        recentCaseLimit
+      ),
+    latestAgentReply
   };
 }

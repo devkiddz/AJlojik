@@ -3,6 +3,11 @@ import type {
   SupportIdentity
 } from './supportTypes';
 
+export type QuickSupportMessageDirection =
+  | 'CUSTOMER'
+  | 'SUPPORT'
+  | 'SYSTEM';
+
 export type QuickSupportReplyPreview = {
   caseId: string;
   caseNumber: string;
@@ -17,9 +22,14 @@ export type QuickSupportCaseContinuity = {
   caseNumber: string;
   subject: string;
   status: SupportCaseStatusValue;
+  reusable: boolean;
   unreadCount: number;
   lastReadAt: string | null;
   lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  lastMessageDirection:
+    QuickSupportMessageDirection |
+    null;
   updatedAt: string;
 };
 
@@ -28,10 +38,13 @@ export type QuickSupportSummary = {
   generatedAt: string;
   totalCaseCount: number;
   openCaseCount: number;
+  historyCount: number;
   unreadCount: number;
   activeCase:
     QuickSupportCaseContinuity |
     null;
+  recentCases:
+    QuickSupportCaseContinuity[];
   latestAgentReply:
     QuickSupportReplyPreview |
     null;

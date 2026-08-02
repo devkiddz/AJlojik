@@ -9,9 +9,17 @@ export {
 
 export type {
   QuickSupportCaseContinuity,
+  QuickSupportMessageDirection,
   QuickSupportReplyPreview,
   QuickSupportSummary
 } from './quickSupportTypes';
+
+export {
+  clearQuickSupportSelectedCaseId,
+  QUICK_SUPPORT_SELECTED_CASE_PREFIX,
+  readQuickSupportSelectedCaseId,
+  writeQuickSupportSelectedCaseId
+} from './client/quickSupportSelectionStorage';
 
 export {
   invalidateQuickSupportSummary,
