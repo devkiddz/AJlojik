@@ -63,3 +63,15 @@ export type {
   SupportAnalyticsSnapshot,
   SupportAuditTimelineItem
 } from './supportAnalyticsTypes';
+
+export {
+  SUPPORT_LIVE_EVENT_TYPES
+} from './supportLiveTypes';
+
+export type {
+  SupportLiveAudience,
+  SupportLiveEventItem,
+  SupportLiveEventTypeValue,
+  SupportLiveReadyPayload,
+  SupportLiveReconnectPayload
+} from './supportLiveTypes';

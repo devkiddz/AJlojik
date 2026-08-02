@@ -64,6 +64,47 @@ export async function notifyCommunicationRecipients(
 
   const supportCase =
     conversation.supportCase;
+
+  const activeSupportRecipients =
+    supportCase
+      ? await prisma.supportLivePresence.findMany({
+          where: {
+            caseId:
+              supportCase.id,
+            userId: {
+              in: recipients
+            },
+            active: true,
+            expiresAt: {
+              gt: new Date()
+            }
+          },
+          select: {
+            userId: true
+          }
+        })
+      : [];
+
+  const activeRecipientIds =
+    new Set(
+      activeSupportRecipients.map(
+        item => item.userId
+      )
+    );
+
+  const notificationRecipients =
+    recipients.filter(
+      userId =>
+        !activeRecipientIds.has(
+          userId
+        )
+    );
+
+  if (
+    !notificationRecipients.length
+  ) {
+    return;
+  }
   const topic = supportCase
     ? 'SUPPORT'
     : 'COMMUNICATION';
@@ -83,7 +124,7 @@ export async function notifyCommunicationRecipients(
     'A new message is available.';
 
   await Promise.all(
-    recipients.map(userId =>
+    notificationRecipients.map(userId =>
       createCustomerNotification(
         prisma,
         {

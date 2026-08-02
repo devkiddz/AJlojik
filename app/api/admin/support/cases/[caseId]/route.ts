@@ -6,6 +6,10 @@ import {
 import {
   getAdminApiAccess
 } from '@/features/admin/auth/adminPermissions';
+
+import {
+  markCommunicationConversationRead
+} from '@/features/communication/server/communicationService';
 import {
   getAgentSupportCase
 } from '@/features/support/server/supportRepository';
@@ -150,6 +154,41 @@ export async function PATCH(
     const action = String(
       body.action ?? ''
     );
+
+    if (
+      action === 'mark-read'
+    ) {
+      const current =
+        await getAgentSupportCase(
+          caseId,
+          workspaceId
+        );
+
+      if (!current) {
+        return response(
+          {
+            error:
+              'The Support Case could not be found.'
+          },
+          404
+        );
+      }
+
+      await markCommunicationConversationRead({
+        workspaceId,
+        conversationId:
+          current.conversationId,
+        userId:
+          access.actor.id
+      });
+
+      return response(
+        (await getAgentSupportCase(
+          caseId,
+          workspaceId
+        ))!
+      );
+    }
 
     if (action === 'refresh') {
       const supportCase =

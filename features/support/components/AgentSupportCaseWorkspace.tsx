@@ -16,6 +16,8 @@ import {
 import Link from 'next/link';
 import {
   useCallback,
+  useEffect,
+  useRef,
   useState,
   useTransition
 } from 'react';
@@ -23,8 +25,24 @@ import {
 import { cn } from '@/lib/utils';
 
 import {
+  useSupportLiveCase
+} from '../client/useSupportLiveCase';
+
+import type {
+  SupportLiveEventItem
+} from '../supportLiveTypes';
+
+import {
   SupportIntelligencePanel
 } from './SupportIntelligencePanel';
+
+import {
+  SupportLiveActivityBar
+} from './SupportLiveActivityBar';
+
+import {
+  SupportLiveStatusBadge
+} from './SupportLiveStatusBadge';
 import {
   SupportOperationsPanel
 } from './SupportOperationsPanel';
@@ -107,6 +125,11 @@ export function AgentSupportCaseWorkspace({
   const [isPending, startTransition] =
     useTransition();
 
+  const messagesEndRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
+
   const endpoint =
     `/api/admin/support/cases/${encodeURIComponent(
       supportCase.id
@@ -149,14 +172,92 @@ export function AgentSupportCaseWorkspace({
       setSelectedStatus(next.status);
       setSelectedPriority(next.priority);
       setSelectedAgentId(
-        next.assignedAgent?.id ??
-          selectedAgentId
+        current =>
+          next.assignedAgent?.id ??
+          current
       );
       setError(null);
       return next;
     },
-    [endpoint, selectedAgentId]
+    [endpoint]
   );
+
+  const applyLiveEvent =
+    useCallback(
+      async (
+        event:
+          SupportLiveEventItem
+      ): Promise<void> => {
+        if (
+          event.actorId ===
+          actorUserId
+        ) {
+          return;
+        }
+
+        if (
+          event.type ===
+          'MESSAGE_CREATED'
+        ) {
+          await request(
+            'PATCH',
+            {
+              action:
+                'mark-read'
+            }
+          );
+
+          return;
+        }
+
+        await request(
+          'GET'
+        );
+      },
+      [
+        actorUserId,
+        request
+      ]
+    );
+
+  const live =
+    useSupportLiveCase({
+      streamUrl:
+        endpoint + '/live',
+      onEvent:
+        applyLiveEvent
+    });
+
+  useEffect(
+    () => {
+      messagesEndRef.current
+        ?.scrollIntoView({
+          block: 'end',
+          behavior:
+            'smooth'
+        });
+    },
+    [
+      supportCase
+        .conversation
+        .messages.length
+    ]
+  );
+
+  useEffect(() => {
+    void request(
+      'PATCH',
+      {
+        action:
+          'mark-read'
+      }
+    ).catch(cause => {
+      console.error(
+        'Support agent read-state update failed.',
+        cause
+      );
+    });
+  }, [request]);
 
   const run = (
     payload: Record<string, unknown>,
@@ -211,20 +312,35 @@ export function AgentSupportCaseWorkspace({
               </p>
             </div>
 
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() =>
-                run({ action: 'refresh' })
-              }
-              className="grid size-10 place-items-center rounded-full border border-border hover:bg-muted disabled:opacity-50">
-              <RefreshCw
-                className={cn(
-                  'size-4',
-                  isPending && 'animate-spin'
-                )}
+            <div className="flex flex-wrap items-center gap-2">
+              <SupportLiveStatusBadge
+                state={
+                  live.state
+                }
+                error={
+                  live.error
+                }
               />
-            </button>
+
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() =>
+                  run({
+                    action:
+                      'refresh'
+                  })
+                }
+                className="grid size-10 place-items-center rounded-full border border-border hover:bg-muted disabled:opacity-50">
+                <RefreshCw
+                  className={cn(
+                    'size-4',
+                    isPending &&
+                      'animate-spin'
+                  )}
+                />
+              </button>
+            </div>
           </div>
         </section>
 
@@ -284,9 +400,26 @@ export function AgentSupportCaseWorkspace({
                   );
                 }
               )}
+
+              <div
+                ref={
+                  messagesEndRef
+                }
+                aria-hidden="true"
+              />
             </div>
 
-            <div className="border-t border-border/60 bg-card/70 p-3 sm:p-4">
+            <SupportLiveActivityBar
+              actorUserId={
+                actorUserId
+              }
+              participants={
+                live.participants
+              }
+              remoteLabel="Customer"
+            />
+
+            <div className="bg-card/70 p-3 sm:p-4">
               {permissions.reply &&
               assignedToActor &&
               supportCase.status !== 'CLOSED' ? (
@@ -294,9 +427,23 @@ export function AgentSupportCaseWorkspace({
                   <textarea
                     value={message}
                     maxLength={4000}
-                    onChange={event =>
+                    onChange={event => {
+                      const value =
+                        event.target.value;
+
                       setMessage(
-                        event.target.value
+                        value
+                      );
+
+                      live.setTyping(
+                        Boolean(
+                          value.trim()
+                        )
+                      );
+                    }}
+                    onBlur={() =>
+                      live.setTyping(
+                        false
                       )
                     }
                     placeholder="Reply to the customer…"
@@ -310,7 +457,13 @@ export function AgentSupportCaseWorkspace({
                           action: 'send',
                           body: message
                         },
-                        () => setMessage('')
+                        () => {
+                          live.setTyping(
+                            false
+                          );
+
+                          setMessage('');
+                        }
                       )
                     }
                     disabled={

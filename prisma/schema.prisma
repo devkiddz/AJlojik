@@ -83,6 +83,7 @@ model User {
   proposedSupportResolutions SupportResolution[]    @relation("SupportResolutionProposer")
   approvedSupportResolutions SupportResolution[]    @relation("SupportResolutionApprover")
   supportFeedbackEntries     SupportFeedback[]
+  supportLivePresenceRecords SupportLivePresence[]
 
   requestedSupportCommerceActions SupportCommerceAction[]          @relation("SupportCommerceActionRequester")
   approvedSupportCommerceActions  SupportCommerceAction[]          @relation("SupportCommerceActionApprover")
@@ -1741,6 +1742,8 @@ model SupportCase {
   feedback      SupportFeedback?
 
   commerceActions SupportCommerceAction[]
+  liveEvents      SupportLiveEvent[]
+  livePresence    SupportLivePresence[]
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
 
@@ -1751,6 +1754,72 @@ model SupportCase {
   @@index([orderId])
   @@index([deliveryId])
   @@map("support_case")
+}
+
+enum SupportLiveEventType {
+  MESSAGE_CREATED
+  CASE_UPDATED
+  CONVERSATION_READ
+  PRESENCE_UPDATED
+  TYPING_UPDATED
+  UNREAD_UPDATED
+}
+
+enum SupportLiveAudience {
+  CUSTOMER
+  AGENT
+}
+
+model SupportLiveEvent {
+  id Int @id @default(autoincrement())
+
+  workspaceId String
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  conversationId String
+
+  type    SupportLiveEventType
+  actorId String?
+  payload Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([caseId, id])
+  @@index([workspaceId, id])
+  @@index([conversationId, id])
+  @@map("support_live_event")
+}
+
+model SupportLivePresence {
+  id String @id @default(cuid())
+
+  workspaceId String
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  conversationId String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  audience SupportLiveAudience
+  active   Boolean             @default(true)
+
+  typingUntil DateTime?
+  lastSeenAt  DateTime  @default(now())
+  expiresAt   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([caseId, userId, audience])
+  @@index([caseId, expiresAt])
+  @@index([workspaceId, audience, expiresAt])
+  @@index([conversationId, expiresAt])
+  @@map("support_live_presence")
 }
 
 model SupportAssignment {

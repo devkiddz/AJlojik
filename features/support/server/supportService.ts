@@ -27,9 +27,33 @@ import {
   notifySupportStatusChange
 } from './supportNotificationService';
 
+import {
+  publishSupportLiveEvent
+} from './supportLiveRepository';
+
 const MAX_SUBJECT_LENGTH = 180;
 const MAX_DESCRIPTION_LENGTH = 6000;
 const MAX_NOTE_LENGTH = 6000;
+
+type SupportLivePublishInput =
+  Parameters<
+    typeof publishSupportLiveEvent
+  >[0];
+
+async function publishSupportLiveEventSoft(
+  input: SupportLivePublishInput
+): Promise<void> {
+  try {
+    await publishSupportLiveEvent(
+      input
+    );
+  } catch (cause) {
+    console.error(
+      'Support live event publication failed.',
+      cause
+    );
+  }
+}
 
 export type SupportServiceErrorCode =
   | 'INVALID_INPUT'
@@ -620,6 +644,22 @@ export async function assignSupportCase(
     }
   );
 
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      current.conversationId,
+    type: 'CASE_UPDATED',
+    actorId:
+      input.assignedById,
+    payload: {
+      reason: 'ASSIGNED',
+      assignedAgentId:
+        input.agentId,
+      status: 'ASSIGNED'
+    }
+  });
+
   const result =
     await getAgentSupportCase(
       input.caseId,
@@ -650,7 +690,8 @@ export async function changeSupportCaseStatus(
         workspaceId: input.workspaceId
       },
       select: {
-        status: true
+        status: true,
+        conversationId: true
       }
     });
 
@@ -732,6 +773,19 @@ export async function changeSupportCaseStatus(
     })
   ]);
 
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      current.conversationId,
+    type: 'CASE_UPDATED',
+    actorId: input.actorId,
+    payload: {
+      reason: 'STATUS_CHANGED',
+      status: input.status
+    }
+  });
+
   const result =
     await getAgentSupportCase(
       input.caseId,
@@ -782,7 +836,8 @@ export async function addSupportInternalNote(
         workspaceId: input.workspaceId
       },
       select: {
-        id: true
+        id: true,
+        conversationId: true
       }
     });
 
@@ -799,6 +854,20 @@ export async function addSupportInternalNote(
       authorId: input.authorId,
       body,
       internal: true
+    }
+  });
+
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      record.conversationId,
+    type: 'CASE_UPDATED',
+    actorId:
+      input.authorId,
+    payload: {
+      reason:
+        'INTERNAL_NOTE_CREATED'
     }
   });
 
@@ -839,7 +908,8 @@ export async function escalateSupportCase(
         workspaceId: input.workspaceId
       },
       select: {
-        priority: true
+        priority: true,
+        conversationId: true
       }
     });
 
@@ -870,6 +940,19 @@ export async function escalateSupportCase(
       }
     })
   ]);
+
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      current.conversationId,
+    type: 'CASE_UPDATED',
+    actorId: input.actorId,
+    payload: {
+      reason: 'PRIORITY_CHANGED',
+      priority: input.priority
+    }
+  });
 
   const result =
     await getAgentSupportCase(
@@ -910,7 +993,8 @@ export async function proposeSupportResolution(
         workspaceId: input.workspaceId
       },
       select: {
-        id: true
+        id: true,
+        conversationId: true
       }
     });
 
@@ -931,6 +1015,22 @@ export async function proposeSupportResolution(
       summary,
       actionPayload:
         input.actionPayload
+    }
+  });
+
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      record.conversationId,
+    type: 'CASE_UPDATED',
+    actorId:
+      input.proposedById,
+    payload: {
+      reason:
+        'RESOLUTION_PROPOSED',
+      resolutionType:
+        input.type
     }
   });
 
@@ -986,7 +1086,8 @@ export async function sendSupportCaseMessage(
     );
   }
 
-  await sendCommunicationMessage({
+  const conversation =
+    await sendCommunicationMessage({
     workspaceId: input.workspaceId,
     conversationId:
       record.conversationId,
@@ -1033,6 +1134,26 @@ export async function sendSupportCaseMessage(
     });
   }
 
+  const sentMessage =
+    conversation.messages.at(-1);
+
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      record.conversationId,
+    type: 'MESSAGE_CREATED',
+    actorId:
+      input.senderUserId,
+    payload: {
+      messageId:
+        sentMessage?.id ?? null,
+      senderRole:
+        sentMessage?.senderRole ??
+        null
+    }
+  });
+
   const result = customerMessage
     ? await getCustomerSupportCase(
         input.caseId,
@@ -1071,7 +1192,8 @@ export async function confirmSupportResolution(
         customerId: input.customerId
       },
       select: {
-        status: true
+        status: true,
+        conversationId: true
       }
     });
 
@@ -1129,6 +1251,23 @@ export async function confirmSupportResolution(
       }
     })
   ]);
+
+  await publishSupportLiveEventSoft({
+    workspaceId: input.workspaceId,
+    caseId: input.caseId,
+    conversationId:
+      record.conversationId,
+    type: 'CASE_UPDATED',
+    actorId:
+      input.customerId,
+    payload: {
+      reason:
+        'RESOLUTION_CONFIRMED',
+      confirmed:
+        input.confirmed,
+      status: nextStatus
+    }
+  });
 
   const result =
     await getCustomerSupportCase(

@@ -15,15 +15,32 @@ import Link from 'next/link';
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   useTransition
 } from 'react';
 
 import { cn } from '@/lib/utils';
 
+import {
+  useSupportLiveCase
+} from '../client/useSupportLiveCase';
+
+import type {
+  SupportLiveEventItem
+} from '../supportLiveTypes';
+
 import type {
   SupportCaseDetail
 } from '../supportTypes';
+
+import {
+  SupportLiveActivityBar
+} from './SupportLiveActivityBar';
+
+import {
+  SupportLiveStatusBadge
+} from './SupportLiveStatusBadge';
 
 type CustomerSupportCaseWorkspaceProps = {
   actorUserId: string;
@@ -50,6 +67,11 @@ export function CustomerSupportCaseWorkspace({
     useState<string | null>(null);
   const [isPending, startTransition] =
     useTransition();
+
+  const messagesEndRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
 
   const endpoint =
     `/api/support/cases/${encodeURIComponent(
@@ -96,6 +118,52 @@ export function CustomerSupportCaseWorkspace({
     [endpoint]
   );
 
+  const applyLiveEvent =
+    useCallback(
+      async (
+        event:
+          SupportLiveEventItem
+      ): Promise<void> => {
+        if (
+          event.actorId ===
+          actorUserId
+        ) {
+          return;
+        }
+
+        if (
+          event.type ===
+          'MESSAGE_CREATED'
+        ) {
+          await request(
+            'PATCH',
+            {
+              action:
+                'mark-read'
+            }
+          );
+
+          return;
+        }
+
+        await request(
+          'GET'
+        );
+      },
+      [
+        actorUserId,
+        request
+      ]
+    );
+
+  const live =
+    useSupportLiveCase({
+      streamUrl:
+        endpoint + '/live',
+      onEvent:
+        applyLiveEvent
+    });
+
   const refresh = useCallback(() => {
     startTransition(async () => {
       try {
@@ -121,6 +189,22 @@ export function CustomerSupportCaseWorkspace({
     });
   }, [request]);
 
+  useEffect(
+    () => {
+      messagesEndRef.current
+        ?.scrollIntoView({
+          block: 'end',
+          behavior:
+            'smooth'
+        });
+    },
+    [
+      supportCase
+        .conversation
+        .messages.length
+    ]
+  );
+
   const sendMessage = () => {
     const body = message.trim();
 
@@ -132,6 +216,11 @@ export function CustomerSupportCaseWorkspace({
           action: 'send',
           body
         });
+
+        live.setTyping(
+          false
+        );
+
         setMessage('');
       } catch (cause) {
         setError(
@@ -198,7 +287,16 @@ export function CustomerSupportCaseWorkspace({
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <SupportLiveStatusBadge
+                state={
+                  live.state
+                }
+                error={
+                  live.error
+                }
+              />
+
               <span className="rounded-full bg-muted px-3 py-1.5 text-[10px] font-black">
                 {supportCase.status.replaceAll(
                   '_',
@@ -337,17 +435,48 @@ export function CustomerSupportCaseWorkspace({
                 );
               }
             )}
+
+            <div
+              ref={
+                messagesEndRef
+              }
+              aria-hidden="true"
+            />
           </div>
 
-          <div className="border-t border-border/60 bg-card/70 p-3 sm:p-4">
+          <SupportLiveActivityBar
+            actorUserId={
+              actorUserId
+            }
+            participants={
+              live.participants
+            }
+            remoteLabel="Support agent"
+          />
+
+          <div className="bg-card/70 p-3 sm:p-4">
             {open ? (
               <div className="flex items-end gap-2">
                 <textarea
                   value={message}
                   maxLength={4000}
-                  onChange={event =>
+                  onChange={event => {
+                    const value =
+                      event.target.value;
+
                     setMessage(
-                      event.target.value
+                      value
+                    );
+
+                    live.setTyping(
+                      Boolean(
+                        value.trim()
+                      )
+                    );
+                  }}
+                  onBlur={() =>
+                    live.setTyping(
+                      false
                     )
                   }
                   onKeyDown={event => {

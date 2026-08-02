@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build",
+    "verify:support-live": "node scripts/verify-support-live-runtime.mjs",
     "seed": "tsx prisma/seed.ts",
     "seed:admins": "tsx prisma/seed-admins.ts",
     "provision:super-admins": "tsx prisma/provision-super-admins.ts",
