@@ -29,3 +29,10 @@ export type {
   SupportStatusHistoryItem,
   SupportVendorIdentity
 } from './supportTypes';
+
+export { AgentSupportCaseWorkspace } from './components/AgentSupportCaseWorkspace';
+export type { SupportAgentOption } from './components/AgentSupportCaseWorkspace';
+export { AgentSupportQueue } from './components/AgentSupportQueue';
+export { CustomerSupportCaseWorkspace } from './components/CustomerSupportCaseWorkspace';
+export { CustomerSupportWorkspace } from './components/CustomerSupportWorkspace';
+export type { SupportOrderOption } from './components/CustomerSupportWorkspace';

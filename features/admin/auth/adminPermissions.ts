@@ -52,6 +52,13 @@ export type AdminPermission =
   | 'settings:manage'
   | 'system:manage'
   | 'platform:manage'
+  | 'support:view'
+  | 'support:reply'
+  | 'support:assign'
+  | 'support:escalate'
+  | 'support:resolve'
+  | 'support:configure'
+  | 'communication:moderate'
   | 'multivendor:manage';
 
 const levelOne: AdminPermission[] = [
@@ -71,6 +78,8 @@ const levelOne: AdminPermission[] = [
   'promotion:view',
   'vendor:view',
   'approval:view',
+  'support:view',
+  'support:reply',
   'settings:view'
 ];
 
@@ -90,7 +99,10 @@ const levelTwo: AdminPermission[] = [
   'deletion:request',
   'delivery:update:request',
   'delivery:update:routine',
-  'todo:assign'
+  'todo:assign',
+  'support:assign',
+  'support:escalate',
+  'support:resolve'
 ];
 
 const levelThree: AdminPermission[] = [
@@ -101,7 +113,9 @@ const levelThree: AdminPermission[] = [
   'product:delete',
   'vendor:manage',
   'vendor:approve',
-  'staff:view'
+  'staff:view',
+  'support:configure',
+  'communication:moderate'
 ];
 
 const superAdmin: AdminPermission[] = [
