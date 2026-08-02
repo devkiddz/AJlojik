@@ -8,6 +8,18 @@ export {
 } from './supportTypes';
 
 export type {
+  QuickSupportCaseContinuity,
+  QuickSupportReplyPreview,
+  QuickSupportSummary
+} from './quickSupportTypes';
+
+export {
+  invalidateQuickSupportSummary,
+  QUICK_SUPPORT_SUMMARY_INVALIDATED_EVENT,
+  useQuickSupportSummary
+} from './client/useQuickSupportSummary';
+
+export type {
   SupportAssignmentItem,
   SupportCaseCategoryValue,
   SupportCaseDetail,

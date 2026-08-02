@@ -14,6 +14,10 @@ import {
 } from '@/features/global-overlay';
 
 import {
+  useQuickSupportSummary
+} from '../client/useQuickSupportSummary';
+
+import {
   QuickSupportChatWorkspace
 } from './QuickSupportChatWorkspace';
 
@@ -38,6 +42,12 @@ export function QuickSupportChatLauncher() {
   } =
     useGlobalOverlay();
 
+  const {
+    summary,
+    loading
+  } =
+    useQuickSupportSummary();
+
   if (
     hasOpenOverlay ||
     hiddenPrefixes.some(
@@ -51,11 +61,34 @@ export function QuickSupportChatLauncher() {
     return null;
   }
 
+  const hasActiveCase =
+    Boolean(
+      summary?.activeCase
+    );
+
+  const label =
+    hasActiveCase
+      ? 'Continue Support'
+      : 'Support';
+
+  const accessibleLabel =
+    hasActiveCase
+      ? `Continue AJ Logik Support Case ${summary?.activeCase?.caseNumber ?? ''}`
+      : 'Chat with AJ Logik Support';
+
   return (
     <button
       type="button"
-      aria-label="Chat with AJ Logik Support"
-      title="Chat with AJ Logik Support"
+      aria-label={
+        accessibleLabel
+      }
+      title={
+        accessibleLabel
+      }
+      data-support-workspace={
+        summary?.workspaceId ??
+        undefined
+      }
       onClick={() =>
         openOverlay({
           id:
@@ -67,9 +100,13 @@ export function QuickSupportChatLauncher() {
             </span>
           ),
           title:
-            'Chat with Support',
+            hasActiveCase
+              ? 'Continue with Support'
+              : 'Chat with Support',
           description:
-            'Start or continue a live Support conversation without leaving your current experience.',
+            hasActiveCase
+              ? 'Your current Support Case is ready and connected to the live workspace.'
+              : 'Start a live Support conversation without leaving your current experience.',
           content: (
             <QuickSupportChatWorkspace />
           ),
@@ -92,7 +129,11 @@ export function QuickSupportChatLauncher() {
       </span>
 
       <span>
-        Support
+        {
+          loading
+            ? 'Support'
+            : label
+        }
       </span>
     </button>
   );

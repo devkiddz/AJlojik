@@ -23,6 +23,14 @@ import {
 } from '@/lib/utils';
 
 import {
+  useWorkspace
+} from '@/features/workspace';
+
+import {
+  invalidateQuickSupportSummary
+} from '../client/useQuickSupportSummary';
+
+import {
   useSupportLiveCase
 } from '../client/useSupportLiveCase';
 
@@ -31,8 +39,11 @@ import type {
 } from '../supportLiveTypes';
 
 import type {
+  QuickSupportSummary
+} from '../quickSupportTypes';
+
+import type {
   SupportCaseDetail,
-  SupportCaseListSnapshot,
   SupportCaseStatusValue
 } from '../supportTypes';
 
@@ -102,6 +113,17 @@ function quickChatSubject(
 }
 
 export function QuickSupportChatWorkspace() {
+  const {
+    activeWorkspace,
+    loading:
+      workspaceLoading
+  } =
+    useWorkspace();
+
+  const workspaceId =
+    activeWorkspace?.id ??
+    null;
+
   const [
     supportCase,
     setSupportCase
@@ -227,6 +249,12 @@ export function QuickSupportChatWorkspace() {
           false
         );
 
+        if (
+          markRead
+        ) {
+          invalidateQuickSupportSummary();
+        }
+
         return next;
       },
       []
@@ -235,6 +263,26 @@ export function QuickSupportChatWorkspace() {
   const restoreConversation =
     useCallback(
       async (): Promise<void> => {
+        if (
+          workspaceLoading
+        ) {
+          return;
+        }
+
+        if (
+          !workspaceId
+        ) {
+          setSupportCase(
+            null
+          );
+
+          setLoading(
+            false
+          );
+
+          return;
+        }
+
         setLoading(
           true
         );
@@ -246,7 +294,9 @@ export function QuickSupportChatWorkspace() {
         try {
           const response =
             await fetch(
-              '/api/support/cases',
+              `/api/support/quick-chat/summary?workspaceId=${encodeURIComponent(
+                workspaceId
+              )}`,
               {
                 credentials:
                   'same-origin',
@@ -281,15 +331,17 @@ export function QuickSupportChatWorkspace() {
 
           const snapshot =
             (await response.json()) as
-              SupportCaseListSnapshot;
+              QuickSupportSummary;
+
+          if (
+            snapshot.workspaceId !==
+            workspaceId
+          ) {
+            return;
+          }
 
           const activeCase =
-            snapshot.cases.find(
-              item =>
-                reusableStatuses.includes(
-                  item.status
-                )
-            );
+            snapshot.activeCase;
 
           if (
             activeCase
@@ -320,7 +372,9 @@ export function QuickSupportChatWorkspace() {
         }
       },
       [
-        loadCase
+        loadCase,
+        workspaceId,
+        workspaceLoading
       ]
     );
 
@@ -516,6 +570,8 @@ export function QuickSupportChatWorkspace() {
           setAuthenticationRequired(
             false
           );
+
+          invalidateQuickSupportSummary();
         } catch (cause) {
           setError(
             cause instanceof Error
