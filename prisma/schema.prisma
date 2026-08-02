@@ -67,6 +67,12 @@ model User {
   notificationPreferences NotificationPreference[]
   notificationMutes       NotificationMute[]
 
+  createdCommunicationConversations CommunicationConversation[]  @relation("CommunicationConversationCreator")
+  communicationParticipants         CommunicationParticipant[]
+  sentCommunicationMessages         CommunicationMessage[]       @relation("CommunicationMessageSender")
+  uploadedCommunicationAttachments  CommunicationAttachment[]    @relation("CommunicationAttachmentUploader")
+  communicationStatusChanges        CommunicationStatusHistory[] @relation("CommunicationStatusActor")
+
   shoppingListPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationCustomer")
 
   assignedPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationAssignedStaff")
@@ -302,6 +308,8 @@ model Product {
   updatedAt DateTime @updatedAt
 
   preparationItems ShoppingListPreparationItem[]
+
+  communicationContexts CommunicationContext[]
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, active])
@@ -700,6 +708,8 @@ model Order {
 
   preparationRequest ShoppingListPreparationRequest?
 
+  communicationContexts CommunicationContext[]
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -1053,6 +1063,8 @@ model Workspace {
   notificationPreferences NotificationPreference[]
   notificationMutes       NotificationMute[]
 
+  communicationConversations CommunicationConversation[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1377,6 +1389,228 @@ enum AdminTodoStatus {
   BLOCKED
   COMPLETED
   DISMISSED
+}
+
+// ============================================================
+// RCENTZ COMMUNICATION
+// ============================================================
+
+enum CommunicationConversationType {
+  CUSTOMER_VENDOR
+  SUPPORT_CASE
+}
+
+enum CommunicationConversationStatus {
+  OPEN
+  ARCHIVED
+  CLOSED
+  RESTRICTED
+}
+
+enum CommunicationParticipantRole {
+  CUSTOMER
+  VENDOR_MEMBER
+  SUPPORT_AGENT
+  ADMIN
+  SYSTEM
+}
+
+enum CommunicationParticipantStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+}
+
+enum CommunicationMessageType {
+  TEXT
+  SYSTEM
+  EVENT
+}
+
+enum CommunicationAttachmentStatus {
+  PENDING
+  READY
+  QUARANTINED
+  REMOVED
+}
+
+model CommunicationConversation {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  type   CommunicationConversationType
+  status CommunicationConversationStatus @default(OPEN)
+
+  subject String?
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  createdById String
+  createdBy   User   @relation("CommunicationConversationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  dedupeKey String?
+  metadata  Json?
+
+  lastMessageAt DateTime?
+  closedAt      DateTime?
+  restrictedAt  DateTime?
+
+  participants  CommunicationParticipant[]
+  context       CommunicationContext?
+  messages      CommunicationMessage[]
+  statusHistory CommunicationStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, status, lastMessageAt])
+  @@index([workspaceId, type, updatedAt])
+  @@index([vendorProfileId, status, lastMessageAt])
+  @@index([createdById, createdAt])
+  @@map("communication_conversation")
+}
+
+model CommunicationParticipant {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  role   CommunicationParticipantRole
+  status CommunicationParticipantStatus @default(ACTIVE)
+
+  unreadCount Int       @default(0)
+  lastReadAt  DateTime?
+  mutedUntil  DateTime?
+  archivedAt  DateTime?
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([conversationId, userId, role])
+  @@unique([conversationId, vendorProfileId, role])
+  @@index([userId, status, updatedAt])
+  @@index([vendorProfileId, status, updatedAt])
+  @@index([conversationId, status])
+  @@map("communication_participant")
+}
+
+model CommunicationContext {
+  id String @id @default(cuid())
+
+  conversationId String                    @unique
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  orderItemIds String[] @default([])
+  source       String?
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("communication_context")
+}
+
+model CommunicationMessage {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String?
+  sender   User?   @relation("CommunicationMessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  senderRole CommunicationParticipantRole
+  type       CommunicationMessageType     @default(TEXT)
+  body       String
+
+  replyToMessageId String?
+  replyToMessage   CommunicationMessage?  @relation("CommunicationMessageReply", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies          CommunicationMessage[] @relation("CommunicationMessageReply")
+
+  metadata Json?
+
+  editedAt  DateTime?
+  removedAt DateTime?
+
+  attachments CommunicationAttachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([replyToMessageId])
+  @@map("communication_message")
+}
+
+model CommunicationAttachment {
+  id String @id @default(cuid())
+
+  messageId String
+  message   CommunicationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  uploadedById String?
+  uploadedBy   User?   @relation("CommunicationAttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  fileName        String
+  mimeType        String
+  byteSize        Int
+  storageProvider String
+  storageKey      String  @unique
+  checksum        String?
+
+  status   CommunicationAttachmentStatus @default(PENDING)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([messageId, status])
+  @@index([uploadedById, createdAt])
+  @@map("communication_attachment")
+}
+
+model CommunicationStatusHistory {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("CommunicationStatusActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  fromStatus CommunicationConversationStatus?
+  toStatus   CommunicationConversationStatus
+
+  reason   String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("communication_status_history")
 }
 
 // ============================================================
@@ -1993,6 +2227,9 @@ model VendorProfile {
   aiAssistantSessions     AiAssistantSession[]     @relation("AiAssistantSessionVendor")
   aiAssistantApplications AiAssistantApplication[] @relation("AiAssistantApplicationVendor")
   intelligenceResolutions IntelligenceResolution[] @relation("IntelligenceResolutionVendor")
+
+  communicationConversations CommunicationConversation[]
+  communicationParticipants  CommunicationParticipant[]
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, status, active])
