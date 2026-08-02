@@ -23,6 +23,9 @@ import {
 import { cn } from '@/lib/utils';
 
 import {
+  SupportIntelligencePanel
+} from './SupportIntelligencePanel';
+import {
   SupportOperationsPanel
 } from './SupportOperationsPanel';
 
@@ -596,6 +599,10 @@ export function AgentSupportCaseWorkspace({
                 Propose resolution
               </button>
             </Panel>
+
+            <SupportIntelligencePanel
+              caseId={supportCase.id}
+            />
 
             <SupportOperationsPanel
               caseId={supportCase.id}

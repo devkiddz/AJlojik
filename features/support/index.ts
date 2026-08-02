@@ -50,3 +50,10 @@ export type {
   SupportSLAHealth,
   SupportSLAState
 } from './supportOperationsTypes';
+export { SupportIntelligencePanel } from './components/SupportIntelligencePanel';
+export { SupportOperationsDashboard } from './components/SupportOperationsDashboard';
+export type {
+  SupportIntelligenceRisk,
+  SupportIntelligenceSnapshot,
+  SupportOperationsOverview
+} from './supportIntelligenceTypes';
