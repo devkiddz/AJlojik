@@ -3,6 +3,7 @@ export const NOTIFICATION_TOPICS = [
   'DELIVERY',
   'SHOPPING_LIST',
   'SUPPORT',
+  'COMMUNICATION',
   'SYSTEM',
   'PROMOTION'
 ] as const;
@@ -40,6 +41,7 @@ export type NotificationPreferences = {
   deliveryUpdates: boolean;
   shoppingListUpdates: boolean;
   supportUpdates: boolean;
+  communicationUpdates: boolean;
   systemUpdates: boolean;
   promotionUpdates: boolean;
   mutedUntil: string | null;

@@ -31,7 +31,7 @@ import PremiumStoreButton from '@/components/ui/premium-store-button';
 import { MarketplaceLink } from '@/features/commerce-mode/components/MarketplaceLink';
 import { MobileSearchButton } from '@/features/search';
 
-import { CartLogics } from './shared/CartLogics';
+import { CommunicationBell } from '@/features/communication';
 
 type BrandType = {
   brandName: string;
@@ -206,7 +206,7 @@ export default function NavbarComponent({
             )}
           </button>
 
-          <CartLogics />
+          <CommunicationBell />
 
           <div
             id="customer-experience-history-slot"

@@ -10,6 +10,7 @@ import {
   Bell,
   CreditCard,
   Heart,
+  Headphones,
   LogIn,
   LogOut,
   Palette,
@@ -384,6 +385,15 @@ export default function UserActionComponent() {
                 disabled={!isAuthenticated}
                 onClick={() =>
                   navigateTo('/notifications')
+                }
+              />
+
+              <MenuItem
+                icon={<Headphones className="size-4" />}
+                label="Support"
+                disabled={!isAuthenticated}
+                onClick={() =>
+                  navigateTo('/support')
                 }
               />
 

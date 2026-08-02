@@ -67,6 +67,26 @@ model User {
   notificationPreferences NotificationPreference[]
   notificationMutes       NotificationMute[]
 
+  createdCommunicationConversations CommunicationConversation[]  @relation("CommunicationConversationCreator")
+  communicationParticipants         CommunicationParticipant[]
+  sentCommunicationMessages         CommunicationMessage[]       @relation("CommunicationMessageSender")
+  uploadedCommunicationAttachments  CommunicationAttachment[]    @relation("CommunicationAttachmentUploader")
+  communicationStatusChanges        CommunicationStatusHistory[] @relation("CommunicationStatusActor")
+
+  customerSupportCases       SupportCase[]          @relation("SupportCaseCustomer")
+  assignedSupportCases       SupportCase[]          @relation("SupportCaseAssignedAgent")
+  supportAgentAssignments    SupportAssignment[]    @relation("SupportAssignmentAgent")
+  createdSupportAssignments  SupportAssignment[]    @relation("SupportAssignmentAssigner")
+  authoredSupportNotes       SupportNote[]          @relation("SupportNoteAuthor")
+  supportEscalationActions   SupportEscalation[]    @relation("SupportEscalationActor")
+  supportStatusChanges       SupportStatusHistory[] @relation("SupportStatusActor")
+  proposedSupportResolutions SupportResolution[]    @relation("SupportResolutionProposer")
+  approvedSupportResolutions SupportResolution[]    @relation("SupportResolutionApprover")
+  supportFeedbackEntries     SupportFeedback[]
+
+  requestedSupportCommerceActions SupportCommerceAction[]          @relation("SupportCommerceActionRequester")
+  approvedSupportCommerceActions  SupportCommerceAction[]          @relation("SupportCommerceActionApprover")
+  executedSupportCommerceActions  SupportCommerceAction[]          @relation("SupportCommerceActionExecutor")
   shoppingListPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationCustomer")
 
   assignedPreparationRequests ShoppingListPreparationRequest[] @relation("PreparationAssignedStaff")
@@ -302,6 +322,8 @@ model Product {
   updatedAt DateTime @updatedAt
 
   preparationItems ShoppingListPreparationItem[]
+
+  communicationContexts CommunicationContext[]
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, active])
@@ -700,6 +722,9 @@ model Order {
 
   preparationRequest ShoppingListPreparationRequest?
 
+  communicationContexts CommunicationContext[]
+  supportCases          SupportCase[]
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -1053,6 +1078,10 @@ model Workspace {
   notificationPreferences NotificationPreference[]
   notificationMutes       NotificationMute[]
 
+  communicationConversations CommunicationConversation[]
+  supportCases               SupportCase[]
+  supportSLAs                SupportSLA[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1380,6 +1409,580 @@ enum AdminTodoStatus {
 }
 
 // ============================================================
+// RCENTZ COMMUNICATION
+// ============================================================
+
+enum CommunicationConversationType {
+  CUSTOMER_VENDOR
+  SUPPORT_CASE
+}
+
+enum CommunicationConversationStatus {
+  OPEN
+  ARCHIVED
+  CLOSED
+  RESTRICTED
+}
+
+enum CommunicationParticipantRole {
+  CUSTOMER
+  VENDOR_MEMBER
+  SUPPORT_AGENT
+  ADMIN
+  SYSTEM
+}
+
+enum CommunicationParticipantStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+}
+
+enum CommunicationMessageType {
+  TEXT
+  SYSTEM
+  EVENT
+}
+
+enum CommunicationAttachmentStatus {
+  PENDING
+  READY
+  QUARANTINED
+  REMOVED
+}
+
+model CommunicationConversation {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  type   CommunicationConversationType
+  status CommunicationConversationStatus @default(OPEN)
+
+  subject String?
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  createdById String
+  createdBy   User   @relation("CommunicationConversationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  dedupeKey String?
+  metadata  Json?
+
+  lastMessageAt DateTime?
+  closedAt      DateTime?
+  restrictedAt  DateTime?
+
+  participants  CommunicationParticipant[]
+  context       CommunicationContext?
+  messages      CommunicationMessage[]
+  statusHistory CommunicationStatusHistory[]
+  supportCase   SupportCase?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, status, lastMessageAt])
+  @@index([workspaceId, type, updatedAt])
+  @@index([vendorProfileId, status, lastMessageAt])
+  @@index([createdById, createdAt])
+  @@map("communication_conversation")
+}
+
+model CommunicationParticipant {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  role   CommunicationParticipantRole
+  status CommunicationParticipantStatus @default(ACTIVE)
+
+  unreadCount Int       @default(0)
+  lastReadAt  DateTime?
+  mutedUntil  DateTime?
+  archivedAt  DateTime?
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([conversationId, userId, role])
+  @@unique([conversationId, vendorProfileId, role])
+  @@index([userId, status, updatedAt])
+  @@index([vendorProfileId, status, updatedAt])
+  @@index([conversationId, status])
+  @@map("communication_participant")
+}
+
+model CommunicationContext {
+  id String @id @default(cuid())
+
+  conversationId String                    @unique
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  orderItemIds String[] @default([])
+  source       String?
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("communication_context")
+}
+
+model CommunicationMessage {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String?
+  sender   User?   @relation("CommunicationMessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  senderRole CommunicationParticipantRole
+  type       CommunicationMessageType     @default(TEXT)
+  body       String
+
+  replyToMessageId String?
+  replyToMessage   CommunicationMessage?  @relation("CommunicationMessageReply", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies          CommunicationMessage[] @relation("CommunicationMessageReply")
+
+  metadata Json?
+
+  editedAt  DateTime?
+  removedAt DateTime?
+
+  attachments CommunicationAttachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([replyToMessageId])
+  @@map("communication_message")
+}
+
+model CommunicationAttachment {
+  id String @id @default(cuid())
+
+  messageId String
+  message   CommunicationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  uploadedById String?
+  uploadedBy   User?   @relation("CommunicationAttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  fileName        String
+  mimeType        String
+  byteSize        Int
+  storageProvider String
+  storageKey      String  @unique
+  checksum        String?
+
+  status   CommunicationAttachmentStatus @default(PENDING)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([messageId, status])
+  @@index([uploadedById, createdAt])
+  @@map("communication_attachment")
+}
+
+model CommunicationStatusHistory {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("CommunicationStatusActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  fromStatus CommunicationConversationStatus?
+  toStatus   CommunicationConversationStatus
+
+  reason   String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("communication_status_history")
+}
+
+// ============================================================
+// RCENTZ SUPPORT
+// ============================================================
+
+enum SupportCaseCategory {
+  ORDER
+  DELIVERY
+  PAYMENT
+  PRODUCT
+  ACCOUNT
+  VENDOR
+  SHOPPING_LIST
+  TECHNICAL
+  OTHER
+}
+
+enum SupportCasePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportCaseStatus {
+  NEW
+  TRIAGED
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  WAITING_VENDOR
+  WAITING_INTERNAL
+  RESOLVED
+  CUSTOMER_CONFIRMED
+  CLOSED
+}
+
+enum SupportEscalationStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  CANCELLED
+}
+
+enum SupportResolutionType {
+  INFORMATION
+  DELIVERY_FOLLOWUP
+  ORDER_ADJUSTMENT
+  REFUND_REQUEST
+  REPLACEMENT
+  TECHNICAL_FIX
+  OTHER
+}
+
+enum SupportResolutionStatus {
+  PROPOSED
+  APPROVED
+  APPLIED
+  REJECTED
+  FAILED
+}
+
+model SupportCase {
+  id         String @id @default(cuid())
+  caseNumber String @unique
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  conversationId String                    @unique
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   User   @relation("SupportCaseCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+
+  vendorProfileId String?
+  vendorProfile   VendorProfile? @relation(fields: [vendorProfileId], references: [id], onDelete: SetNull)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  deliveryId String?
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+
+  assignedAgentId String?
+  assignedAgent   User?   @relation("SupportCaseAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  category SupportCaseCategory
+  priority SupportCasePriority @default(NORMAL)
+  status   SupportCaseStatus   @default(NEW)
+
+  subject     String
+  description String
+  metadata    Json?
+
+  assignedAt          DateTime?
+  firstResponseAt     DateTime?
+  dueAt               DateTime?
+  resolvedAt          DateTime?
+  customerConfirmedAt DateTime?
+  closedAt            DateTime?
+  resolutionSummary   String?
+
+  assignments   SupportAssignment[]
+  notes         SupportNote[]
+  escalations   SupportEscalation[]
+  statusHistory SupportStatusHistory[]
+  resolutions   SupportResolution[]
+  feedback      SupportFeedback?
+
+  commerceActions SupportCommerceAction[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([workspaceId, status, priority, updatedAt])
+  @@index([customerId, updatedAt])
+  @@index([assignedAgentId, status, dueAt])
+  @@index([vendorProfileId, status])
+  @@index([orderId])
+  @@index([deliveryId])
+  @@map("support_case")
+}
+
+model SupportAssignment {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  agentId String
+  agent   User   @relation("SupportAssignmentAgent", fields: [agentId], references: [id], onDelete: Restrict)
+
+  assignedById String?
+  assignedBy   User?   @relation("SupportAssignmentAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  active Boolean @default(true)
+  reason String?
+
+  assignedAt DateTime  @default(now())
+  releasedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, active, assignedAt])
+  @@index([agentId, active])
+  @@map("support_assignment")
+}
+
+model SupportNote {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("SupportNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  body     String
+  internal Boolean @default(true)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("support_note")
+}
+
+model SupportEscalation {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("SupportEscalationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  fromPriority SupportCasePriority
+  toPriority   SupportCasePriority
+  status       SupportEscalationStatus @default(OPEN)
+
+  reason   String
+  metadata Json?
+
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([caseId, status, createdAt])
+  @@index([actorId, createdAt])
+  @@map("support_escalation")
+}
+
+model SupportStatusHistory {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("SupportStatusActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  fromStatus SupportCaseStatus?
+  toStatus   SupportCaseStatus
+
+  note     String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("support_status_history")
+}
+
+model SupportSLA {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  scopeKey String
+  category SupportCaseCategory?
+  priority SupportCasePriority
+
+  firstResponseMinutes Int
+  resolutionMinutes    Int
+  active               Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, scopeKey])
+  @@index([workspaceId, category, priority, active])
+  @@map("support_sla")
+}
+
+model SupportResolution {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  proposedById String?
+  proposedBy   User?   @relation("SupportResolutionProposer", fields: [proposedById], references: [id], onDelete: SetNull)
+
+  approvedById String?
+  approvedBy   User?   @relation("SupportResolutionApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  type   SupportResolutionType
+  status SupportResolutionStatus @default(PROPOSED)
+
+  summary       String
+  actionPayload Json?
+  resultPayload Json?
+  failureReason String?
+
+  proposedAt DateTime  @default(now())
+  approvedAt DateTime?
+  appliedAt  DateTime?
+  failedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, status, proposedAt])
+  @@index([proposedById, proposedAt])
+  @@index([approvedById, approvedAt])
+  @@map("support_resolution")
+}
+
+model SupportFeedback {
+  id String @id @default(cuid())
+
+  caseId String      @unique
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("support_feedback")
+}
+
+enum SupportCommerceActionType {
+  REFUND_REQUEST
+  ORDER_CANCELLATION
+  DELIVERY_RETRY
+  PAYMENT_REVIEW
+  INVENTORY_REVIEW
+  VENDOR_FOLLOWUP
+}
+
+enum SupportCommerceActionStatus {
+  PREPARED
+  APPROVED
+  REJECTED
+  APPLIED
+  FAILED
+  CANCELLED
+}
+
+model SupportCommerceAction {
+  id String @id @default(cuid())
+
+  caseId String
+  case   SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  requestedById String?
+  requestedBy   User?   @relation("SupportCommerceActionRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  approvedById String?
+  approvedBy   User?   @relation("SupportCommerceActionApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  executedById String?
+  executedBy   User?   @relation("SupportCommerceActionExecutor", fields: [executedById], references: [id], onDelete: SetNull)
+
+  type   SupportCommerceActionType
+  status SupportCommerceActionStatus @default(PREPARED)
+
+  requestedAmount Decimal? @db.Decimal(12, 2)
+  currency        String?
+  reason          String
+
+  requestPayload Json?
+  resultPayload  Json?
+  failureReason  String?
+
+  preparedAt  DateTime  @default(now())
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  appliedAt   DateTime?
+  failedAt    DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, status, preparedAt])
+  @@index([requestedById, preparedAt])
+  @@index([approvedById, approvedAt])
+  @@map("support_commerce_action")
+}
+
+// ============================================================
 // CUSTOMER NOTIFICATIONS
 // ============================================================
 
@@ -1426,14 +2029,15 @@ model NotificationPreference {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  inAppEnabled        Boolean   @default(true)
-  orderUpdates        Boolean   @default(true)
-  deliveryUpdates     Boolean   @default(true)
-  shoppingListUpdates Boolean   @default(true)
-  supportUpdates      Boolean   @default(true)
-  systemUpdates       Boolean   @default(true)
-  promotionUpdates    Boolean   @default(false)
-  mutedUntil          DateTime?
+  inAppEnabled         Boolean   @default(true)
+  orderUpdates         Boolean   @default(true)
+  deliveryUpdates      Boolean   @default(true)
+  shoppingListUpdates  Boolean   @default(true)
+  supportUpdates       Boolean   @default(true)
+  communicationUpdates Boolean   @default(true)
+  systemUpdates        Boolean   @default(true)
+  promotionUpdates     Boolean   @default(false)
+  mutedUntil           DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1473,6 +2077,7 @@ enum NotificationTopic {
   DELIVERY
   SHOPPING_LIST
   SUPPORT
+  COMMUNICATION
   SYSTEM
   PROMOTION
 }
@@ -1516,7 +2121,8 @@ model Delivery {
   lastLongitude    Float?
   lastLocationAt   DateTime?
 
-  events DeliveryTrackingEvent[]
+  events       DeliveryTrackingEvent[]
+  supportCases SupportCase[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1993,6 +2599,10 @@ model VendorProfile {
   aiAssistantSessions     AiAssistantSession[]     @relation("AiAssistantSessionVendor")
   aiAssistantApplications AiAssistantApplication[] @relation("AiAssistantApplicationVendor")
   intelligenceResolutions IntelligenceResolution[] @relation("IntelligenceResolutionVendor")
+
+  communicationConversations CommunicationConversation[]
+  communicationParticipants  CommunicationParticipant[]
+  supportCases               SupportCase[]
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, status, active])

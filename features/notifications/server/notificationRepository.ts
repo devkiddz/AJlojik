@@ -40,6 +40,7 @@ type NotificationPreferencePatch = Partial<{
   deliveryUpdates: boolean;
   shoppingListUpdates: boolean;
   supportUpdates: boolean;
+  communicationUpdates: boolean;
   systemUpdates: boolean;
   promotionUpdates: boolean;
   mutedUntil: Date | null;
@@ -51,6 +52,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   deliveryUpdates: true,
   shoppingListUpdates: true,
   supportUpdates: true,
+  communicationUpdates: true,
   systemUpdates: true,
   promotionUpdates: false,
   mutedUntil: null
@@ -63,6 +65,7 @@ function mapPreferences(
     deliveryUpdates: boolean;
     shoppingListUpdates: boolean;
     supportUpdates: boolean;
+    communicationUpdates: boolean;
     systemUpdates: boolean;
     promotionUpdates: boolean;
     mutedUntil: Date | null;
@@ -78,6 +81,7 @@ function mapPreferences(
     deliveryUpdates: preference.deliveryUpdates,
     shoppingListUpdates: preference.shoppingListUpdates,
     supportUpdates: preference.supportUpdates,
+    communicationUpdates: preference.communicationUpdates,
     systemUpdates: preference.systemUpdates,
     promotionUpdates: preference.promotionUpdates,
     mutedUntil: preference.mutedUntil?.toISOString() ?? null
@@ -126,6 +130,7 @@ function topicIsEnabled(
   if (topic === 'DELIVERY') return preference.deliveryUpdates;
   if (topic === 'SHOPPING_LIST') return preference.shoppingListUpdates;
   if (topic === 'SUPPORT') return preference.supportUpdates;
+  if (topic === 'COMMUNICATION') return preference.communicationUpdates;
   if (topic === 'PROMOTION') return preference.promotionUpdates;
 
   return preference.systemUpdates;

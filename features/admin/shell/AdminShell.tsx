@@ -14,6 +14,7 @@ import {
   FolderKanban,
   GalleryVerticalEnd,
   Grid2X2Plus,
+  Headphones,
   LayoutDashboard,
   ListTodo,
   Menu,
@@ -52,6 +53,7 @@ export type AdminShellPermission =
   | 'vendor:view'
   | 'approval:view'
   | 'staff:view'
+  | 'support:view'
   | 'settings:view'
   | 'system:manage'
   | 'platform:manage';
@@ -105,6 +107,7 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
   {
     label: 'Operations',
     items: [
+      { href: '/admin/support', label: 'Support', icon: Headphones, permission: 'support:view' },
       { href: '/admin/inventory', label: 'Inventory', icon: Warehouse, permission: 'inventory:view' },
       { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, permission: 'order:view' },
       { href: '/admin/deliveries', label: 'Deliveries', icon: Truck, permission: 'delivery:view' },

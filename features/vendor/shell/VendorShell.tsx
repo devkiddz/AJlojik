@@ -13,6 +13,7 @@ import {
   GalleryVerticalEnd,
   LayoutDashboard,
   Menu,
+  MessageSquareText,
   Store,
   UsersRound,
   X
@@ -39,6 +40,7 @@ type VendorNavigationItem = {
 const navigation: VendorNavigationItem[] = [
   { href: '/vendor', label: 'Overview', icon: LayoutDashboard },
   { href: '/vendor/assistant', label: 'AJ Studio Manager', icon: BrainCircuit },
+  { href: '/vendor/inbox', label: 'Inbox', icon: MessageSquareText, permission: 'communication:view' },
   { href: '/vendor/media', label: 'Media Studio', icon: GalleryVerticalEnd, permission: 'media:view' },
   { href: '/vendor/products', label: 'Product Studio', icon: Boxes, permission: 'product:view' },
   { href: '/vendor/collections', label: 'Collection Studio', icon: FolderKanban, permission: 'collection:view' },

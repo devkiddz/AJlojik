@@ -21,12 +21,14 @@ export type VendorPermission =
   | 'campaign:manage'
   | 'submission:view'
   | 'analytics:view'
+  | 'communication:view'
+  | 'communication:reply'
   | 'team:manage';
 
 const permissionsByRole = {
-  OWNER: ['vendor:view','media:view','media:manage','product:view','product:manage','collection:view','collection:manage','promotion:view','promotion:manage','campaign:view','campaign:manage','submission:view','analytics:view','team:manage'],
-  MANAGER: ['vendor:view','media:view','media:manage','product:view','product:manage','collection:view','collection:manage','promotion:view','promotion:manage','campaign:view','campaign:manage','submission:view','analytics:view'],
-  EDITOR: ['vendor:view','media:view','media:manage','product:view','product:manage','collection:view','collection:manage','promotion:view','promotion:manage','campaign:view','campaign:manage','submission:view'],
+  OWNER: ['vendor:view','media:view','media:manage','product:view','product:manage','collection:view','collection:manage','promotion:view','promotion:manage','campaign:view','campaign:manage','submission:view','analytics:view','communication:view','communication:reply','team:manage'],
+  MANAGER: ['vendor:view','media:view','media:manage','product:view','product:manage','collection:view','collection:manage','promotion:view','promotion:manage','campaign:view','campaign:manage','submission:view','analytics:view','communication:view','communication:reply'],
+  EDITOR: ['vendor:view','media:view','media:manage','product:view','product:manage','collection:view','collection:manage','promotion:view','promotion:manage','campaign:view','campaign:manage','submission:view','communication:view','communication:reply'],
   ANALYST: ['vendor:view','media:view','product:view','collection:view','promotion:view','campaign:view','submission:view','analytics:view']
 } as const satisfies Record<string, readonly VendorPermission[]>;
 
