@@ -85,6 +85,17 @@ type ProductActionTrayProps = {
   showAddLabel?: boolean;
 
   /**
+   * Keeps Add to Cart readable while secondary actions remain icons.
+   */
+  cartLabelOnly?: boolean;
+
+  /**
+   * Reduces only the labelled Cart action without resizing
+   * Shopping List or Wishlist actions.
+   */
+  compactCart?: boolean;
+
+  /**
    * Displays the complete action language:
    * Add to Cart · Add to List · Wishlist.
    */
@@ -110,6 +121,8 @@ export function ProductActionTray({
   presentation = 'overlay',
   compact = false,
   showAddLabel = false,
+  cartLabelOnly = false,
+  compactCart = false,
   showLabels = false,
   showWishlist = true,
   className
@@ -241,6 +254,19 @@ export function ProductActionTray({
           'hover:bg-muted'
         ]
   );
+
+  const cartActionClassName =
+    cn(
+      actionClassName,
+      cartLabelOnly &&
+        (
+          compactCart
+            ? 'h-7 w-auto px-2 text-[10px]'
+            : compact
+              ? 'h-8 w-auto px-2.5'
+              : 'h-9 w-auto px-3'
+        )
+    );
 
   const handleAdd = (
     event:
@@ -394,7 +420,8 @@ export function ProductActionTray({
                 ? 'border-white/15 bg-background/35'
                 : 'border-border bg-muted/40'
             )}>
-            {labelled ? (
+            {labelled ||
+            cartLabelOnly ? (
               <span
                 className="
                   pl-2 text-[10px]
@@ -529,7 +556,7 @@ export function ProductActionTray({
               !canIncrement
             }
             className={
-              actionClassName
+              cartActionClassName
             }
             onClick={
               handleAdd
@@ -550,7 +577,8 @@ export function ProductActionTray({
               />
             )}
 
-            {labelled ? (
+            {labelled ||
+            cartLabelOnly ? (
               <span>
                 {unavailable
                   ? 'Unavailable'

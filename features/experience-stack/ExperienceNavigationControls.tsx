@@ -502,6 +502,7 @@ export function ExperienceHistoryControl({
       className="relative">
       <button
         type="button"
+        data-history-presentation="navbar-stacked"
         aria-expanded={
           historyOpen
         }
@@ -514,18 +515,24 @@ export function ExperienceHistoryControl({
               !current
           )
         }
-        className="relative grid size-10 place-items-center rounded-full border border-white/[0.08] bg-background/55 text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-accent/25 hover:bg-muted/70 hover:text-foreground">
-        <History className="size-4" />
+        className="group flex flex-col items-center gap-1 rounded-full text-muted-foreground outline-none transition hover:text-foreground">
+        <span className="relative grid size-9 shrink-0 place-items-center rounded-full bg-muted text-foreground transition group-hover:bg-muted/80 group-focus-visible:ring-2 group-focus-visible:ring-ring/50">
+          <History className="size-4" />
 
-        {entries.length >
-        0 ? (
-          <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-[9px] font-black leading-4 text-primary-foreground">
-            {Math.min(
-              entries.length,
-              99
-            )}
-          </span>
-        ) : null}
+          {entries.length >
+          0 ? (
+            <span className="absolute -right-1.5 -top-1.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-4 text-primary-foreground shadow-sm">
+              {Math.min(
+                entries.length,
+                99
+              )}
+            </span>
+          ) : null}
+        </span>
+
+        <span className="hidden text-xs lg:inline">
+          History
+        </span>
       </button>
 
       {historyOpen ? (
