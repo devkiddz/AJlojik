@@ -24,3 +24,6 @@ export type {
   CommunicationParticipantStatusValue,
   CommunicationVendorIdentity
 } from './communicationTypes';
+
+export { useCommunicationSummary } from './client/useCommunicationSummary';
+export { CommunicationBell } from './components/CommunicationBell';
