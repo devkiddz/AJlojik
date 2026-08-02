@@ -19,6 +19,18 @@ export {
   useQuickSupportSummary
 } from './client/useQuickSupportSummary';
 
+export {
+  useQuickSupportAttentionStream
+} from './client/useQuickSupportAttentionStream';
+
+export {
+  useQuickSupportPanelState
+} from './client/useQuickSupportPanelState';
+
+export type {
+  QuickSupportPanelMode
+} from './client/useQuickSupportPanelState';
+
 export type {
   SupportAssignmentItem,
   SupportCaseCategoryValue,
