@@ -1,0 +1,28 @@
+AJ Logik — MS11.07 Support Intelligence and Operations
+Installer: apply.ms11.07-support-intelligence-operations.mjs
+SHA-256: 0e91c7d345054dd8be579b9dfb10f7a68bbfc1154c5668760b1761b3ab56684b
+Requires: MS11.06 committed and pushed
+
+Creates:
+- features/support/supportIntelligenceTypes.ts
+- features/support/server/supportIntelligenceService.ts
+- features/support/server/supportOperationsDashboardRepository.ts
+- features/support/components/SupportIntelligencePanel.tsx
+- features/support/components/SupportOperationsDashboard.tsx
+- app/api/admin/support/cases/[caseId]/intelligence/route.ts
+- app/admin/support/operations/page.tsx
+
+Updates:
+- features/support/index.ts
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- features/support/components/AgentSupportQueue.tsx
+
+Scope:
+- Permission-scoped deterministic case summaries
+- Risk signals and missing-evidence warnings
+- Reviewable response drafts
+- Recommended status and commerce-action paths
+- Operations overview and agent workload
+- No autonomous action execution
+
+Commit: feat(support): add operations intelligence assistance

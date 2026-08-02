@@ -1,0 +1,17 @@
+AJ Logik — MS11.06B Schema and Permission Repair
+Installer SHA-256: 2e73be38e270a2c9924336412c0989594ed6065fb1d5a6996edd229147930b71
+
+Corrects:
+- non-global RegExp counting failure in MS11.06A
+
+Updates idempotently:
+- prisma/schema.prisma
+- features/admin/auth/adminPermissions.ts
+- features/support/index.ts
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- app/admin/support/[caseId]/page.tsx
+
+Restores only when missing:
+- eslint.config.mjs
+
+Requires the already-created MS11.06 operation files and migration.

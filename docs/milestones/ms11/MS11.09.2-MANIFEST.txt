@@ -1,0 +1,14 @@
+AJ Logik — MS11.09.2 Live Support Workspaces
+Installer SHA-256: f32a4e688032f76def249e133aa2dc39570e170d4ef4c76e534e5ba568c4f260
+
+Created:
+- features/support/client/useSupportLiveCase.ts
+- features/support/components/SupportLiveStatusBadge.tsx
+
+Updated:
+- features/support/components/CustomerSupportCaseWorkspace.tsx
+- features/support/components/AgentSupportCaseWorkspace.tsx
+
+No migration.
+No dependency change.
+Requires MS11.09.1.

@@ -1,0 +1,12 @@
+AJ Logik — MS11.10.2C-A Quick Support Wiring Repair
+Installer SHA-256: f6f85d9826ef03fa574ddd2a3b2d8daf7ba275ef462c75d7d71e8e28928df509
+
+Updated only:
+- features/support/components/QuickSupportChatWorkspace.tsx
+- features/support/index.ts
+- package.json
+
+Already-applied MS11.10.2C files are not changed.
+No migration.
+No schema change.
+No dependency change.

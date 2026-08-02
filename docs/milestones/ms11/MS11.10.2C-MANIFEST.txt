@@ -1,0 +1,18 @@
+AJ Logik — MS11.10.2C Quick Support Multi-Case Continuity
+Installer SHA-256: e7c1826329526ea1c200a53965b9e852a4fce52087ea4e1acd0d815298387e78
+
+Created:
+- features/support/client/quickSupportSelectionStorage.ts
+- features/support/components/QuickSupportCaseContinuityBar.tsx
+- scripts/verify-quick-support-case-history.mjs
+
+Updated:
+- features/support/quickSupportTypes.ts
+- features/support/server/quickSupportSummaryRepository.ts
+- features/support/components/QuickSupportChatWorkspace.tsx
+- features/support/index.ts
+- package.json
+
+No migration.
+No schema change.
+No dependency change.

@@ -1,0 +1,20 @@
+AJ Logik — MS11.09.4 Production Closure
+Installer SHA-256: 4f88389d71b29b9c5f2a2db139e47831588e1c23fcf89f509ad5b13085f6f357
+
+Created:
+- features/support/server/supportLiveMaintenance.ts
+- app/api/admin/support/live/health/route.ts
+- scripts/verify-support-live-runtime.mjs
+
+Updated:
+- features/support/server/supportLiveRepository.ts
+- package.json
+
+No migration.
+No dependency change.
+Requires MS11.09.1, MS11.09.2 and MS11.09.3.
+
+Runtime retention:
+- Live events: 7 days
+- Expired presence rows: 24 hours after expiry
+- Automatic cleanup gate: 30 minutes per warm process

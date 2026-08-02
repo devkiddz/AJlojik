@@ -1,0 +1,13 @@
+AJ Logik — MS11.09.4A Live Workspace Repair
+Installer SHA-256: 88c7557f4cf555c675842df17f958e84eaca2cba58eed8005408dd3a23bc81e9
+
+Updated:
+- features/support/client/useSupportLiveCase.ts
+- features/support/components/CustomerSupportCaseWorkspace.tsx
+- app/api/admin/support/cases/[caseId]/route.ts
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- features/communication/server/communicationNotificationService.ts
+
+No migration.
+No dependency change.
+No schema change.

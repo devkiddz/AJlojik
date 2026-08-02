@@ -1,0 +1,17 @@
+AJ Logik — MS11.10.2B Quick Support Unread Badge & Minimized State
+Installer SHA-256: a81e76cdfba6dd8c9340cb17d7cfd4c89f74ce4c27fdb38d0712f31be8dad856
+
+Created:
+- features/support/client/useQuickSupportPanelState.ts
+- features/support/client/useQuickSupportAttentionStream.ts
+- app/api/support/quick-chat/live/route.ts
+- scripts/verify-quick-support-unread-state.mjs
+
+Updated:
+- features/support/components/QuickSupportChatLauncher.tsx
+- features/support/index.ts
+- package.json
+
+No migration.
+No schema change.
+No dependency change.

@@ -1,0 +1,16 @@
+AJ Logik — MS11.09.4B Live Workspace Completion
+Installer SHA-256: 3f3b6bb7d81f7c870a19c947a42cf4c2eba6b46f307b45f2273ee2a9562d6016
+
+Purpose:
+- Complete the four live Support boundaries that MS11.09.4A did not write.
+- Preserve the already-landed React callback-ref repair.
+
+Expected updated source:
+- features/support/components/CustomerSupportCaseWorkspace.tsx
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- app/api/admin/support/cases/[caseId]/route.ts
+- features/communication/server/communicationNotificationService.ts
+
+No migration.
+No schema change.
+No dependency change.

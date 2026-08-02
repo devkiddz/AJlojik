@@ -1,0 +1,34 @@
+AJ Logik — MS11.08 Notifications Analytics Audit and Production Validation
+Installer: apply.ms11.08-notifications-analytics-production-validation.mjs
+SHA-256: 12c9342bf58b779968a3bd9ba8a5f904d60b0c2b219db91c8faa9411d3c267bd
+Requires: MS11.07 committed and pushed
+
+Creates:
+- features/communication/server/communicationNotificationService.ts
+- features/support/server/supportNotificationService.ts
+- features/support/supportAnalyticsTypes.ts
+- features/support/server/supportAnalyticsRepository.ts
+- features/support/components/SupportAnalyticsDashboard.tsx
+- app/admin/support/analytics/page.tsx
+- features/support/PRODUCTION-VALIDATION.md
+- prisma/migrations/20260802113000_add_communication_notification_preferences/migration.sql
+
+Updates:
+- prisma/schema.prisma
+- features/notifications/notificationTypes.ts
+- features/notifications/server/notificationRepository.ts
+- features/notifications/components/NotificationSettingsPanel.tsx
+- app/api/notifications/route.ts
+- features/communication/server/communicationService.ts
+- features/support/server/supportService.ts
+- features/support/index.ts
+- features/support/components/AgentSupportQueue.tsx
+
+Scope:
+- Independent Communication notification preference
+- Support and Inbox notification delivery
+- Derived Support analytics and actor-aware audit timeline
+- Admin analytics workspace
+- Production validation checklist and smoke-test routes
+
+Commit: feat(support): complete notifications analytics and validation

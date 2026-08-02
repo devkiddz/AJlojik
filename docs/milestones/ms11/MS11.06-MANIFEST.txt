@@ -1,0 +1,28 @@
+AJ Logik — MS11.06 Support Operations Governance
+Installer: apply.ms11.06-support-operations-governance.mjs
+SHA-256: 9785273e39024a6d5de8b28cd41f6994ba55d6a401119bb5beb1b2528e7005b5
+Requires: MS11.05 committed and pushed
+
+Creates:
+- features/support/supportOperationsTypes.ts
+- features/support/server/supportOperationsRepository.ts
+- features/support/server/supportOperationsService.ts
+- features/support/components/SupportOperationsPanel.tsx
+- app/api/admin/support/cases/[caseId]/operations/route.ts
+- prisma/migrations/20260802103000_add_support_commerce_actions/migration.sql
+
+Updates:
+- prisma/schema.prisma
+- features/admin/auth/adminPermissions.ts
+- features/support/index.ts
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- app/admin/support/[caseId]/page.tsx
+
+Scope:
+- Operational SLA health
+- Order, payment, delivery and vendor context
+- Prepared commerce-action ledger
+- Separate preparation and approval permissions
+- No automatic refund, cancellation, delivery or inventory mutation
+
+Commit: feat(support): add governed operations and commerce context

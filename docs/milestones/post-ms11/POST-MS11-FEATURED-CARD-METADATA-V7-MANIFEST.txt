@@ -1,0 +1,10 @@
+AJ Logik — Featured Carousel Card Metadata V7
+Installer SHA-256: f2136655c7b2c65f1852505b5233b9d6903a0e19a6c09a2d4192c009ee36e558
+
+Updated:
+- features/feed-experience/modules/category-product-experience/ProductExperienceCard.tsx
+
+No card-width change.
+No featured-card change.
+No migration.
+No dependency change.

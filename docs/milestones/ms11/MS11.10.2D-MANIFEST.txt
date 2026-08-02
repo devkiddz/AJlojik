@@ -1,0 +1,24 @@
+AJ Logik — MS11.10.2D Mobile Reliability & Production Closure
+Installer SHA-256: f667398d22d8d076f1de059930b70e8e92c6a2dfa333d027ba9f040b26e7629b
+
+Created:
+- features/support/client/useQuickSupportViewport.ts
+- scripts/verify-quick-support-production.mjs
+
+Updated:
+- features/global-overlay/contracts.ts
+- features/global-overlay/GlobalOverlayProvider.tsx
+- features/support/client/useQuickSupportAttentionStream.ts
+- features/support/client/useSupportLiveCase.ts
+- features/support/components/QuickSupportChatLauncher.tsx
+- features/support/components/QuickSupportChatWorkspace.tsx
+- features/support/index.ts
+- package.json
+
+Installer behavior:
+- full preflight before any write;
+- atomic apply with rollback on write failure.
+
+No migration.
+No Prisma schema change.
+No dependency change.

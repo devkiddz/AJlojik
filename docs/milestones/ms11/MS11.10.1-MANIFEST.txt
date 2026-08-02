@@ -1,0 +1,18 @@
+AJ Logik — MS11.10.1 Quick Customer Chat & Admin Attention
+Installer SHA-256: 4307c5c892e0545f7096c98a6dbef384c73a310effa161924fb8a1e1dcdf3e37
+
+Created:
+- features/support/components/QuickSupportChatLauncher.tsx
+- features/support/components/QuickSupportChatWorkspace.tsx
+- scripts/verify-quick-support-chat.mjs
+
+Updated:
+- components/layout/ApplicationShell.tsx
+- app/admin/page.tsx
+- features/admin/todos/generateAdminTodos.ts
+- features/support/server/supportService.ts
+- package.json
+
+No migration.
+No schema change.
+No dependency change.

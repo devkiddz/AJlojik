@@ -1,0 +1,13 @@
+AJ Logik — Post-MS11 Featured Commerce Runtime V3
+Installer SHA-256: f63cb8da123e54baf76c22300145f44ca67baf5253b55b29e04a4d7f3ae4af76
+
+Updated:
+- features/feed-experience/modules/category-product-experience/FeaturedProductExperienceCard.tsx
+- features/feed-experience/modules/category-product-experience/ProductExperienceCard.tsx
+
+Preserved:
+- features/experience-stack/ExperienceNavigationControls.tsx
+- features/feed-experience/modules/category-product-experience/CategoryProductExperienceSection.tsx
+
+No Prisma migration.
+No dependency change.

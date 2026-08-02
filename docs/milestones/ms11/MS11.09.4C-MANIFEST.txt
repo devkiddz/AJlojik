@@ -1,0 +1,15 @@
+AJ Logik — MS11.09.4C Verifier Mark-Read Repair
+Installer SHA-256: e60bff98d428c636e59919023d42173096c4d52960c380d0100f3bf9c082c157
+
+Updated:
+- scripts/verify-support-live-runtime.mjs
+
+Reason:
+- Accept multiline TypeScript formatting for the Agent mark-read action.
+
+No runtime change.
+No UI change.
+No API change.
+No migration.
+No schema change.
+No dependency change.

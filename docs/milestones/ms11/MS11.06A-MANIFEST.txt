@@ -1,0 +1,14 @@
+AJ Logik — MS11.06A Schema and Permission Repair
+Installer SHA-256: 82c5c11fa58f980680d4beb813e89fbf1e3c7e20c21b9664a58cc34c078eda7b
+
+Updates idempotently:
+- prisma/schema.prisma
+- features/admin/auth/adminPermissions.ts
+- features/support/index.ts
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- app/admin/support/[caseId]/page.tsx
+
+Restores only when missing:
+- eslint.config.mjs
+
+Requires existing MS11.06 partial files and migration.

@@ -1,0 +1,20 @@
+AJ Logik — Post-MS11 Featured Layout and Actions V4
+Installer SHA-256: 5696bb3b0f821e338e87d845b0d8ca911c48a43d5b3b75a5e0ff4f2b48de5754
+
+Updated:
+- features/products/cards/ProductActionTray.tsx
+- features/feed-experience/modules/category-product-experience/FeaturedProductExperienceCard.tsx
+- features/feed-experience/modules/category-product-experience/CategoryProductExperienceSection.tsx
+
+Preserved:
+- features/feed-experience/modules/category-product-experience/ProductExperienceCard.tsx
+- features/experience-stack/ExperienceNavigationControls.tsx
+
+Validation requirement:
+- remove generated .next cache
+- npm run typecheck
+- npm run lint
+- npm run build
+
+No Prisma migration.
+No dependency change.

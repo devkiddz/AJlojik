@@ -1,0 +1,12 @@
+AJ Logik — Post-MS11 Featured Experience and Navbar History V2
+Installer SHA-256: 4491d48ce8ebbd1ecf1489d85a2d42d5e2cf36ddbdc8b0628ee66a8bcd17701b
+
+Updated:
+- features/experience-stack/ExperienceNavigationControls.tsx
+- features/feed-experience/modules/category-product-experience/CategoryProductExperienceSection.tsx
+- features/feed-experience/modules/category-product-experience/FeaturedProductExperienceCard.tsx
+- features/feed-experience/modules/category-product-experience/ProductExperienceCard.tsx
+
+No Prisma migration.
+No dependency change.
+Replaces the earlier post-MS11 Navbar/Featured Experience repair.

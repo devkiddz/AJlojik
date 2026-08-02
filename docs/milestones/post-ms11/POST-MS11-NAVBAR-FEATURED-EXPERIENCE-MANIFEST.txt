@@ -1,0 +1,10 @@
+AJ Logik — Post-MS11 Navbar and Featured Experience Repair
+Installer SHA-256: 3081e9eb007f0d471c2a86e1946859e72e7a600aeffa94dbc48343d97785e9df
+
+Updated:
+- features/experience-stack/ExperienceNavigationControls.tsx
+- features/feed-experience/modules/category-product-experience/CategoryProductExperienceSection.tsx
+
+No migration.
+No dependency change.
+No ProductExperienceSlider deletion.

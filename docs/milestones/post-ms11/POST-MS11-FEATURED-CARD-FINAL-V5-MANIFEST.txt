@@ -1,0 +1,10 @@
+AJ Logik — Final Featured Card Refinement V5
+Installer SHA-256: 2f612d719a05e99fcedb1de1ab74ac5aeae1af688501688505110c6628db3973
+
+Updated:
+- features/products/cards/ProductActionTray.tsx
+- features/feed-experience/modules/category-product-experience/FeaturedProductExperienceCard.tsx
+
+No migration.
+No dependency change.
+No global sizing change.

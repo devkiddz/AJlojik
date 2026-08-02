@@ -1,0 +1,19 @@
+AJ Logik — MS11.10.2A Quick Support Summary & Unread Continuity
+Installer SHA-256: 64188486a6327977cdd11e4609486935e9c638d477421a3b6d8fc58e697840b5
+
+Created:
+- features/support/quickSupportTypes.ts
+- features/support/server/quickSupportSummaryRepository.ts
+- app/api/support/quick-chat/summary/route.ts
+- features/support/client/useQuickSupportSummary.ts
+- scripts/verify-quick-support-continuity.mjs
+
+Updated:
+- features/support/components/QuickSupportChatLauncher.tsx
+- features/support/components/QuickSupportChatWorkspace.tsx
+- features/support/index.ts
+- package.json
+
+No migration.
+No schema change.
+No dependency change.

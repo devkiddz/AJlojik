@@ -1,0 +1,13 @@
+AJ Logik — Post-MS11 History Export Repair
+Installer SHA-256: 54effa1d811c3eab1e8d6d989895dafe49aa3222655caffbe8fdb1c7ff02f84f
+
+Repairs:
+- features/experience-stack/ExperienceNavigationControls.tsx
+
+Method:
+- restore from Git HEAD
+- replace only the Navbar History button
+- verify both exported controls remain
+
+No migration.
+No dependency change.

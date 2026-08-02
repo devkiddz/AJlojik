@@ -1,0 +1,14 @@
+AJ Logik — Featured Carousel Mobile Density V6A
+Installer SHA-256: 61e04772cdd2c5fdbdb1834071e3c1bed75b8bd308228fe292894b5361a47f2d
+
+Updated:
+- features/feed-experience/modules/category-product-experience/CategoryProductExperienceSection.tsx
+
+Mobile width:
+- 46%
+
+Tablet and desktop widths:
+- unchanged
+
+No migration.
+No dependency change.

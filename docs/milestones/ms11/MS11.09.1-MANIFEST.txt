@@ -1,0 +1,23 @@
+AJ Logik — MS11.09.1 Live Transport Foundation
+Installer SHA-256: 15d8a774dba4998154e13235ede664b17be7be452913dd945c7812d61a1cf4bd
+
+Created:
+- features/support/supportLiveTypes.ts
+- features/support/server/supportLiveRepository.ts
+- features/support/server/supportLiveStream.ts
+- app/api/support/cases/[caseId]/live/route.ts
+- app/api/admin/support/cases/[caseId]/live/route.ts
+- prisma/migrations/20260802143500_add_support_live_events/migration.sql
+
+Updated:
+- prisma/schema.prisma
+- features/support/index.ts
+- features/support/server/supportService.ts
+
+Transport:
+- Server-Sent Events
+- database-backed cursor
+- 1 second event polling
+- 15 second heartbeat
+- 45 second controlled reconnect
+- no external dependency

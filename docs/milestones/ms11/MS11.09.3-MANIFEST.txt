@@ -1,0 +1,25 @@
+AJ Logik — MS11.09.3 Presence, Typing and Reliability
+Installer SHA-256: 75c077623bb552194eb3f3bd338bb9c6b5fe05e405fde5b674f4fbee2112b5c8
+
+Created:
+- features/support/server/supportLivePresenceRepository.ts
+- features/support/components/SupportLiveActivityBar.tsx
+- prisma/migrations/20260802151500_add_support_live_presence/migration.sql
+
+Updated:
+- prisma/schema.prisma
+- features/support/supportLiveTypes.ts
+- features/support/server/supportLiveStream.ts
+- features/support/client/useSupportLiveCase.ts
+- app/api/support/cases/[caseId]/live/route.ts
+- app/api/admin/support/cases/[caseId]/live/route.ts
+- app/api/admin/support/cases/[caseId]/route.ts
+- features/support/components/CustomerSupportCaseWorkspace.tsx
+- features/support/components/AgentSupportCaseWorkspace.tsx
+- features/communication/server/communicationNotificationService.ts
+
+Migration count after deployment:
+- 32
+
+No dependency change.
+Requires MS11.09.1 and MS11.09.2.
