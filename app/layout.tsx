@@ -1,57 +1,31 @@
-import type {
-  Metadata,
-  Viewport
-} from 'next';
+import type { Metadata, Viewport } from 'next';
 
-import type {
-  ReactNode
-} from 'react';
+import type { ReactNode } from 'react';
 
 import './globals.css';
 import '@/features/pwa/pwa.css';
 
 import ApplicationShell from '@/components/layout/ApplicationShell';
 
-import {
-  ActionFeedbackProvider
-} from '@/features/action-feedback';
+import { ActionFeedbackProvider } from '@/features/action-feedback';
 
-import {
-  AssistantAccessButton
-} from '@/features/ai-assistance';
+import { AssistantAccessButton } from '@/features/ai-assistance';
 
-import {
-  GlobalOverlayProvider
-} from '@/features/global-overlay';
+import { GlobalOverlayProvider } from '@/features/global-overlay';
 
-import {
-  CartProvider
-} from '@/features/cart';
+import { CartProvider } from '@/features/cart';
 
-import {
-  CatalogProvider
-} from '@/features/catalog';
+import { CatalogProvider } from '@/features/catalog';
 
-import {
-  PWAGlobalStatus,
-  PWARuntimeProvider
-} from '@/features/pwa';
+import { PWAGlobalStatus, PWARuntimeProvider } from '@/features/pwa';
 
-import {
-  ShoppingListRuntimeProvider
-} from '@/features/shopping-lists';
+import { ShoppingListRuntimeProvider } from '@/features/shopping-lists';
 
-import {
-  WishlistProvider
-} from '@/features/wishlist';
+import { WishlistProvider } from '@/features/wishlist';
 
-import {
-  WorkspaceProvider
-} from '@/features/workspace';
+import { WorkspaceProvider } from '@/features/workspace';
 
-import {
-  cn
-} from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import IdentityProvider from '@/providers/IdentityProvider';
 
@@ -60,130 +34,92 @@ import SearchProvider from '@/providers/SearchProvider';
 import ThemeProvider from '@/providers/ThemeProvider';
 
 export const metadata: Metadata = {
-  applicationName:
-    'AJ Logik',
+  applicationName: 'AJ Logik',
 
   title: {
-    default:
-      'AJ Logik — Premium Commerce Experience',
+    default: 'AJ Logik — Premium Commerce Experience',
 
-    template:
-      '%s · AJ Logik'
+    template: '%s · AJ Logik'
   },
 
-  description:
-    'Your personalized, discovery-led shopping workspace.',
+  description: 'Your personalized, discovery-led shopping workspace.',
 
-  manifest:
-    '/manifest.webmanifest',
+  manifest: '/manifest.webmanifest',
 
   appleWebApp: {
-    capable:
-      true,
+    capable: true,
 
-    statusBarStyle:
-      'black-translucent',
+    statusBarStyle: 'black-translucent',
 
-    title:
-      'AJ Logik'
+    title: 'AJ Logik'
   },
 
   icons: {
-    icon:
-      '/favicon.ico',
+    icon: '/favicon.ico',
 
-    apple:
-      '/pwa/apple-touch-icon.png'
+    apple: '/pwa/apple-touch-icon.png'
   },
 
   formatDetection: {
-    telephone:
-      false
+    telephone: false
   }
 };
 
 export const viewport: Viewport = {
-  width:
-    'device-width',
+  width: 'device-width',
 
-  initialScale:
-    1,
+  initialScale: 1,
 
-  viewportFit:
-    'cover',
+  viewportFit: 'cover',
 
   themeColor: [
     {
-      media:
-        '(prefers-color-scheme: light)',
+      media: '(prefers-color-scheme: light)',
 
-      color:
-        '#fbf7ef'
+      color: '#fbf7ef'
     },
     {
-      media:
-        '(prefers-color-scheme: dark)',
+      media: '(prefers-color-scheme: dark)',
 
-      color:
-        '#050814'
+      color: '#050814'
     }
   ]
 };
 
-type RootLayoutProps =
-  Readonly<{
-    children:
-      ReactNode;
-  }>;
+type RootLayoutProps = Readonly<{
+  children: ReactNode;
+}>;
 
-export default function RootLayout({
-  children
-}: RootLayoutProps) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={cn(
-        'h-full',
-        'font-sans antialiased'
-      )}>
+    <html lang="en" suppressHydrationWarning className={cn('h-full', 'font-sans antialiased')}>
       <body className="app-ui-normalized min-h-svh bg-background text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange>
-          <GlobalOverlayProvider>
-            <IdentityProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <IdentityProvider>
             <ActionFeedbackProvider>
-              <GlobalOverlayProvider>
               <PWARuntimeProvider>
                 <WorkspaceProvider>
-                  <ShoppingListRuntimeProvider>
-                    <CatalogProvider>
-                      <WishlistProvider>
-                        <CartProvider>
-                          <SearchProvider>
-                            <ApplicationShell>
-                              {
-                                children
-                              }
-                            </ApplicationShell>
+                  <GlobalOverlayProvider>
+                    <ShoppingListRuntimeProvider>
+                      <CatalogProvider>
+                        <WishlistProvider>
+                          <CartProvider>
+                            <SearchProvider>
+                              <ApplicationShell>{children}</ApplicationShell>
 
-                            <PWAGlobalStatus />
+                              <PWAGlobalStatus />
 
-                            <AssistantAccessButton />
-                          </SearchProvider>
-                        </CartProvider>
-                      </WishlistProvider>
-                    </CatalogProvider>
-                  </ShoppingListRuntimeProvider>
+                              <AssistantAccessButton />
+                            </SearchProvider>
+                          </CartProvider>
+                        </WishlistProvider>
+                      </CatalogProvider>
+                    </ShoppingListRuntimeProvider>
+                  </GlobalOverlayProvider>
                 </WorkspaceProvider>
               </PWARuntimeProvider>
-            </GlobalOverlayProvider>
             </ActionFeedbackProvider>
-            </IdentityProvider>
-          </GlobalOverlayProvider>
+          </IdentityProvider>
         </ThemeProvider>
       </body>
     </html>
