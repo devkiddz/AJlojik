@@ -12,6 +12,11 @@ import type {
 import { prisma } from '@/lib/prisma';
 
 import {
+  completeOperationalTodos,
+  upsertOperationalTodo
+} from '@/features/admin/todos/adminTodoRepository';
+
+import {
   sendCommunicationMessage
 } from '@/features/communication/server/communicationService';
 
@@ -168,6 +173,24 @@ function caseNumber() {
     .toUpperCase();
 
   return `AJ-${year}-${token}`;
+}
+
+function supportTodoPriority(
+  priority: SupportCasePriority
+): 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' {
+  if (priority === 'URGENT') {
+    return 'URGENT';
+  }
+
+  if (priority === 'HIGH') {
+    return 'HIGH';
+  }
+
+  if (priority === 'LOW') {
+    return 'LOW';
+  }
+
+  return 'MEDIUM';
 }
 
 const transitions:
@@ -485,9 +508,41 @@ export async function createSupportCase(
               }
             },
             select: {
-              id: true
+              id: true,
+              caseNumber: true
             }
           });
+
+        await upsertOperationalTodo(
+          transaction,
+          {
+            workspaceId:
+              input.workspaceId,
+            title:
+              `Review new Support Case ${supportCase.caseNumber}`,
+            description:
+              `${input.category.replaceAll('_', ' ')} · ${subject}`,
+            source:
+              'SUPPORT',
+            priority:
+              supportTodoPriority(
+                priority
+              ),
+            targetId:
+              supportCase.id,
+            dedupeKey:
+              `support:case:${supportCase.id}:new`,
+            metadata: {
+              caseNumber:
+                supportCase.caseNumber,
+              category:
+                input.category,
+              priority
+            },
+            createdById:
+              input.customerId
+          }
+        );
 
         return supportCase.id;
       }
@@ -641,6 +696,20 @@ export async function assignSupportCase(
             'Support Case assigned.'
         }
       });
+
+      await completeOperationalTodos(
+        transaction,
+        {
+          workspaceId:
+            input.workspaceId,
+          source:
+            'SUPPORT',
+          targetId:
+            input.caseId,
+          dedupeKey:
+            `support:case:${input.caseId}:new`
+        }
+      );
     }
   );
 
@@ -755,23 +824,45 @@ export async function changeSupportCaseStatus(
     data.closedAt = null;
   }
 
-  await prisma.$transaction([
-    prisma.supportCase.update({
-      where: {
-        id: input.caseId
-      },
-      data
-    }),
-    prisma.supportStatusHistory.create({
-      data: {
-        caseId: input.caseId,
-        actorId: input.actorId,
-        fromStatus: current.status,
-        toStatus: input.status,
-        note
+  await prisma.$transaction(
+    async transaction => {
+      await transaction.supportCase.update({
+        where: {
+          id: input.caseId
+        },
+        data
+      });
+
+      await transaction.supportStatusHistory.create({
+        data: {
+          caseId: input.caseId,
+          actorId: input.actorId,
+          fromStatus: current.status,
+          toStatus: input.status,
+          note
+        }
+      });
+
+      if (
+        input.status !==
+        'NEW'
+      ) {
+        await completeOperationalTodos(
+          transaction,
+          {
+            workspaceId:
+              input.workspaceId,
+            source:
+              'SUPPORT',
+            targetId:
+              input.caseId,
+            dedupeKey:
+              `support:case:${input.caseId}:new`
+          }
+        );
       }
-    })
-  ]);
+    }
+  );
 
   await publishSupportLiveEventSoft({
     workspaceId: input.workspaceId,

@@ -17,6 +17,10 @@ import {
 import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
 
 import {
+  QuickSupportChatLauncher
+} from '@/features/support/components/QuickSupportChatLauncher';
+
+import {
   AppSidebar
 } from '@/providers/AppSideBar';
 
@@ -66,6 +70,8 @@ export default function ApplicationShell({
       </SidebarInset>
 
       <SearchMobileOverlay />
+
+      <QuickSupportChatLauncher />
     </SidebarProvider>
   );
 

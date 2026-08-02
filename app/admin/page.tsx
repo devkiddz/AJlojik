@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, Boxes, CheckCircle2, Clapperboard, ClipboardCheck, Grid2X2Plus, ListTodo, PackagePlus, ShieldCheck, Sparkles, Tags, Truck, UsersRound } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Boxes, CheckCircle2, Clapperboard, ClipboardCheck, Grid2X2Plus, ListTodo, MessagesSquare, PackagePlus, ShieldCheck, Sparkles, Tags, Truck, UsersRound } from 'lucide-react';
 
 import type { Prisma } from '@/lib/generated/prisma/client';
 
@@ -21,13 +21,14 @@ export default async function AdminHomePage() {
     OR: [{ snoozedUntil: null }, { snoozedUntil: { lte: now } }]
   };
 
-  const [todos, activeTodoCount, approvals, staffCount, productCount, deliveries, recentActivity] = await Promise.all([
+  const [todos, activeTodoCount, approvals, staffCount, productCount, deliveries, activeSupportCases, recentActivity] = await Promise.all([
     prisma.adminTodo?.findMany ? prisma.adminTodo.findMany({ where: activeTodoWhere, orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }], take: 8 }).catch(() => []) : Promise.resolve([]),
     prisma.adminTodo?.count ? prisma.adminTodo.count({ where: activeTodoWhere }).catch(() => 0) : Promise.resolve(0),
     prisma.adminApprovalRequest?.findMany ? prisma.adminApprovalRequest.findMany({ where: { workspaceId: access.membership.workspaceId, status: 'PENDING' }, include: { requestedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []) : Promise.resolve([]),
     prisma.staffProfile?.count ? prisma.staffProfile.count({ where: { workspaceId: access.membership.workspaceId, active: true } }).catch(() => 0) : Promise.resolve(0),
     prisma.product.count({ where: { workspaceId: access.membership.workspaceId, active: true } }).catch(() => 0),
     prisma.delivery?.count ? prisma.delivery.count({ where: { workspaceId: access.membership.workspaceId, status: { notIn: ['DELIVERED', 'CANCELLED', 'FAILED'] } } }).catch(() => 0) : Promise.resolve(0),
+    prisma.supportCase.count({ where: { workspaceId: access.membership.workspaceId, status: { not: 'CLOSED' } } }).catch(() => 0),
     prisma.adminAuditEvent?.findMany ? prisma.adminAuditEvent.findMany({ where: { workspaceId: access.membership.workspaceId }, include: { actor: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []) : Promise.resolve([])
   ]);
 
@@ -39,7 +40,7 @@ export default async function AdminHomePage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary/70">{access.membership.workspace.name} · {access.membership.workspace.mode}</p><h1 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">Admin attention center</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Every login begins with work requiring attention, approvals, store health, and live operations.</p></div><span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-2 text-[10px] font-bold uppercase text-emerald-600"><ShieldCheck className="size-4" /> {access.membership.role.replaceAll('_', ' ')}</span></div>
         </header>
 
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric href="/admin/todos" icon={<ClipboardCheck />} label="Open todos" value={activeTodoCount} tone="violet" /><Metric href="/admin/approvals" icon={<AlertTriangle />} label="Awaiting approval" value={approvals.length} tone="amber" /><Metric href="/admin/deliveries" icon={<Truck />} label="Active deliveries" value={deliveries} tone="blue" /><Metric href="/admin/staff" icon={<UsersRound />} label="Active staff" value={staffCount} tone="emerald" /></section>
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><Metric href="/admin/todos" icon={<ClipboardCheck />} label="Open todos" value={activeTodoCount} tone="violet" /><Metric href="/admin/approvals" icon={<AlertTriangle />} label="Awaiting approval" value={approvals.length} tone="amber" /><Metric href="/admin/support" icon={<MessagesSquare />} label="Open support" value={activeSupportCases} tone="rose" /><Metric href="/admin/deliveries" icon={<Truck />} label="Active deliveries" value={deliveries} tone="blue" /><Metric href="/admin/staff" icon={<UsersRound />} label="Active staff" value={staffCount} tone="emerald" /></section>
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
           <Panel eyebrow="Management queue" title="Do next" description="Automatically generated from inventory, approvals, and delivery activity.">
@@ -71,10 +72,11 @@ function resolveTodoHref(todo: { source: string; targetType: string | null; targ
   if (todo.source === 'INVENTORY') return '/admin/inventory';
   if (todo.source === 'SHOPPING_LIST') return '/admin/preparations';
   if (todo.source === 'APPROVAL' || todo.targetType === 'SHOPPING_LIST') return '/admin/approvals';
+  if (todo.source === 'SUPPORT') return todo.targetId ? `/admin/support/${todo.targetId}` : '/admin/support';
   return '/admin/todos';
 }
 
-function Metric({ href, icon, label, value, tone }: { href: string; icon: React.ReactNode; label: string; value: number; tone: 'violet' | 'amber' | 'blue' | 'emerald' }) { const colors={violet:'bg-violet-500/10 text-violet-600',amber:'bg-amber-500/10 text-amber-600',blue:'bg-blue-500/10 text-blue-600',emerald:'bg-emerald-500/10 text-emerald-600'}; return <Link href={href} className="group rounded-3xl border border-border/60 bg-card/75 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg"><div className="flex items-start justify-between gap-3"><div className={`grid size-10 place-items-center rounded-2xl [&_svg]:size-4 ${colors[tone]}`}>{icon}</div><ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" /></div><p className="mt-5 text-[10px] text-muted-foreground">{label}</p><p className="mt-1 text-3xl font-black">{value}</p><span className="mt-3 inline-flex text-[10px] font-bold text-primary">Open report</span></Link>; }
+function Metric({ href, icon, label, value, tone }: { href: string; icon: React.ReactNode; label: string; value: number; tone: 'violet' | 'amber' | 'blue' | 'emerald' | 'rose' }) { const colors={violet:'bg-violet-500/10 text-violet-600',amber:'bg-amber-500/10 text-amber-600',blue:'bg-blue-500/10 text-blue-600',emerald:'bg-emerald-500/10 text-emerald-600',rose:'bg-rose-500/10 text-rose-600'}; return <Link href={href} className="group rounded-3xl border border-border/60 bg-card/75 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg"><div className="flex items-start justify-between gap-3"><div className={`grid size-10 place-items-center rounded-2xl [&_svg]:size-4 ${colors[tone]}`}>{icon}</div><ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" /></div><p className="mt-5 text-[10px] text-muted-foreground">{label}</p><p className="mt-1 text-3xl font-black">{value}</p><span className="mt-3 inline-flex text-[10px] font-bold text-primary">Open report</span></Link>; }
 function Panel({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: React.ReactNode }) { return <section className="rounded-[2rem] border border-border/60 bg-card/75 p-5 shadow-lg sm:p-6"><p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/70">{eyebrow}</p><h2 className="mt-1 text-xl font-black">{title}</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>{children}</section>; }
 function QuickLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) { return <Link href={href} className="group flex items-center gap-3 rounded-2xl border border-border/50 bg-background/55 p-3 transition hover:bg-muted"><span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary [&_svg]:size-4">{icon}</span><span className="flex-1 text-xs font-bold">{label}</span><ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" /></Link>; }
 function Empty({ label }: { label: string }) { return <div className="grid min-h-28 place-items-center rounded-2xl border border-dashed border-border/70 p-5 text-center text-xs text-muted-foreground">{label}</div>; }

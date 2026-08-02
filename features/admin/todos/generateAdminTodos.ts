@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma';
 export async function generateAdminTodos(
   workspaceId: string
 ): Promise<void> {
-  const [inventoryCandidates, delayedDeliveries] = await Promise.all([
+  const [inventoryCandidates, delayedDeliveries, newSupportCases] = await Promise.all([
     prisma.productVariant.findMany({
       where: {
         active: true,
@@ -53,6 +53,23 @@ export async function generateAdminTodos(
         trackingCode: true
       },
       take: 50
+    }),
+    prisma.supportCase.findMany({
+      where: {
+        workspaceId,
+        status: 'NEW'
+      },
+      select: {
+        id: true,
+        caseNumber: true,
+        subject: true,
+        category: true,
+        priority: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 100
     })
   ]).catch(error => {
     console.error(
@@ -60,7 +77,7 @@ export async function generateAdminTodos(
       error
     );
 
-    return [[], []] as const;
+    return [[], [], []] as const;
   });
 
   const lowStockProducts = new Map<
@@ -95,8 +112,10 @@ export async function generateAdminTodos(
 
   const lowStockProductIds = [...lowStockProducts.keys()];
   const delayedDeliveryIds = delayedDeliveries.map(delivery => delivery.id);
+  const newSupportCaseIds = newSupportCases.map(supportCase => supportCase.id);
   const inventoryScanComplete = inventoryCandidates.length < 250;
   const deliveryScanComplete = delayedDeliveries.length < 50;
+  const supportScanComplete = newSupportCases.length < 100;
   const completedAt = new Date();
 
   await prisma.$transaction(async transaction => {
@@ -198,6 +217,60 @@ export async function generateAdminTodos(
       });
     }
 
+    if (supportScanComplete) {
+      await transaction.adminTodo.updateMany({
+        where: {
+          workspaceId,
+          source: 'SUPPORT',
+          dedupeKey: {
+            startsWith: 'support:case:'
+          },
+          status: {
+            in: [...ACTIVE_ADMIN_TODO_STATUSES]
+          },
+          ...(newSupportCaseIds.length
+            ? {
+                targetId: {
+                  notIn: newSupportCaseIds
+                }
+              }
+            : {})
+        },
+        data: {
+          status: 'COMPLETED',
+          completedAt,
+          dismissedAt: null,
+          snoozedUntil: null,
+          activeDedupeKey: null
+        }
+      });
+
+      await transaction.adminTodo.updateMany({
+        where: {
+          workspaceId,
+          source: 'SUPPORT',
+          dedupeKey: {
+            startsWith: 'support:case:'
+          },
+          status: 'DISMISSED',
+          activeDedupeKey: {
+            not: null
+          },
+          ...(newSupportCaseIds.length
+            ? {
+                targetId: {
+                  notIn: newSupportCaseIds
+                }
+              }
+            : {})
+        },
+        data: {
+          activeDedupeKey: null,
+          snoozedUntil: null
+        }
+      });
+    }
+
     for (const item of lowStockProducts.values()) {
       await upsertOperationalTodo(transaction, {
         workspaceId,
@@ -228,6 +301,30 @@ export async function generateAdminTodos(
         dedupeKey: `delivery:${delivery.id}:delayed`,
         metadata: {
           trackingCode: delivery.trackingCode
+        }
+      });
+    }
+
+    for (const supportCase of newSupportCases) {
+      await upsertOperationalTodo(transaction, {
+        workspaceId,
+        title: `Review new Support Case ${supportCase.caseNumber}`,
+        description: `${supportCase.category.replaceAll('_', ' ')} · ${supportCase.subject}`,
+        source: 'SUPPORT',
+        priority:
+          supportCase.priority === 'URGENT'
+            ? 'URGENT'
+            : supportCase.priority === 'HIGH'
+              ? 'HIGH'
+              : supportCase.priority === 'LOW'
+                ? 'LOW'
+                : 'MEDIUM',
+        targetId: supportCase.id,
+        dedupeKey: `support:case:${supportCase.id}:new`,
+        metadata: {
+          caseNumber: supportCase.caseNumber,
+          category: supportCase.category,
+          priority: supportCase.priority
         }
       });
     }
