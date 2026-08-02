@@ -39,6 +39,10 @@ import {
 } from '../client/useQuickSupportSummary';
 
 import {
+  useQuickSupportViewport
+} from '../client/useQuickSupportViewport';
+
+import {
   QuickSupportChatWorkspace
 } from './QuickSupportChatWorkspace';
 
@@ -84,6 +88,8 @@ export function QuickSupportChatLauncher() {
   } =
     useQuickSupportPanelState();
 
+  useQuickSupportViewport();
+
   const [
     showAttention,
     setShowAttention
@@ -128,9 +134,29 @@ export function QuickSupportChatLauncher() {
       summary?.activeCase
     );
 
+  const hasRestorableCase =
+    Boolean(
+      summary
+        ?.recentCases
+        .length
+    );
+
   const unreadCount =
     summary?.unreadCount ??
     0;
+
+  const attentionCaseIds =
+    summary
+      ?.recentCases
+      .slice(
+        0,
+        5
+      )
+      .map(
+        item =>
+          item.id
+      ) ??
+    [];
 
   const openSupport =
     useCallback(
@@ -151,12 +177,14 @@ export function QuickSupportChatLauncher() {
             </span>
           ),
           title:
-            hasActiveCase
+            hasActiveCase ||
+            hasRestorableCase
               ? 'Continue with Support'
               : 'Chat with Support',
           description:
-            hasActiveCase
-              ? 'Your current Support Case is ready and connected to the live workspace.'
+            hasActiveCase ||
+            hasRestorableCase
+              ? 'Your Support conversations are ready and connected to the live workspace.'
               : 'Start a live Support conversation without leaving your current experience.',
           content: (
             <QuickSupportChatWorkspace />
@@ -166,11 +194,16 @@ export function QuickSupportChatLauncher() {
           size:
             'sm',
           closeLabel:
-            'Minimize Support chat'
+            'Minimize Support chat',
+          surfaceClassName:
+            'h-[var(--quick-support-viewport-height,100dvh)] max-h-[var(--quick-support-viewport-height,100dvh)] overscroll-none sm:h-dvh sm:max-h-none',
+          bodyClassName:
+            '!overflow-hidden !p-0'
         });
       },
       [
         hasActiveCase,
+        hasRestorableCase,
         markOpen,
         openOverlay
       ]
@@ -180,14 +213,11 @@ export function QuickSupportChatLauncher() {
     workspaceId:
       summary?.workspaceId ??
       workspaceId,
-    caseId:
-      summary?.activeCase
-        ?.id ??
-      null,
+    caseIds:
+      attentionCaseIds,
     enabled:
       Boolean(
-        summary
-          ?.activeCase &&
+        attentionCaseIds.length &&
         !overlayOpen &&
         !hidden
       ),
@@ -249,7 +279,7 @@ export function QuickSupportChatLauncher() {
       if (
         mode ===
           'open' &&
-        !summary.activeCase
+        !hasRestorableCase
       ) {
         markMinimized();
 
@@ -264,7 +294,7 @@ export function QuickSupportChatLauncher() {
           'open' ||
         hidden ||
         hasOpenOverlay ||
-        !summary.activeCase ||
+        !hasRestorableCase ||
         restoredWorkspaceRef.current ===
           workspaceId
       ) {
@@ -288,6 +318,7 @@ export function QuickSupportChatLauncher() {
     },
     [
       hasOpenOverlay,
+      hasRestorableCase,
       hidden,
       hydrated,
       markMinimized,
@@ -392,7 +423,8 @@ export function QuickSupportChatLauncher() {
   }
 
   const label =
-    hasActiveCase
+    hasActiveCase ||
+    hasRestorableCase
       ? 'Continue Support'
       : 'Support';
 
@@ -402,7 +434,9 @@ export function QuickSupportChatLauncher() {
       ? `${unreadCount} unread Support ${unreadCount === 1 ? 'message' : 'messages'}. Open AJ Logik Support.`
       : hasActiveCase
         ? `Continue AJ Logik Support Case ${summary?.activeCase?.caseNumber ?? ''}`
-        : 'Chat with AJ Logik Support';
+        : hasRestorableCase
+          ? 'Continue AJ Logik Support conversations'
+          : 'Chat with AJ Logik Support';
 
   const badgeLabel =
     unreadCount >
@@ -491,7 +525,7 @@ export function QuickSupportChatLauncher() {
           openSupport
         }
         className={cn(
-          'group fixed bottom-[calc(env(safe-area-inset-bottom)+8.25rem)] right-[var(--app-page-gutter)] z-[180] inline-flex h-11 items-center gap-2 rounded-full border bg-background/95 px-3.5 text-xs font-black text-foreground shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7)] ring-1 ring-background/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 md:bottom-5 md:right-[calc(var(--app-page-gutter)+7.5rem)] md:h-12 md:px-4',
+          'group fixed bottom-[calc(env(safe-area-inset-bottom)+8.25rem)] right-[var(--app-page-gutter)] z-[180] inline-flex h-11 touch-manipulation items-center gap-2 rounded-full border bg-background/95 px-3.5 text-xs font-black text-foreground shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7)] ring-1 ring-background/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 md:bottom-5 md:right-[calc(var(--app-page-gutter)+7.5rem)] md:h-12 md:px-4',
           unreadCount >
             0
             ? 'border-emerald-500/60 shadow-[0_18px_55px_-15px_rgba(16,185,129,0.55)]'

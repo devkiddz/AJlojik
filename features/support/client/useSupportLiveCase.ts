@@ -28,11 +28,19 @@ type UseSupportLiveCaseInput = {
 };
 
 type UseSupportLiveCaseResult = {
-  state: SupportLiveConnectionState;
-  lastEventId: number;
-  error: string | null;
+  state:
+    SupportLiveConnectionState;
+  lastEventId:
+    number;
+  error:
+    string |
+    null;
   participants:
     SupportLivePresenceItem[];
+  online:
+    boolean;
+  retry:
+    () => void;
   setTyping: (
     typing: boolean
   ) => void;
@@ -42,10 +50,34 @@ function parseJson<T>(
   value: string
 ): T | null {
   try {
-    return JSON.parse(value) as T;
+    return JSON.parse(
+      value
+    ) as T;
   } catch {
     return null;
   }
+}
+
+function appendCursor(
+  streamUrl: string,
+  cursor: number
+): string {
+  if (
+    cursor <=
+    0
+  ) {
+    return streamUrl;
+  }
+
+  return `${streamUrl}${streamUrl.includes('?') ? '&' : '?'}after=${cursor}`;
+}
+
+function browserOnline(): boolean {
+  return (
+    typeof navigator ===
+      'undefined' ||
+    navigator.onLine
+  );
 }
 
 export function useSupportLiveCase({
@@ -54,7 +86,23 @@ export function useSupportLiveCase({
   onEvent
 }: UseSupportLiveCaseInput): UseSupportLiveCaseResult {
   const onEventRef =
-    useRef(onEvent);
+    useRef(
+      onEvent
+    );
+
+  const cursorRef =
+    useRef(0);
+
+  const previousStreamUrlRef =
+    useRef(
+      streamUrl
+    );
+
+  const typingStateRef =
+    useRef(false);
+
+  const lastTypingSentAtRef =
+    useRef(0);
 
   const [
     state,
@@ -74,7 +122,12 @@ export function useSupportLiveCase({
     error,
     setError
   ] =
-    useState<string | null>(null);
+    useState<
+      string |
+      null
+    >(
+      null
+    );
 
   const [
     participants,
@@ -82,13 +135,23 @@ export function useSupportLiveCase({
   ] =
     useState<
       SupportLivePresenceItem[]
-    >([]);
+    >(
+      []
+    );
 
-  const typingStateRef =
-    useRef(false);
+  const [
+    online,
+    setOnline
+  ] =
+    useState(
+      browserOnline
+    );
 
-  const lastTypingSentAtRef =
-    useRef(0);
+  const [
+    reconnectEpoch,
+    setReconnectEpoch
+  ] =
+    useState(0);
 
   const postActivity =
     useCallback(
@@ -100,14 +163,24 @@ export function useSupportLiveCase({
         typing?: boolean,
         keepalive = false
       ): Promise<void> => {
+        if (
+          !browserOnline() &&
+          action !==
+            'leave'
+        ) {
+          return;
+        }
+
         const response =
           await fetch(
             streamUrl,
             {
-              method: 'POST',
+              method:
+                'POST',
               credentials:
                 'same-origin',
-              cache: 'no-store',
+              cache:
+                'no-store',
               keepalive,
               headers: {
                 'Content-Type':
@@ -135,7 +208,9 @@ export function useSupportLiveCase({
           );
         }
       },
-      [streamUrl]
+      [
+        streamUrl
+      ]
     );
 
   const setTyping =
@@ -172,14 +247,46 @@ export function useSupportLiveCase({
         void postActivity(
           'typing',
           typing
-        ).catch(cause => {
-          console.error(
-            'Support typing update failed.',
-            cause
-          );
-        });
+        ).catch(
+          cause => {
+            console.error(
+              'Support typing update failed.',
+              cause
+            );
+          }
+        );
       },
-      [postActivity]
+      [
+        postActivity
+      ]
+    );
+
+  const retry =
+    useCallback(
+      (): void => {
+        if (!enabled) {
+          return;
+        }
+
+        setOnline(
+          browserOnline()
+        );
+
+        setState(
+          browserOnline()
+            ? 'reconnecting'
+            : 'offline'
+        );
+
+        setReconnectEpoch(
+          current =>
+            current +
+            1
+        );
+      },
+      [
+        enabled
+      ]
     );
 
   useEffect(
@@ -187,7 +294,117 @@ export function useSupportLiveCase({
       onEventRef.current =
         onEvent;
     },
-    [onEvent]
+    [
+      onEvent
+    ]
+  );
+
+  useEffect(
+    () => {
+      if (
+        previousStreamUrlRef.current ===
+        streamUrl
+      ) {
+        return;
+      }
+
+      previousStreamUrlRef.current =
+        streamUrl;
+
+      cursorRef.current =
+        0;
+
+      typingStateRef.current =
+        false;
+
+      setLastEventId(
+        0
+      );
+
+      setParticipants(
+        []
+      );
+
+      setError(
+        null
+      );
+
+      setState(
+        enabled
+          ? 'connecting'
+          : 'offline'
+      );
+    },
+    [
+      enabled,
+      streamUrl
+    ]
+  );
+
+  useEffect(
+    () => {
+      const handleOnline =
+        (): void => {
+          setOnline(
+            true
+          );
+
+          if (
+            enabled
+          ) {
+            setState(
+              'reconnecting'
+            );
+
+            setReconnectEpoch(
+              current =>
+                current +
+                1
+            );
+          }
+        };
+
+      const handleOffline =
+        (): void => {
+          setOnline(
+            false
+          );
+
+          setState(
+            'offline'
+          );
+
+          setTyping(
+            false
+          );
+        };
+
+      window.addEventListener(
+        'online',
+        handleOnline
+      );
+
+      window.addEventListener(
+        'offline',
+        handleOffline
+      );
+
+      return () => {
+        window.removeEventListener(
+          'online',
+          handleOnline
+        );
+
+        window.removeEventListener(
+          'offline',
+          handleOffline
+        );
+      };
+    },
+    [
+      enabled,
+      setTyping
+    ]
   );
 
   useEffect(
@@ -197,97 +414,175 @@ export function useSupportLiveCase({
         typeof EventSource ===
           'undefined'
       ) {
+        setParticipants(
+          []
+        );
+
         return;
       }
 
+      if (
+        !browserOnline()
+      ) {
+        setOnline(
+          false
+        );
+
+        setState(
+          'offline'
+        );
+
+        return;
+      }
+
+      let closed =
+        false;
+
+      setOnline(
+        true
+      );
+
+      setState(
+        current =>
+          current ===
+            'live'
+            ? 'reconnecting'
+            : 'connecting'
+      );
+
       const source =
         new EventSource(
-          streamUrl,
+          appendCursor(
+            streamUrl,
+            cursorRef.current
+          ),
           {
             withCredentials:
               true
           }
         );
 
+      const updateCursor =
+        (
+          cursor: number
+        ): void => {
+          cursorRef.current =
+            cursor;
+
+          setLastEventId(
+            cursor
+          );
+        };
+
       const handleReady =
         (
           event: Event
         ): void => {
-          const messageEvent =
-            event as
-              MessageEvent<string>;
+          if (closed) {
+            return;
+          }
 
           const payload =
             parseJson<{
               cursor?: number;
             }>(
-              messageEvent.data
+              (
+                event as
+                  MessageEvent<string>
+              ).data
             );
 
           if (
             typeof payload?.cursor ===
             'number'
           ) {
-            setLastEventId(
+            updateCursor(
               payload.cursor
             );
           }
 
-          setError(null);
-          setState('live');
+          setError(
+            null
+          );
+
+          setState(
+            'live'
+          );
         };
 
       const handleSupport =
         (
           event: Event
         ): void => {
-          const messageEvent =
-            event as
-              MessageEvent<string>;
+          if (closed) {
+            return;
+          }
 
           const payload =
-            parseJson<SupportLiveEventItem>(
-              messageEvent.data
+            parseJson<
+              SupportLiveEventItem
+            >(
+              (
+                event as
+                  MessageEvent<string>
+              ).data
             );
 
           if (!payload) {
             setError(
               'AJ Logik received an unreadable live Support event.'
             );
+
             return;
           }
 
-          setLastEventId(
+          updateCursor(
             payload.id
           );
 
-          setState('live');
-          setError(null);
+          setState(
+            'live'
+          );
+
+          setError(
+            null
+          );
 
           void Promise.resolve(
             onEventRef.current(
               payload
             )
-          ).catch(cause => {
-            setError(
-              cause instanceof Error
-                ? cause.message
-                : 'AJ Logik could not apply a live Support update.'
-            );
-          });
+          ).catch(
+            cause => {
+              if (closed) {
+                return;
+              }
+
+              setError(
+                cause instanceof Error
+                  ? cause.message
+                  : 'AJ Logik could not apply a live Support update.'
+              );
+            }
+          );
         };
 
       const handlePresence =
         (
           event: Event
         ): void => {
-          const messageEvent =
-            event as
-              MessageEvent<string>;
+          if (closed) {
+            return;
+          }
 
           const payload =
-            parseJson<SupportLivePresencePayload>(
-              messageEvent.data
+            parseJson<
+              SupportLivePresencePayload
+            >(
+              (
+                event as
+                  MessageEvent<string>
+              ).data
             );
 
           if (!payload) {
@@ -303,22 +598,25 @@ export function useSupportLiveCase({
         (
           event: Event
         ): void => {
-          const messageEvent =
-            event as
-              MessageEvent<string>;
+          if (closed) {
+            return;
+          }
 
           const payload =
             parseJson<{
               cursor?: number;
             }>(
-              messageEvent.data
+              (
+                event as
+                  MessageEvent<string>
+              ).data
             );
 
           if (
             typeof payload?.cursor ===
             'number'
           ) {
-            setLastEventId(
+            updateCursor(
               payload.cursor
             );
           }
@@ -332,15 +630,18 @@ export function useSupportLiveCase({
         (
           event: Event
         ): void => {
-          const messageEvent =
-            event as
-              MessageEvent<string>;
+          if (closed) {
+            return;
+          }
 
           const payload =
             parseJson<{
               message?: string;
             }>(
-              messageEvent.data
+              (
+                event as
+                  MessageEvent<string>
+              ).data
             );
 
           setError(
@@ -349,23 +650,9 @@ export function useSupportLiveCase({
           );
 
           setState(
-            navigator.onLine
+            browserOnline()
               ? 'reconnecting'
               : 'offline'
-          );
-        };
-
-      const handleOnline =
-        (): void => {
-          setState(
-            'reconnecting'
-          );
-        };
-
-      const handleOffline =
-        (): void => {
-          setState(
-            'offline'
           );
         };
 
@@ -396,46 +683,46 @@ export function useSupportLiveCase({
 
       source.onerror =
         (): void => {
+          if (closed) {
+            return;
+          }
+
           setState(
-            navigator.onLine
+            browserOnline()
               ? 'reconnecting'
               : 'offline'
           );
         };
 
-      window.addEventListener(
-        'online',
-        handleOnline
-      );
+      const sendHeartbeat =
+        (): void => {
+          if (
+            document.visibilityState !==
+              'visible' ||
+            !browserOnline()
+          ) {
+            return;
+          }
 
-      window.addEventListener(
-        'offline',
-        handleOffline
-      );
-
-      const heartbeat =
-        window.setInterval(
-          () => {
-            void postActivity(
-              'heartbeat'
-            ).catch(cause => {
+          void postActivity(
+            'heartbeat'
+          ).catch(
+            cause => {
               console.error(
                 'Support presence heartbeat failed.',
                 cause
               );
-            });
-          },
+            }
+          );
+        };
+
+      const heartbeat =
+        window.setInterval(
+          sendHeartbeat,
           10_000
         );
 
-      void postActivity(
-        'heartbeat'
-      ).catch(cause => {
-        console.error(
-          'Initial Support presence heartbeat failed.',
-          cause
-        );
-      });
+      sendHeartbeat();
 
       const handleVisibility =
         (): void => {
@@ -443,12 +730,41 @@ export function useSupportLiveCase({
             document.visibilityState ===
             'visible'
           ) {
-            void postActivity(
-              'heartbeat'
-            );
+            sendHeartbeat();
+
+            if (
+              source.readyState ===
+              EventSource.CLOSED
+            ) {
+              setReconnectEpoch(
+                current =>
+                  current +
+                  1
+              );
+            }
           } else {
-            setTyping(false);
+            setTyping(
+              false
+            );
           }
+        };
+
+      const handlePageHide =
+        (): void => {
+          setTyping(
+            false
+          );
+
+          void postActivity(
+            'leave',
+            undefined,
+            true
+          ).catch(
+            () => {
+              // Page exit is
+              // best-effort only.
+            }
+          );
         };
 
       document.addEventListener(
@@ -456,7 +772,15 @@ export function useSupportLiveCase({
         handleVisibility
       );
 
+      window.addEventListener(
+        'pagehide',
+        handlePageHide
+      );
+
       return () => {
+        closed =
+          true;
+
         source.close();
 
         window.clearInterval(
@@ -468,29 +792,30 @@ export function useSupportLiveCase({
           handleVisibility
         );
 
+        window.removeEventListener(
+          'pagehide',
+          handlePageHide
+        );
+
+        typingStateRef.current =
+          false;
+
         void postActivity(
           'leave',
           undefined,
           true
-        ).catch(() => {
-          // Closing a page is
-          // best-effort only.
-        });
-
-        window.removeEventListener(
-          'online',
-          handleOnline
-        );
-
-        window.removeEventListener(
-          'offline',
-          handleOffline
+        ).catch(
+          () => {
+            // Stream replacement is
+            // best-effort only.
+          }
         );
       };
     },
     [
       enabled,
       postActivity,
+      reconnectEpoch,
       setTyping,
       streamUrl
     ]
@@ -501,6 +826,8 @@ export function useSupportLiveCase({
     lastEventId,
     error,
     participants,
+    online,
+    retry,
     setTyping
   };
 }

@@ -42,6 +42,10 @@ export type GlobalOverlayConfig = {
   closeLabel?: string;
 
   dismissible?: boolean;
+
+  surfaceClassName?: string;
+
+  bodyClassName?: string;
 };
 
 export type GlobalOverlayEntry =

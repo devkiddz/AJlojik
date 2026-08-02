@@ -3,12 +3,15 @@
 import Link from 'next/link';
 
 import {
+  AlertTriangle,
   ArrowRight,
   Headphones,
   LoaderCircle,
   MessageCircle,
+  RefreshCw,
   Send,
-  ShieldCheck
+  ShieldCheck,
+  WifiOff
 } from 'lucide-react';
 
 import {
@@ -97,8 +100,10 @@ async function readFailure(
         error?: string;
       };
 
-    return payload.error ??
-      fallback;
+    return (
+      payload.error ??
+      fallback
+    );
   } catch {
     return fallback;
   }
@@ -120,6 +125,17 @@ function quickChatSubject(
       );
 
   return `Quick chat: ${summary}`;
+}
+
+function isAbortError(
+  cause: unknown
+): boolean {
+  return (
+    cause instanceof
+      DOMException &&
+    cause.name ===
+      'AbortError'
+  );
 }
 
 export function QuickSupportChatWorkspace() {
@@ -186,6 +202,17 @@ export function QuickSupportChatWorkspace() {
       null
     );
 
+  const [
+    notice,
+    setNotice
+  ] =
+    useState<
+      string |
+      null
+    >(
+      null
+    );
+
   const messagesEndRef =
     useRef<
       HTMLDivElement |
@@ -194,11 +221,143 @@ export function QuickSupportChatWorkspace() {
       null
     );
 
-  const loadCase =
+  const workspaceRef =
+    useRef<
+      string |
+      null
+    >(
+      workspaceId
+    );
+
+  const activeCaseIdRef =
+    useRef<
+      string |
+      null
+    >(
+      null
+    );
+
+  const viewSequenceRef =
+    useRef(0);
+
+  const navigationControllerRef =
+    useRef<
+      AbortController |
+      null
+    >(
+      null
+    );
+
+  const refreshControllerRef =
+    useRef<
+      AbortController |
+      null
+    >(
+      null
+    );
+
+  const sendControllerRef =
+    useRef<
+      AbortController |
+      null
+    >(
+      null
+    );
+
+  const sendInFlightRef =
+    useRef(false);
+
+  const mountedRef =
+    useRef(true);
+
+  useEffect(
+    () => {
+      mountedRef.current =
+        true;
+
+      return () => {
+        mountedRef.current =
+          false;
+
+        navigationControllerRef.current
+          ?.abort();
+
+        refreshControllerRef.current
+          ?.abort();
+
+        sendControllerRef.current
+          ?.abort();
+      };
+    },
+    []
+  );
+
+  useEffect(
+    () => {
+      workspaceRef.current =
+        workspaceId;
+
+      viewSequenceRef.current +=
+        1;
+
+      navigationControllerRef.current
+        ?.abort();
+
+      refreshControllerRef.current
+        ?.abort();
+
+      sendControllerRef.current
+        ?.abort();
+
+      sendControllerRef.current =
+        null;
+
+      sendInFlightRef.current =
+        false;
+
+      setBusy(
+        false
+      );
+
+      activeCaseIdRef.current =
+        null;
+
+      setSupportCase(
+        null
+      );
+
+      setStartingNew(
+        false
+      );
+
+      setMessage(
+        ''
+      );
+
+      setError(
+        null
+      );
+
+      setNotice(
+        null
+      );
+
+      setAuthenticationRequired(
+        false
+      );
+    },
+    [
+      workspaceId
+    ]
+  );
+
+  const requestCaseDetail =
     useCallback(
       async (
         caseId: string,
-        markRead = false
+        markRead: boolean,
+        signal:
+          AbortSignal
       ): Promise<SupportCaseDetail> => {
         const response =
           await fetch(
@@ -214,6 +373,7 @@ export function QuickSupportChatWorkspace() {
                 'same-origin',
               cache:
                 'no-store',
+              signal,
               headers:
                 markRead
                   ? {
@@ -235,10 +395,6 @@ export function QuickSupportChatWorkspace() {
           response.status ===
           401
         ) {
-          setAuthenticationRequired(
-            true
-          );
-
           throw new Error(
             'Sign in to continue with AJ Logik Support.'
           );
@@ -253,22 +409,42 @@ export function QuickSupportChatWorkspace() {
           );
         }
 
-        const next =
-          (await response.json()) as
-            SupportCaseDetail;
+        return (
+          await response.json()
+        ) as
+          SupportCaseDetail;
+      },
+      []
+    );
+
+  const commitCase =
+    useCallback(
+      (
+        next:
+          SupportCaseDetail,
+        requestedWorkspaceId:
+          string,
+        markRead:
+          boolean
+      ): boolean => {
+        if (
+          workspaceRef.current !==
+          requestedWorkspaceId
+        ) {
+          return false;
+        }
+
+        activeCaseIdRef.current =
+          next.id;
 
         setSupportCase(
           next
         );
 
-        if (
-          workspaceId
-        ) {
-          writeQuickSupportSelectedCaseId(
-            workspaceId,
-            next.id
-          );
-        }
+        writeQuickSupportSelectedCaseId(
+          requestedWorkspaceId,
+          next.id
+        );
 
         setAuthenticationRequired(
           false
@@ -280,11 +456,9 @@ export function QuickSupportChatWorkspace() {
           invalidateQuickSupportSummary();
         }
 
-        return next;
+        return true;
       },
-      [
-        workspaceId
-      ]
+      []
     );
 
   const restoreConversation =
@@ -299,16 +473,28 @@ export function QuickSupportChatWorkspace() {
         if (
           !workspaceId
         ) {
-          setSupportCase(
-            null
-          );
-
           setLoading(
             false
           );
 
           return;
         }
+
+        const sequence =
+          viewSequenceRef.current +
+          1;
+
+        viewSequenceRef.current =
+          sequence;
+
+        navigationControllerRef.current
+          ?.abort();
+
+        const controller =
+          new AbortController();
+
+        navigationControllerRef.current =
+          controller;
 
         setLoading(
           true
@@ -328,7 +514,9 @@ export function QuickSupportChatWorkspace() {
                 credentials:
                   'same-origin',
                 cache:
-                  'no-store'
+                  'no-store',
+                signal:
+                  controller.signal
               }
             );
 
@@ -336,13 +524,23 @@ export function QuickSupportChatWorkspace() {
             response.status ===
             401
           ) {
-            setAuthenticationRequired(
-              true
-            );
+            if (
+              sequence ===
+                viewSequenceRef.current &&
+              workspaceRef.current ===
+                workspaceId
+            ) {
+              setAuthenticationRequired(
+                true
+              );
 
-            setSupportCase(
-              null
-            );
+              activeCaseIdRef.current =
+                null;
+
+              setSupportCase(
+                null
+              );
+            }
 
             return;
           }
@@ -361,8 +559,13 @@ export function QuickSupportChatWorkspace() {
               QuickSupportSummary;
 
           if (
+            controller.signal.aborted ||
+            sequence !==
+              viewSequenceRef.current ||
             snapshot.workspaceId !==
-            workspaceId
+              workspaceId ||
+            workspaceRef.current !==
+              workspaceId
           ) {
             return;
           }
@@ -396,17 +599,11 @@ export function QuickSupportChatWorkspace() {
             snapshot.activeCase;
 
           if (
-            activeCase
+            !activeCase
           ) {
-            await loadCase(
-              activeCase.id,
-              true
-            );
+            activeCaseIdRef.current =
+              null;
 
-            setStartingNew(
-              false
-            );
-          } else {
             setSupportCase(
               null
             );
@@ -418,21 +615,85 @@ export function QuickSupportChatWorkspace() {
             setStartingNew(
               false
             );
+
+            return;
+          }
+
+          const next =
+            await requestCaseDetail(
+              activeCase.id,
+              true,
+              controller.signal
+            );
+
+          if (
+            controller.signal.aborted ||
+            sequence !==
+              viewSequenceRef.current
+          ) {
+            return;
+          }
+
+          if (
+            commitCase(
+              next,
+              workspaceId,
+              true
+            )
+          ) {
+            setStartingNew(
+              false
+            );
           }
         } catch (cause) {
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'AJ Logik could not prepare Quick Support.'
-          );
+          if (
+            isAbortError(
+              cause
+            )
+          ) {
+            return;
+          }
+
+          if (
+            sequence ===
+              viewSequenceRef.current &&
+            workspaceRef.current ===
+              workspaceId
+          ) {
+            const message =
+              cause instanceof Error
+                ? cause.message
+                : 'AJ Logik could not prepare Quick Support.';
+
+            if (
+              message.startsWith(
+                'Sign in'
+              )
+            ) {
+              setAuthenticationRequired(
+                true
+              );
+            }
+
+            setError(
+              message
+            );
+          }
         } finally {
-          setLoading(
-            false
-          );
+          if (
+            sequence ===
+              viewSequenceRef.current &&
+            mountedRef.current
+          ) {
+            setLoading(
+              false
+            );
+          }
         }
       },
       [
-        loadCase,
+        commitCase,
+        requestCaseDetail,
         workspaceId,
         workspaceLoading
       ]
@@ -441,6 +702,11 @@ export function QuickSupportChatWorkspace() {
   useEffect(
     () => {
       void restoreConversation();
+
+      return () => {
+        navigationControllerRef.current
+          ?.abort();
+      };
     },
     [
       restoreConversation
@@ -452,6 +718,33 @@ export function QuickSupportChatWorkspace() {
       async (
         caseId: string
       ): Promise<void> => {
+        if (
+          !workspaceId ||
+          caseId ===
+            activeCaseIdRef.current
+        ) {
+          return;
+        }
+
+        const sequence =
+          viewSequenceRef.current +
+          1;
+
+        viewSequenceRef.current =
+          sequence;
+
+        navigationControllerRef.current
+          ?.abort();
+
+        refreshControllerRef.current
+          ?.abort();
+
+        const controller =
+          new AbortController();
+
+        navigationControllerRef.current =
+          controller;
+
         setLoading(
           true
         );
@@ -460,33 +753,146 @@ export function QuickSupportChatWorkspace() {
           null
         );
 
+        setNotice(
+          null
+        );
+
         try {
-          await loadCase(
-            caseId,
-            true
-          );
+          const next =
+            await requestCaseDetail(
+              caseId,
+              true,
+              controller.signal
+            );
 
-          setStartingNew(
-            false
-          );
+          if (
+            controller.signal.aborted ||
+            sequence !==
+              viewSequenceRef.current
+          ) {
+            return;
+          }
 
-          setMessage(
-            ''
+          if (
+            commitCase(
+              next,
+              workspaceId,
+              true
+            )
+          ) {
+            setStartingNew(
+              false
+            );
+
+            setMessage(
+              ''
+            );
+          }
+        } catch (cause) {
+          if (
+            isAbortError(
+              cause
+            )
+          ) {
+            return;
+          }
+
+          if (
+            sequence ===
+              viewSequenceRef.current
+          ) {
+            setError(
+              cause instanceof Error
+                ? cause.message
+                : 'AJ Logik could not switch Support conversations.'
+            );
+          }
+        } finally {
+          if (
+            sequence ===
+              viewSequenceRef.current &&
+            mountedRef.current
+          ) {
+            setLoading(
+              false
+            );
+          }
+        }
+      },
+      [
+        commitCase,
+        requestCaseDetail,
+        workspaceId
+      ]
+    );
+
+  const refreshActiveCase =
+    useCallback(
+      async (
+        caseId: string,
+        markRead:
+          boolean
+      ): Promise<void> => {
+        const requestedWorkspaceId =
+          workspaceRef.current;
+
+        if (
+          !requestedWorkspaceId ||
+          activeCaseIdRef.current !==
+            caseId
+        ) {
+          return;
+        }
+
+        refreshControllerRef.current
+          ?.abort();
+
+        const controller =
+          new AbortController();
+
+        refreshControllerRef.current =
+          controller;
+
+        try {
+          const next =
+            await requestCaseDetail(
+              caseId,
+              markRead,
+              controller.signal
+            );
+
+          if (
+            controller.signal.aborted ||
+            activeCaseIdRef.current !==
+              caseId
+          ) {
+            return;
+          }
+
+          commitCase(
+            next,
+            requestedWorkspaceId,
+            markRead
           );
         } catch (cause) {
+          if (
+            isAbortError(
+              cause
+            )
+          ) {
+            return;
+          }
+
           setError(
             cause instanceof Error
               ? cause.message
-              : 'AJ Logik could not switch Support conversations.'
-          );
-        } finally {
-          setLoading(
-            false
+              : 'AJ Logik could not apply a live Support update.'
           );
         }
       },
       [
-        loadCase
+        commitCase,
+        requestCaseDetail
       ]
     );
 
@@ -496,27 +902,28 @@ export function QuickSupportChatWorkspace() {
         event:
           SupportLiveEventItem
       ): Promise<void> => {
-        if (
-          !supportCase
-        ) {
+        const current =
+          supportCase;
+
+        if (!current) {
           return;
         }
 
         if (
           event.actorId ===
-          supportCase.customer.id
+          current.customer.id
         ) {
           return;
         }
 
-        await loadCase(
-          supportCase.id,
+        await refreshActiveCase(
+          current.id,
           event.type ===
             'MESSAGE_CREATED'
         );
       },
       [
-        loadCase,
+        refreshActiveCase,
         supportCase
       ]
     );
@@ -540,9 +947,21 @@ export function QuickSupportChatWorkspace() {
   const startAnotherConversation =
     useCallback(
       (): void => {
+        viewSequenceRef.current +=
+          1;
+
+        navigationControllerRef.current
+          ?.abort();
+
+        refreshControllerRef.current
+          ?.abort();
+
         live.setTyping(
           false
         );
+
+        activeCaseIdRef.current =
+          null;
 
         setSupportCase(
           null
@@ -559,23 +978,52 @@ export function QuickSupportChatWorkspace() {
         setError(
           null
         );
+
+        setNotice(
+          null
+        );
       },
       [
         live
       ]
     );
 
+  const scrollToEnd =
+    useCallback(
+      (
+        behavior:
+          ScrollBehavior =
+            'smooth'
+      ): void => {
+        messagesEndRef.current
+          ?.scrollIntoView({
+            block:
+              'end',
+            behavior
+          });
+      },
+      []
+    );
+
   useEffect(
     () => {
-      messagesEndRef.current
-        ?.scrollIntoView({
-          block:
-            'end',
-          behavior:
-            'smooth'
-        });
+      const frame =
+        window.requestAnimationFrame(
+          () => {
+            scrollToEnd(
+              'auto'
+            );
+          }
+        );
+
+      return () => {
+        window.cancelAnimationFrame(
+          frame
+        );
+      };
     },
     [
+      scrollToEnd,
       supportCase
         ?.conversation
         .messages.length
@@ -590,10 +1038,52 @@ export function QuickSupportChatWorkspace() {
 
         if (
           !body ||
-          busy
+          sendInFlightRef.current
         ) {
           return;
         }
+
+        if (
+          !live.online
+        ) {
+          setError(
+            'You are offline. Your draft is safe—reconnect before sending.'
+          );
+
+          return;
+        }
+
+        const requestedWorkspaceId =
+          workspaceId;
+
+        if (
+          !requestedWorkspaceId
+        ) {
+          setError(
+            'An active workspace is required for Support.'
+          );
+
+          return;
+        }
+
+        const selectedCaseId =
+          supportCase?.id ??
+          null;
+
+        const viewSequence =
+          viewSequenceRef.current;
+
+        sendControllerRef.current
+          ?.abort();
+
+        const controller =
+          new AbortController();
+
+        sendControllerRef.current =
+          controller;
+
+        sendInFlightRef.current =
+          true;
 
         setBusy(
           true
@@ -603,12 +1093,16 @@ export function QuickSupportChatWorkspace() {
           null
         );
 
+        setNotice(
+          null
+        );
+
         try {
           const response =
-            supportCase
+            selectedCaseId
               ? await fetch(
                   `/api/support/cases/${encodeURIComponent(
-                    supportCase.id
+                    selectedCaseId
                   )}`,
                   {
                     method:
@@ -617,6 +1111,8 @@ export function QuickSupportChatWorkspace() {
                       'same-origin',
                     cache:
                       'no-store',
+                    signal:
+                      controller.signal,
                     headers: {
                       'Content-Type':
                         'application/json'
@@ -638,6 +1134,8 @@ export function QuickSupportChatWorkspace() {
                       'same-origin',
                     cache:
                       'no-store',
+                    signal:
+                      controller.signal,
                     headers: {
                       'Content-Type':
                         'application/json'
@@ -675,7 +1173,7 @@ export function QuickSupportChatWorkspace() {
             throw new Error(
               await readFailure(
                 response,
-                supportCase
+                selectedCaseId
                   ? 'AJ Logik could not send your Support message.'
                   : 'AJ Logik could not start Quick Support.'
               )
@@ -686,50 +1184,90 @@ export function QuickSupportChatWorkspace() {
             (await response.json()) as
               SupportCaseDetail;
 
-          setSupportCase(
-            next
-          );
+          invalidateQuickSupportSummary();
+
+          const stillViewingRequest =
+            !controller.signal.aborted &&
+            mountedRef.current &&
+            workspaceRef.current ===
+              requestedWorkspaceId &&
+            viewSequenceRef.current ===
+              viewSequence;
 
           if (
-            workspaceId
+            stillViewingRequest
           ) {
-            writeQuickSupportSelectedCaseId(
-              workspaceId,
-              next.id
+            commitCase(
+              next,
+              requestedWorkspaceId,
+              false
+            );
+
+            setStartingNew(
+              false
+            );
+
+            setMessage(
+              ''
+            );
+
+            live.setTyping(
+              false
+            );
+
+            setAuthenticationRequired(
+              false
+            );
+          } else if (
+            mountedRef.current
+          ) {
+            setNotice(
+              `Message sent to ${next.caseNumber}.`
             );
           }
-
-          setStartingNew(
-            false
-          );
-
-          setMessage(
-            ''
-          );
-
-          live.setTyping(
-            false
-          );
-
-          setAuthenticationRequired(
-            false
-          );
-
-          invalidateQuickSupportSummary();
         } catch (cause) {
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'AJ Logik could not send your Support message.'
-          );
+          if (
+            isAbortError(
+              cause
+            )
+          ) {
+            return;
+          }
+
+          if (
+            mountedRef.current &&
+            viewSequenceRef.current ===
+              viewSequence
+          ) {
+            setError(
+              cause instanceof Error
+                ? cause.message
+                : 'AJ Logik could not send your Support message.'
+            );
+          }
         } finally {
-          setBusy(
-            false
-          );
+          if (
+            sendControllerRef.current ===
+            controller
+          ) {
+            sendControllerRef.current =
+              null;
+
+            sendInFlightRef.current =
+              false;
+
+            if (
+              mountedRef.current
+            ) {
+              setBusy(
+                false
+              );
+            }
+          }
         }
       },
       [
-        busy,
+        commitCase,
         live,
         message,
         supportCase,
@@ -737,11 +1275,55 @@ export function QuickSupportChatWorkspace() {
       ]
     );
 
+  const handleComposerKeyDown =
+    useCallback(
+      (
+        event:
+          React.KeyboardEvent<HTMLTextAreaElement>
+      ): void => {
+        if (
+          event.key !==
+            'Enter' ||
+          event.shiftKey ||
+          event.nativeEvent.isComposing
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        void sendMessage();
+      },
+      [
+        sendMessage
+      ]
+    );
+
+  const handleComposerFocus =
+    useCallback(
+      (): void => {
+        window.setTimeout(
+          () => {
+            scrollToEnd(
+              'smooth'
+            );
+          },
+          140
+        );
+      },
+      [
+        scrollToEnd
+      ]
+    );
+
   if (
     loading
   ) {
     return (
-      <div className="grid min-h-[22rem] place-items-center">
+      <div
+        data-quick-support-workspace
+        aria-busy="true"
+        className="grid h-full min-h-[18rem] place-items-center">
         <div className="text-center">
           <LoaderCircle className="mx-auto size-6 animate-spin text-primary" />
 
@@ -757,7 +1339,9 @@ export function QuickSupportChatWorkspace() {
     authenticationRequired
   ) {
     return (
-      <div className="grid min-h-[22rem] place-items-center">
+      <div
+        data-quick-support-workspace
+        className="grid h-full min-h-[18rem] place-items-center overflow-y-auto p-4">
         <div className="max-w-sm rounded-[1.5rem] border border-border/60 bg-muted/25 p-5 text-center">
           <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
             <ShieldCheck className="size-5" />
@@ -773,7 +1357,7 @@ export function QuickSupportChatWorkspace() {
 
           <Link
             href="/sign-in"
-            className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground">
+            className="mt-5 inline-flex h-10 touch-manipulation items-center justify-center gap-2 rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground">
             Sign in
             <ArrowRight className="size-3.5" />
           </Link>
@@ -786,7 +1370,9 @@ export function QuickSupportChatWorkspace() {
     !supportCase
   ) {
     return (
-      <div className="space-y-4">
+      <div
+        data-quick-support-workspace
+        className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
         <QuickSupportCaseContinuityBar
           selectedCaseId={
             null
@@ -806,7 +1392,7 @@ export function QuickSupportChatWorkspace() {
           }
         />
 
-        <section className="rounded-[1.5rem] border border-emerald-500/20 bg-emerald-500/8 p-4">
+        <section className="mt-4 rounded-[1.5rem] border border-emerald-500/20 bg-emerald-500/8 p-4">
           <span className="grid size-10 place-items-center rounded-2xl bg-emerald-500/12 text-emerald-600">
             <Headphones className="size-4" />
           </span>
@@ -828,9 +1414,35 @@ export function QuickSupportChatWorkspace() {
           </p>
         </section>
 
+        {!live.online ? (
+          <div
+            role="status"
+            className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200">
+            <WifiOff className="mt-0.5 size-4 shrink-0" />
+
+            <span>
+              You are offline. Your draft remains here and can be sent after reconnecting.
+            </span>
+          </div>
+        ) : null}
+
+        {notice ? (
+          <div
+            role="status"
+            className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+            {
+              notice
+            }
+          </div>
+        ) : null}
+
         {error ? (
-          <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
-            {error}
+          <div
+            role="alert"
+            className="mt-3 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
+            {
+              error
+            }
           </div>
         ) : null}
 
@@ -841,7 +1453,7 @@ export function QuickSupportChatWorkspace() {
           maxLength={
             4000
           }
-          autoFocus
+          enterKeyHint="send"
           onChange={
             event =>
               setMessage(
@@ -849,32 +1461,24 @@ export function QuickSupportChatWorkspace() {
               )
           }
           onKeyDown={
-            event => {
-              if (
-                event.key ===
-                  'Enter' &&
-                !event.shiftKey
-              ) {
-                event.preventDefault();
-
-                void sendMessage();
-              }
-            }
+            handleComposerKeyDown
           }
           placeholder="Tell us what you need help with…"
-          className="min-h-36 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none focus:border-primary/40"
+          aria-label="Message AJ Logik Support"
+          className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-base leading-6 outline-none focus:border-primary/40 sm:text-sm"
         />
 
         <button
           type="button"
           disabled={
             busy ||
-            !message.trim()
+            !message.trim() ||
+            !live.online
           }
           onClick={() =>
             void sendMessage()
           }
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-xs font-black text-primary-foreground disabled:opacity-40">
+          className="mt-3 inline-flex h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-full bg-primary px-4 text-xs font-black text-primary-foreground disabled:opacity-40">
           {busy ? (
             <LoaderCircle className="size-4 animate-spin" />
           ) : (
@@ -886,7 +1490,7 @@ export function QuickSupportChatWorkspace() {
 
         <Link
           href="/support"
-          className="inline-flex w-full items-center justify-center gap-2 text-xs font-bold text-primary">
+          className="mt-4 inline-flex w-full touch-manipulation items-center justify-center gap-2 text-xs font-bold text-primary">
           View Support history
           <ArrowRight className="size-3.5" />
         </Link>
@@ -899,28 +1503,44 @@ export function QuickSupportChatWorkspace() {
       supportCase.status
     );
 
-  return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-border/60 bg-background shadow-sm">
-      <QuickSupportCaseContinuityBar
-        selectedCaseId={
-          supportCase.id
-        }
-        startingNew={
-          startingNew
-        }
-        onSelectCase={
-          caseId => {
-            void selectSupportCase(
-              caseId
-            );
-          }
-        }
-        onStartNew={
-          startAnotherConversation
-        }
-      />
+  const connectionInterrupted =
+    live.state ===
+      'offline' ||
+    live.state ===
+      'reconnecting';
 
-      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-card/70 p-3">
+  return (
+    <div
+      data-quick-support-workspace
+      data-support-case={
+        supportCase.id
+      }
+      aria-busy={
+        busy
+      }
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-background sm:rounded-[1.5rem] sm:border sm:border-border/60 sm:shadow-sm">
+      <div className="shrink-0">
+        <QuickSupportCaseContinuityBar
+          selectedCaseId={
+            supportCase.id
+          }
+          startingNew={
+            startingNew
+          }
+          onSelectCase={
+            caseId => {
+              void selectSupportCase(
+                caseId
+              );
+            }
+          }
+          onStartNew={
+            startAnotherConversation
+          }
+        />
+      </div>
+
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/60 bg-card/70 p-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[10px] font-black uppercase tracking-[0.15em] text-primary">
             {
@@ -955,7 +1575,73 @@ export function QuickSupportChatWorkspace() {
         remoteLabel="Support agent"
       />
 
-      <div className="max-h-[50dvh] min-h-[19rem] space-y-3 overflow-y-auto bg-muted/20 p-3">
+      {connectionInterrupted ? (
+        <div
+          role="status"
+          className={cn(
+            'flex shrink-0 items-center gap-2 border-b px-3 py-2 text-[10px]',
+            live.state ===
+              'offline'
+              ? 'border-destructive/20 bg-destructive/8 text-destructive'
+              : 'border-amber-500/20 bg-amber-500/8 text-amber-800 dark:text-amber-200'
+          )}>
+          {live.state ===
+          'offline' ? (
+            <WifiOff className="size-3.5 shrink-0" />
+          ) : (
+            <RefreshCw className="size-3.5 shrink-0 animate-spin" />
+          )}
+
+          <span className="min-w-0 flex-1">
+            {
+              live.state ===
+                'offline'
+                ? 'Offline. Saved messages remain available and your draft is safe.'
+                : 'Restoring the live Support connection…'
+            }
+          </span>
+
+          <button
+            type="button"
+            onClick={
+              live.retry
+            }
+            className="shrink-0 rounded-full border border-current/20 px-2.5 py-1 font-black">
+            Retry
+          </button>
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div
+          role="status"
+          className="shrink-0 border-b border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] text-emerald-700 dark:text-emerald-300">
+          {
+            notice
+          }
+        </div>
+      ) : null}
+
+      {error ? (
+        <div
+          role="alert"
+          className="flex shrink-0 items-start gap-2 border-b border-destructive/20 bg-destructive/10 px-3 py-2 text-[10px] text-destructive">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+
+          <span>
+            {
+              error
+            }
+          </span>
+        </div>
+      ) : null}
+
+      <div
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-label={`Messages for Support Case ${supportCase.caseNumber}`}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-muted/20 p-3 [scrollbar-gutter:stable]">
         {
           supportCase
             .conversation
@@ -999,7 +1685,7 @@ export function QuickSupportChatWorkspace() {
                         </span>
                       </div>
 
-                      <p className="mt-1.5 whitespace-pre-wrap text-xs leading-5">
+                      <p className="mt-1.5 whitespace-pre-wrap break-words text-xs leading-5">
                         {
                           item.body
                         }
@@ -1029,13 +1715,7 @@ export function QuickSupportChatWorkspace() {
         />
       </div>
 
-      <div className="border-t border-border/60 bg-card/70 p-3">
-        {error ? (
-          <div className="mb-3 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
-            {error}
-          </div>
-        ) : null}
-
+      <div className="shrink-0 border-t border-border/60 bg-card/90 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
         {canSend ? (
           <div className="flex items-end gap-2">
             <textarea
@@ -1044,6 +1724,13 @@ export function QuickSupportChatWorkspace() {
               }
               maxLength={
                 4000
+              }
+              rows={
+                1
+              }
+              enterKeyHint="send"
+              onFocus={
+                handleComposerFocus
               }
               onChange={
                 event => {
@@ -1067,32 +1754,29 @@ export function QuickSupportChatWorkspace() {
                 )
               }
               onKeyDown={
-                event => {
-                  if (
-                    event.key ===
-                      'Enter' &&
-                    !event.shiftKey
-                  ) {
-                    event.preventDefault();
-
-                    void sendMessage();
-                  }
-                }
+                handleComposerKeyDown
               }
-              placeholder="Message Support…"
-              className="max-h-28 min-h-11 min-w-0 flex-1 resize-y rounded-2xl border border-border bg-background px-3 py-2.5 text-xs leading-5 outline-none focus:border-primary/40"
+              placeholder={
+                live.online
+                  ? 'Message Support…'
+                  : 'Draft saved while offline…'
+              }
+              aria-label={`Message Support about ${supportCase.caseNumber}`}
+              className="max-h-28 min-h-11 min-w-0 flex-1 resize-y rounded-2xl border border-border bg-background px-3 py-2.5 text-base leading-5 outline-none focus:border-primary/40 sm:text-xs"
             />
 
             <button
               type="button"
+              aria-label="Send Support message"
               disabled={
                 busy ||
-                !message.trim()
+                !message.trim() ||
+                !live.online
               }
               onClick={() =>
                 void sendMessage()
               }
-              className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-40">
+              className="grid size-11 shrink-0 touch-manipulation place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-40">
               {busy ? (
                 <LoaderCircle className="size-4 animate-spin" />
               ) : (
@@ -1120,7 +1804,7 @@ export function QuickSupportChatWorkspace() {
             href={
               `/support/${supportCase.id}`
             }
-            className="inline-flex items-center gap-1.5 text-[10px] font-black text-primary">
+            className="inline-flex touch-manipulation items-center gap-1.5 text-[10px] font-black text-primary">
             Open full case
             <ArrowRight className="size-3" />
           </Link>

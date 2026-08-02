@@ -2,7 +2,8 @@
 
 import {
   useEffect,
-  useRef
+  useRef,
+  useState
 } from 'react';
 
 import type {
@@ -13,9 +14,8 @@ type UseQuickSupportAttentionStreamInput = {
   workspaceId:
     string |
     null;
-  caseId:
-    string |
-    null;
+  caseIds:
+    readonly string[];
   enabled:
     boolean;
   onEvent:
@@ -26,6 +26,9 @@ type UseQuickSupportAttentionStreamInput = {
       void |
       Promise<void>;
 };
+
+const MAX_ATTENTION_STREAMS =
+  5;
 
 function parseEvent(
   value: string
@@ -42,7 +45,7 @@ function parseEvent(
 
 export function useQuickSupportAttentionStream({
   workspaceId,
-  caseId,
+  caseIds,
   enabled,
   onEvent
 }: UseQuickSupportAttentionStreamInput): void {
@@ -50,6 +53,47 @@ export function useQuickSupportAttentionStream({
     useRef(
       onEvent
     );
+
+  const seenEventsRef =
+    useRef(
+      new Set<string>()
+    );
+
+  const pendingEventRef =
+    useRef<
+      SupportLiveEventItem |
+      null
+    >(
+      null
+    );
+
+  const refreshTimerRef =
+    useRef<
+      number |
+      null
+    >(
+      null
+    );
+
+  const [
+    reconnectEpoch,
+    setReconnectEpoch
+  ] =
+    useState(0);
+
+  const caseKey =
+    Array.from(
+      new Set(
+        caseIds.filter(
+          Boolean
+        )
+      )
+    )
+      .slice(
+        0,
+        MAX_ATTENTION_STREAMS
+      )
+      .join('|');
 
   useEffect(
     () => {
@@ -63,76 +107,224 @@ export function useQuickSupportAttentionStream({
 
   useEffect(
     () => {
+      const handleOnline =
+        (): void => {
+          setReconnectEpoch(
+            current =>
+              current +
+              1
+          );
+        };
+
+      const handleVisibility =
+        (): void => {
+          if (
+            document.visibilityState ===
+            'visible'
+          ) {
+            setReconnectEpoch(
+              current =>
+                current +
+                1
+            );
+          }
+        };
+
+      window.addEventListener(
+        'online',
+        handleOnline
+      );
+
+      document.addEventListener(
+        'visibilitychange',
+        handleVisibility
+      );
+
+      return () => {
+        window.removeEventListener(
+          'online',
+          handleOnline
+        );
+
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibility
+        );
+      };
+    },
+    []
+  );
+
+  useEffect(
+    () => {
       if (
         !enabled ||
         !workspaceId ||
-        !caseId ||
+        !caseKey ||
         typeof EventSource ===
-          'undefined'
+          'undefined' ||
+        !navigator.onLine
       ) {
         return;
       }
 
-      const source =
-        new EventSource(
-          `/api/support/quick-chat/live?workspaceId=${encodeURIComponent(
-            workspaceId
-          )}&caseId=${encodeURIComponent(
-            caseId
-          )}`,
-          {
-            withCredentials:
-              true
-          }
-        );
+      const activeCaseIds =
+        caseKey.split('|');
 
-      const handleSupport =
+      const sources:
+        EventSource[] =
+          [];
+
+      const scheduleRefresh =
         (
-          event: Event
+          payload:
+            SupportLiveEventItem
         ): void => {
-          const payload =
-            parseEvent(
-              (
-                event as
-                  MessageEvent<string>
-              ).data
-            );
+          pendingEventRef.current =
+            payload;
 
-          if (!payload) {
+          if (
+            refreshTimerRef.current !==
+            null
+          ) {
             return;
           }
 
-          void Promise.resolve(
-            onEventRef.current(
-              payload
-            )
-          ).catch(
-            cause => {
-              console.error(
-                'Quick Support attention refresh failed.',
-                cause
-              );
-            }
-          );
+          refreshTimerRef.current =
+            window.setTimeout(
+              () => {
+                refreshTimerRef.current =
+                  null;
+
+                const next =
+                  pendingEventRef.current;
+
+                pendingEventRef.current =
+                  null;
+
+                if (!next) {
+                  return;
+                }
+
+                void Promise.resolve(
+                  onEventRef.current(
+                    next
+                  )
+                ).catch(
+                  cause => {
+                    console.error(
+                      'Quick Support attention refresh failed.',
+                      cause
+                    );
+                  }
+                );
+              },
+              120
+            );
         };
 
-      source.addEventListener(
-        'support',
-        handleSupport
-      );
+      for (
+        const caseId of
+        activeCaseIds
+      ) {
+        const source =
+          new EventSource(
+            `/api/support/quick-chat/live?workspaceId=${encodeURIComponent(
+              workspaceId
+            )}&caseId=${encodeURIComponent(
+              caseId
+            )}`,
+            {
+              withCredentials:
+                true
+            }
+          );
 
-      return () => {
-        source.removeEventListener(
+        const handleSupport =
+          (
+            event: Event
+          ): void => {
+            const payload =
+              parseEvent(
+                (
+                  event as
+                    MessageEvent<string>
+                ).data
+              );
+
+            if (!payload) {
+              return;
+            }
+
+            const eventKey =
+              `${caseId}:${payload.id}`;
+
+            if (
+              seenEventsRef.current.has(
+                eventKey
+              )
+            ) {
+              return;
+            }
+
+            seenEventsRef.current.add(
+              eventKey
+            );
+
+            if (
+              seenEventsRef.current.size >
+              500
+            ) {
+              seenEventsRef.current.clear();
+
+              seenEventsRef.current.add(
+                eventKey
+              );
+            }
+
+            scheduleRefresh(
+              payload
+            );
+          };
+
+        source.addEventListener(
           'support',
           handleSupport
         );
 
-        source.close();
+        sources.push(
+          source
+        );
+      }
+
+      return () => {
+        for (
+          const source of
+          sources
+        ) {
+          source.close();
+        }
+
+        if (
+          refreshTimerRef.current !==
+          null
+        ) {
+          window.clearTimeout(
+            refreshTimerRef.current
+          );
+
+          refreshTimerRef.current =
+            null;
+        }
+
+        pendingEventRef.current =
+          null;
       };
     },
     [
-      caseId,
+      caseKey,
       enabled,
+      reconnectEpoch,
       workspaceId
     ]
   );

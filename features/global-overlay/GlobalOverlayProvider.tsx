@@ -589,6 +589,9 @@ export function GlobalOverlayProvider({
                   activeOverlay.id
                 }
                 data-global-overlay-surface
+                data-overlay-id={
+                  activeOverlay.id
+                }
                 className={cn(
                   'rcentz-overlay-canvas pointer-events-auto relative grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden',
                   'border border-border/70 bg-popover/96 text-popover-foreground shadow-2xl ring-1 ring-foreground/[0.07] backdrop-blur-3xl outline-none',
@@ -596,7 +599,8 @@ export function GlobalOverlayProvider({
                   surfaceClasses(
                     activeVariant,
                     activeSize
-                  )
+                  ),
+                  activeOverlay.surfaceClassName
                 )}>
                 <header className="relative z-10 border-b border-border/60 bg-popover/92 px-4 py-3.5 backdrop-blur-xl sm:px-6 sm:py-4">
                   <div className="flex min-w-0 items-start gap-3">
@@ -655,7 +659,11 @@ export function GlobalOverlayProvider({
                   </div>
                 </header>
 
-                <div className="rcentz-overlay-body min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 lg:px-7">
+                <div
+                  className={cn(
+                    'rcentz-overlay-body min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 lg:px-7',
+                    activeOverlay.bodyClassName
+                  )}>
                   {
                     activeOverlay.content
                   }

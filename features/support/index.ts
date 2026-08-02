@@ -39,6 +39,14 @@ export type {
   QuickSupportPanelMode
 } from './client/useQuickSupportPanelState';
 
+export {
+  useQuickSupportViewport
+} from './client/useQuickSupportViewport';
+
+export type {
+  QuickSupportViewportState
+} from './client/useQuickSupportViewport';
+
 export type {
   SupportAssignmentItem,
   SupportCaseCategoryValue,

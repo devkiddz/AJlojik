@@ -17,6 +17,7 @@
     "verify:support-quick-continuity": "node scripts/verify-quick-support-continuity.mjs",
     "verify:support-quick-unread": "node scripts/verify-quick-support-unread-state.mjs",
     "verify:support-quick-history": "node scripts/verify-quick-support-case-history.mjs",
+    "verify:support-quick-production": "node scripts/verify-quick-support-production.mjs",
     "seed": "tsx prisma/seed.ts",
     "seed:admins": "tsx prisma/seed-admins.ts",
     "provision:super-admins": "tsx prisma/provision-super-admins.ts",
