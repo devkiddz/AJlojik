@@ -58,6 +58,8 @@ export type AdminPermission =
   | 'support:escalate'
   | 'support:resolve'
   | 'support:configure'
+  | 'support:commerce:prepare'
+  | 'support:commerce:approve'
   | 'communication:moderate'
   | 'multivendor:manage';
 
@@ -80,6 +82,7 @@ const levelOne: AdminPermission[] = [
   'approval:view',
   'support:view',
   'support:reply',
+  'support:commerce:prepare',
   'settings:view'
 ];
 
@@ -102,7 +105,8 @@ const levelTwo: AdminPermission[] = [
   'todo:assign',
   'support:assign',
   'support:escalate',
-  'support:resolve'
+  'support:resolve',
+  'support:commerce:approve'
 ];
 
 const levelThree: AdminPermission[] = [

@@ -97,6 +97,14 @@ export default async function AdminSupportCasePage({
         resolve:
           access.permissions.has(
             'support:resolve'
+          ),
+        prepareCommerce:
+          access.permissions.has(
+            'support:commerce:prepare'
+          ),
+        approveCommerce:
+          access.permissions.has(
+            'support:commerce:approve'
           )
       }}
     />

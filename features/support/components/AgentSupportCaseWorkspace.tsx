@@ -23,6 +23,10 @@ import {
 import { cn } from '@/lib/utils';
 
 import {
+  SupportOperationsPanel
+} from './SupportOperationsPanel';
+
+import {
   SUPPORT_CASE_PRIORITIES,
   SUPPORT_CASE_STATUSES,
   SUPPORT_RESOLUTION_TYPES
@@ -50,6 +54,8 @@ type AgentSupportCaseWorkspaceProps = {
     assign: boolean;
     escalate: boolean;
     resolve: boolean;
+    prepareCommerce: boolean;
+    approveCommerce: boolean;
   };
 };
 
@@ -590,6 +596,16 @@ export function AgentSupportCaseWorkspace({
                 Propose resolution
               </button>
             </Panel>
+
+            <SupportOperationsPanel
+              caseId={supportCase.id}
+              canPrepare={
+                permissions.prepareCommerce
+              }
+              canApprove={
+                permissions.approveCommerce
+              }
+            />
           </aside>
         </div>
       </div>

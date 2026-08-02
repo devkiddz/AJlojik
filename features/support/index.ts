@@ -36,3 +36,17 @@ export { AgentSupportQueue } from './components/AgentSupportQueue';
 export { CustomerSupportCaseWorkspace } from './components/CustomerSupportCaseWorkspace';
 export { CustomerSupportWorkspace } from './components/CustomerSupportWorkspace';
 export type { SupportOrderOption } from './components/CustomerSupportWorkspace';
+export { SupportOperationsPanel } from './components/SupportOperationsPanel';
+export {
+  SUPPORT_COMMERCE_ACTION_STATUSES,
+  SUPPORT_COMMERCE_ACTION_TYPES
+} from './supportOperationsTypes';
+export type {
+  SupportCommerceActionItem,
+  SupportCommerceActionStatusValue,
+  SupportCommerceActionTypeValue,
+  SupportCommerceContext,
+  SupportOperationsSnapshot,
+  SupportSLAHealth,
+  SupportSLAState
+} from './supportOperationsTypes';
