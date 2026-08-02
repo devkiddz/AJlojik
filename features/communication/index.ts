@@ -27,3 +27,6 @@ export type {
 
 export { useCommunicationSummary } from './client/useCommunicationSummary';
 export { CommunicationBell } from './components/CommunicationBell';
+export { ConversationWorkspace } from './components/ConversationWorkspace';
+export { InboxWorkspace } from './components/InboxWorkspace';
+export type { CommunicationComposeVendor } from './components/InboxWorkspace';

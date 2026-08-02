@@ -356,6 +356,16 @@ export function CommunicationBell() {
             onSignIn={() =>
               navigateTo('/sign-in')
             }
+            onOpen={conversation =>
+              navigateTo(
+                `/inbox/${encodeURIComponent(
+                  conversation.id
+                )}`
+              )
+            }
+            onOpenAll={() =>
+              navigateTo('/inbox')
+            }
           />
         ) : (
           <ShoppingActivityPanel
@@ -518,7 +528,9 @@ function InboxPreview({
   loading,
   error,
   conversations,
-  onSignIn
+  onSignIn,
+  onOpen,
+  onOpenAll
 }: {
   authenticated: boolean;
   loading: boolean;
@@ -526,6 +538,11 @@ function InboxPreview({
   conversations:
     CommunicationConversationSummary[];
   onSignIn: () => void;
+  onOpen: (
+    conversation:
+      CommunicationConversationSummary
+  ) => void;
+  onOpenAll: () => void;
 }) {
   if (!authenticated) {
     return (
@@ -560,12 +577,16 @@ function InboxPreview({
           <div className="space-y-2">
             {conversations.map(
               conversation => (
-                <article
+                <button
                   key={
                     conversation.id
                   }
+                  type="button"
+                  onClick={() =>
+                    onOpen(conversation)
+                  }
                   className={cn(
-                    'flex items-start gap-3 rounded-2xl border p-3',
+                    'flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition hover:bg-card',
                     conversation.unreadCount
                       ? 'border-sky-500/25 bg-sky-500/[0.045]'
                       : 'border-transparent bg-card/35'
@@ -614,7 +635,7 @@ function InboxPreview({
                         : 'Conversation created'}
                     </p>
                   </div>
-                </article>
+                </button>
               )
             )}
           </div>
@@ -629,11 +650,13 @@ function InboxPreview({
         )}
       </div>
 
-      <div className="border-t border-border/60 bg-card/50 px-4 py-3 text-center">
-        <p className="text-[10px] leading-4 text-muted-foreground">
-          The complete Inbox workspace
-          installs in MS11.03.
-        </p>
+      <div className="border-t border-border/60 bg-card/50 p-3">
+        <button
+          type="button"
+          onClick={onOpenAll}
+          className="flex w-full items-center justify-center rounded-full bg-foreground px-4 py-2.5 text-xs font-semibold text-background transition hover:opacity-90">
+          Open Inbox
+        </button>
       </div>
     </div>
   );
