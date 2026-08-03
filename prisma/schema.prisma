@@ -1638,7 +1638,6 @@ model CommunicationStatusHistory {
 // RCENTZ SUPPORT
 // ============================================================
 
-
 model SupportKnowledgeBucket {
   id          String  @id @default(cuid())
   workspaceId String
@@ -1660,7 +1659,7 @@ model SupportKnowledgeBucket {
 }
 
 model SupportKnowledgeEntry {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   workspaceId String
   bucketId    String
   slug        String
@@ -1673,9 +1672,9 @@ model SupportKnowledgeEntry {
   sampleQuestions String[] @default([])
   actions         Json?
 
-  priority    Int      @default(0)
-  active      Boolean  @default(true)
-  verified    Boolean  @default(false)
+  priority    Int       @default(0)
+  active      Boolean   @default(true)
+  verified    Boolean   @default(false)
   publishedAt DateTime?
 
   workspace Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -1690,7 +1689,6 @@ model SupportKnowledgeEntry {
   @@index([bucketId, priority])
   @@map("support_knowledge_entry")
 }
-
 
 enum SupportCaseCategory {
   ORDER
