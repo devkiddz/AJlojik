@@ -1083,10 +1083,8 @@ model Workspace {
   supportCases               SupportCase[]
   supportSLAs                SupportSLA[]
   supportKnowledgeBuckets    SupportKnowledgeBucket[]
-  supportKnowledgeEntries    SupportKnowledgeEntry[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
 
   shoppingListPreparationRequests ShoppingListPreparationRequest[]
 
@@ -1095,6 +1093,10 @@ model Workspace {
   intelligenceResolutions  IntelligenceResolution[]  @relation("IntelligenceResolutionWorkspace")
   intelligenceProviderRuns IntelligenceProviderRun[] @relation("IntelligenceProviderRunWorkspace")
   intelligenceAuditEvents  IntelligenceAuditEvent[]  @relation("IntelligenceAuditEventWorkspace")
+
+  // AJLOJIK_SUPPORT_KNOWLEDGE_RELATIONS
+  supportKnowledgeEntries      SupportKnowledgeEntry[]
+  supportKnowledgeInteractions SupportKnowledgeInteraction[]
 
   @@index([mode, active])
   @@map("workspace")
@@ -1656,38 +1658,6 @@ model SupportKnowledgeBucket {
   @@unique([workspaceId, slug])
   @@index([workspaceId, active, priority])
   @@map("support_knowledge_bucket")
-}
-
-model SupportKnowledgeEntry {
-  id          String  @id @default(cuid())
-  workspaceId String
-  bucketId    String
-  slug        String
-  intent      String
-  title       String
-  answer      String
-  followUp    String?
-
-  keywords        String[] @default([])
-  sampleQuestions String[] @default([])
-  actions         Json?
-
-  priority    Int       @default(0)
-  active      Boolean   @default(true)
-  verified    Boolean   @default(false)
-  publishedAt DateTime?
-
-  workspace Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  bucket    SupportKnowledgeBucket @relation(fields: [bucketId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([workspaceId, slug])
-  @@index([workspaceId, intent])
-  @@index([workspaceId, active, verified, priority])
-  @@index([bucketId, priority])
-  @@map("support_knowledge_entry")
 }
 
 enum SupportCaseCategory {
@@ -3424,3 +3394,126 @@ model IntelligenceAuditEvent {
   @@index([traceId])
   @@map("intelligence_audit_event")
 }
+
+// ============================================================
+// SUPPORT AUTO RESPONSE — KNOWLEDGE FOUNDATION
+// AJLOJIK_SUPPORT_KNOWLEDGE_START
+// ============================================================
+
+enum SupportKnowledgeStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum SupportKnowledgeInteractionOutcome {
+  ANSWERED
+  CLARIFICATION_REQUIRED
+  CONTEXT_REQUIRED
+  HUMAN_SUPPORT_REQUIRED
+  NO_MATCH
+}
+
+model SupportKnowledgeEntry {
+  id String @id @default(cuid())
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  slug            String
+  title           String
+  category        String
+  intent          String
+  primaryQuestion String
+  answerTemplate  String
+
+  clarificationAnswer String?
+  escalationAnswer    String?
+
+  keywords        String[] @default([])
+  synonyms        String[] @default([])
+  requiredContext String[] @default([])
+
+  conditions Json?
+  actions    Json?
+
+  status              SupportKnowledgeStatus @default(DRAFT)
+  priority            Int                    @default(0)
+  confidenceThreshold Float                  @default(0.65)
+  version             Int                    @default(1)
+
+  publishedAt DateTime?
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  questionExamples         SupportKnowledgeQuestionExample[]
+  interactions             SupportKnowledgeInteraction[]
+  supportKnowledgeBucket   SupportKnowledgeBucket?           @relation(fields: [supportKnowledgeBucketId], references: [id])
+  supportKnowledgeBucketId String?
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, status, priority])
+  @@index([workspaceId, intent, status])
+  @@index([workspaceId, category, status])
+  @@map("support_knowledge_entry")
+}
+
+model SupportKnowledgeQuestionExample {
+  id String @id @default(cuid())
+
+  entryId String
+  entry   SupportKnowledgeEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  text           String
+  normalizedText String
+  locale         String  @default("en-NG")
+  weight         Float   @default(1)
+  active         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([entryId, normalizedText])
+  @@index([entryId, active])
+  @@index([normalizedText])
+  @@map("support_knowledge_question_example")
+}
+
+model SupportKnowledgeInteraction {
+  id String @id @default(cuid())
+
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customerId    String?
+  supportCaseId String?
+
+  entryId String?
+  entry   SupportKnowledgeEntry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
+
+  question           String
+  normalizedQuestion String
+  matchedIntent      String?
+  confidence         Float?
+  outcome            SupportKnowledgeInteractionOutcome
+  answer             String?
+
+  feedbackHelpful Boolean?
+  feedbackReason  String?
+  humanRequested  Boolean  @default(false)
+
+  pathname String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, outcome, createdAt])
+  @@index([workspaceId, matchedIntent, createdAt])
+  @@index([entryId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([supportCaseId])
+  @@map("support_knowledge_interaction")
+}
+
+// AJLOJIK_SUPPORT_KNOWLEDGE_END

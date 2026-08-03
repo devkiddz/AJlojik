@@ -117,3 +117,15 @@ export type {
 } from './supportLiveTypes';
 
 export * from './supportGuideTypes';
+
+export type {
+  RecordSupportKnowledgeInteractionInput,
+  SupportKnowledgeActionDefinition,
+  SupportKnowledgeConditionDefinition,
+  SupportKnowledgeEntrySnapshot,
+  SupportKnowledgeInteractionOutcomeValue,
+  SupportKnowledgeQuestionExampleInput,
+  SupportKnowledgeQuestionExampleSnapshot,
+  SupportKnowledgeSeedEntry,
+  SupportKnowledgeStatusValue
+} from './supportKnowledgeTypes';

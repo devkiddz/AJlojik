@@ -4,12 +4,9 @@ import {
   prisma
 } from '@/lib/prisma';
 
-import {
-  SUPPORT_GUIDE_INTENTS,
-  type SupportGuideAction,
-  type SupportGuideIntent,
-  type SupportGuideRequest,
-  type SupportGuideResponse
+import type {
+  SupportGuideRequest,
+  SupportGuideResponse
 } from '../supportGuideTypes';
 
 import {
@@ -18,305 +15,6 @@ import {
 
 const MAX_QUESTION_LENGTH =
   1000;
-
-
-const MIN_DATABASE_MATCH_SCORE =
-  8;
-
-function normalizedSearchText(
-  value: string
-): string {
-  return value
-    .toLocaleLowerCase('en-NG')
-    .replace(
-      /[^a-z0-9\s-]+/g,
-      ' '
-    )
-    .replace(
-      /\s+/g,
-      ' '
-    )
-    .trim();
-}
-
-function searchTokens(
-  value: string
-): Set<string> {
-  return new Set(
-    normalizedSearchText(value)
-      .split(' ')
-      .filter(token => token.length > 1)
-  );
-}
-
-function isSupportGuideIntent(
-  value: string
-): value is SupportGuideIntent {
-  return (
-    SUPPORT_GUIDE_INTENTS as readonly string[]
-  ).includes(value);
-}
-
-function parseKnowledgeActions(
-  value: unknown
-): SupportGuideAction[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap(item => {
-    if (
-      !item ||
-      typeof item !== 'object'
-    ) {
-      return [];
-    }
-
-    const candidate =
-      item as Record<string, unknown>;
-
-    const kind =
-      candidate.kind;
-
-    if (
-      kind !== 'NAVIGATE' &&
-      kind !== 'FOLLOW_UP' &&
-      kind !== 'HUMAN_HANDOFF'
-    ) {
-      return [];
-    }
-
-    if (
-      typeof candidate.id !== 'string' ||
-      typeof candidate.label !== 'string'
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        id: candidate.id,
-        label: candidate.label,
-        kind,
-        href:
-          typeof candidate.href === 'string'
-            ? candidate.href
-            : undefined,
-        prompt:
-          typeof candidate.prompt === 'string'
-            ? candidate.prompt
-            : undefined
-      }
-    ];
-  });
-}
-
-function knowledgeMatchScore(
-  question: string,
-  entry: {
-    intent: string;
-    title: string;
-    keywords: string[];
-    sampleQuestions: string[];
-    priority: number;
-  }
-): number {
-  const normalized =
-    normalizedSearchText(question);
-
-  const tokens =
-    searchTokens(question);
-
-  let score =
-    Math.max(
-      0,
-      entry.priority
-    );
-
-  for (
-    const sampleQuestion of
-    entry.sampleQuestions
-  ) {
-    const sample =
-      normalizedSearchText(
-        sampleQuestion
-      );
-
-    if (!sample) {
-      continue;
-    }
-
-    if (sample === normalized) {
-      score += 100;
-      continue;
-    }
-
-    if (
-      normalized.includes(sample) ||
-      sample.includes(normalized)
-    ) {
-      score += 30;
-    }
-
-    for (
-      const token of
-      searchTokens(sampleQuestion)
-    ) {
-      if (tokens.has(token)) {
-        score += 3;
-      }
-    }
-  }
-
-  for (
-    const keyword of
-    entry.keywords
-  ) {
-    const normalizedKeyword =
-      normalizedSearchText(keyword);
-
-    if (!normalizedKeyword) {
-      continue;
-    }
-
-    if (
-      normalized.includes(
-        normalizedKeyword
-      )
-    ) {
-      score += 8;
-    }
-
-    if (
-      tokens.has(
-        normalizedKeyword
-      )
-    ) {
-      score += 4;
-    }
-  }
-
-  for (
-    const token of
-    searchTokens(
-      `${entry.intent} ${entry.title}`
-    )
-  ) {
-    if (tokens.has(token)) {
-      score += 2;
-    }
-  }
-
-  return score;
-}
-
-async function databaseKnowledgeResponse(
-  workspaceId: string,
-  question: string,
-  pathname:
-    | string
-    | null
-    | undefined
-): Promise<SupportGuideResponse | null> {
-  const entries =
-    await prisma.supportKnowledgeEntry.findMany({
-      where: {
-        workspaceId,
-        active: true,
-        verified: true,
-        bucket: {
-          active: true
-        }
-      },
-      select: {
-        id: true,
-        intent: true,
-        title: true,
-        answer: true,
-        followUp: true,
-        keywords: true,
-        sampleQuestions: true,
-        actions: true,
-        priority: true
-      },
-      orderBy: [
-        {
-          priority: 'desc'
-        },
-        {
-          updatedAt: 'desc'
-        }
-      ]
-    });
-
-  const ranked =
-    entries
-      .map(entry => ({
-        entry,
-        score:
-          knowledgeMatchScore(
-            question,
-            entry
-          )
-      }))
-      .sort(
-        (left, right) =>
-          right.score -
-          left.score
-      );
-
-  const best =
-    ranked[0];
-
-  if (
-    !best ||
-    best.score <
-      MIN_DATABASE_MATCH_SCORE ||
-    !isSupportGuideIntent(
-      best.entry.intent
-    )
-  ) {
-    return null;
-  }
-
-  const actions =
-    parseKnowledgeActions(
-      best.entry.actions
-    );
-
-  const context =
-    routeContext(
-      pathname
-    );
-
-  return {
-    intent:
-      best.entry.intent,
-    answer:
-      context
-        ? `${best.entry.answer}\n\n${context}`
-        : best.entry.answer,
-    followUp:
-      best.entry.followUp,
-    confidence:
-      best.score >= 30
-        ? 'HIGH'
-        : 'MEDIUM',
-    source:
-      context
-        ? 'LIVE_CONTEXT'
-        : 'DATABASE_KNOWLEDGE',
-    shouldOfferHuman:
-      best.entry.intent ===
-        'HUMAN_SUPPORT' ||
-      actions.some(
-        action =>
-          action.kind ===
-          'HUMAN_HANDOFF'
-      ),
-    actions
-  };
-}
 
 function normalizedQuestion(
   value: string
@@ -331,7 +29,7 @@ function normalizedQuestion(
 
   if (!normalized) {
     throw new Error(
-      'Ask AJ Support Intelligence a question.'
+      'Ask AJ Support Guide a question.'
     );
   }
 
@@ -340,7 +38,7 @@ function normalizedQuestion(
     MAX_QUESTION_LENGTH
   ) {
     throw new Error(
-      'Support Intelligence questions must not exceed 1000 characters.'
+      'Support Guide questions must not exceed 1000 characters.'
     );
   }
 
@@ -480,17 +178,6 @@ export async function resolveSupportGuideQuestion(
     return multivendorResponse(
       input.workspaceId
     );
-  }
-
-  const databaseResponse =
-    await databaseKnowledgeResponse(
-      input.workspaceId,
-      question,
-      input.pathname
-    );
-
-  if (databaseResponse) {
-    return databaseResponse;
   }
 
   const entry =
