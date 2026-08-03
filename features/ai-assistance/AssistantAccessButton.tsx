@@ -73,7 +73,16 @@ export function AssistantAccessButton() {
   } =
     useGlobalOverlay();
 
+  const operationalWorkspace =
+    pathname.startsWith(
+      '/admin'
+    ) ||
+    pathname.startsWith(
+      '/vendor'
+    );
+
   if (
+    !operationalWorkspace ||
     hasOpenOverlay ||
     hiddenPrefixes.some(
       prefix =>

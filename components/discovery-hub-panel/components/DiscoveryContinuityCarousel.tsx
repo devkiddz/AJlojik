@@ -63,9 +63,9 @@ export function DiscoveryContinuityCarousel() {
     );
 
   const {
-    actions,
     context,
-    intent
+    intent,
+    openProductInFeed
   } = useFeedExperience();
 
   const shoppingLists =
@@ -400,13 +400,9 @@ export function DiscoveryContinuityCarousel() {
                 <button
                   type="button"
                   onClick={() =>
-                    actions.openExperience({
-                      type:
-                        'product',
-
-                      productId:
-                        item.product.id
-                    })
+                    openProductInFeed(
+                      item.product.id
+                    )
                   }
                   className="
                     block w-full

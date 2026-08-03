@@ -70,6 +70,12 @@ type FeedExperienceContextValue = {
    * for the Hub's Continue Discovery action.
    */
   continueDiscovery: () => void;
+
+  /**
+   * Opens a Product Experience and keeps the central Feed
+   * revealed while the new product replaces the previous one.
+   */
+  openProductInFeed: (productId: string) => void;
 };
 
 const FeedExperienceContext = createContext<FeedExperienceContextValue | null>(null);
@@ -233,6 +239,12 @@ export function FeedExperienceProvider({
    */
   const intentHistoryRef = useRef<FeedIntent[]>([]);
 
+  /**
+   * One-shot handoff used when a product selection must replace
+   * the currently revealed central Feed instead of collapsing it.
+   */
+  const revealProductInFeedRef = useRef<string | null>(null);
+
   const resolutionFrameRef = useRef<number | null>(null);
 
   const completionTimerRef = useRef<number | null>(null);
@@ -326,12 +338,22 @@ export function FeedExperienceProvider({
   useEffect(() => {
     const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
 
+    const revealInFeed = Boolean(
+      activeProductId && revealProductInFeedRef.current === activeProductId
+    );
+
+    if (revealInFeed) {
+      revealProductInFeedRef.current = null;
+    }
+
     setProductDetailsDisclosure(currentDisclosure => ({
       productId: activeProductId,
 
-      expanded: false,
+      expanded: revealInFeed,
 
-      requestId: currentDisclosure.requestId
+      requestId: revealInFeed
+        ? currentDisclosure.requestId + 1
+        : currentDisclosure.requestId
     }));
   }, [intent.id, intent.targetId, intent.type]);
 
@@ -348,6 +370,30 @@ export function FeedExperienceProvider({
           productId: target.productId
         });
       }
+    },
+    [beginResolution]
+  );
+
+  const openProductInFeed = useCallback(
+    (productId: string) => {
+      const normalizedProductId = String(productId).trim();
+
+      if (!normalizedProductId) {
+        return;
+      }
+
+      revealProductInFeedRef.current = normalizedProductId;
+
+      beginResolution(
+        createIntent({
+          type: 'product',
+          productId: normalizedProductId
+        })
+      );
+
+      void recordProductView({
+        productId: normalizedProductId
+      });
     },
     [beginResolution]
   );
@@ -563,7 +609,9 @@ export function FeedExperienceProvider({
 
       productDetailsControls,
 
-      continueDiscovery
+      continueDiscovery,
+
+      openProductInFeed
     }),
     [
       intent,
@@ -574,7 +622,8 @@ export function FeedExperienceProvider({
       pendingIntent,
       productDetailsDisclosure,
       productDetailsControls,
-      continueDiscovery
+      continueDiscovery,
+      openProductInFeed
     ]
   );
 

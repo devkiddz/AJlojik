@@ -1,8 +1,16 @@
 'use client';
 
-import { BellRing, Headphones, MessagesSquare, X } from 'lucide-react';
+import {
+  BellRing,
+  Headphones,
+  HelpCircle,
+  MessageCircleQuestion,
+  MessagesSquare,
+  Sparkles,
+  X
+} from 'lucide-react';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -23,6 +31,7 @@ import { QuickSupportChatWorkspace } from './QuickSupportChatWorkspace';
 const QUICK_SUPPORT_OVERLAY_ID = 'quick-support-chat';
 
 const hiddenPrefixes = [
+  '/ai',
   '/admin',
   '/vendor',
   '/support',
@@ -36,6 +45,8 @@ const hiddenPrefixes = [
 export function QuickSupportChatLauncher() {
   const pathname = usePathname();
 
+  const router = useRouter();
+
   const { activeOverlay, closeOverlay, hasOpenOverlay, openOverlay } = useGlobalOverlay();
 
   const { summary, loading, refresh, authenticationRequired } = useQuickSupportSummary();
@@ -47,6 +58,8 @@ export function QuickSupportChatLauncher() {
   useQuickSupportViewport(overlayOpen);
 
   const [showAttention, setShowAttention] = useState(false);
+
+  const [launcherOpen, setLauncherOpen] = useState(false);
 
   const previousUnreadRef = useRef<number | null>(null);
 
@@ -67,6 +80,8 @@ export function QuickSupportChatLauncher() {
 
   const openSupport = useCallback((): void => {
     markOpen();
+
+    setLauncherOpen(false);
 
     setShowAttention(false);
 
@@ -185,6 +200,14 @@ export function QuickSupportChatLauncher() {
 
   const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
 
+  const launcherLabel =
+    unreadCount > 0
+      ? unreadCount +
+        ' unread Support ' +
+        (unreadCount === 1 ? 'message' : 'messages') +
+        '. Open AJ assistance.'
+      : 'Open AJ assistance';
+
   return (
     <>
       {showAttention && summary?.latestAgentReply ? (
@@ -221,23 +244,79 @@ export function QuickSupportChatLauncher() {
         </aside>
       ) : null}
 
+      {launcherOpen ? (
+        <div
+          role="menu"
+          aria-label="AJ assistance options"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+8.35rem)] right-[var(--app-page-gutter)] z-[180] w-[min(86vw,18rem)] overflow-hidden rounded-[1.35rem] border border-primary/20 bg-card/95 p-2 shadow-2xl backdrop-blur-xl md:bottom-[4.75rem]">
+          <button
+            type="button"
+            role="menuitem"
+            aria-label={accessibleLabel}
+            title={accessibleLabel}
+            onClick={openSupport}
+            className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-muted">
+            <span className="relative grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <MessagesSquare className="size-5" />
+              {unreadCount > 0 ? (
+                <span className="absolute -right-2 -top-2 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-card bg-primary px-1 text-[8px] font-black leading-none text-primary-foreground">
+                  {badgeLabel}
+                </span>
+              ) : null}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-black text-foreground">
+                {loading ? 'Support' : label}
+              </span>
+              <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                {hasActiveCase || hasRestorableCase
+                  ? 'Resume your connected Support conversation.'
+                  : 'Open Quick Support only when you need a human.'}
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setLauncherOpen(false);
+              router.push('/ai');
+            }}
+            className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-muted">
+            <span className="relative grid size-10 shrink-0 place-items-center rounded-2xl bg-accent/12 text-primary">
+              <MessageCircleQuestion className="size-5" />
+              <Sparkles className="absolute right-1.5 top-1.5 size-2.5 text-accent" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-black text-foreground">Ask AJ</span>
+              <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                Open AJ Intelligence for shopping and workspace guidance.
+              </span>
+            </span>
+          </button>
+        </div>
+      ) : null}
+
       <button
         type="button"
-        aria-label={accessibleLabel}
-        title={accessibleLabel}
+        aria-label={launcherLabel}
+        title={launcherLabel}
+        aria-haspopup="menu"
+        aria-expanded={launcherOpen}
         data-support-workspace={summary?.workspaceId ?? workspaceId ?? undefined}
         data-support-panel-state={mode}
         data-support-unread={unreadCount}
-        onClick={openSupport}
+        onClick={() => setLauncherOpen(current => !current)}
         className={cn(
-          'group fixed bottom-[calc(env(safe-area-inset-bottom)+8.25rem)] right-[var(--app-page-gutter)] z-[180] inline-flex h-11 touch-manipulation items-center gap-2 rounded-full border bg-background/95 px-3.5 text-xs font-black text-foreground shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7)] ring-1 ring-background/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:bottom-5 md:right-[calc(var(--app-page-gutter)+7.5rem)] md:h-12 md:px-4',
+          'group fixed bottom-[calc(env(safe-area-inset-bottom)+4.85rem)] right-[var(--app-page-gutter)] z-[180] grid size-12 touch-manipulation place-items-center rounded-full border bg-background/95 text-foreground shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7)] ring-1 ring-background/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:bottom-5',
           unreadCount > 0
             ? 'border-primary/60 shadow-xl shadow-primary/20'
-            : 'border-primary/30 hover:border-primary/50'
+            : launcherOpen
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-primary/30 hover:border-primary/50'
         )}>
-        <span className="relative grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-          <MessagesSquare className="size-4.5" />
-
+        <span className="relative grid size-7 place-items-center">
+          <HelpCircle className="size-5" />
           {unreadCount > 0 ? (
             <span
               aria-hidden="true"
@@ -245,14 +324,12 @@ export function QuickSupportChatLauncher() {
               {badgeLabel}
             </span>
           ) : (
-            <span
+            <Sparkles
               aria-hidden="true"
-              className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-primary"
+              className="absolute -right-1 -top-1 size-2.5 text-accent transition group-hover:rotate-12"
             />
           )}
         </span>
-
-        <span>{loading ? 'Support' : label}</span>
       </button>
     </>
   );
