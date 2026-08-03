@@ -129,3 +129,18 @@ export type {
   SupportKnowledgeSeedEntry,
   SupportKnowledgeStatusValue
 } from './supportKnowledgeTypes';
+
+export { SupportKnowledgeStudio } from './components/SupportKnowledgeStudio';
+export type {
+  SupportKnowledgeEntryPerformance,
+  SupportKnowledgeLearningCandidate,
+  SupportKnowledgeLearningInteraction,
+  SupportKnowledgeMutation,
+  SupportKnowledgeMutationExample,
+  SupportKnowledgeStudioBucket,
+  SupportKnowledgeStudioEntry,
+  SupportKnowledgeStudioExample,
+  SupportKnowledgeStudioMetrics,
+  SupportKnowledgeStudioSnapshot
+} from './supportKnowledgeManagementTypes';
+

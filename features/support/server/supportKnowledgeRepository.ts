@@ -89,3 +89,73 @@ export async function recordSupportKnowledgeInteraction(
 
   return created.id;
 }
+
+export async function linkSupportKnowledgeInteractionToCase(
+  input: {
+    workspaceId: string;
+    customerId: string;
+    interactionId: string;
+    supportCaseId: string;
+  }
+): Promise<boolean> {
+  const supportCase =
+    await prisma.supportCase.findFirst({
+      where: {
+        id: input.supportCaseId,
+        workspaceId: input.workspaceId,
+        customerId: input.customerId
+      },
+      select: {
+        id: true
+      }
+    });
+
+  if (!supportCase) {
+    return false;
+  }
+
+  const updated =
+    await prisma.supportKnowledgeInteraction.updateMany({
+      where: {
+        id: input.interactionId,
+        workspaceId: input.workspaceId,
+        customerId: input.customerId,
+        supportCaseId: null
+      },
+      data: {
+        supportCaseId:
+          supportCase.id,
+        humanRequested:
+          true
+      }
+    });
+
+  return updated.count === 1;
+}
+
+export async function recordSupportKnowledgeFeedback(
+  input: {
+    workspaceId: string;
+    customerId: string;
+    interactionId: string;
+    helpful: boolean;
+    reason?: string | null;
+  }
+): Promise<boolean> {
+  const updated =
+    await prisma.supportKnowledgeInteraction.updateMany({
+      where: {
+        id: input.interactionId,
+        workspaceId: input.workspaceId,
+        customerId: input.customerId
+      },
+      data: {
+        feedbackHelpful: input.helpful,
+        feedbackReason:
+          input.reason?.trim().slice(0, 500) || null
+      }
+    });
+
+  return updated.count === 1;
+}
+

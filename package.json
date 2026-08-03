@@ -27,7 +27,9 @@
     "verify:support-knowledge-foundation": "node scripts/verify-support-knowledge-foundation.mjs",
     "verify:support-guide": "tsx scripts/verify-support-guide.ts",
     "verify:support-knowledge-runtime": "tsx scripts/verify-support-knowledge-runtime.ts",
-    "verify:support-guide-context": "tsx scripts/verify-support-guide-context.ts"
+    "verify:support-guide-context": "tsx scripts/verify-support-guide-context.ts",
+    "verify:support-guide-handoff": "tsx scripts/verify-support-guide-handoff.ts",
+    "verify:support-knowledge-studio": "tsx scripts/verify-support-knowledge-studio.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

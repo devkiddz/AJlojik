@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  BookOpenCheck,
   BrainCircuit,
   Headphones,
   RefreshCw,
@@ -141,6 +142,12 @@ export function AgentSupportQueue({
                   href="/admin/support/analytics"
                   className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2.5 text-xs font-black text-white">
                   Analytics & Audit
+                </Link>
+                <Link
+                  href="/admin/support/knowledge"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2.5 text-xs font-black text-white">
+                  <BookOpenCheck className="size-3.5" />
+                  Knowledge Studio
                 </Link>
               </div>
             </div>
