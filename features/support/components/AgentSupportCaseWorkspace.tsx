@@ -244,6 +244,7 @@ export function AgentSupportCaseWorkspace({
     ]
   );
 
+  /* eslint-disable react-hooks/set-state-in-effect -- Opening the workspace synchronizes server-side read state; request state updates settle asynchronously. */
   useEffect(() => {
     void request(
       'PATCH',
@@ -258,6 +259,7 @@ export function AgentSupportCaseWorkspace({
       );
     });
   }, [request]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const run = (
     payload: Record<string, unknown>,

@@ -1082,6 +1082,8 @@ model Workspace {
   communicationConversations CommunicationConversation[]
   supportCases               SupportCase[]
   supportSLAs                SupportSLA[]
+  supportKnowledgeBuckets    SupportKnowledgeBucket[]
+  supportKnowledgeEntries    SupportKnowledgeEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1635,6 +1637,60 @@ model CommunicationStatusHistory {
 // ============================================================
 // RCENTZ SUPPORT
 // ============================================================
+
+
+model SupportKnowledgeBucket {
+  id          String  @id @default(cuid())
+  workspaceId String
+  slug        String
+  name        String
+  description String?
+  priority    Int     @default(0)
+  active      Boolean @default(true)
+
+  workspace Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entries   SupportKnowledgeEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, active, priority])
+  @@map("support_knowledge_bucket")
+}
+
+model SupportKnowledgeEntry {
+  id          String @id @default(cuid())
+  workspaceId String
+  bucketId    String
+  slug        String
+  intent      String
+  title       String
+  answer      String
+  followUp    String?
+
+  keywords        String[] @default([])
+  sampleQuestions String[] @default([])
+  actions         Json?
+
+  priority    Int      @default(0)
+  active      Boolean  @default(true)
+  verified    Boolean  @default(false)
+  publishedAt DateTime?
+
+  workspace Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  bucket    SupportKnowledgeBucket @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, intent])
+  @@index([workspaceId, active, verified, priority])
+  @@index([bucketId, priority])
+  @@map("support_knowledge_entry")
+}
+
 
 enum SupportCaseCategory {
   ORDER

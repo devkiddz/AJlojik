@@ -1,53 +1,26 @@
 'use client';
 
-import {
-  BellRing,
-  Headphones,
-  MessagesSquare,
-  X
-} from 'lucide-react';
+import { BellRing, Headphones, MessagesSquare, X } from 'lucide-react';
 
-import {
-  usePathname
-} from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  useGlobalOverlay
-} from '@/features/global-overlay';
+import { useGlobalOverlay } from '@/features/global-overlay';
 
-import {
-  cn
-} from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
-import {
-  useQuickSupportAttentionStream
-} from '../client/useQuickSupportAttentionStream';
+import { useQuickSupportAttentionStream } from '../client/useQuickSupportAttentionStream';
 
-import {
-  useQuickSupportPanelState
-} from '../client/useQuickSupportPanelState';
+import { useQuickSupportPanelState } from '../client/useQuickSupportPanelState';
 
-import {
-  useQuickSupportSummary
-} from '../client/useQuickSupportSummary';
+import { useQuickSupportSummary } from '../client/useQuickSupportSummary';
 
-import {
-  useQuickSupportViewport
-} from '../client/useQuickSupportViewport';
+import { useQuickSupportViewport } from '../client/useQuickSupportViewport';
 
-import {
-  QuickSupportChatWorkspace
-} from './QuickSupportChatWorkspace';
+import { QuickSupportChatWorkspace } from './QuickSupportChatWorkspace';
 
-const QUICK_SUPPORT_OVERLAY_ID =
-  'quick-support-chat';
+const QUICK_SUPPORT_OVERLAY_ID = 'quick-support-chat';
 
 const hiddenPrefixes = [
   '/admin',
@@ -61,376 +34,148 @@ const hiddenPrefixes = [
 ] as const;
 
 export function QuickSupportChatLauncher() {
-  const pathname =
-    usePathname();
+  const pathname = usePathname();
 
-  const {
-    activeOverlay,
-    closeOverlay,
-    hasOpenOverlay,
-    openOverlay
-  } =
-    useGlobalOverlay();
+  const { activeOverlay, closeOverlay, hasOpenOverlay, openOverlay } = useGlobalOverlay();
 
-  const {
-    summary,
-    loading,
-    refresh
-  } =
-    useQuickSupportSummary();
+  const { summary, loading, refresh, authenticationRequired } = useQuickSupportSummary();
 
-  const {
-    workspaceId,
-    mode,
-    hydrated,
-    markOpen,
-    markMinimized
-  } =
-    useQuickSupportPanelState();
+  const { workspaceId, mode, markOpen, markMinimized } = useQuickSupportPanelState();
 
-  useQuickSupportViewport();
+  const overlayOpen = activeOverlay?.id === QUICK_SUPPORT_OVERLAY_ID;
 
-  const [
-    showAttention,
-    setShowAttention
-  ] =
-    useState(false);
+  useQuickSupportViewport(overlayOpen);
 
-  const previousUnreadRef =
-    useRef<
-      number |
-      null
-    >(
-      null
-    );
+  const [showAttention, setShowAttention] = useState(false);
 
-  const previousOverlayOpenRef =
-    useRef(false);
+  const previousUnreadRef = useRef<number | null>(null);
 
-  const restoredWorkspaceRef =
-    useRef<
-      string |
-      null
-    >(
-      null
-    );
+  const previousOverlayOpenRef = useRef(false);
 
-  const hidden =
-    hiddenPrefixes.some(
-      prefix =>
-        pathname ===
-          prefix ||
-        pathname.startsWith(
-          `${prefix}/`
-        )
-    );
+  const hidden = hiddenPrefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
-  const overlayOpen =
-    activeOverlay?.id ===
-    QUICK_SUPPORT_OVERLAY_ID;
+  const hasActiveCase = Boolean(summary?.activeCase);
 
-  const hasActiveCase =
-    Boolean(
-      summary?.activeCase
-    );
+  const hasRestorableCase = Boolean(summary?.recentCases.length);
 
-  const hasRestorableCase =
-    Boolean(
-      summary
-        ?.recentCases
-        .length
-    );
+  const unreadCount = summary?.unreadCount ?? 0;
 
-  const unreadCount =
-    summary?.unreadCount ??
-    0;
+  const attentionCaseIds = useMemo(
+    () => summary?.recentCases.slice(0, 5).map(item => item.id) ?? [],
+    [summary?.recentCases]
+  );
 
-  const attentionCaseIds =
-    summary
-      ?.recentCases
-      .slice(
-        0,
-        5
-      )
-      .map(
-        item =>
-          item.id
-      ) ??
-    [];
+  const openSupport = useCallback((): void => {
+    markOpen();
 
-  const openSupport =
-    useCallback(
-      (): void => {
-        markOpen();
+    setShowAttention(false);
 
-        setShowAttention(
-          false
-        );
+    openOverlay({
+      id: QUICK_SUPPORT_OVERLAY_ID,
 
-        openOverlay({
-          id:
-            QUICK_SUPPORT_OVERLAY_ID,
-          eyebrow: (
-            <span className="inline-flex items-center gap-2">
-              <Headphones className="size-3.5" />
-              AJ Logik Support
-            </span>
-          ),
-          title:
-            hasActiveCase ||
-            hasRestorableCase
-              ? 'Continue with Support'
-              : 'Chat with Support',
-          description:
-            hasActiveCase ||
-            hasRestorableCase
-              ? 'Your Support conversations are ready and connected to the live workspace.'
-              : 'Start a live Support conversation without leaving your current experience.',
-          content: (
-            <QuickSupportChatWorkspace />
-          ),
-          variant:
-            'panel',
-          size:
-            'sm',
-          closeLabel:
-            'Minimize Support chat',
-          surfaceClassName:
-            'h-[var(--quick-support-viewport-height,100dvh)] max-h-[var(--quick-support-viewport-height,100dvh)] overscroll-none sm:h-dvh sm:max-h-none',
-          bodyClassName:
-            '!overflow-hidden !p-0'
-        });
-      },
-      [
-        hasActiveCase,
-        hasRestorableCase,
-        markOpen,
-        openOverlay
-      ]
-    );
+      eyebrow: (
+        <span className="inline-flex items-center gap-2">
+          <Headphones className="size-3.5" />
+          AJ Logik Support
+        </span>
+      ),
+
+      title: hasActiveCase || hasRestorableCase ? 'Continue with Support' : 'Chat with Support',
+
+      description:
+        hasActiveCase || hasRestorableCase
+          ? 'Your Support conversations are ready and connected to the live workspace.'
+          : 'Start a live Support conversation without leaving your current experience.',
+
+      content: <QuickSupportChatWorkspace />,
+
+      variant: 'panel',
+
+      size: 'sm',
+
+      closeLabel: 'Minimize Support chat',
+
+      surfaceClassName:
+        'h-[var(--quick-support-viewport-height,100dvh)] max-h-[var(--quick-support-viewport-height,100dvh)] overscroll-none sm:h-dvh sm:max-h-none',
+
+      bodyClassName: '!overflow-hidden !p-0'
+    });
+  }, [hasActiveCase, hasRestorableCase, markOpen, openOverlay]);
 
   useQuickSupportAttentionStream({
-    workspaceId:
-      summary?.workspaceId ??
-      workspaceId,
-    caseIds:
-      attentionCaseIds,
-    enabled:
-      Boolean(
-        attentionCaseIds.length &&
-        !overlayOpen &&
-        !hidden
-      ),
-    onEvent:
-      refresh
+    workspaceId: summary?.workspaceId ?? workspaceId,
+
+    caseIds: attentionCaseIds,
+
+    enabled: Boolean(attentionCaseIds.length && !authenticationRequired && !overlayOpen && !hidden),
+
+    onEvent: refresh
   });
 
-  useEffect(
-    () => {
-      if (
-        previousOverlayOpenRef.current &&
-        !overlayOpen
-      ) {
-        markMinimized();
+  useEffect(() => {
+    if (previousOverlayOpenRef.current && !overlayOpen) {
+      markMinimized();
+    }
+
+    previousOverlayOpenRef.current = overlayOpen;
+  }, [markMinimized, overlayOpen]);
+
+  useEffect(() => {
+    if (hidden && overlayOpen) {
+      closeOverlay(QUICK_SUPPORT_OVERLAY_ID);
+
+      markMinimized();
+    }
+  }, [closeOverlay, hidden, markMinimized, overlayOpen]);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- Attention visibility is derived from unread-count transitions received from the Support summary stream. */
+  useEffect(() => {
+    const previous = previousUnreadRef.current;
+
+    if (previous === null) {
+      previousUnreadRef.current = unreadCount;
+
+      if (unreadCount > 0 && !overlayOpen && summary?.latestAgentReply) {
+        setShowAttention(true);
       }
 
-      previousOverlayOpenRef.current =
-        overlayOpen;
-    },
-    [
-      markMinimized,
-      overlayOpen
-    ]
-  );
+      return;
+    }
 
-  useEffect(
-    () => {
-      if (
-        hidden &&
-        overlayOpen
-      ) {
-        closeOverlay(
-          QUICK_SUPPORT_OVERLAY_ID
-        );
+    if (unreadCount > previous && !overlayOpen) {
+      setShowAttention(true);
+    }
 
-        markMinimized();
-      }
-    },
-    [
-      closeOverlay,
-      hidden,
-      markMinimized,
-      overlayOpen
-    ]
-  );
+    if (unreadCount === 0) {
+      setShowAttention(false);
+    }
 
-  useEffect(
-    () => {
-      if (
-        !hydrated ||
-        !workspaceId ||
-        !summary ||
-        summary.workspaceId !==
-          workspaceId
-      ) {
-        return;
-      }
+    previousUnreadRef.current = unreadCount;
+  }, [overlayOpen, summary?.latestAgentReply, unreadCount]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-      if (
-        mode ===
-          'open' &&
-        !hasRestorableCase
-      ) {
-        markMinimized();
+  useEffect(() => {
+    if (!showAttention) {
+      return;
+    }
 
-        restoredWorkspaceRef.current =
-          workspaceId;
+    const timer = window.setTimeout(() => {
+      setShowAttention(false);
+    }, 8_000);
 
-        return;
-      }
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [showAttention]);
 
-      if (
-        mode !==
-          'open' ||
-        hidden ||
-        hasOpenOverlay ||
-        !hasRestorableCase ||
-        restoredWorkspaceRef.current ===
-          workspaceId
-      ) {
-        return;
-      }
-
-      restoredWorkspaceRef.current =
-        workspaceId;
-
-      const timer =
-        window.setTimeout(
-          openSupport,
-          0
-        );
-
-      return () => {
-        window.clearTimeout(
-          timer
-        );
-      };
-    },
-    [
-      hasOpenOverlay,
-      hasRestorableCase,
-      hidden,
-      hydrated,
-      markMinimized,
-      mode,
-      openSupport,
-      summary,
-      workspaceId
-    ]
-  );
-
-  useEffect(
-    () => {
-      const previous =
-        previousUnreadRef.current;
-
-      if (
-        previous ===
-        null
-      ) {
-        previousUnreadRef.current =
-          unreadCount;
-
-        if (
-          unreadCount >
-            0 &&
-          !overlayOpen &&
-          summary
-            ?.latestAgentReply
-        ) {
-          setShowAttention(
-            true
-          );
-        }
-
-        return;
-      }
-
-      if (
-        unreadCount >
-          previous &&
-        !overlayOpen
-      ) {
-        setShowAttention(
-          true
-        );
-      }
-
-      if (
-        unreadCount ===
-        0
-      ) {
-        setShowAttention(
-          false
-        );
-      }
-
-      previousUnreadRef.current =
-        unreadCount;
-    },
-    [
-      overlayOpen,
-      summary
-        ?.latestAgentReply,
-      unreadCount
-    ]
-  );
-
-  useEffect(
-    () => {
-      if (
-        !showAttention
-      ) {
-        return;
-      }
-
-      const timer =
-        window.setTimeout(
-          () => {
-            setShowAttention(
-              false
-            );
-          },
-          8_000
-        );
-
-      return () => {
-        window.clearTimeout(
-          timer
-        );
-      };
-    },
-    [
-      showAttention
-    ]
-  );
-
-  if (
-    hidden ||
-    hasOpenOverlay
-  ) {
+  if (hidden || hasOpenOverlay) {
     return null;
   }
 
-  const label =
-    hasActiveCase ||
-    hasRestorableCase
-      ? 'Continue Support'
-      : 'Support';
+  const label = hasActiveCase || hasRestorableCase ? 'Continue Support' : 'Support';
 
   const accessibleLabel =
-    unreadCount >
-      0
+    unreadCount > 0
       ? `${unreadCount} unread Support ${unreadCount === 1 ? 'message' : 'messages'}. Open AJ Logik Support.`
       : hasActiveCase
         ? `Continue AJ Logik Support Case ${summary?.activeCase?.caseNumber ?? ''}`
@@ -438,63 +183,37 @@ export function QuickSupportChatLauncher() {
           ? 'Continue AJ Logik Support conversations'
           : 'Chat with AJ Logik Support';
 
-  const badgeLabel =
-    unreadCount >
-      99
-      ? '99+'
-      : String(
-          unreadCount
-        );
+  const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
 
   return (
     <>
-      {showAttention &&
-      summary?.latestAgentReply ? (
+      {showAttention && summary?.latestAgentReply ? (
         <aside
           aria-live="polite"
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+11.75rem)] right-[var(--app-page-gutter)] z-[179] w-[min(88vw,20rem)] rounded-[1.35rem] border border-emerald-500/25 bg-card/95 p-3 shadow-2xl backdrop-blur-xl md:bottom-[4.65rem] md:right-[calc(var(--app-page-gutter)+7.5rem)]">
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+11.75rem)] right-[var(--app-page-gutter)] z-[179] w-[min(88vw,20rem)] rounded-[1.35rem] border border-primary/25 bg-card/95 p-3 shadow-2xl backdrop-blur-xl md:bottom-[4.65rem] md:right-[calc(var(--app-page-gutter)+7.5rem)]">
           <div className="flex items-start gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-emerald-500/12 text-emerald-600">
+            <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
               <BellRing className="size-4" />
             </span>
 
-            <button
-              type="button"
-              onClick={
-                openSupport
-              }
-              className="min-w-0 flex-1 text-left">
-              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-600">
+            <button type="button" onClick={openSupport} className="min-w-0 flex-1 text-left">
+              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-primary">
                 New Support reply
               </p>
 
               <p className="mt-1 truncate text-xs font-black">
-                {
-                  summary
-                    .latestAgentReply
-                    .sender
-                    ?.name ??
-                  'AJ Logik Support'
-                }
+                {summary.latestAgentReply.sender?.name ?? 'AJ Logik Support'}
               </p>
 
               <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-muted-foreground">
-                {
-                  summary
-                    .latestAgentReply
-                    .bodyPreview
-                }
+                {summary.latestAgentReply.bodyPreview}
               </p>
             </button>
 
             <button
               type="button"
               aria-label="Dismiss Support reply preview"
-              onClick={() =>
-                setShowAttention(
-                  false
-                )
-              }
+              onClick={() => setShowAttention(false)}
               className="grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground">
               <X className="size-3.5" />
             </button>
@@ -504,60 +223,36 @@ export function QuickSupportChatLauncher() {
 
       <button
         type="button"
-        aria-label={
-          accessibleLabel
-        }
-        title={
-          accessibleLabel
-        }
-        data-support-workspace={
-          summary?.workspaceId ??
-          workspaceId ??
-          undefined
-        }
-        data-support-panel-state={
-          mode
-        }
-        data-support-unread={
-          unreadCount
-        }
-        onClick={
-          openSupport
-        }
+        aria-label={accessibleLabel}
+        title={accessibleLabel}
+        data-support-workspace={summary?.workspaceId ?? workspaceId ?? undefined}
+        data-support-panel-state={mode}
+        data-support-unread={unreadCount}
+        onClick={openSupport}
         className={cn(
-          'group fixed bottom-[calc(env(safe-area-inset-bottom)+8.25rem)] right-[var(--app-page-gutter)] z-[180] inline-flex h-11 touch-manipulation items-center gap-2 rounded-full border bg-background/95 px-3.5 text-xs font-black text-foreground shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7)] ring-1 ring-background/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 md:bottom-5 md:right-[calc(var(--app-page-gutter)+7.5rem)] md:h-12 md:px-4',
-          unreadCount >
-            0
-            ? 'border-emerald-500/60 shadow-[0_18px_55px_-15px_rgba(16,185,129,0.55)]'
-            : 'border-emerald-500/30 hover:border-emerald-500/50'
+          'group fixed bottom-[calc(env(safe-area-inset-bottom)+8.25rem)] right-[var(--app-page-gutter)] z-[180] inline-flex h-11 touch-manipulation items-center gap-2 rounded-full border bg-background/95 px-3.5 text-xs font-black text-foreground shadow-[0_18px_50px_-18px_rgba(0,0,0,0.7)] ring-1 ring-background/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:bottom-5 md:right-[calc(var(--app-page-gutter)+7.5rem)] md:h-12 md:px-4',
+          unreadCount > 0
+            ? 'border-primary/60 shadow-xl shadow-primary/20'
+            : 'border-primary/30 hover:border-primary/50'
         )}>
-        <span className="relative grid size-6 shrink-0 place-items-center rounded-full bg-emerald-500/12 text-emerald-600">
+        <span className="relative grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
           <MessagesSquare className="size-4.5" />
 
-          {unreadCount >
-          0 ? (
+          {unreadCount > 0 ? (
             <span
               aria-hidden="true"
-              className="absolute -right-2.5 -top-2.5 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-background bg-emerald-500 px-1 text-[8px] font-black leading-none text-white shadow-lg">
-              {
-                badgeLabel
-              }
+              className="absolute -right-2.5 -top-2.5 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-background bg-primary px-1 text-[8px] font-black leading-none text-primary-foreground shadow-lg">
+              {badgeLabel}
             </span>
           ) : (
             <span
               aria-hidden="true"
-              className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-emerald-500"
+              className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-primary"
             />
           )}
         </span>
 
-        <span>
-          {
-            loading
-              ? 'Support'
-              : label
-          }
-        </span>
+        <span>{loading ? 'Support' : label}</span>
       </button>
     </>
   );

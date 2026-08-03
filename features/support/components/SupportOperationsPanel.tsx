@@ -404,7 +404,7 @@ export function SupportOperationsPanel({
                               action.id
                           })
                         }
-                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-emerald-600 px-3 text-[10px] font-bold text-white">
+                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[10px] font-bold text-white">
                         <CheckCircle2 className="size-3" />
                         Approve
                       </button>

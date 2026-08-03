@@ -58,7 +58,7 @@ export function SupportLiveStatusBadge({
       className={cn(
         'inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[10px] font-bold',
         state === 'live'
-          ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+          ? 'border-primary/25 bg-primary/10 text-primary dark:text-primary'
           : state ===
               'offline'
             ? 'border-destructive/25 bg-destructive/10 text-destructive'

@@ -82,6 +82,11 @@ export function useQuickSupportSummary():
   const sequenceRef =
     useRef(0);
 
+  const requestControllerRef =
+    useRef<AbortController | null>(
+      null
+    );
+
   const [
     summary,
     setSummary
@@ -146,6 +151,15 @@ export function useQuickSupportSummary():
         sequenceRef.current =
           sequence;
 
+        requestControllerRef.current
+          ?.abort();
+
+        const controller =
+          new AbortController();
+
+        requestControllerRef.current =
+          controller;
+
         try {
           const response =
             await fetch(
@@ -156,7 +170,9 @@ export function useQuickSupportSummary():
                 credentials:
                   'same-origin',
                 cache:
-                  'no-store'
+                  'no-store',
+                signal:
+                  controller.signal
               }
             );
 
@@ -220,6 +236,12 @@ export function useQuickSupportSummary():
           );
         } catch (cause) {
           if (
+            controller.signal.aborted
+          ) {
+            return;
+          }
+
+          if (
             sequence !==
             sequenceRef.current
           ) {
@@ -232,6 +254,14 @@ export function useQuickSupportSummary():
               : 'AJ Logik could not refresh Quick Support.'
           );
         } finally {
+          if (
+            requestControllerRef.current ===
+            controller
+          ) {
+            requestControllerRef.current =
+              null;
+          }
+
           if (
             sequence ===
             sequenceRef.current
@@ -248,6 +278,7 @@ export function useQuickSupportSummary():
       ]
     );
 
+  /* eslint-disable react-hooks/set-state-in-effect -- Workspace changes intentionally reset stale Support summary state before starting the next external request. */
   useEffect(
     () => {
       sequenceRef.current +=
@@ -277,6 +308,9 @@ export function useQuickSupportSummary():
         window.clearTimeout(
           timer
         );
+
+        requestControllerRef.current
+          ?.abort();
       };
     },
     [
@@ -284,6 +318,7 @@ export function useQuickSupportSummary():
       workspaceId
     ]
   );
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(
     () => {
@@ -308,10 +343,12 @@ export function useQuickSupportSummary():
       );
 
       const interval =
-        window.setInterval(
-          handleRefresh,
-          20_000
-        );
+        authenticationRequired
+          ? null
+          : window.setInterval(
+              handleRefresh,
+              30_000
+            );
 
       return () => {
         window.removeEventListener(
@@ -324,12 +361,15 @@ export function useQuickSupportSummary():
           handleFocus
         );
 
-        window.clearInterval(
-          interval
-        );
+        if (interval !== null) {
+          window.clearInterval(
+            interval
+          );
+        }
       };
     },
     [
+      authenticationRequired,
       refresh
     ]
   );

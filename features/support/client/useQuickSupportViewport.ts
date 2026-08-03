@@ -29,8 +29,9 @@ function readOnline(): boolean {
   );
 }
 
-export function useQuickSupportViewport():
-  QuickSupportViewportState {
+export function useQuickSupportViewport(
+  enabled = true
+): QuickSupportViewportState {
   const [
     state,
     setState
@@ -48,6 +49,10 @@ export function useQuickSupportViewport():
 
   useEffect(
     () => {
+      if (!enabled) {
+        return;
+      }
+
       const root =
         document.documentElement;
 
@@ -235,7 +240,7 @@ export function useQuickSupportViewport():
         );
       };
     },
-    []
+    [enabled]
   );
 
   return state;

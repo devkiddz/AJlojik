@@ -79,7 +79,7 @@ export function SupportAnalyticsDashboard({
     <main className="min-h-dvh px-3 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[96rem] space-y-5">
         <header className="rounded-[2rem] border border-border/60 bg-slate-950 p-5 text-white shadow-xl sm:p-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-200">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-foreground">
             Production observability
           </p>
           <h1 className="mt-3 text-3xl font-black sm:text-5xl">

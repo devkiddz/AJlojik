@@ -178,6 +178,7 @@ export function CustomerSupportCaseWorkspace({
     });
   }, [request]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- Opening the workspace synchronizes server-side read state; request state updates settle asynchronously. */
   useEffect(() => {
     void request('PATCH', {
       action: 'mark-read'
@@ -188,6 +189,7 @@ export function CustomerSupportCaseWorkspace({
       );
     });
   }, [request]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(
     () => {
@@ -354,11 +356,11 @@ export function CustomerSupportCaseWorkspace({
 
         {supportCase.status ===
         'RESOLVED' ? (
-          <section className="rounded-[1.75rem] border border-emerald-500/20 bg-emerald-500/10 p-5">
-            <h2 className="text-sm font-black text-emerald-800 dark:text-emerald-200">
+          <section className="rounded-[1.75rem] border border-primary/20 bg-primary/10 p-5">
+            <h2 className="text-sm font-black text-primary dark:text-primary-foreground">
               Has this been resolved?
             </h2>
-            <p className="mt-2 text-xs leading-5 text-emerald-800/75 dark:text-emerald-200/75">
+            <p className="mt-2 text-xs leading-5 text-primary/75 dark:text-primary-foreground/75">
               Confirm the result or reopen the case for continued support.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -368,7 +370,7 @@ export function CustomerSupportCaseWorkspace({
                 onClick={() =>
                   confirmResolution(true)
                 }
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-emerald-600 px-4 text-xs font-bold text-white disabled:opacity-50">
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-xs font-bold text-white disabled:opacity-50">
                 <CheckCircle2 className="size-4" />
                 Confirm resolution
               </button>
@@ -378,7 +380,7 @@ export function CustomerSupportCaseWorkspace({
                 onClick={() =>
                   confirmResolution(false)
                 }
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-emerald-600/30 px-4 text-xs font-bold text-emerald-800 dark:text-emerald-200 disabled:opacity-50">
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-primary/30 px-4 text-xs font-bold text-primary dark:text-primary-foreground disabled:opacity-50">
                 <RotateCcw className="size-4" />
                 Continue support
               </button>

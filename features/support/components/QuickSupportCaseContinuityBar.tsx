@@ -151,7 +151,7 @@ function CaseButton({
 
           {item.unreadCount >
           0 ? (
-            <span className="grid min-h-4 min-w-4 shrink-0 place-items-center rounded-full bg-emerald-500 px-1 text-[8px] font-black text-white">
+            <span className="grid min-h-4 min-w-4 shrink-0 place-items-center rounded-full bg-primary px-1 text-[8px] font-black text-white">
               {
                 item.unreadCount >
                 99
@@ -296,7 +296,7 @@ export function QuickSupportCaseContinuityBar({
 
           {summary.unreadCount >
           0 ? (
-            <span className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-emerald-500 px-1 text-[8px] font-black text-white">
+            <span className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-primary px-1 text-[8px] font-black text-white">
               {
                 summary.unreadCount >
                 99

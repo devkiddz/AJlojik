@@ -1,7 +1,4 @@
-import {
-  Suspense,
-  type ReactNode
-} from 'react';
+import { Suspense, type ReactNode } from 'react';
 
 import FooterComponent from '@/components/FooterComponent';
 import NavbarComponent from '@/components/Navbar';
@@ -9,42 +6,28 @@ import ApplicationShellBoundary from '@/components/layout/ApplicationShellBounda
 import CustomerExperienceShell from '@/components/layout/CustomerExperienceShell';
 import MobileApplicationShell from '@/components/layout/MobileApplicationShell';
 
-import {
-  SidebarInset,
-  SidebarProvider
-} from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 import SearchMobileOverlay from '@/features/search/SearchMobileOverlay';
 
-import {
-  QuickSupportChatLauncher
-} from '@/features/support/components/QuickSupportChatLauncher';
+import { QuickSupportChatLauncher } from '@/features/support/components/QuickSupportChatLauncher';
 
-import {
-  AppSidebar
-} from '@/providers/AppSideBar';
+import { AppSidebar } from '@/providers/AppSideBar';
 
 type ApplicationShellProps = {
   children: ReactNode;
 };
 
-export default function ApplicationShell({
-  children
-}: ApplicationShellProps) {
+export default function ApplicationShell({ children }: ApplicationShellProps) {
   const customerShell = (
     <SidebarProvider defaultOpen>
       <AppSidebar />
 
       <SidebarInset className="min-w-0 overflow-x-clip">
         <div className="flex min-h-svh min-w-0 flex-col">
-          <header
-            className="sticky top-0 z-[120] shrink-0 bg-background"
-            data-app-navbar>
+          <header className="sticky top-0 z-[120] shrink-0 bg-background" data-app-navbar>
             <Suspense fallback={null}>
-              <NavbarComponent
-                brandName="AJ"
-                brandSlug="Logik"
-              />
+              <NavbarComponent brandName="AJ" brandSlug="Logik" />
             </Suspense>
           </header>
 
@@ -56,16 +39,11 @@ export default function ApplicationShell({
             />
 
             <MobileApplicationShell>
-              <CustomerExperienceShell>
-                {children}
-              </CustomerExperienceShell>
+              <CustomerExperienceShell>{children}</CustomerExperienceShell>
             </MobileApplicationShell>
           </main>
 
-          <FooterComponent
-            brandName="AJ"
-            brandSlug="Logik"
-          />
+          <FooterComponent brandName="AJ" brandSlug="Logik" />
         </div>
       </SidebarInset>
 
@@ -78,11 +56,7 @@ export default function ApplicationShell({
   return (
     <ApplicationShellBoundary
       customerShell={customerShell}
-      operationalShell={
-        <div className="min-h-dvh min-w-0 bg-background">
-          {children}
-        </div>
-      }
+      operationalShell={<div className="min-h-dvh min-w-0 bg-background">{children}</div>}
     />
   );
 }

@@ -2,45 +2,23 @@
 
 import Image from 'next/image';
 
-import {
-  Eye,
-  Star
-} from 'lucide-react';
+import { Eye, Star } from 'lucide-react';
 
-import {
-  useMemo
-} from 'react';
+import { useMemo } from 'react';
 
-import {
-  Button
-} from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 
-import type {
-  FeedActions
-} from '@/features/feed-experience/contracts';
+import type { FeedActions } from '@/features/feed-experience/contracts';
 
-import {
-  ProductActionTray
-} from '@/features/products/cards';
+import { ProductActionTray } from '@/features/products/cards';
 
-import {
-  useProductVariant
-} from '@/features/products/cards/useProductVariant';
+import { useProductVariant } from '@/features/products/cards/useProductVariant';
 
-import {
-  cn
-} from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
-import type {
-  ProductType
-} from '@/types/types';
+import type { ProductType } from '@/types/types';
 
 type FeaturedProductExperienceCardProps = {
   product: ProductType;
@@ -57,79 +35,45 @@ export default function FeaturedProductExperienceCard({
   currency = 'NGN',
   title
 }: FeaturedProductExperienceCardProps) {
-  const {
-    selectedVariant,
-    selectedVariantId,
-    setSelectedVariantId
-  } =
-    useProductVariant(
-      product
-    );
+  const { selectedVariant, selectedVariantId, setSelectedVariantId } = useProductVariant(product);
 
-  const priceFormatter =
-    useMemo(
-      () => {
-        try {
-          return new Intl.NumberFormat(
-            locale,
-            {
-              style:
-                'currency',
-              currency,
-              maximumFractionDigits:
-                0
-            }
-          );
-        } catch {
-          return new Intl.NumberFormat(
-            'en-NG',
-            {
-              style:
-                'currency',
-              currency:
-                'NGN',
-              maximumFractionDigits:
-                0
-            }
-          );
-        }
-      },
-      [
+  const priceFormatter = useMemo(() => {
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
         currency,
-        locale
-      ]
-    );
+        maximumFractionDigits: 0
+      });
+    } catch {
+      return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        maximumFractionDigits: 0
+      });
+    }
+  }, [currency, locale]);
 
-  if (
-    !selectedVariant
-  ) {
+  if (!selectedVariant) {
     return null;
   }
 
-  const outOfStock =
-    selectedVariant.stockLeft <=
-    0;
+  const outOfStock = selectedVariant.stockLeft <= 0;
 
-  const openExperience =
-    (): void => {
-      actions.openExperience({
-        type:
-          'product',
-        productId:
-          product.id
-      });
-    };
+  const openExperience = (): void => {
+    actions.openExperience({
+      type: 'product',
+      productId: product.id
+    });
+  };
+
+  console.count('FeaturedProductExperienceCard render');
 
   return (
     <article className="grid h-full min-h-[17rem] w-full min-w-0 grid-cols-[minmax(9rem,0.9fr)_minmax(0,1.1fr)] overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm transition duration-300 hover:border-primary/20 hover:shadow-xl lg:w-[34rem] lg:min-w-[34rem] lg:max-w-[34rem]">
       <div className="relative min-h-52 overflow-hidden bg-muted sm:min-h-full">
         <Image
-          src={
-            selectedVariant.image
-          }
-          alt={
-            product.name
-          }
+          src={selectedVariant.image}
+          alt={product.name}
           fill
           priority
           sizes="(max-width: 640px) 100vw, 28vw"
@@ -138,9 +82,7 @@ export default function FeaturedProductExperienceCard({
 
         <button
           type="button"
-          onClick={
-            openExperience
-          }
+          onClick={openExperience}
           aria-label={`Open ${product.name}`}
           className="absolute inset-0 z-10"
         />
@@ -151,14 +93,9 @@ export default function FeaturedProductExperienceCard({
         />
 
         <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-wrap gap-1.5">
-          {product.discountPercentage >
-          0 ? (
+          {product.discountPercentage > 0 ? (
             <span className="rounded-full bg-secondary px-2.5 py-1 text-[9px] font-black text-secondary-foreground shadow-md">
-              -
-              {
-                product.discountPercentage
-              }
-              %
+              -{product.discountPercentage}%
             </span>
           ) : null}
 
@@ -170,30 +107,17 @@ export default function FeaturedProductExperienceCard({
         </div>
 
         <p className="pointer-events-none absolute inset-x-4 bottom-4 z-20 truncate text-[9px] font-bold uppercase tracking-[0.18em] text-white/75">
-          {
-            product.category.replaceAll(
-              '-',
-              ' '
-            )
-          }
+          {product.category.replaceAll('-', ' ')}
         </p>
       </div>
 
       <div className="flex min-w-0 flex-col p-4 sm:p-5">
         <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
-            Featured product
-          </p>
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">Featured product</p>
 
-          <button
-            type="button"
-            onClick={
-              openExperience
-            }
-            className="mt-1 block min-w-0 text-left">
+          <button type="button" onClick={openExperience} className="mt-1 block min-w-0 text-left">
             <h3 className="line-clamp-2 text-lg font-semibold leading-tight tracking-tight sm:text-xl">
-              {title ??
-                product.name}
+              {title ?? product.name}
             </h3>
           </button>
         </div>
@@ -201,99 +125,50 @@ export default function FeaturedProductExperienceCard({
         <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
           <Star className="size-3.5 fill-amber-400 text-amber-400" />
 
-          <span className="font-bold text-foreground">
-            {
-              product.rating.toFixed(
-                1
-              )
-            }
-          </span>
+          <span className="font-bold text-foreground">{product.rating.toFixed(1)}</span>
 
-          <span>
-            (
-            {
-              product.reviews
-            }
-            )
-          </span>
+          <span>({product.reviews})</span>
 
           <span className="mx-1 size-1 rounded-full bg-border" />
 
-          <span>
-            {
-              product.soldCount
-            }{' '}
-            sold
-          </span>
+          <span>{product.soldCount} sold</span>
         </div>
 
         <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-muted-foreground">
-          {
-            product.shortDescription
-          }
+          {product.shortDescription}
         </p>
 
         <div className="mt-auto space-y-3 pt-4">
-          <Select
-            value={
-              selectedVariantId
-            }
-            onValueChange={
-              setSelectedVariantId
-            }>
+          <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
             <SelectTrigger
               aria-label={`Select a variant for ${product.name}`}
               className="h-9 w-full rounded-xl text-[10px]">
-              <span
-                data-slot="select-value"
-                className="flex min-w-0 flex-1 items-center truncate text-left">
-                {
-                  selectedVariant.label
-                }
+              <span data-slot="select-value" className="flex min-w-0 flex-1 items-center truncate text-left">
+                {selectedVariant.label}
               </span>
             </SelectTrigger>
 
             <SelectContent align="start">
-              {product.variants.map(
-                variant => (
-                  <SelectItem
-                    key={
-                      variant.id
-                    }
-                    value={String(
-                      variant.id
-                    )}>
-                    {
-                      variant.label
-                    }
-                  </SelectItem>
-                )
-              )}
+              {product.variants.map(variant => (
+                <SelectItem key={variant.id} value={String(variant.id)}>
+                  {variant.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-base font-black">
-                {
-                  priceFormatter.format(
-                    Number(
-                      selectedVariant.price
-                    )
-                  )
-                }
+                {priceFormatter.format(Number(selectedVariant.price))}
               </p>
 
               <p
                 className={cn(
                   'mt-0.5 text-[9px]',
-                  outOfStock
-                    ? 'text-destructive'
-                    : 'text-muted-foreground'
+                  outOfStock ? 'text-destructive' : 'text-muted-foreground'
                 )}>
-                {outOfStock
-                  ? 'Out of stock'
-                  : `${selectedVariant.stockLeft} available`}
+                {outOfStock ? 'Out of stock' : `${selectedVariant.stockLeft} available`}
               </p>
             </div>
 
@@ -301,11 +176,7 @@ export default function FeaturedProductExperienceCard({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
-                actions.previewProduct(
-                  product
-                )
-              }
+              onClick={() => actions.previewProduct(product)}
               className="h-9 shrink-0 rounded-full px-3 text-[10px]">
               <Eye className="size-3.5" />
               Details
@@ -313,15 +184,9 @@ export default function FeaturedProductExperienceCard({
           </div>
 
           <ProductActionTray
-            product={
-              product
-            }
-            variant={
-              selectedVariant
-            }
-            onAddToCart={
-              actions.addToCart
-            }
+            product={product}
+            variant={selectedVariant}
+            onAddToCart={actions.addToCart}
             presentation="inline"
             cartLabelOnly
             compactCart

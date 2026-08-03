@@ -28,7 +28,7 @@ type UseQuickSupportAttentionStreamInput = {
 };
 
 const MAX_ATTENTION_STREAMS =
-  5;
+  1;
 
 function parseEvent(
   value: string

@@ -149,7 +149,7 @@ export function SupportIntelligencePanel({
                     : snapshot.risk.level ===
                         'MEDIUM'
                       ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
-                      : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-primary/15 text-primary dark:text-primary'
                 )}>
                 {snapshot.risk.level}
               </span>

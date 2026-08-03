@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Bell,
-  BellRing,
-  ChevronRight,
-  CircleAlert,
-  RefreshCw,
-  Settings2
-} from 'lucide-react';
+import { Bell, BellRing, ChevronRight, CircleAlert, RefreshCw, Settings2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { useIdentity } from '@/providers/IdentityProvider';
@@ -18,13 +11,7 @@ import { useNotificationSummary } from '../client/useNotificationSummary';
 export default function NotificationHubWidget() {
   const router = useRouter();
   const { isAuthenticated } = useIdentity();
-  const {
-    snapshot,
-    loading,
-    error,
-    refresh,
-    mutate
-  } = useNotificationSummary(4);
+  const { snapshot, loading, error, refresh, mutate } = useNotificationSummary(4);
 
   if (!isAuthenticated) {
     return (
@@ -52,11 +39,7 @@ export default function NotificationHubWidget() {
       <div className="border-b border-border/60 p-4">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
-            {unreadCount ? (
-              <BellRing className="size-4" />
-            ) : (
-              <Bell className="size-4" />
-            )}
+            {unreadCount ? <BellRing className="size-4" /> : <Bell className="size-4" />}
           </span>
 
           <div className="min-w-0 flex-1">
@@ -92,7 +75,7 @@ export default function NotificationHubWidget() {
         </div>
       ) : null}
 
-      <div className="divide-y divide-border/60">
+      <div className="max-h-[min(60vh,28rem)] divide-y divide-border/60 overflow-y-auto overscroll-contain">
         {items.map(item => (
           <button
             type="button"
@@ -112,6 +95,7 @@ export default function NotificationHubWidget() {
                     console.error('Unable to mark Hub notification read.', cause);
                     navigate();
                   });
+
                 return;
               }
 
@@ -124,14 +108,15 @@ export default function NotificationHubWidget() {
                 item.readAt ? 'bg-muted-foreground/25' : 'bg-primary'
               )}
             />
+
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-bold">
-                {item.title}
-              </span>
+              <span className="block truncate text-xs font-bold">{item.title}</span>
+
               <span className="mt-1 line-clamp-2 block text-[10px] leading-4 text-muted-foreground">
                 {item.message}
               </span>
             </span>
+
             <ChevronRight className="mt-1 size-3.5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5" />
           </button>
         ))}
@@ -139,7 +124,9 @@ export default function NotificationHubWidget() {
         {!items.length && !loading ? (
           <div className="p-5 text-center">
             <Bell className="mx-auto size-5 text-muted-foreground" />
+
             <p className="mt-2 text-xs font-bold">No verified updates</p>
+
             <p className="mt-1 text-[10px] leading-4 text-muted-foreground">
               This surface remains empty until a real commerce event occurs.
             </p>

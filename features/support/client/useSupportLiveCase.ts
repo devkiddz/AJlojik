@@ -407,6 +407,7 @@ export function useSupportLiveCase({
     ]
   );
 
+  /* eslint-disable react-hooks/set-state-in-effect -- This effect owns the EventSource lifecycle and mirrors transport state into React. */
   useEffect(
     () => {
       if (
@@ -820,6 +821,7 @@ export function useSupportLiveCase({
       streamUrl
     ]
   );
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return {
     state,

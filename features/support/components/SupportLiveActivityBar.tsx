@@ -50,7 +50,7 @@ export function SupportLiveActivityBar({
         className={cn(
           'relative grid size-6 place-items-center rounded-full border bg-background',
           online
-            ? 'border-emerald-500/30 text-emerald-600'
+            ? 'border-primary/30 text-primary'
             : 'border-border text-muted-foreground'
         )}>
         <CircleUserRound className="size-3.5" />
@@ -59,7 +59,7 @@ export function SupportLiveActivityBar({
           className={cn(
             'absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-background',
             online
-              ? 'bg-emerald-500'
+              ? 'bg-primary'
               : 'bg-muted-foreground/40'
           )}
         />

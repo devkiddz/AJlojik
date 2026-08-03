@@ -115,3 +115,5 @@ export type {
   SupportLiveReadyPayload,
   SupportLiveReconnectPayload
 } from './supportLiveTypes';
+
+export * from './supportGuideTypes';
