@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useState, type ComponentType } from 'react';
 
+import SignOutButton from '@/components/auth/SignOutButton';
 import { AdminActionFeedbackBridge } from '@/features/admin/components/AdminActionFeedbackBridge';
 import { cn } from '@/lib/utils';
 
@@ -84,9 +85,19 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
     label: 'Command',
     items: [
       { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-      { href: '/admin/assistant', label: 'AJ Studio Manager', icon: BrainCircuit, permission: 'commerce:view' },
+      {
+        href: '/admin/assistant',
+        label: 'AJ Studio Manager',
+        icon: BrainCircuit,
+        permission: 'commerce:view'
+      },
       { href: '/admin/activity', label: 'Activity', icon: Activity, permission: 'activity:view' },
-      { href: '/admin/analytics', label: 'Analytics', icon: ChartNoAxesCombined, permission: 'analytics:view' },
+      {
+        href: '/admin/analytics',
+        label: 'Analytics',
+        icon: ChartNoAxesCombined,
+        permission: 'analytics:view'
+      },
       { href: '/admin/todos', label: 'Todos', icon: ListTodo, permission: 'todo:view' },
       { href: '/admin/approvals', label: 'Approvals', icon: ShieldCheck, permission: 'approval:view' }
     ]
@@ -98,9 +109,24 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
       { href: '/admin/products', label: 'Product Studio', icon: Boxes, permission: 'commerce:view' },
       { href: '/admin/categories', label: 'Category Studio', icon: Grid2X2Plus, permission: 'category:view' },
       { href: '/admin/brands', label: 'Brand Studio', icon: Tags, permission: 'brand:view' },
-      { href: '/admin/collections', label: 'Collection Studio', icon: FolderKanban, permission: 'collection:view' },
-      { href: '/admin/promotions', label: 'Promotion Studio', icon: BadgePercent, permission: 'promotion:view' },
-      { href: '/admin/store-studio', label: 'Store Studio', icon: Clapperboard, permission: 'experience:manage' },
+      {
+        href: '/admin/collections',
+        label: 'Collection Studio',
+        icon: FolderKanban,
+        permission: 'collection:view'
+      },
+      {
+        href: '/admin/promotions',
+        label: 'Promotion Studio',
+        icon: BadgePercent,
+        permission: 'promotion:view'
+      },
+      {
+        href: '/admin/store-studio',
+        label: 'Store Studio',
+        icon: Clapperboard,
+        permission: 'experience:manage'
+      },
       { href: '/admin/hero', label: 'Homepage Hero', icon: Sparkles, permission: 'system:manage' }
     ]
   },
@@ -126,7 +152,13 @@ const navigation: Array<{ label: string; items: NavigationItem[] }> = [
     label: 'Configuration',
     items: [
       { href: '/admin/settings', label: 'Workspace settings', icon: Settings2, permission: 'settings:view' },
-      { href: '/admin/system', label: 'Developer system', icon: Activity, permission: 'platform:manage', developerOnly: true }
+      {
+        href: '/admin/system',
+        label: 'Developer system',
+        icon: Activity,
+        permission: 'platform:manage',
+        developerOnly: true
+      }
     ]
   }
 ];
@@ -190,7 +222,12 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
                       )}>
                       <Icon className="size-4 shrink-0" />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      <ChevronRight className={cn('size-3.5 transition', active ? 'opacity-70' : 'opacity-0 group-hover:opacity-60')} />
+                      <ChevronRight
+                        className={cn(
+                          'size-3.5 transition',
+                          active ? 'opacity-70' : 'opacity-0 group-hover:opacity-60'
+                        )}
+                      />
                     </Link>
                   );
                 })}
@@ -213,6 +250,10 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
             <span className="rounded-full bg-background px-2 py-1 text-[10px] font-bold">
               {operator.commerceMode.replaceAll('_', ' ')}
             </span>
+          </div>
+
+          <div className="mt-3 border-t border-border/60 pt-3">
+            <SignOutButton />
           </div>
         </div>
       </div>
@@ -238,7 +279,10 @@ export function AdminShell({ children, operator, permissions }: AdminShellProps)
           <p className="truncate text-sm font-bold">{operator.workspaceName}</p>
           <p className="truncate text-[11px] text-muted-foreground">Admin control plane</p>
         </div>
-        <Link href="/store" className="grid size-10 place-items-center rounded-2xl border border-border/60 bg-card" aria-label="Open Store">
+        <Link
+          href="/store"
+          className="grid size-10 place-items-center rounded-2xl border border-border/60 bg-card"
+          aria-label="Open Store">
           <ShoppingBag className="size-4" />
         </Link>
       </header>
