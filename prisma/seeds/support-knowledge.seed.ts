@@ -5,7 +5,37 @@ import { prisma } from './seed-utils';
 import { AJ_LOGIK_SUPPORT_KNOWLEDGE_SEED } from '../../features/support/server/supportKnowledgeSeedCatalog';
 import { normalizeSupportKnowledgeText } from '../../features/support/server/supportKnowledgeText';
 
+const AUTO_SUPPORT_BUCKET_SLUG = 'auto-support';
+
 async function seedWorkspace(workspaceId: string): Promise<number> {
+  const bucket = await prisma.supportKnowledgeBucket.upsert({
+    where: {
+      workspaceId_slug: {
+        workspaceId,
+        slug: AUTO_SUPPORT_BUCKET_SLUG
+      }
+    },
+    create: {
+      workspaceId,
+      slug: AUTO_SUPPORT_BUCKET_SLUG,
+      name: 'AJ Support Intelligence',
+      description:
+        'Approved customer-facing Q&A knowledge used by AJ Support Intelligence.',
+      priority: 100,
+      active: true
+    },
+    update: {
+      name: 'AJ Support Intelligence',
+      description:
+        'Approved customer-facing Q&A knowledge used by AJ Support Intelligence.',
+      priority: 100,
+      active: true
+    },
+    select: {
+      id: true
+    }
+  });
+
   let count = 0;
 
   for (const item of AJ_LOGIK_SUPPORT_KNOWLEDGE_SEED) {
@@ -20,6 +50,7 @@ async function seedWorkspace(workspaceId: string): Promise<number> {
       },
       create: {
         workspaceId,
+        supportKnowledgeBucketId: bucket.id,
         slug: item.slug,
         title: item.title,
         category: item.category,
@@ -41,9 +72,11 @@ async function seedWorkspace(workspaceId: string): Promise<number> {
         priority: item.priority ?? 0,
         confidenceThreshold: item.confidenceThreshold ?? 0.65,
         version: item.version ?? 1,
-        publishedAt: status === 'ACTIVE' ? new Date() : null
+        publishedAt: status === 'ACTIVE' ? new Date() : null,
+        archivedAt: status === 'ARCHIVED' ? new Date() : null
       },
       update: {
+        supportKnowledgeBucketId: bucket.id,
         title: item.title,
         category: item.category,
         intent: item.intent,
@@ -65,13 +98,17 @@ async function seedWorkspace(workspaceId: string): Promise<number> {
         confidenceThreshold: item.confidenceThreshold ?? 0.65,
         version: item.version ?? 1,
         publishedAt: status === 'ACTIVE' ? new Date() : null,
-        archivedAt: null
+        archivedAt: status === 'ARCHIVED' ? new Date() : null
       },
-      select: { id: true }
+      select: {
+        id: true
+      }
     });
 
     await prisma.supportKnowledgeQuestionExample.deleteMany({
-      where: { entryId: entry.id }
+      where: {
+        entryId: entry.id
+      }
     });
 
     if (item.examples.length) {
@@ -95,8 +132,13 @@ async function seedWorkspace(workspaceId: string): Promise<number> {
 
 async function main(): Promise<void> {
   const workspaces = await prisma.workspace.findMany({
-    where: { active: true },
-    select: { id: true, name: true }
+    where: {
+      active: true
+    },
+    select: {
+      id: true,
+      name: true
+    }
   });
 
   if (!workspaces.length) {

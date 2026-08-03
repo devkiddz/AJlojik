@@ -59,7 +59,7 @@ const globalForPrisma = globalThis as unknown as {
   prismaSchemaVersion?: string;
 };
 
-const PRISMA_SCHEMA_VERSION = '20260731073000';
+const PRISMA_SCHEMA_VERSION = '20260803124500-support-knowledge-resolution';
 
 function supportsCurrentSchema(
   client: PrismaClient | undefined,
@@ -86,7 +86,11 @@ function supportsCurrentSchema(
     'storeStudioAsset',
     'mediaAsset',
     'vendorProfile',
-    'storeCollection'
+    'storeCollection',
+    'supportKnowledgeBucket',
+    'supportKnowledgeEntry',
+    'supportKnowledgeQuestionExample',
+    'supportKnowledgeInteraction'
   ].every(delegate => delegate in client);
 }
 

@@ -158,4 +158,3 @@ export async function recordSupportKnowledgeFeedback(
 
   return updated.count === 1;
 }
-

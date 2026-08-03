@@ -3449,13 +3449,14 @@ model SupportKnowledgeEntry {
 
   questionExamples         SupportKnowledgeQuestionExample[]
   interactions             SupportKnowledgeInteraction[]
-  supportKnowledgeBucket   SupportKnowledgeBucket?           @relation(fields: [supportKnowledgeBucketId], references: [id])
+  supportKnowledgeBucket   SupportKnowledgeBucket?           @relation(fields: [supportKnowledgeBucketId], references: [id], onDelete: SetNull)
   supportKnowledgeBucketId String?
 
   @@unique([workspaceId, slug])
   @@index([workspaceId, status, priority])
   @@index([workspaceId, intent, status])
   @@index([workspaceId, category, status])
+  @@index([supportKnowledgeBucketId, priority])
   @@map("support_knowledge_entry")
 }
 

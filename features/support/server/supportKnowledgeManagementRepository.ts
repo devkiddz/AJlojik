@@ -1,7 +1,10 @@
 import 'server-only';
 
+import {
+  Prisma
+} from '@/lib/generated/prisma/client';
+
 import type {
-  Prisma,
   SupportKnowledgeEntry,
   SupportKnowledgeInteraction
 } from '@/lib/generated/prisma/client';

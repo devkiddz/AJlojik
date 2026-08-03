@@ -304,9 +304,9 @@ async function recordInteractionSafely(
     Parameters<
       typeof recordSupportKnowledgeInteraction
     >[0]
-): Promise<void> {
+): Promise<string | null> {
   try {
-    await recordSupportKnowledgeInteraction(
+    return await recordSupportKnowledgeInteraction(
       input
     );
   } catch (
@@ -316,6 +316,8 @@ async function recordInteractionSafely(
       'AJ Support Intelligence could not record the knowledge interaction.',
       cause
     );
+
+    return null;
   }
 }
 
@@ -339,6 +341,8 @@ function noMatchResponse():
     knowledgeEntryId:
       null,
     knowledgeEntrySlug:
+      null,
+    interactionId:
       null,
     requiredContext:
       [],
@@ -399,6 +403,8 @@ function unavailableResponse():
     knowledgeEntryId:
       null,
     knowledgeEntrySlug:
+      null,
+    interactionId:
       null,
     requiredContext:
       [],
@@ -501,25 +507,26 @@ export async function resolveSupportGuideQuestion(
     const response =
       noMatchResponse();
 
-    await recordInteractionSafely({
-      workspaceId:
-        input.workspaceId,
-      customerId:
-        input.customerId ??
-        null,
-      question,
-      outcome:
-        'NO_MATCH',
-      answer:
-        response.answer,
-      pathname:
-        input.pathname ??
-        null,
-      metadata: {
-        reason:
-          'NO_ACTIVE_KNOWLEDGE'
-      }
-    });
+    response.interactionId =
+      await recordInteractionSafely({
+        workspaceId:
+          input.workspaceId,
+        customerId:
+          input.customerId ??
+          null,
+        question,
+        outcome:
+          'NO_MATCH',
+        answer:
+          response.answer,
+        pathname:
+          input.pathname ??
+          null,
+        metadata: {
+          reason:
+            'NO_ACTIVE_KNOWLEDGE'
+        }
+      });
 
     return response;
   }
@@ -587,45 +594,46 @@ export async function resolveSupportGuideQuestion(
     const response =
       noMatchResponse();
 
-    await recordInteractionSafely({
-      workspaceId:
-        input.workspaceId,
-      customerId:
-        input.customerId ??
-        null,
-      question,
-      matchedIntent:
-        contextualIntent
-          ?.intent ??
-        null,
-      confidence:
-        contextualIntent
-          ?.confidence ??
-        null,
-      outcome:
-        'NO_MATCH',
-      answer:
-        response.answer,
-      pathname:
-        input.pathname ??
-        null,
-      metadata: {
-        candidateIntent:
-          resolution.runnerUp
-            ?.entry
-            .intent ??
+    response.interactionId =
+      await recordInteractionSafely({
+        workspaceId:
+          input.workspaceId,
+        customerId:
+          input.customerId ??
+          null,
+        question,
+        matchedIntent:
           contextualIntent
             ?.intent ??
           null,
-        candidateScore:
-          resolution.runnerUp
-            ?.score ??
+        confidence:
           contextualIntent
             ?.confidence ??
           null,
-        contextualIntent
-      }
-    });
+        outcome:
+          'NO_MATCH',
+        answer:
+          response.answer,
+        pathname:
+          input.pathname ??
+          null,
+        metadata: {
+          candidateIntent:
+            resolution.runnerUp
+              ?.entry
+              .intent ??
+            contextualIntent
+              ?.intent ??
+            null,
+          candidateScore:
+            resolution.runnerUp
+              ?.score ??
+            contextualIntent
+              ?.confidence ??
+            null,
+          contextualIntent
+        }
+      });
 
     return response;
   }
@@ -664,6 +672,8 @@ export async function resolveSupportGuideQuestion(
           best.entry.id,
         knowledgeEntrySlug:
           best.entry.slug,
+        interactionId:
+          null,
         requiredContext:
           [],
         context:
@@ -676,42 +686,43 @@ export async function resolveSupportGuideQuestion(
           )
       };
 
-    await recordInteractionSafely({
-      workspaceId:
-        input.workspaceId,
-      customerId:
-        input.customerId ??
-        null,
-      entryId:
-        best.entry.id,
-      question,
-      matchedIntent:
-        best.entry.intent,
-      confidence:
-        best.score,
-      outcome:
-        'CLARIFICATION_REQUIRED',
-      answer:
-        response.answer,
-      pathname:
-        input.pathname ??
-        null,
-      metadata: {
-        entrySlug:
-          best.entry.slug,
-        runnerUpSlug:
-          runnerUp
-            ?.entry
-            .slug ??
+    response.interactionId =
+      await recordInteractionSafely({
+        workspaceId:
+          input.workspaceId,
+        customerId:
+          input.customerId ??
           null,
-        runnerUpScore:
-          runnerUp
-            ?.score ??
+        entryId:
+          best.entry.id,
+        question,
+        matchedIntent:
+          best.entry.intent,
+        confidence:
+          best.score,
+        outcome:
+          'CLARIFICATION_REQUIRED',
+        answer:
+          response.answer,
+        pathname:
+          input.pathname ??
           null,
-        evidence:
-          best.evidence
-      }
-    });
+        metadata: {
+          entrySlug:
+            best.entry.slug,
+          runnerUpSlug:
+            runnerUp
+              ?.entry
+              .slug ??
+            null,
+          runnerUpScore:
+            runnerUp
+              ?.score ??
+            null,
+          evidence:
+            best.evidence
+        }
+      });
 
     return response;
   }
@@ -886,6 +897,8 @@ export async function resolveSupportGuideQuestion(
         best.entry.id,
       knowledgeEntrySlug:
         best.entry.slug,
+      interactionId:
+        null,
       requiredContext:
         customerContext
           ? [
@@ -905,49 +918,50 @@ export async function resolveSupportGuideQuestion(
       actions
     };
 
-  await recordInteractionSafely({
-    workspaceId:
-      input.workspaceId,
-    customerId:
-      input.customerId ??
-      null,
-    entryId:
-      best.entry.id,
-    question,
-    matchedIntent:
-      best.entry.intent,
-    confidence:
-      best.score,
-    outcome,
-    answer:
-      response.answer,
-    humanRequested:
-      humanRequested ||
-      Boolean(
-        customerContext
-          ?.requiresHuman
-      ),
-    pathname:
-      input.pathname ??
-      null,
-    metadata: {
-      entrySlug:
-        best.entry.slug,
-      entryVersion:
-        best.entry.version,
-      category:
-        best.entry.category,
-      requestedContext:
-        originalRequiredContext,
-      context:
-        customerContext
-          ?.snapshot ??
+  response.interactionId =
+    await recordInteractionSafely({
+      workspaceId:
+        input.workspaceId,
+      customerId:
+        input.customerId ??
         null,
-      contextualIntent,
-      evidence:
-        best.evidence
-    }
-  });
+      entryId:
+        best.entry.id,
+      question,
+      matchedIntent:
+        best.entry.intent,
+      confidence:
+        best.score,
+      outcome,
+      answer:
+        response.answer,
+      humanRequested:
+        humanRequested ||
+        Boolean(
+          customerContext
+            ?.requiresHuman
+        ),
+      pathname:
+        input.pathname ??
+        null,
+      metadata: {
+        entrySlug:
+          best.entry.slug,
+        entryVersion:
+          best.entry.version,
+        category:
+          best.entry.category,
+        requestedContext:
+          originalRequiredContext,
+        context:
+          customerContext
+            ?.snapshot ??
+          null,
+        contextualIntent,
+        evidence:
+          best.evidence
+      }
+    });
 
   return response;
 }

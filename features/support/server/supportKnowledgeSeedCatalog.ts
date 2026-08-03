@@ -3,6 +3,69 @@ import type { SupportKnowledgeSeedEntry } from '../supportKnowledgeTypes';
 export const AJ_LOGIK_SUPPORT_KNOWLEDGE_SEED:
   readonly SupportKnowledgeSeedEntry[] = [
     {
+      slug: 'greeting',
+      title: 'Greeting and welcome',
+      category: 'CONVERSATION',
+      intent: 'GREETING',
+      primaryQuestion: 'Hello',
+      answerTemplate:
+        'Hi 👋 Welcome to AJ Logik. I am AJ Support Intelligence. I can help you understand the platform, shop, find the right order or delivery support, or connect you to a human agent when personal attention is needed.',
+      clarificationAnswer:
+        'What can I help you with today?',
+      escalationAnswer: null,
+      keywords: [
+        'hello',
+        'hi',
+        'hey',
+        'greeting',
+        'welcome',
+        'morning',
+        'afternoon',
+        'evening'
+      ],
+      synonyms: [
+        'good day',
+        'how are you',
+        'how far',
+        'what is up',
+        'wetin dey happen'
+      ],
+      actions: [
+        {
+          id: 'greeting-shopping-help',
+          label: 'Shopping help',
+          kind: 'FOLLOW_UP',
+          prompt: 'How do I buy on AJ Logik?'
+        },
+        {
+          id: 'greeting-platform-help',
+          label: 'About AJ Logik',
+          kind: 'FOLLOW_UP',
+          prompt: 'What is AJ Logik?'
+        }
+      ],
+      status: 'ACTIVE',
+      priority: 130,
+      confidenceThreshold: 0.55,
+      examples: [
+        { text: 'Hi' },
+        { text: 'Hello' },
+        { text: 'Hey' },
+        { text: 'Hi AJ' },
+        { text: 'Hello AJ' },
+        { text: 'Hi there' },
+        { text: 'Hello there' },
+        { text: 'Good morning' },
+        { text: 'Good afternoon' },
+        { text: 'Good evening' },
+        { text: 'Good day' },
+        { text: 'How are you?' },
+        { text: 'How far?' },
+        { text: "What's up?" },
+        { text: 'Wetin dey happen?' }
+      ]
+    },
+    {
       slug: 'what-is-aj-logik',
       title: 'What AJ Logik is',
       category: 'PLATFORM',

@@ -227,13 +227,8 @@ export function SupportGuidePanel({
       null
     );
 
-  const [
-    shortcutLabel,
-    setShortcutLabel
-  ] =
-    useState(
-      'Ctrl ⇧ ⌫'
-    );
+  const shortcutLabel =
+    'Ctrl/⌘ ⇧ ⌫';
 
   const requestRef =
     useRef<
@@ -841,23 +836,6 @@ export function SupportGuidePanel({
         latest
       ]
     );
-
-  useEffect(
-    () => {
-      const platform =
-        navigator.platform
-          .toLowerCase();
-
-      setShortcutLabel(
-        platform.includes(
-          'mac'
-        )
-          ? '⌘ ⇧ ⌫'
-          : 'Ctrl ⇧ ⌫'
-      );
-    },
-    []
-  );
 
   useEffect(
     () => {

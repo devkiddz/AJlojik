@@ -81,14 +81,15 @@ export async function POST(
     )?.value ||
     null;
 
-  const runtime =
+  const workspaceRuntime =
     await getUserWorkspaces(
       session.user.id,
       requestedWorkspaceId
     );
 
   if (
-    !runtime.activeWorkspace
+    !workspaceRuntime
+      .activeWorkspace
   ) {
     return response(
       {
@@ -109,9 +110,11 @@ export async function POST(
     return response(
       await resolveSupportGuideQuestion({
         workspaceId:
-          runtime
+          workspaceRuntime
             .activeWorkspace
             .id,
+        customerId:
+          session.user.id,
         question:
           typeof payload.question ===
           'string'
@@ -124,7 +127,9 @@ export async function POST(
             : null
       })
     );
-  } catch (cause) {
+  } catch (
+    cause
+  ) {
     return response(
       {
         error:

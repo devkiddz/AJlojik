@@ -89,6 +89,36 @@ export type SupportGuideContextSnapshot = {
   references: SupportGuideContextReference[];
 };
 
+export const SUPPORT_GUIDE_HANDOFF_CATEGORIES = [
+  'ORDER',
+  'DELIVERY',
+  'PAYMENT',
+  'PRODUCT',
+  'ACCOUNT',
+  'VENDOR',
+  'SHOPPING_LIST',
+  'TECHNICAL',
+  'OTHER'
+] as const;
+
+export type SupportGuideHandoffCategory =
+  (typeof SUPPORT_GUIDE_HANDOFF_CATEGORIES)[number];
+
+export type SupportGuideHandoffPriority =
+  | 'NORMAL'
+  | 'HIGH';
+
+export type SupportGuideHandoffDraft = {
+  category: SupportGuideHandoffCategory;
+  priority: SupportGuideHandoffPriority;
+  subject: string;
+  orderId: string | null;
+  deliveryId: string | null;
+  vendorProfileId: string | null;
+  interactionId: string | null;
+  metadata: Record<string, unknown>;
+};
+
 export type SupportGuideResponse = {
   outcome: SupportGuideOutcome;
   intent: SupportGuideIntent;
@@ -106,6 +136,7 @@ export type SupportGuideResponse = {
     | 'SYSTEM_FALLBACK';
   knowledgeEntryId: string | null;
   knowledgeEntrySlug: string | null;
+  interactionId: string | null;
   requiredContext: string[];
   context: SupportGuideContextSnapshot | null;
   actions: SupportGuideAction[];

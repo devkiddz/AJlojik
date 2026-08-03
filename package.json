@@ -29,7 +29,10 @@
     "verify:support-knowledge-runtime": "tsx scripts/verify-support-knowledge-runtime.ts",
     "verify:support-guide-context": "tsx scripts/verify-support-guide-context.ts",
     "verify:support-guide-handoff": "tsx scripts/verify-support-guide-handoff.ts",
-    "verify:support-knowledge-studio": "tsx scripts/verify-support-knowledge-studio.ts"
+    "verify:support-knowledge-studio": "tsx scripts/verify-support-knowledge-studio.ts",
+    "verify:support-auto-response-production": "node scripts/verify-support-auto-response-production.mjs",
+    "verify:support-auto-response-live-boundary": "node scripts/verify-support-auto-response-live-boundary.mjs",
+    "verify:support-auto-response-release": "npm run verify:support-knowledge-runtime && npm run verify:support-guide && npm run verify:support-guide-context && npm run verify:support-guide-handoff && npm run verify:support-knowledge-studio && npm run typecheck && npm run lint && npm run verify:support-auto-response-production"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
