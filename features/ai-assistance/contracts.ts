@@ -60,6 +60,38 @@ export type AIAssistantCampaignType =
   | 'STORY'
   | 'REEL';
 
+/* AJ_MS12_PRODUCT_LIBRARY_PRESENTATION_V1 */
+export type AIAssistantProductKnowledgeSourceType =
+  | 'CATALOG'
+  | 'VENDOR'
+  | 'MANUFACTURER'
+  | 'WIKIPEDIA'
+  | 'WIKIDATA';
+
+export type AIAssistantProductKnowledgeSource = {
+  type: AIAssistantProductKnowledgeSourceType;
+  title: string;
+  href?: string | null;
+  verified: boolean;
+};
+
+export type AIAssistantProductSpecification = {
+  label: string;
+  value: string;
+};
+
+export type AIAssistantProductLibraryEntry = {
+  status: 'CATALOG_ONLY' | 'ENRICHED';
+  overview: string | null;
+  description: string | null;
+  tags: string[];
+  specifications: AIAssistantProductSpecification[];
+  ingredients: string[];
+  safetyNotes: string[];
+  sources: AIAssistantProductKnowledgeSource[];
+  missingInformation: string[];
+};
+
 export type AIAssistantProduct = {
   id: string;
   slug: string;
@@ -74,6 +106,7 @@ export type AIAssistantProduct = {
   rating: number;
   reason: string;
   href: string;
+  library?: AIAssistantProductLibraryEntry;
 };
 
 export type AIAssistantRecognizedProductDraft = {
@@ -161,8 +194,63 @@ export type AIAssistantMessageView = {
   provider: string;
   confidence: number | null;
   feedback: AIAssistantFeedbackValue | null;
+  journeyVersion: number | null;
+  previousPlanMessageId: string | null;
+  isPlanSnapshot: boolean;
+  journeyStateSnapshot: AIAssistantJourneyState | null;
+  journeyStageSnapshot: AIAssistantJourneyStage | null;
+  journeyStateVersionSnapshot: number | null;
+  journeyTransition: AIAssistantJourneyTransition | null;
   applications: AIAssistantApplicationView[];
   createdAt: string;
+};
+
+export type AIAssistantJourneyStage =
+  | 'UNDERSTANDING'
+  | 'PLANNING'
+  | 'REFINING'
+  | 'AWAITING_DECISION'
+  | 'READY'
+  | 'COMPLETED';
+
+export type AIAssistantJourneyTransitionReason =
+  | 'STARTED'
+  | 'NEEDS_CONTEXT'
+  | 'CONTEXT_CONFIRMED'
+  | 'PLAN_CREATED'
+  | 'PLAN_REFINED'
+  | 'AWAITING_CHOICE'
+  | 'DECISION_CONFIRMED'
+  | 'ACTION_READY'
+  | 'COMPLETED'
+  | 'REOPENED'
+  | 'RESTORED'
+  | 'STAGE_PRESERVED';
+
+export type AIAssistantJourneyTransition = {
+  from: AIAssistantJourneyStage | null;
+  proposed: AIAssistantJourneyStage;
+  to: AIAssistantJourneyStage;
+  reason: AIAssistantJourneyTransitionReason;
+  changed: boolean;
+  planVersion: number;
+  at: string;
+};
+
+export type AIAssistantJourneyState = {
+  schemaVersion: 1;
+  objective: string | null;
+  confirmedContext: string[];
+  constraints: string[];
+  preferences: string[];
+  confirmedDecisions: string[];
+  rejectedSuggestions: string[];
+  unresolvedQuestions: string[];
+  assumptions: string[];
+  latestInstruction: string;
+  currentStage: AIAssistantJourneyStage;
+  planVersion: number;
+  updatedAt: string;
 };
 
 export type AIAssistantSessionSummary = {
@@ -170,8 +258,17 @@ export type AIAssistantSessionSummary = {
   title: string;
   audience: AIAssistantAudience;
   status: 'ACTIVE' | 'ARCHIVED';
+  journeyGoal: string;
+  activePlanMessageId: string | null;
+  currentPlanVersion: number;
+  lastRefinedAt: string | null;
   messageCount: number;
   lastMessage: string | null;
+  journeyStage: AIAssistantJourneyStage;
+  journeyStateVersion: number;
+  journeyState: AIAssistantJourneyState | null;
+
+  journeyLastTransition: AIAssistantJourneyTransition | null;
   createdAt: string;
   updatedAt: string;
 };

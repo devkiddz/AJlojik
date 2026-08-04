@@ -3,6 +3,8 @@ import {
   NextResponse
 } from 'next/server';
 
+/* AJ_ASSISTANCE_WORKSPACE_STAGE_3_RESTORE_ROUTE */
+
 import type {
   AIAssistantAudience
 } from '@/features/ai-assistance/contracts';
@@ -92,56 +94,7 @@ export const dynamic =
 export const revalidate =
   0;
 
-export async function GET(
-  request:
-    NextRequest,
-  context: {
-    params:
-      Promise<{
-        sessionId:
-          string;
-      }>;
-  }
-) {
-  try {
-    const access =
-      await accessForRequest(
-        request
-      );
-
-    const {
-      sessionId
-    } =
-      await context.params;
-
-    const session =
-      await AssistantRepository.readSession(
-        access,
-        sessionId
-      );
-
-    return NextResponse.json(
-      {
-        session
-      },
-      {
-        headers: {
-          'Cache-Control':
-            'no-store'
-        }
-      }
-    );
-  } catch (
-    error
-  ) {
-    return assistantErrorResponse(
-      error,
-      'Unable to load the intelligence session.'
-    );
-  }
-}
-
-export async function PATCH(
+export async function POST(
   request:
     NextRequest,
   context: {
@@ -165,21 +118,28 @@ export async function PATCH(
 
     const body =
       (await request.json()) as {
-        title?:
+        messageId?:
           unknown;
       };
 
-    const title =
-      typeof body.title ===
+    const messageId =
+      typeof body.messageId ===
       'string'
-        ? body.title
+        ? body.messageId.trim()
         : '';
 
+    if (!messageId) {
+      throw new AssistantRuntimeError(
+        'Select a saved plan version to restore.',
+        422
+      );
+    }
+
     const session =
-      await AssistantRepository.renameSession(
+      await AssistantRepository.restorePlan(
         access,
         sessionId,
-        title
+        messageId
       );
 
     return NextResponse.json(
@@ -198,61 +158,7 @@ export async function PATCH(
   ) {
     return assistantErrorResponse(
       error,
-      'Unable to rename the Journey.'
-    );
-  }
-}
-
-export async function DELETE(
-  request:
-    NextRequest,
-  context: {
-    params:
-      Promise<{
-        sessionId:
-          string;
-      }>;
-  }
-) {
-  try {
-    const access =
-      await accessForRequest(
-        request
-      );
-
-    const {
-      sessionId
-    } =
-      await context.params;
-
-    const mode =
-      request.nextUrl.searchParams
-        .get(
-          'mode'
-        )
-        ?.trim();
-
-    const result =
-      mode ===
-      'delete'
-        ? await AssistantRepository.deleteSession(
-            access,
-            sessionId
-          )
-        : await AssistantRepository.archiveSession(
-            access,
-            sessionId
-          );
-
-    return NextResponse.json(
-      result
-    );
-  } catch (
-    error
-  ) {
-    return assistantErrorResponse(
-      error,
-      'Unable to archive the intelligence session.'
+      'Unable to restore the selected plan.'
     );
   }
 }

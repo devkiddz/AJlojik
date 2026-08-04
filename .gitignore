@@ -56,3 +56,16 @@ next-env.d.ts
 *.bak.*
 .vercel
 .env*
+.aj-backups/
+.aj-installer-backups/
+.ajlojik-rcentz-backups/
+aj-ai-crash.log
+README-aj-*.txt
+install-aj-*.mjs
+install-aj-*.zip
+repair-aj-*.mjs
+repair-aj-*.zip
+collect-aj-*.mjs
+collect-aj-*.zip
+aj-ms12-*.txt
+*.before-local-css-removal

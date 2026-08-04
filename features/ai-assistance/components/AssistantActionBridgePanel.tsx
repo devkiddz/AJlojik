@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_MS12_INTELLIGENCE_READABILITY_PASS_V1 */
+
 import {
   useMemo,
   useState,
@@ -646,14 +648,14 @@ export function AssistantActionBridgePanel({
 
   return (
     <section className="overflow-hidden rounded-3xl border border-accent/25 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_8%,transparent),transparent_55%)]">
-      <header className="flex flex-col gap-3 border-b border-border/55 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+      <header className="flex flex-col gap-4 border-b border-border/55 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-accent/25 bg-accent/12 text-accent">
             <ShieldCheck className="size-4" />
           </span>
 
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground">
               Ready to continue
             </p>
 
@@ -662,7 +664,7 @@ export function AssistantActionBridgePanel({
               should prepare
             </h4>
 
-            <p className="mt-1 max-w-2xl text-[10px] leading-5 text-muted-foreground">
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
               Review the details first.
               AJ Logik will verify your
               access and continue through
@@ -673,7 +675,7 @@ export function AssistantActionBridgePanel({
 
         {latestApplication ? (
           <span
-            className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-2 text-[9px] font-black ${
+            className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-2 text-xs font-black ${
               latestApplication.status ===
               'FAILED'
                 ? 'border-destructive/20 bg-destructive/5 text-destructive'
@@ -698,8 +700,8 @@ export function AssistantActionBridgePanel({
         ) : null}
       </header>
 
-      <div className="p-4 sm:p-5">
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="p-5 sm:p-6">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {actions.map(
             action => {
               const Icon =
@@ -722,20 +724,20 @@ export function AssistantActionBridgePanel({
                       action.type
                     )
                   }
-                  className={`rounded-2xl border p-3 text-left transition ${
+                  className={`rounded-2xl border p-4 text-left transition ${
                     selected
                       ? 'border-accent/35 bg-accent/12 shadow-sm'
                       : 'border-border/60 bg-background/55 hover:border-accent/25 hover:bg-muted/35'
                   }`}>
                   <Icon className="size-4 text-accent" />
 
-                  <p className="mt-2 text-xs font-black">
+                  <p className="mt-3 text-sm font-semibold">
                     {
                       action.label
                     }
                   </p>
 
-                  <p className="mt-1 text-[9px] leading-4 text-muted-foreground">
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {
                       action.description
                     }
@@ -844,7 +846,7 @@ export function AssistantActionBridgePanel({
                           AIAssistantTodoPriority
                       )
                   }
-                  className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-xs font-bold outline-none focus:border-accent/50">
+                  className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm font-medium outline-none focus:border-accent/50">
                   <option value="LOW">
                     Low
                   </option>
@@ -969,7 +971,7 @@ export function AssistantActionBridgePanel({
                 />
               </div>
 
-              <p className="rounded-xl border border-accent/20 bg-accent/8 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
+              <p className="rounded-xl border border-accent/20 bg-accent/8 px-3 py-2 text-xs leading-5 text-muted-foreground">
                 This creates an inactive
                 Draft only. Complete
                 media, variants, price
@@ -998,7 +1000,7 @@ export function AssistantActionBridgePanel({
                           .value
                       )
                   }
-                  className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-xs font-bold outline-none focus:border-accent/50">
+                  className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm font-medium outline-none focus:border-accent/50">
                   {payload.products.map(
                     product => (
                       <option
@@ -1069,7 +1071,7 @@ export function AssistantActionBridgePanel({
                             AIAssistantCampaignType
                         )
                     }
-                    className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-xs font-bold outline-none focus:border-accent/50">
+                    className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm font-medium outline-none focus:border-accent/50">
                     <option value="BANNER">
                       Banner
                     </option>
@@ -1118,7 +1120,7 @@ export function AssistantActionBridgePanel({
           ) : null}
 
           {error ? (
-            <p className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-[10px] leading-5 text-destructive">
+            <p className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs leading-5 text-destructive">
               {
                 error
               }
@@ -1126,7 +1128,7 @@ export function AssistantActionBridgePanel({
           ) : null}
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/55 pt-4">
-            <p className="max-w-2xl text-[9px] leading-4 text-muted-foreground">
+            <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
               Your access, ownership and
               approval rules still
               apply. AJ Logik will not
@@ -1142,7 +1144,7 @@ export function AssistantActionBridgePanel({
               onClick={() =>
                 void applyAction()
               }
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-xs font-black text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45">
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45">
               {submitting ? (
                 <LoaderCircle className="size-4 animate-spin" />
               ) : (
@@ -1186,7 +1188,7 @@ function FieldLabel({
     ReactNode;
 }) {
   return (
-    <span className="text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground">
+    <span className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
       {
         children
       }
@@ -1241,7 +1243,7 @@ function TextField({
         placeholder={
           placeholder
         }
-        className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-xs outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/10"
+        className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/10"
       />
     </label>
   );
@@ -1294,7 +1296,7 @@ function TextAreaField({
         maxLength={
           maximum
         }
-        className="mt-2 w-full resize-y rounded-xl border bg-background px-3 py-2 text-xs leading-5 outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/10"
+        className="mt-2 w-full resize-y rounded-xl border bg-background px-3 py-3 text-sm leading-6 outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/10"
       />
     </label>
   );
@@ -1312,7 +1314,7 @@ function ReadOnlyFact({
 }) {
   return (
     <div className="rounded-xl border border-border/60 bg-muted/25 p-3">
-      <p className="text-[9px] font-black uppercase tracking-[0.1em] text-muted-foreground">
+      <p className="text-xs font-black uppercase tracking-[0.1em] text-muted-foreground">
         {
           label
         }
@@ -1349,11 +1351,11 @@ function ProductSelection({
 
   return (
     <fieldset>
-      <legend className="text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground">
+      <legend className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
         Included products
       </legend>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {products.map(
           product => {
             const checked =
@@ -1366,7 +1368,7 @@ function ProductSelection({
                 key={
                   product.id
                 }
-                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
+                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
                   checked
                     ? 'border-accent/30 bg-accent/10'
                     : 'border-border/60 bg-background/55'
@@ -1385,13 +1387,13 @@ function ProductSelection({
                 />
 
                 <span className="min-w-0">
-                  <span className="block truncate text-[10px] font-black">
+                  <span className="block truncate text-sm font-semibold">
                     {
                       product.name
                     }
                   </span>
 
-                  <span className="mt-1 block text-[9px] text-muted-foreground">
+                  <span className="mt-1 block text-xs text-muted-foreground">
                     {
                       product.available
                     }{' '}

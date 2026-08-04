@@ -9,7 +9,10 @@ import type {
   AIAssistantAudience,
   AIAssistantResponsePayload,
   AIAssistantSessionSummary,
-  AIAssistantSessionView
+  AIAssistantSessionView,
+  AIAssistantJourneyStage,
+  AIAssistantJourneyState,
+  AIAssistantJourneyTransition
 } from '../contracts';
 
 export const assistantSessionInclude = {
@@ -50,6 +53,46 @@ function responsePayload(
   }
 
   return value as unknown as AIAssistantResponsePayload;
+}
+
+function journeyStateValue(
+  value:
+    Prisma.JsonValue |
+    null
+): AIAssistantJourneyState | null {
+  if (
+    !value ||
+    typeof value !==
+      'object' ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return value as unknown as
+    AIAssistantJourneyState;
+}
+
+function journeyTransitionValue(
+  value:
+    Prisma.JsonValue |
+    null
+): AIAssistantJourneyTransition | null {
+  if (
+    !value ||
+    typeof value !==
+      'object' ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return value as unknown as
+    AIAssistantJourneyTransition;
 }
 
 function applicationHref(
@@ -170,6 +213,29 @@ export function mapAssistantSession(
       session.audience
     ),
     status: session.status,
+    journeyStage:
+      session.journeyStage as
+        AIAssistantJourneyStage,
+    journeyStateVersion:
+      session.journeyStateVersion,
+    journeyState:
+      journeyStateValue(
+        session.journeyState
+      ),
+    journeyLastTransition:
+      journeyTransitionValue(
+        session.journeyLastTransition
+      ),
+    journeyGoal:
+      session.journeyGoal ??
+      session.title,
+    activePlanMessageId:
+      session.activePlanMessageId,
+    currentPlanVersion:
+      session.currentPlanVersion,
+    lastRefinedAt:
+      session.lastRefinedAt?.toISOString() ??
+      null,
     messageCount:
       session.messages.length,
     lastMessage:
@@ -201,6 +267,26 @@ export function mapAssistantSession(
             message.confidence,
           feedback:
             message.feedback,
+          journeyVersion:
+            message.journeyVersion,
+          previousPlanMessageId:
+            message.previousPlanMessageId,
+          isPlanSnapshot:
+            message.isPlanSnapshot,
+          journeyStateSnapshot:
+            journeyStateValue(
+              message.journeyStateSnapshot
+            ),
+          journeyStageSnapshot:
+            message.journeyStageSnapshot as
+              AIAssistantJourneyStage |
+              null,
+          journeyStateVersionSnapshot:
+            message.journeyStateVersionSnapshot,
+          journeyTransition:
+            journeyTransitionValue(
+              message.journeyTransition
+            ),
           applications:
             message.applications.map(
               mapApplication
@@ -229,6 +315,22 @@ export function mapAssistantSessionSummary(
     title: mapped.title,
     audience: mapped.audience,
     status: mapped.status,
+    journeyStage:
+      mapped.journeyStage,
+    journeyStateVersion:
+      mapped.journeyStateVersion,
+    journeyState:
+      mapped.journeyState,
+    journeyLastTransition:
+      mapped.journeyLastTransition,
+    journeyGoal:
+      mapped.journeyGoal,
+    activePlanMessageId:
+      mapped.activePlanMessageId,
+    currentPlanVersion:
+      mapped.currentPlanVersion,
+    lastRefinedAt:
+      mapped.lastRefinedAt,
     messageCount:
       mapped.messageCount,
     lastMessage:
