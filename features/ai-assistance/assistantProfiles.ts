@@ -169,11 +169,11 @@ const profiles: Record<
     audience:
       'customer',
     eyebrow:
-      'AJ Logik · Store Assistant',
+      'AJ Logik · Living Intelligence',
     title:
-      'Store Assistant',
+      'AJ Intelligence',
     description:
-      'Friendly help for discovering products, comparing choices, planning occasions and building useful Shopping Lists.',
+      'A living planning and decision workspace for discovering products, comparing choices, shaping occasions and building useful Shopping Lists.',
     contextDescription:
       'I use available products, your current interests, recent views and Shopping Lists to prepare helpful suggestions.',
     capabilities: [

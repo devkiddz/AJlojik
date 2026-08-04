@@ -1,9 +1,20 @@
 import 'server-only';
 
+/* AJ_MS12_TYPED_JOURNEY_CONTINUATION */
+
+/* AJ_ASSISTANCE_WORKSPACE_STAGE_2 */
+
 import type {
   AIAssistantAudience,
   AIAssistantResponsePayload
 } from '../contracts';
+
+type CollaborativeMissingField =
+  | 'goal'
+  | 'audienceSize'
+  | 'occasion'
+  | 'budget'
+  | 'preferences';
 
 type CollaborativeIntent = {
   active: boolean;
@@ -11,16 +22,12 @@ type CollaborativeIntent = {
   audienceSize: number | null;
   occasion: string | null;
   budget: number | null;
+  budgetFlexible: boolean;
   preferences: string[];
   exclusions: string[];
   urgency: 'now' | 'today' | 'scheduled' | null;
-  missing: Array<
-    | 'goal'
-    | 'audienceSize'
-    | 'occasion'
-    | 'budget'
-    | 'preferences'
-  >;
+  planningContext: boolean;
+  missing: CollaborativeMissingField[];
 };
 
 type CollaborativeInput = {
@@ -28,6 +35,11 @@ type CollaborativeInput = {
   prompt: string;
   conversation: string[];
 };
+
+import {
+  canonicalizeJourneyConversation,
+  hasFlexibleJourneyBudget
+} from './journeyContinuationInput';
 
 const collaborationTriggers = [
   'help me think this through',
@@ -41,69 +53,189 @@ const collaborationTriggers = [
   "i'm not sure what i need",
   'let us work this out',
   "let's work this out"
-];
+] as const;
 
-function normalize(value: string) {
+const genericReplies = [
+  'yes',
+  'no',
+  'okay',
+  'ok',
+  'sure',
+  'maybe',
+  'continue',
+  'go ahead',
+  'show me'
+] as const;
+
+function normalize(
+  value: string
+) {
   return value
     .toLowerCase()
-    .replace(/[,]/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(
+      /[,]/g,
+      ''
+    )
+    .replace(
+      /\s+/g,
+      ' '
+    )
     .trim();
+}
+
+function uniqueMessages(
+  conversation: string[],
+  prompt: string
+) {
+  const messages = [
+    ...conversation,
+    prompt
+  ]
+    .map(
+      message =>
+        message
+          .replace(
+            /\s+/g,
+            ' '
+          )
+          .trim()
+    )
+    .filter(
+      Boolean
+    );
+
+  return messages.filter(
+    (
+      message,
+      index
+    ) =>
+      index ===
+        0 ||
+      normalize(
+        message
+      ) !==
+        normalize(
+          messages[
+            index - 1
+          ] ??
+          ''
+        )
+  );
 }
 
 function includesAny(
   value: string,
-  terms: string[]
+  terms: readonly string[]
 ) {
-  return terms.some(term => value.includes(term));
+  return terms.some(
+    term =>
+      value.includes(
+        term
+      )
+  );
 }
 
-function extractBudget(value: string) {
+function extractBudget(
+  value: string
+) {
   const patterns = [
     /(?:₦|ngn|n)\s*([0-9]+(?:\.[0-9]+)?)\s*(k|m|thousand|million)?\b/i,
-    /(?:budget|spend|under|below|within|around|about|max(?:imum)?)\s*(?:is|of|:)?\s*(?:₦|ngn|n)?\s*([0-9]+(?:\.[0-9]+)?)\s*(k|m|thousand|million)?\b/i
+    /(?:budget|spend|under|below|within|around|about|max(?:imum)?|cost)\s*(?:is|of|:)?\s*(?:₦|ngn|n)?\s*([0-9]+(?:\.[0-9]+)?)\s*(k|m|thousand|million)?\b/i
   ];
 
-  for (const pattern of patterns) {
-    const match = value.match(pattern);
+  for (
+    const pattern of
+    patterns
+  ) {
+    const match =
+      value.match(
+        pattern
+      );
 
     if (!match) {
       continue;
     }
 
-    const number = Number(match[1]);
+    const number =
+      Number(
+        match[1]
+      );
 
-    if (!Number.isFinite(number)) {
+    if (
+      !Number.isFinite(
+        number
+      )
+    ) {
       continue;
     }
 
-    const scale = (match[2] ?? '').toLowerCase();
+    const scale =
+      (
+        match[2] ??
+        ''
+      ).toLowerCase();
 
-    if (scale === 'k' || scale === 'thousand') {
-      return Math.round(number * 1000);
+    if (
+      scale ===
+        'k' ||
+      scale ===
+        'thousand'
+    ) {
+      return Math.round(
+        number *
+          1000
+      );
     }
 
-    if (scale === 'm' || scale === 'million') {
-      return Math.round(number * 1000000);
+    if (
+      scale ===
+        'm' ||
+      scale ===
+        'million'
+    ) {
+      return Math.round(
+        number *
+          1000000
+      );
     }
 
-    return Math.round(number);
+    return Math.round(
+      number
+    );
   }
 
   return null;
 }
 
-function extractAudienceSize(value: string) {
+function extractAudienceSize(
+  value: string
+) {
   const patterns = [
-    /\b(?:for|about|around|expecting|hosting)\s+([0-9]{1,4})\s+(?:people|persons|guests|visitors|friends|customers|attendees)\b/i,
+    /\b(?:for|about|around|expecting|hosting|serving)\s+([0-9]{1,4})\s+(?:people|persons|guests|visitors|friends|customers|attendees)\b/i,
     /\b([0-9]{1,4})\s+(?:people|persons|guests|visitors|friends|customers|attendees)\b/i
   ];
 
-  for (const pattern of patterns) {
-    const match = value.match(pattern);
-    const number = Number(match?.[1]);
+  for (
+    const pattern of
+    patterns
+  ) {
+    const match =
+      value.match(
+        pattern
+      );
 
-    if (Number.isInteger(number) && number > 0) {
+    const number =
+      Number(
+        match?.[1]
+      );
+
+    if (
+      Number.isInteger(
+        number
+      ) &&
+      number >
+        0
+    ) {
       return number;
     }
   }
@@ -111,7 +243,9 @@ function extractAudienceSize(value: string) {
   return null;
 }
 
-function extractOccasion(value: string) {
+function extractOccasion(
+  value: string
+) {
   const occasions = [
     'birthday',
     'wedding',
@@ -127,47 +261,64 @@ function extractOccasion(value: string) {
     'gift',
     'restock',
     'weekend',
-    'holiday'
-  ];
+    'holiday',
+    'housewarming',
+    'graduation'
+  ] as const;
 
   return occasions.find(
-    occasion => value.includes(occasion)
-  ) ?? null;
+    occasion =>
+      value.includes(
+        occasion
+      )
+  ) ??
+    null;
 }
 
-function extractUrgency(value: string) {
+function extractUrgency(
+  value: string
+) {
   if (
-    includesAny(value, [
-      'right now',
-      'immediately',
-      'as soon as possible',
-      'urgent'
-    ])
+    includesAny(
+      value,
+      [
+        'right now',
+        'immediately',
+        'as soon as possible',
+        'urgent'
+      ]
+    )
   ) {
     return 'now' as const;
   }
 
   if (
-    includesAny(value, [
-      'today',
-      'tonight',
-      'this evening',
-      'this afternoon',
-      'this morning'
-    ])
+    includesAny(
+      value,
+      [
+        'today',
+        'tonight',
+        'this evening',
+        'this afternoon',
+        'this morning'
+      ]
+    )
   ) {
     return 'today' as const;
   }
 
   if (
-    includesAny(value, [
-      'tomorrow',
-      'next week',
-      'this weekend',
-      'on saturday',
-      'on sunday',
-      'scheduled'
-    ])
+    includesAny(
+      value,
+      [
+        'tomorrow',
+        'next week',
+        'this weekend',
+        'on saturday',
+        'on sunday',
+        'scheduled'
+      ]
+    )
   ) {
     return 'scheduled' as const;
   }
@@ -175,7 +326,9 @@ function extractUrgency(value: string) {
   return null;
 }
 
-function extractPreferences(value: string) {
+function extractPreferences(
+  value: string
+) {
   const preferenceTerms = [
     'premium',
     'affordable',
@@ -197,145 +350,352 @@ function extractPreferences(value: string) {
     'meals',
     'drinks',
     'groceries',
-    'fashion',
-    'gift'
-  ];
+    'gift',
+    'local',
+    'imported'
+  ] as const;
 
   return preferenceTerms.filter(
-    term => value.includes(term)
+    term =>
+      value.includes(
+        term
+      )
   );
 }
 
-function extractExclusions(value: string) {
-  const exclusions: string[] = [];
+function extractExclusions(
+  value: string
+) {
+  const exclusions:
+    string[] = [];
 
   const patterns = [
     /(?:no|without|avoid|exclude|except)\s+([a-z][a-z\s-]{2,40})/gi,
     /(?:do not want|don't want|dislike)\s+([a-z][a-z\s-]{2,40})/gi
   ];
 
-  for (const pattern of patterns) {
-    for (const match of value.matchAll(pattern)) {
-      const exclusion = match[1]
-        ?.split(/[.,;]|\bbut\b/i)[0]
-        ?.trim();
+  for (
+    const pattern of
+    patterns
+  ) {
+    for (
+      const match of
+      value.matchAll(
+        pattern
+      )
+    ) {
+      const exclusion =
+        match[1]
+          ?.split(
+            /[.,;]|\bbut\b/i
+          )[0]
+          ?.trim();
 
-      if (exclusion) {
-        exclusions.push(exclusion);
+      if (
+        exclusion
+      ) {
+        exclusions.push(
+          exclusion
+        );
       }
     }
   }
 
-  return [...new Set(exclusions)].slice(0, 5);
+  return [
+    ...new Set(
+      exclusions
+    )
+  ].slice(
+    0,
+    5
+  );
+}
+
+function meaningfulGoalMessage(
+  message: string
+) {
+  const value =
+    normalize(
+      message
+    );
+
+  if (
+    value.length <
+      8 ||
+    collaborationTriggers.some(
+      trigger =>
+        value.includes(
+          trigger
+        )
+    ) ||
+    genericReplies.includes(
+      value as
+        typeof genericReplies[number]
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    /^(?:₦|ngn|n)?\s*[0-9]+(?:k|m|thousand|million)?$/.test(
+      value
+    ) ||
+    /^(?:for\s+)?[0-9]+\s+(?:people|guests|persons|attendees)$/.test(
+      value
+    )
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function extractGoal(
-  messages: string[],
-  combined: string
+  messages: string[]
 ) {
-  const meaningful = messages.find(message => {
-    const value = normalize(message);
-
-    return (
-      value.length >= 12 &&
-      !collaborationTriggers.some(
-        trigger => value.includes(trigger)
-      ) &&
-      !/^(yes|no|okay|ok|sure|maybe|around|about)\b/.test(value)
+  const meaningful =
+    messages.find(
+      meaningfulGoalMessage
     );
-  });
 
-  if (meaningful) {
-    return meaningful
-      .replace(/^(i want to|i need to|help me|i am trying to|i'm trying to)\s+/i, '')
-      .trim()
-      .slice(0, 180);
+  if (!meaningful) {
+    return null;
   }
 
-  if (combined.includes('visitors') || combined.includes('guests')) {
-    return 'prepare something suitable for visitors';
-  }
+  return meaningful
+    .replace(
+      /^(i want to|i need to|help me|i am trying to|i'm trying to|please help me)\s+/i,
+      ''
+    )
+    .trim()
+    .slice(
+      0,
+      180
+    );
+}
 
-  return null;
+function planningContext(
+  value: string
+) {
+  return includesAny(
+    value,
+    [
+      'plan',
+      'prepare',
+      'party',
+      'occasion',
+      'celebration',
+      'birthday',
+      'wedding',
+      'anniversary',
+      'dinner',
+      'gathering',
+      'guests',
+      'people',
+      'visitors',
+      'shopping list',
+      'basket',
+      'event'
+    ]
+  );
+}
+
+function requiresAudienceSize(
+  value: string
+) {
+  return includesAny(
+    value,
+    [
+      'party',
+      'celebration',
+      'birthday',
+      'wedding',
+      'anniversary',
+      'dinner',
+      'gathering',
+      'guests',
+      'people',
+      'visitors',
+      'attendees',
+      'event'
+    ]
+  );
+}
+
+function requiresOccasion(
+  value: string
+) {
+  return (
+    includesAny(
+      value,
+      [
+        'plan',
+        'prepare',
+        'shopping list',
+        'basket',
+        'for guests',
+        'for visitors'
+      ]
+    ) &&
+    !includesAny(
+      value,
+      [
+        'restock',
+        'weekly shopping',
+        'monthly shopping',
+        'household',
+        'groceries'
+      ]
+    )
+  );
+}
+
+function requiresBudget(
+  value: string,
+  intent: {
+    audienceSize:
+      number |
+      null;
+    occasion:
+      string |
+      null;
+  }
+) {
+  return (
+    includesAny(
+      value,
+      [
+        'budget',
+        'affordable',
+        'cheaper',
+        'cheap',
+        'lower cost',
+        'under ',
+        'within ',
+        'spend',
+        'cost'
+      ]
+    ) ||
+    Boolean(
+      intent.audienceSize &&
+      intent.occasion
+    )
+  );
 }
 
 function analyseConversation(
   conversation: string[]
 ): CollaborativeIntent {
+  const canonicalConversation =
+    canonicalizeJourneyConversation(
+      conversation
+    );
+
   const normalizedMessages =
-    conversation.map(normalize);
+    canonicalConversation.map(
+      normalize
+    );
 
   const combined =
-    normalizedMessages.join(' ');
+    normalizedMessages.join(
+      ' '
+    );
 
   const active =
     normalizedMessages.some(
       message =>
         collaborationTriggers.some(
-          trigger => message.includes(trigger)
+          trigger =>
+            message.includes(
+              trigger
+            )
         )
     );
 
   const goal =
-    extractGoal(conversation, combined);
+    extractGoal(
+      conversation
+    );
 
   const audienceSize =
-    extractAudienceSize(combined);
+    extractAudienceSize(
+      combined
+    );
 
   const occasion =
-    extractOccasion(combined);
+    extractOccasion(
+      combined
+    );
 
   const budget =
-    extractBudget(combined);
+    extractBudget(
+      combined
+    );
+
+  const budgetFlexible =
+    hasFlexibleJourneyBudget(
+      combined
+    );
 
   const preferences =
-    extractPreferences(combined);
+    extractPreferences(
+      combined
+    );
 
   const exclusions =
-    extractExclusions(combined);
+    extractExclusions(
+      combined
+    );
 
   const urgency =
-    extractUrgency(combined);
+    extractUrgency(
+      combined
+    );
 
-  const missing: CollaborativeIntent['missing'] = [];
+  const isPlanning =
+    planningContext(
+      combined
+    );
+
+  const missing:
+    CollaborativeMissingField[] =
+    [];
 
   if (!goal) {
-    missing.push('goal');
-  }
-
-  if (
-    includesAny(combined, [
-      'guest',
-      'visitor',
-      'party',
-      'gathering',
-      'people',
-      'occasion'
-    ]) &&
+    missing.push(
+      'goal'
+    );
+  } else if (
+    requiresAudienceSize(
+      combined
+    ) &&
     !audienceSize
   ) {
-    missing.push('audienceSize');
-  }
-
-  if (
-    includesAny(combined, [
-      'plan',
-      'prepare',
-      'event',
-      'guest',
-      'visitor'
-    ]) &&
+    missing.push(
+      'audienceSize'
+    );
+  } else if (
+    requiresOccasion(
+      combined
+    ) &&
     !occasion
   ) {
-    missing.push('occasion');
-  }
-
-  if (!budget) {
-    missing.push('budget');
-  }
-
-  if (!preferences.length) {
-    missing.push('preferences');
+    missing.push(
+      'occasion'
+    );
+  } else if (
+    requiresBudget(
+      combined,
+      {
+        audienceSize,
+        occasion
+      }
+    ) &&
+    !budget
+  ) {
+    missing.push(
+      'budget'
+    );
   }
 
   return {
@@ -344,34 +704,47 @@ function analyseConversation(
     audienceSize,
     occasion,
     budget,
+    budgetFlexible,
     preferences,
     exclusions,
     urgency,
+    planningContext:
+      isPlanning,
     missing
   };
 }
 
-function money(value: number) {
+function money(
+  value: number
+) {
   return new Intl.NumberFormat(
     'en-NG',
     {
-      style: 'currency',
-      currency: 'NGN',
-      maximumFractionDigits: 0
+      style:
+        'currency',
+      currency:
+        'NGN',
+      maximumFractionDigits:
+        0
     }
-  ).format(value);
+  ).format(
+    value
+  );
 }
 
+/* AJ_MS12_UNIFIED_JOURNEY_INPUT_TYPE_REPAIR */
 function questionFor(
-  intent: CollaborativeIntent
+  value:
+    CollaborativeIntent |
+    string |
+    null |
+    undefined
 ) {
-  const first = intent.missing[0];
-  const second = intent.missing[1];
-
-  const questions: Record<
-    CollaborativeIntent['missing'][number],
-    string
-  > = {
+  const questions:
+    Record<
+      CollaborativeIntent['missing'][number],
+      string
+    > = {
     goal:
       'What are you hoping to prepare, solve or decide?',
     audienceSize:
@@ -381,63 +754,146 @@ function questionFor(
     budget:
       'What budget would you like me to work within?',
     preferences:
-      'Should the result feel affordable, balanced, premium, casual or something else?'
+      'What should the result feel like—balanced, affordable, premium or something else?'
   };
 
-  const selected = [first, second]
-    .filter(
-      (item): item is NonNullable<typeof item> =>
-        Boolean(item)
-    )
-    .map(item => questions[item]);
+  const candidate =
+    typeof value ===
+    'string'
+      ? value
+      : value?.missing[0];
 
-  return selected.join(' ');
+  if (
+    !candidate ||
+    !(
+      candidate in
+      questions
+    )
+  ) {
+    return '';
+  }
+
+  return questions[
+    candidate as
+      CollaborativeIntent['missing'][number]
+  ];
+}
+
+function promptOptionsFor(
+  field:
+    CollaborativeMissingField
+) {
+  const options:
+    Record<
+      CollaborativeMissingField,
+      string[]
+    > = {
+    goal: [
+      'Plan a birthday dinner',
+      'Help me compare two products',
+      'Build a household Shopping List'
+    ],
+    audienceSize: [
+      'Plan for 5 people',
+      'Plan for 10 people',
+      'Plan for 20 people'
+    ],
+    occasion: [
+      'It is for a birthday',
+      'It is for a dinner',
+      'It is a household restock'
+    ],
+    budget: [
+      'Keep it within ₦50,000',
+      'Keep it within ₦100,000',
+      'The budget is flexible'
+    ],
+    preferences: [
+      'Keep it affordable',
+      'Make it balanced',
+      'Make it premium'
+    ]
+  };
+
+  return options[
+    field
+  ];
 }
 
 function summaryBullets(
-  intent: CollaborativeIntent
+  intent:
+    CollaborativeIntent
 ) {
-  const bullets: string[] = [];
+  const bullets:
+    string[] = [];
 
-  if (intent.goal) {
+  if (
+    intent.goal
+  ) {
     bullets.push(
       `Goal: ${intent.goal}.`
     );
   }
 
-  if (intent.audienceSize) {
+  if (
+    intent.audienceSize
+  ) {
     bullets.push(
       `People: approximately ${intent.audienceSize}.`
     );
   }
 
-  if (intent.occasion) {
+  if (
+    intent.occasion
+  ) {
     bullets.push(
       `Occasion: ${intent.occasion}.`
     );
   }
 
-  if (intent.budget) {
+  if (
+    intent.budget
+  ) {
     bullets.push(
-      `Budget: ${money(intent.budget)}.`
+      `Budget: ${money(
+        intent.budget
+      )}.`
     );
   }
 
-  if (intent.preferences.length) {
+  if (
+    intent.preferences.length
+  ) {
     bullets.push(
-      `Preferences: ${intent.preferences.join(', ')}.`
+      `Preferences: ${intent.preferences.join(
+        ', '
+      )}.`
     );
   }
 
-  if (intent.exclusions.length) {
+  if (
+    intent.exclusions.length
+  ) {
     bullets.push(
-      `Avoid: ${intent.exclusions.join(', ')}.`
+      `Avoid: ${intent.exclusions.join(
+        ', '
+      )}.`
     );
   }
 
-  if (intent.urgency) {
+  if (
+    intent.urgency
+  ) {
     bullets.push(
       `Timing: ${intent.urgency}.`
+    );
+  }
+
+  if (
+    intent.budgetFlexible
+  ) {
+    bullets.push(
+      'Budget: flexible.'
     );
   }
 
@@ -449,73 +905,96 @@ export function resolveCollaborativeIntentResponse({
   prompt,
   conversation
 }: CollaborativeInput): AIAssistantResponsePayload | null {
-  const messages = [
-    ...conversation,
-    prompt
-  ].filter(Boolean);
+  const messages =
+    uniqueMessages(
+      conversation,
+      prompt
+    );
 
   const intent =
-    analyseConversation(messages);
+    analyseConversation(
+      messages
+    );
 
-  if (!intent.active) {
+  if (
+    !intent.active
+  ) {
     return null;
   }
 
   const understood =
-    summaryBullets(intent);
+    summaryBullets(
+      intent
+    );
 
-  if (intent.missing.length) {
+  const nextMissing =
+    intent.missing[0] ??
+    null;
+
+  if (
+    nextMissing
+  ) {
     const question =
-      questionFor(intent);
+      questionFor(
+        nextMissing
+      );
 
     return {
       headline:
-        'Let’s shape this together',
+        nextMissing ===
+        'goal'
+          ? 'Let’s define this Journey'
+          : 'One detail before I build the plan',
       summary:
-        question ||
-        'Tell me a little more about what you have in mind.',
+        question,
       outputType:
-        audience === 'customer'
+        audience ===
+        'customer'
           ? 'SHOPPING_PLAN'
           : 'OPERATIONS_BRIEF',
       confidence:
-        0.72,
+        understood.length
+          ? 0.82
+          : 0.66,
       metrics: [
         {
           label:
-            'Details understood',
+            'Understood',
           value:
-            String(understood.length),
+            String(
+              understood.length
+            ),
           helper:
-            'I will keep using these details as we continue.'
+            'Saved from this Journey’s conversation.'
         },
         {
           label:
-            'Still needed',
+            'Next question',
           value:
-            String(intent.missing.length),
+            '1',
           tone:
             'warning'
         }
       ],
       products: [],
-      productDraft: null,
+      productDraft:
+        null,
       sections: [
         {
           title:
-            'What I understand so far',
+            'What I understand',
           bullets:
             understood.length
               ? understood
               : [
-                  'You want help turning an unfinished idea into a clear plan.'
+                  'You want AJ to help turn an unfinished idea into a useful plan.'
                 ]
         },
         {
           title:
-            'What I need from you next',
+            'What I need next',
           description:
-            'Answer naturally. You do not need to use a special format.',
+            'Answer naturally. AJ will continue this same Journey.',
           bullets: [
             question
           ]
@@ -523,93 +1002,66 @@ export function resolveCollaborativeIntentResponse({
       ],
       draftFields: [],
       warnings: [],
-      suggestedPrompts: [
-        'Let me add more detail',
-        'Help me choose a sensible budget',
-        'Show me what you understand so far'
-      ],
+      suggestedPrompts:
+        promptOptionsFor(
+          nextMissing
+        ),
       actions: []
     };
   }
 
+  /*
+   * Once the minimum context is complete, return control to the
+   * customer engine. It will build the live catalog response from
+   * the complete Journey conversation instead of asking the user
+   * to issue another "build it" command.
+   */
+  if (
+    audience ===
+    'customer'
+  ) {
+    return null;
+  }
+
   return {
     headline:
-      'Your idea is clear enough to plan',
+      'The Journey is clear enough to prepare',
     summary:
-      'I have organised what you told me. Review it below, then ask me to build the recommendation or change any detail.',
+      'AJ has enough context to prepare the next governed draft.',
     outputType:
-      audience === 'customer'
-        ? 'SHOPPING_PLAN'
-        : 'OPERATIONS_BRIEF',
+      'OPERATIONS_BRIEF',
     confidence:
       0.9,
     metrics: [
       {
         label:
-          'Goal',
+          'Details understood',
         value:
-          intent.goal ??
-          'Ready'
-      },
-      {
-        label:
-          'Budget',
-        value:
-          intent.budget
-            ? money(intent.budget)
-            : 'Flexible'
-      },
-      {
-        label:
-          'People',
-        value:
-          intent.audienceSize
-            ? String(intent.audienceSize)
-            : 'Not required'
+          String(
+            understood.length
+          )
       }
     ],
     products: [],
-    productDraft: null,
+    productDraft:
+      null,
     sections: [
       {
         title:
           'What I understand',
         bullets:
           understood
-      },
-      {
-        title:
-          'What we can do next',
-        bullets:
-          audience === 'customer'
-            ? [
-                'Build a balanced recommendation from available products.',
-                'Create a lower-cost or premium alternative.',
-                'Turn the final selection into a Shopping List for your review.'
-              ]
-            : [
-                'Prepare a reviewable operational plan.',
-                'Identify the safest first action.',
-                'Turn the approved result into an existing controlled workflow.'
-              ]
       }
     ],
     draftFields: [],
     warnings: [
-      'Nothing will be purchased, published or changed until you review and confirm an available action.'
+      'Nothing will be published or changed until an authorised user reviews the available action.'
     ],
-    suggestedPrompts:
-      audience === 'customer'
-        ? [
-            'Build the recommendation from this plan',
-            'Show me a cheaper version',
-            'Let me change one detail'
-          ]
-        : [
-            'Prepare the next safe action',
-            'Show me the highest-priority version',
-            'Let me change one detail'
-          ],
+    suggestedPrompts: [
+      'Prepare the next safe action',
+      'Show me the highest-priority version',
+      'Let me change one detail'
+    ],
     actions: []
   };
 }

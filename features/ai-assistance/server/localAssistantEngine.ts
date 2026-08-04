@@ -1,5 +1,16 @@
 import 'server-only';
 
+/* AJ_ASSISTANCE_WORKSPACE_STAGE_2 */
+/* AJ_MS12_MEANINGFUL_CONSTRAINT_REFINEMENT_V1 */
+/* AJ_MS12_PLAN_EXPLANATION_AUTHORITY_V1 */
+/* AJ_MS12_4_MARKETPLACE_PRODUCT_RESOLUTION_V1 */
+/* AJ_MS12_4_MIXED_INSTRUCTION_AUTHORITY_V1 */
+/* AJ_MS12_4_SOFT_DECREASE_PRESERVATION_V1 */
+/* AJ_MS12_4_RELATIVE_BUDGET_CLARIFICATION_V1 */
+/* AJ_MS12_4_CONTEXTUAL_NAIRA_INPUT_V1 */
+/* AJ_MS12_4_FIXED_BUDGET_PRECEDENCE_V1 */
+/* AJ_MS12_4_PLAN_LINEAGE_BUDGET_METRICS_V1 */
+
 import type {
   Prisma
 } from '@/lib/generated/prisma/client';
@@ -11,6 +22,7 @@ import {
 import type {
   AIAssistantAction,
   AIAssistantDraftField,
+  AIAssistantJourneyState,
   AIAssistantMetric,
   AIAssistantOutputType,
   AIAssistantProduct,
@@ -28,8 +40,36 @@ import {
   resolveCollaborativeIntentResponse
 } from './collaborativeIntentBuilder';
 
+import {
+  marketplaceAcknowledgement,
+  marketplacePriceComparison,
+  marketplaceProductSignal,
+  marketplaceReason,
+  marketplaceResolutionSections,
+  resolveMarketplaceRequest,
+  type MarketplaceProductSignal,
+  type MarketplaceRequestResolution
+} from './marketplaceProductResolver';
+
+import {
+  isPlanExplanationOnlyInstruction,
+  isPlanMutationInstruction
+} from './journeyInstructionAuthority';
+
+import {
+  hasPendingBudgetClarification,
+  parseNairaAmount
+} from './nairaAmountAuthority';
+
 const productInclude = {
   category: {
+    select: {
+      id: true,
+      slug: true,
+      label: true
+    }
+  },
+  subcategory: {
     select: {
       id: true,
       slug: true,
@@ -80,6 +120,12 @@ type EngineInput = {
     AIAssistantRuntimeContext;
   conversation?:
     string[];
+  journeyState?:
+    AIAssistantJourneyState |
+    null;
+  previousPlan?:
+    AIAssistantResponsePayload |
+    null;
 };
 
 function normalize(
@@ -1086,6 +1132,7 @@ function availableQuantity(
   );
 }
 
+/* AJ_MS12_PRODUCT_LIBRARY_PRESENTATION_V1 */
 function productCard(
   product:
     ProductRecord,
@@ -1116,6 +1163,93 @@ function productCard(
     variant?.image ??
     null;
 
+  const available =
+    availableQuantity(
+      product
+    );
+
+  const overview =
+    product.shortDescription
+      ?.trim() ||
+    null;
+
+  const description =
+    product.longDescription
+      ?.trim() ||
+    overview;
+
+  const specifications = [
+    {
+      label:
+        'Category',
+      value:
+        product.category.label
+    },
+    ...(
+      product.brand?.name
+        ? [
+            {
+              label:
+                'Brand',
+              value:
+                product.brand.name
+            }
+          ]
+        : []
+    ),
+    ...(
+      variant?.label
+        ? [
+            {
+              label:
+                'Selected variant',
+              value:
+                variant.label
+            }
+          ]
+        : []
+    ),
+    ...(
+      variant?.sku
+        ? [
+            {
+              label:
+                'SKU',
+              value:
+                variant.sku
+            }
+          ]
+        : []
+    ),
+    ...(
+      product.estimatedDelivery
+        ? [
+            {
+              label:
+                'Estimated delivery',
+              value:
+                product.estimatedDelivery
+            }
+          ]
+        : []
+    ),
+    {
+      label:
+        'Current availability',
+      value:
+        `${available} available`
+    },
+    {
+      label:
+        'Customer rating',
+      value:
+        product.reviewsCount >
+        0
+          ? `${product.rating.toFixed(1)} from ${product.reviewsCount} reviews`
+          : `${product.rating.toFixed(1)} rating; no published review count`
+    }
+  ];
+
   return {
     id: product.id,
     slug: product.slug,
@@ -1138,19 +1272,45 @@ function productCard(
             variant.price
           )
         : null,
-    available:
-      availableQuantity(
-        product
-      ),
+    available,
     rating:
       product.rating,
     reason,
     href:
       `/store?product=${encodeURIComponent(
         product.slug
-      )}`
+      )}`,
+    library: {
+      status:
+        'CATALOG_ONLY',
+      overview,
+      description,
+      tags:
+        product.tags,
+      specifications,
+      ingredients: [],
+      safetyNotes: [],
+      sources: [
+        {
+          type:
+            'CATALOG',
+          title:
+            'AJ Logik live marketplace catalogue',
+          verified:
+            true
+        }
+      ],
+      missingInformation: [
+        'Verified vendor or manufacturer knowledge record',
+        'Ingredients, composition or technical details where applicable',
+        'Product-specific safety guidance where applicable',
+        'External educational enrichment and provenance'
+      ]
+    }
   };
 }
+
+
 
 function promptTitle(
   prompt: string
@@ -1448,6 +1608,1525 @@ function qualityIssues(
   return issues;
 }
 
+type PlanCompositionPreference =
+  | 'AFFORDABLE'
+  | 'BALANCED'
+  | 'PREMIUM'
+  | null;
+
+type PlanCompositionConstraints = {
+  budget:
+    number |
+    null;
+  flexibleBudget:
+    boolean;
+  guestCount:
+    number |
+    null;
+  preference:
+    PlanCompositionPreference;
+  reduceCost:
+    boolean;
+  requestAlternative:
+    boolean;
+  nonAlcoholic:
+    boolean;
+  nonAlcoholicMinimum:
+    number;
+  alcoholFreeOnly:
+    boolean;
+  contextText:
+    string;
+  exclusionTerms:
+    string[];
+};
+
+type RankedProduct = {
+  product:
+    ProductRecord;
+  score:
+    number;
+  marketplace:
+    MarketplaceProductSignal;
+};
+
+function availableVariant(
+  product:
+    ProductRecord
+) {
+  return (
+    product.variants.find(
+      variant =>
+        (
+          variant.inventory
+            ?.quantity ??
+          0
+        ) -
+          (
+            variant.inventory
+              ?.reserved ??
+            0
+          ) >
+        0
+    ) ??
+    product.variants[0] ??
+    null
+  );
+}
+
+function productUnitPrice(
+  product:
+    ProductRecord
+) {
+  const variant =
+    availableVariant(
+      product
+    );
+
+  return variant
+    ? Number(
+        variant.price
+      )
+    : null;
+}
+
+function formatNaira(
+  value:
+    number
+) {
+  return `₦${Math.max(
+    0,
+    Math.round(
+      value
+    )
+  ).toLocaleString(
+    'en-NG'
+  )}`;
+}
+
+function numericBudget(
+  value:
+    string
+) {
+  return parseNairaAmount(
+    value
+  );
+}
+
+
+type RelativeBudgetAdjustment =
+  | 'INCREASE'
+  | null;
+
+function relativeBudgetAdjustment(
+  prompt:
+    string
+): RelativeBudgetAdjustment {
+  if (
+    numericBudget(
+      prompt
+    )
+  ) {
+    return null;
+  }
+
+  const normalized =
+    normalize(
+      prompt
+    );
+
+  if (
+    /(?:\b(?:increase|raise|expand|boost|enlarge)\b[^.!?\n]{0,30}\bbudget\b|\bbudget\b[^.!?\n]{0,30}\b(?:increase|higher|larger|bigger|too low|too small|not enough)\b|\bspend\s+more\b|\bgive\s+(?:it|the\s+plan|this\s+plan)\s+more\s+(?:budget|room)\b)/.test(
+      normalized
+    )
+  ) {
+    return 'INCREASE';
+  }
+
+  return null;
+}
+
+function planMetricAmount(
+  plan:
+    AIAssistantResponsePayload,
+  label:
+    string
+) {
+  const value =
+    plan.metrics.find(
+      metric =>
+        metric.label ===
+        label
+    )?.value;
+
+  if (
+    !value
+  ) {
+    return null;
+  }
+
+  return numericBudget(
+    `${label} ${value}`
+  );
+}
+
+function roundBudgetGuidance(
+  value:
+    number
+) {
+  return Math.max(
+    5_000,
+    Math.ceil(
+      value /
+        5_000
+    ) *
+      5_000
+  );
+}
+
+function relativeBudgetClarificationResponse(
+  plan:
+    AIAssistantResponsePayload
+) {
+  const currentBudget =
+    planMetricAmount(
+      plan,
+      'Budget limit'
+    );
+
+  const currentTotal =
+    planMetricAmount(
+      plan,
+      'Estimated total'
+    ) ??
+    priorPlanTotal(
+      plan
+    );
+
+  const productCount =
+    plan.products.length;
+
+  const currentAuthority =
+    currentBudget ??
+    Math.max(
+      currentTotal,
+      1
+    );
+
+  const estimatedItemValue =
+    productCount >
+      0
+      ? currentTotal /
+        productCount
+      : currentAuthority *
+        0.2;
+
+  const firstGuidedBudget =
+    roundBudgetGuidance(
+      Math.max(
+        currentAuthority *
+          1.15,
+        currentTotal +
+          Math.max(
+            5_000,
+            estimatedItemValue *
+              0.45
+          )
+      )
+    );
+
+  const secondGuidedBudget =
+    roundBudgetGuidance(
+      Math.max(
+        firstGuidedBudget +
+          10_000,
+        currentAuthority *
+          1.35
+      )
+    );
+
+  const thirdGuidedBudget =
+    roundBudgetGuidance(
+      Math.max(
+        secondGuidedBudget +
+          15_000,
+        currentAuthority *
+          1.6
+      )
+    );
+
+  return response({
+    headline:
+      'How much should I raise the budget?',
+    summary:
+      `I understood that ${productCount || 'the current number of'} product${productCount === 1 ? '' : 's'} feel${productCount === 1 ? 's' : ''} too small. The active limit is ${currentBudget ? formatNaira(currentBudget) : 'not yet confirmed'}, so I paused before spending beyond it.`,
+    outputType:
+      plan.outputType,
+    confidence:
+      0.92,
+    metrics:
+      plan.metrics,
+    products:
+      plan.products,
+    sections: [
+      {
+        title:
+          'Still open',
+        bullets: [
+          'What budget would you like me to work within?'
+        ]
+      },
+      {
+        title:
+          'Why I paused',
+        bullets: [
+          currentBudget
+            ? `Your saved budget remains ${formatNaira(currentBudget)} until you confirm a higher ceiling.`
+            : 'A new spending ceiling is required before I rebuild the plan.',
+          'A higher budget can support more matching products, but AJ should not choose how much more you are willing to spend without your confirmation.'
+        ]
+      }
+    ],
+    warnings: [
+      'The active Plan, selected products and budget remain unchanged until a new limit is confirmed.'
+    ],
+    suggestedPrompts: [
+      `Increase the budget to ${formatNaira(firstGuidedBudget)}`,
+      `Increase the budget to ${formatNaira(secondGuidedBudget)}`,
+      `Increase the budget to ${formatNaira(thirdGuidedBudget)}`,
+      'Use a flexible budget'
+    ],
+    actions: []
+  });
+}
+
+function audienceCount(
+  value:
+    string
+) {
+  const matches =
+    [
+      ...value.matchAll(
+        /(?:for|we(?:\s+are|'re)?|plan(?:ning)?\s+for)?\s*(\d{1,4})\s*(?:people|persons|guests|attendees)\b/gi
+      )
+    ];
+
+  const match =
+    matches.at(
+      -1
+    );
+
+  if (
+    !match
+  ) {
+    return null;
+  }
+
+  const count =
+    Number(
+      match[1]
+    );
+
+  return Number.isFinite(
+    count
+  ) &&
+    count >
+      0
+    ? count
+    : null;
+}
+
+function lastPreference(
+  value:
+    string
+): PlanCompositionPreference {
+  const normalized =
+    normalize(
+      value
+    );
+
+  const candidates = [
+    {
+      key:
+        'AFFORDABLE' as const,
+      index:
+        Math.max(
+          normalized.lastIndexOf(
+            'affordable'
+          ),
+          normalized.lastIndexOf(
+            'cheaper'
+          ),
+          normalized.lastIndexOf(
+            'lower cost'
+          ),
+          normalized.lastIndexOf(
+            'reduce cost'
+          )
+        )
+    },
+    {
+      key:
+        'BALANCED' as const,
+      index:
+        normalized.lastIndexOf(
+          'balanced'
+        )
+    },
+    {
+      key:
+        'PREMIUM' as const,
+      index:
+        normalized.lastIndexOf(
+          'premium'
+        )
+    }
+  ]
+    .filter(
+      item =>
+        item.index >=
+        0
+    )
+    .sort(
+      (
+        left,
+        right
+      ) =>
+        right.index -
+        left.index
+    );
+
+  return candidates[0]?.key ??
+    null;
+}
+
+const planCountWords:
+  Record<
+    string,
+    number
+  > = {
+    one:
+      1,
+    two:
+      2,
+    three:
+      3,
+    four:
+      4,
+    five:
+      5,
+    six:
+      6,
+    seven:
+      7,
+    eight:
+      8
+  };
+
+function requestedNonAlcoholicMinimum(
+  value:
+    string
+) {
+  const normalized =
+    normalize(
+      value
+    );
+
+  const matches =
+    [
+      ...normalized.matchAll(
+        /\b(?:include|add|with|need|want)?\s*(?:at\s+least|minimum\s+of)?\s*(\d+|one|two|three|four|five|six|seven|eight)\s+non[-\s]+alcoholic\b/g
+      )
+    ];
+
+  const countValue =
+    matches.at(
+      -1
+    )?.[1] ??
+    null;
+
+  if (
+    countValue
+  ) {
+    const numeric =
+      Number(
+        countValue
+      );
+
+    return Math.min(
+      8,
+      Math.max(
+        1,
+        Number.isFinite(
+          numeric
+        )
+          ? numeric
+          : planCountWords[
+              countValue
+            ] ??
+            1
+      )
+    );
+  }
+
+  return /(?:non[-\s]+alcoholic|without\s+alcohol|no\s+alcohol)/.test(
+    normalized
+  )
+    ? 1
+    : 0;
+}
+
+function resolvePlanCompositionConstraints(
+  input: {
+    state:
+      AIAssistantJourneyState |
+      null;
+    conversation:
+      string[];
+    prompt:
+      string;
+    confirmedBudget?:
+      number |
+      null;
+  }
+): PlanCompositionConstraints {
+  const stateParts = [
+    input.state?.objective ??
+      '',
+    ...(
+      input.state?.confirmedContext ??
+      []
+    ),
+    ...(
+      input.state?.constraints ??
+      []
+    ),
+    ...(
+      input.state?.preferences ??
+      []
+    ),
+    ...(
+      input.state?.rejectedSuggestions ??
+      []
+    ),
+    input.state?.latestInstruction ??
+      ''
+  ];
+
+  const allText =
+    [
+      ...input.conversation,
+      ...stateParts,
+      input.prompt
+    ].join(
+      ' '
+    );
+
+  const latestDirection =
+    [
+      input.state?.latestInstruction ??
+        '',
+      input.prompt
+    ].join(
+      ' '
+    );
+
+  const normalizedAll =
+    normalize(
+      allText
+    );
+
+  const normalizedLatest =
+    normalize(
+      latestDirection
+    );
+
+  const latestFlexibleBudget =
+    /(?:budget\s+is\s+flexible|flexible\s+budget|optimise\s+freely|optimize\s+freely)/i.test(
+      input.prompt
+    );
+
+  const savedFixedBudget =
+    numericBudget(
+      (
+        input.state
+          ?.constraints ??
+        []
+      ).join(
+        ' '
+      )
+    );
+
+  const fixedBudgetAuthority =
+    input.confirmedBudget ??
+    (
+      latestFlexibleBudget
+        ? null
+        : savedFixedBudget
+    );
+
+  const flexibleBudget =
+    latestFlexibleBudget ||
+    (
+      fixedBudgetAuthority ===
+        null &&
+      /(?:budget\s+is\s+flexible|flexible\s+budget|optimise\s+freely|optimize\s+freely)/i.test(
+        allText
+      ) &&
+      !numericBudget(
+        latestDirection
+      )
+    );
+
+  const explicitExclusionTerms =
+    (
+      input.state?.rejectedSuggestions ??
+      []
+    )
+      .concat(
+        input.state?.constraints ??
+        []
+      )
+      .map(
+        value =>
+          normalize(
+            value
+          )
+      )
+      .flatMap(
+        value => {
+          if (
+            !/(?:avoid|without|exclude|remove|no\s+)/.test(
+              value
+            )
+          ) {
+            return [];
+          }
+
+          return [
+            'wine',
+            'champagne',
+            'whisky',
+            'cognac',
+            'alcohol',
+            'chocolate',
+            'snacks'
+          ].filter(
+            term =>
+              value.includes(
+                term
+              )
+          );
+        }
+      );
+
+  const nonAlcoholicMinimum =
+    requestedNonAlcoholicMinimum(
+      allText
+    );
+
+  const alcoholFreeOnly =
+    /(?:without\s+alcohol|no\s+alcohol|only\s+non[-\s]+alcoholic|all\s+non[-\s]+alcoholic|fully\s+non[-\s]+alcoholic|entirely\s+non[-\s]+alcoholic)/.test(
+      normalizedAll
+    );
+
+  return {
+    budget:
+      flexibleBudget
+        ? null
+        : fixedBudgetAuthority ??
+          numericBudget(
+            allText
+          ),
+    flexibleBudget,
+    guestCount:
+      audienceCount(
+        allText
+      ),
+    preference:
+      lastPreference(
+        allText
+      ),
+    reduceCost:
+      /(?:remove\s+premium|reduce\s+cost|lower\s+cost|more\s+affordable|make\s+(?:it|this|the\s+plan)\s+cheaper|cheaper\s+version|cut\s+(?:the\s+)?cost)/.test(
+        normalizedLatest
+      ),
+    requestAlternative:
+      /(?:another|different|alternative|replace|swap)/.test(
+        normalizedLatest
+      ),
+    nonAlcoholic:
+      nonAlcoholicMinimum >
+        0 ||
+      alcoholFreeOnly,
+    nonAlcoholicMinimum,
+    alcoholFreeOnly,
+    contextText:
+      normalizedAll,
+    exclusionTerms:
+      [
+        ...new Set(
+          explicitExclusionTerms
+        )
+      ]
+  };
+}
+
+function productPlanText(
+  product:
+    ProductRecord
+) {
+  return normalize(
+    [
+      product.name,
+      product.category.label,
+      product.category.slug,
+      product.brand?.name ??
+        '',
+      product.shortDescription ??
+        '',
+      product.longDescription ??
+        ''
+    ].join(
+      ' '
+    )
+  );
+}
+
+function alcoholicPlanProduct(
+  product:
+    ProductRecord
+) {
+  return /(?:\bwine\b|\bchampagne\b|\bwhisky\b|\bwhiskey\b|\bcognac\b|\bvodka\b|\brum\b|\bgin\b|\btequila\b|\bbaileys\b|\bmartell\b|\bhennessy\b|\balcohol\b)/.test(
+    productPlanText(
+      product
+    )
+  );
+}
+
+function planRelevanceScore(
+  product:
+    ProductRecord,
+  constraints:
+    PlanCompositionConstraints
+) {
+  const productText =
+    productPlanText(
+      product
+    );
+
+  const context =
+    constraints.contextText;
+
+  let score =
+    0;
+
+  const birthdayPlanning =
+    /(?:birthday|celebration|party)/.test(
+      context
+    );
+
+  const dinnerPlanning =
+    /(?:dinner|meal|food|serve|guests)/.test(
+      context
+    );
+
+  if (
+    birthdayPlanning
+  ) {
+    if (
+      /(?:birthday|party plans|celebration|cake|confection|chocolate|dessert)/.test(
+        productText
+      )
+    ) {
+      score +=
+        64;
+    }
+
+    if (
+      /(?:wine|champagne|baileys|martell|drink|beverage)/.test(
+        productText
+      )
+    ) {
+      score +=
+        26;
+    }
+
+    if (
+      /(?:corporate|vip lounge|office)/.test(
+        productText
+      )
+    ) {
+      score -=
+        72;
+    }
+  }
+
+  if (
+    dinnerPlanning &&
+    /(?:kitchen meals|meal|food|wine|drink|beverage|party plans)/.test(
+      productText
+    )
+  ) {
+    score +=
+      24;
+  }
+
+  if (
+    /(?:stand mixer|mixer|air fryer|appliance|equipment|kitchenaid artisan)/.test(
+      productText
+    )
+  ) {
+    score -=
+      110;
+  }
+
+  if (
+    constraints.alcoholFreeOnly &&
+    alcoholicPlanProduct(
+      product
+    )
+  ) {
+    score -=
+      500;
+  } else if (
+    constraints.nonAlcoholicMinimum >
+      0 &&
+    alcoholicPlanProduct(
+      product
+    )
+  ) {
+    score -=
+      60;
+  }
+
+  if (
+    constraints.exclusionTerms.some(
+      term =>
+        productText.includes(
+          term
+        )
+    )
+  ) {
+    score -=
+      240;
+  }
+
+  return score;
+}
+
+function priorPlanTotal(
+  previousPlan:
+    AIAssistantResponsePayload |
+    null
+) {
+  return (
+    previousPlan?.products ??
+    []
+  ).reduce(
+    (
+      total,
+      product
+    ) =>
+      total +
+      (
+        product.price ??
+        0
+      ),
+    0
+  );
+}
+
+function composeShoppingPlan(
+  input: {
+    ranked:
+      RankedProduct[];
+    constraints:
+      PlanCompositionConstraints;
+    previousPlan:
+      AIAssistantResponsePayload |
+      null;
+    marketplaceResolution:
+      MarketplaceRequestResolution;
+  }
+) {
+  const previousIds =
+    new Set(
+      (
+        input.previousPlan?.products ??
+        []
+      ).map(
+        product =>
+          product.id
+      )
+    );
+
+  const previousTotal =
+    priorPlanTotal(
+      input.previousPlan
+    );
+
+  const budgetLimit =
+    input.constraints.budget;
+
+  const targetBudget =
+    input.constraints.reduceCost &&
+    previousTotal >
+      0
+      ? Math.min(
+          budgetLimit ??
+            previousTotal,
+          Math.max(
+            1,
+            Math.floor(
+              previousTotal *
+                0.7
+            )
+          )
+        )
+      : budgetLimit;
+
+  const individualCap =
+    targetBudget
+      ? input.constraints.reduceCost ||
+        input.constraints.preference ===
+          'AFFORDABLE'
+        ? targetBudget *
+          0.45
+        : input.constraints.preference ===
+            'BALANCED'
+          ? targetBudget *
+            0.6
+          : targetBudget
+      : null;
+
+  const candidates =
+    input.ranked
+      .map(
+        item => {
+          const price =
+            productUnitPrice(
+              item.product
+            );
+
+          const relevance =
+            planRelevanceScore(
+              item.product,
+              input.constraints
+            );
+
+          const previousPenalty =
+            input.constraints
+              .requestAlternative &&
+            previousIds.has(
+              item.product.id
+            )
+              ? 120
+              : 0;
+
+          const pricePenalty =
+            (
+              input.constraints.reduceCost ||
+              input.constraints.preference ===
+                'AFFORDABLE'
+            ) &&
+            price
+              ? price /
+                1_000 *
+                0.16
+              : 0;
+
+          return {
+            ...item,
+            price,
+            relevance,
+            adjustedScore:
+              item.score +
+              relevance -
+              previousPenalty -
+              pricePenalty
+          };
+        }
+      )
+      .filter(
+        item =>
+          !item.marketplace
+            .excluded &&
+          availableQuantity(
+            item.product
+          ) >
+            0 &&
+          item.price !==
+            null &&
+          item.price >
+            0 &&
+          item.relevance >
+            -80 &&
+          (
+            !targetBudget ||
+            item.price <=
+              targetBudget
+          ) &&
+          (
+            !individualCap ||
+            item.price <=
+              individualCap
+          ) &&
+          (
+            !input.constraints
+              .alcoholFreeOnly ||
+            !alcoholicPlanProduct(
+              item.product
+            )
+          )
+      )
+      .sort(
+        (
+          left,
+          right
+        ) =>
+          right.adjustedScore -
+          left.adjustedScore ||
+          (
+            left.price ??
+            Number.MAX_SAFE_INTEGER
+          ) -
+            (
+              right.price ??
+              Number.MAX_SAFE_INTEGER
+            )
+      );
+
+  const selectedRecords:
+    typeof candidates = [];
+
+  const selectedIds =
+    new Set<string>();
+
+  let estimatedTotal =
+    0;
+
+  function canSelect(
+    candidate:
+      typeof candidates[number]
+  ) {
+    if (
+      selectedRecords.length >=
+        8 ||
+      selectedIds.has(
+        candidate.product.id
+      )
+    ) {
+      return false;
+    }
+
+    if (
+      candidate.marketplace
+        .deprioritized
+    ) {
+      const candidateConcepts =
+        new Set(
+          candidate.marketplace
+            .matchedConcepts
+        );
+
+      const alreadySelectedForConcept =
+        selectedRecords.some(
+          item =>
+            item.marketplace
+              .deprioritized &&
+            item.marketplace
+              .matchedConcepts
+              .some(
+                concept =>
+                  candidateConcepts.has(
+                    concept
+                  )
+              )
+        );
+
+      if (
+        alreadySelectedForConcept
+      ) {
+        return false;
+      }
+    }
+
+    if (
+      targetBudget &&
+      estimatedTotal +
+        (
+          candidate.price ??
+          0
+        ) >
+        targetBudget
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function selectCandidate(
+    candidate:
+      typeof candidates[number]
+  ) {
+    if (
+      !canSelect(
+        candidate
+      )
+    ) {
+      return false;
+    }
+
+    selectedRecords.push(
+      candidate
+    );
+
+    selectedIds.add(
+      candidate.product.id
+    );
+
+    estimatedTotal +=
+      candidate.price ??
+      0;
+
+    return true;
+  }
+
+  const requiredNonAlcoholic =
+    Math.min(
+      8,
+      Math.max(
+        0,
+        input.constraints
+          .nonAlcoholicMinimum
+      )
+    );
+
+  for (
+    const candidate of
+    candidates.filter(
+      item =>
+        !alcoholicPlanProduct(
+          item.product
+        )
+    )
+  ) {
+    const selectedNonAlcoholic =
+      selectedRecords.filter(
+        item =>
+          !alcoholicPlanProduct(
+            item.product
+          )
+      ).length;
+
+    if (
+      selectedNonAlcoholic >=
+        requiredNonAlcoholic
+    ) {
+      break;
+    }
+
+    selectCandidate(
+      candidate
+    );
+  }
+
+  /* AJ_MS12_4_SOFT_DECREASE_PRESERVATION_V1 */
+  const decreasedConcepts =
+    [
+      ...new Set(
+        input.marketplaceResolution
+          .directions
+          .filter(
+            direction =>
+              direction.direction ===
+              'DECREASE'
+          )
+          .map(
+            direction =>
+              direction.concept
+          )
+      )
+    ];
+
+  for (
+    const concept of
+    decreasedConcepts
+  ) {
+    const reducedCandidates =
+      candidates
+        .filter(
+          item =>
+            item.marketplace
+              .deprioritized &&
+            item.marketplace
+              .matchedConcepts
+              .includes(
+                concept
+              )
+        )
+        .sort(
+          (
+            left,
+            right
+          ) =>
+            (
+              left.price ??
+              Number.MAX_SAFE_INTEGER
+            ) -
+              (
+                right.price ??
+                Number.MAX_SAFE_INTEGER
+              ) ||
+            right.adjustedScore -
+              left.adjustedScore
+        );
+
+    for (
+      const candidate of
+      reducedCandidates
+    ) {
+      if (
+        selectCandidate(
+          candidate
+        )
+      ) {
+        break;
+      }
+    }
+  }
+
+  const preferredCandidateCount =
+    candidates.filter(
+      item =>
+        item.marketplace
+          .preferred
+    ).length;
+
+  const preferredMinimum =
+    preferredCandidateCount >
+      0
+      ? Math.min(
+          4,
+          Math.max(
+            2,
+            Math.ceil(
+              Math.min(
+                8,
+                candidates.length
+              ) *
+                0.5
+            )
+          )
+        )
+      : 0;
+
+  for (
+    const candidate of
+    candidates.filter(
+      item =>
+        item.marketplace
+          .preferred
+    )
+  ) {
+    const selectedPreferred =
+      selectedRecords.filter(
+        item =>
+          item.marketplace
+            .preferred
+      ).length;
+
+    if (
+      selectedPreferred >=
+      preferredMinimum
+    ) {
+      break;
+    }
+
+    selectCandidate(
+      candidate
+    );
+  }
+
+  for (
+    const candidate of
+    candidates
+  ) {
+    selectCandidate(
+      candidate
+    );
+  }
+
+  if (
+    selectedRecords.length <
+      2 &&
+    targetBudget
+  ) {
+    const cheapest:
+      typeof candidates =
+      input.ranked
+        .map(
+          item => {
+            const price =
+              productUnitPrice(
+                item.product
+              );
+
+            const relevance =
+              planRelevanceScore(
+                item.product,
+                input.constraints
+              );
+
+            return {
+              ...item,
+              price,
+              relevance,
+              adjustedScore:
+                item.score +
+                relevance
+            };
+          }
+        )
+        .filter(
+          item =>
+            !item.marketplace
+              .excluded &&
+            availableQuantity(
+              item.product
+            ) >
+              0 &&
+            item.price !==
+              null &&
+            item.price >
+              0 &&
+            item.price <=
+              targetBudget &&
+            item.relevance >
+              -80 &&
+            (
+              !input.constraints
+                .alcoholFreeOnly ||
+              !alcoholicPlanProduct(
+                item.product
+              )
+            )
+        )
+        .sort(
+          (
+            left,
+            right
+          ) =>
+            Number(
+              right.marketplace
+                .preferred
+            ) -
+              Number(
+                left.marketplace
+                  .preferred
+              ) ||
+            Number(
+              left.marketplace
+                .deprioritized
+            ) -
+              Number(
+                right.marketplace
+                  .deprioritized
+              ) ||
+            (
+              left.price ??
+              Number.MAX_SAFE_INTEGER
+            ) -
+            (
+              right.price ??
+              Number.MAX_SAFE_INTEGER
+            )
+        );
+
+    selectedRecords.length =
+      0;
+
+    selectedIds.clear();
+
+    estimatedTotal =
+      0;
+
+    for (
+      const candidate of
+      cheapest.filter(
+        item =>
+          !alcoholicPlanProduct(
+            item.product
+          )
+      )
+    ) {
+      const selectedNonAlcoholic =
+        selectedRecords.filter(
+          item =>
+            !alcoholicPlanProduct(
+              item.product
+            )
+        ).length;
+
+      if (
+        selectedNonAlcoholic >=
+          requiredNonAlcoholic
+      ) {
+        break;
+      }
+
+      selectCandidate(
+        candidate
+      );
+    }
+
+    for (
+      const candidate of
+      cheapest
+    ) {
+      selectCandidate(
+        candidate
+      );
+    }
+  }
+
+  const orderedSelectedRecords =
+    [
+      ...selectedRecords
+    ].sort(
+      (
+        left,
+        right
+      ) =>
+        Number(
+          right.marketplace
+            .preferred
+        ) -
+          Number(
+            left.marketplace
+              .preferred
+          ) ||
+        Number(
+          left.marketplace
+            .deprioritized
+        ) -
+          Number(
+            right.marketplace
+              .deprioritized
+          ) ||
+        right.adjustedScore -
+          left.adjustedScore
+    );
+
+  const selected =
+    orderedSelectedRecords.map(
+      (
+        item,
+        index
+      ) =>
+        productCard(
+          item.product,
+          marketplaceReason(
+            item.marketplace,
+            index ===
+              0
+              ? 'Strongest occasion-relevant match within the active plan constraints.'
+              : input.constraints
+                  .nonAlcoholicMinimum >
+                  0 &&
+                !alcoholicPlanProduct(
+                  item.product
+                )
+                ? 'Included to satisfy the requested non-alcoholic minimum.'
+                : 'Included within the active budget and occasion requirements.'
+          )
+        )
+    );
+
+  const nonAlcoholicCount =
+    selectedRecords.filter(
+      item =>
+        !alcoholicPlanProduct(
+          item.product
+        )
+    ).length;
+
+  const availableCandidateCount =
+    input.ranked.filter(
+      item =>
+        availableQuantity(
+          item.product
+        ) >
+        0
+    ).length;
+
+  const softDecreaseNotes =
+    decreasedConcepts.map(
+      concept => {
+        const availableForConcept =
+          candidates.filter(
+            item =>
+              item.marketplace
+                .matchedConcepts
+                .includes(
+                  concept
+                )
+          ).length;
+
+        const selectedForConcept =
+          selectedRecords.filter(
+            item =>
+              item.marketplace
+                .matchedConcepts
+                .includes(
+                  concept
+                )
+          ).length;
+
+        if (
+          selectedForConcept >
+          0
+        ) {
+          return `“Fewer ${concept}” reduced that part of the plan without excluding it; ${selectedForConcept} ${concept} selection${selectedForConcept === 1 ? '' : 's'} remain${selectedForConcept === 1 ? 's' : ''}.`;
+        }
+
+        if (
+          availableForConcept >
+          0
+        ) {
+          return `Available ${concept} products were considered, but none could remain after applying the active budget and stronger latest priorities.`;
+        }
+
+        return `No available ${concept} product could be retained from the current catalogue.`;
+      }
+    );
+
+  return {
+    selected,
+    estimatedTotal,
+    budgetLimit,
+    targetBudget,
+    remainingBudget:
+      targetBudget
+        ? Math.max(
+            0,
+            targetBudget -
+              estimatedTotal
+          )
+        : null,
+    excludedCount:
+      Math.max(
+        0,
+        availableCandidateCount -
+          selected.length
+      ),
+    nonAlcoholicCount,
+    softDecreaseNotes
+  };
+}
+
 function productScore(
   product:
     ProductRecord,
@@ -1556,15 +3235,204 @@ function productScore(
   return score;
 }
 
+function isActivePlanExplanationPrompt(
+  prompt:
+    string
+) {
+  return isPlanExplanationOnlyInstruction(
+    prompt
+  );
+}
+
+function activePlanExplanationResponse(
+  plan:
+    AIAssistantResponsePayload
+) {
+  const budget =
+    plan.metrics.find(
+      metric =>
+        metric.label ===
+        'Budget limit'
+    );
+
+  const total =
+    plan.metrics.find(
+      metric =>
+        metric.label ===
+        'Estimated total'
+    );
+
+  const productReasons =
+    plan.products.map(
+      product =>
+        `${product.name}: ${product.reason || 'Selected because it supports the active Journey direction.'}`
+    );
+
+  return response({
+    headline:
+      'Why this plan fits your Journey',
+    summary:
+      'This explanation reads the active plan without changing its products, budget, constraints or saved Plan version.',
+    outputType:
+      plan.outputType,
+    confidence:
+      Math.max(
+        plan.confidence,
+        0.84
+      ),
+    metrics:
+      plan.metrics,
+    products:
+      plan.products,
+    sections: [
+      {
+        title:
+          'Why these products fit',
+        bullets:
+          productReasons.length
+            ? productReasons
+            : [
+                'The active plan does not currently contain product selections to explain.'
+              ]
+      },
+      {
+        title:
+          'How the plan stays aligned',
+        bullets: [
+          ...(budget
+            ? [
+                `The active budget authority remains ${budget.value}.`
+              ]
+            : []),
+          ...(total
+            ? [
+                `The saved estimated total remains ${total.value}.`
+              ]
+            : []),
+          'The active product identities, selected variants and Journey constraints were preserved exactly for this explanation.'
+        ]
+      },
+      {
+        title:
+          'Marketplace authority',
+        bullets: [
+          'Current catalogue records remain authoritative for price, availability and variants.',
+          'Opening Product Library accordions or reading this explanation does not reserve stock or perform a commerce action.'
+        ]
+      }
+    ],
+    warnings:
+      plan.warnings,
+    suggestedPrompts: [
+      'Tell me more about the first product',
+      'Show an alternative for one product',
+      'Keep this plan and complete the Journey'
+    ],
+    actions: []
+  });
+}
+
 async function customerResponse({
   access,
   prompt,
-  context
+  context,
+  conversation = [],
+  journeyState = null,
+  previousPlan = null
 }: EngineInput) {
+  const pendingBudgetClarification =
+    hasPendingBudgetClarification(
+      journeyState
+    );
+
+  const confirmedBudgetFromPrompt =
+    parseNairaAmount(
+      prompt,
+      {
+        allowBare:
+          pendingBudgetClarification
+      }
+    );
+
+  const journeyConversation =
+    [
+      ...conversation,
+      prompt
+    ]
+      .map(
+        message =>
+          message
+            .replace(
+              /\s+/g,
+              ' '
+            )
+            .trim()
+      )
+      .filter(
+        Boolean
+      )
+      .filter(
+        (
+          message,
+          index,
+          messages
+        ) =>
+          index ===
+            0 ||
+          normalize(
+            message
+          ) !==
+            normalize(
+              messages[
+                index - 1
+              ] ??
+              ''
+            )
+      );
+
+  const journeyPrompt =
+    journeyConversation.join(
+      ' '
+    );
+
   const normalizedPrompt =
     normalize(
-      prompt
+      journeyPrompt
     );
+
+  if (
+    previousPlan &&
+    isActivePlanExplanationPrompt(
+      prompt
+    )
+  ) {
+    return activePlanExplanationResponse(
+      previousPlan
+    );
+  }
+
+  if (
+    previousPlan &&
+    relativeBudgetAdjustment(
+      prompt
+    ) ===
+      'INCREASE'
+  ) {
+    return relativeBudgetClarificationResponse(
+      previousPlan
+    );
+  }
+
+  const planConstraints =
+    resolvePlanCompositionConstraints({
+      state:
+        journeyState,
+      conversation:
+        journeyConversation,
+      prompt,
+      confirmedBudget:
+        confirmedBudgetFromPrompt
+    });
 
   const [
     products,
@@ -1701,17 +3569,51 @@ async function customerResponse({
       null
   };
 
+  const marketplaceResolution =
+    resolveMarketplaceRequest({
+      prompt,
+      journeyText:
+        journeyPrompt,
+      products,
+      budget:
+        planConstraints.budget
+    });
+
+  const marketplaceLead =
+    marketplaceAcknowledgement(
+      marketplaceResolution
+    );
+
+  const marketplaceSummary =
+    (
+      value:
+        string
+    ) =>
+      marketplaceLead
+        ? `${marketplaceLead} ${value}`
+        : value;
+
   const ranked =
     products
       .map(
-        product => ({
-          product,
-          score:
-            productScore(
-              product,
-              signals
-            )
-        })
+        product => {
+          const marketplace =
+            marketplaceProductSignal(
+              marketplaceResolution,
+              product.id
+            );
+
+          return {
+            product,
+            marketplace,
+            score:
+              productScore(
+                product,
+                signals
+              ) +
+              marketplace.score
+          };
+        }
       )
       .sort(
         (
@@ -1722,10 +3624,101 @@ async function customerResponse({
           left.score
       );
 
-  const outputType =
-    classifyCustomer(
-      normalizedPrompt
+  const planLineageText =
+    normalize(
+      [
+        journeyState?.objective ??
+          '',
+        ...(
+          journeyState?.confirmedContext ??
+          []
+        ),
+        ...(
+          journeyState?.constraints ??
+          []
+        ),
+        ...(
+          journeyState?.preferences ??
+          []
+        ),
+        journeyState?.latestInstruction ??
+          '',
+        previousPlan?.headline ??
+          '',
+        previousPlan?.summary ??
+          '',
+        ...journeyConversation
+      ].join(
+        ' '
+      )
     );
+
+  const inferredPlanLineageType =
+    classifyCustomer(
+      planLineageText
+    );
+
+  const previousPlanLineageType =
+    previousPlan &&
+    (
+      previousPlan.outputType ===
+        'PAIRING' ||
+      previousPlan.outputType ===
+        'SHOPPING_PLAN'
+    )
+      ? previousPlan.outputType
+      : null;
+
+  const inferredStructuredPlanType =
+    inferredPlanLineageType ===
+      'PAIRING' ||
+    inferredPlanLineageType ===
+      'SHOPPING_PLAN'
+      ? inferredPlanLineageType
+      : null;
+
+  const hasBudgetControlledLineage =
+    confirmedBudgetFromPrompt !==
+      null ||
+    (
+      journeyState?.constraints ??
+      []
+    ).some(
+      value =>
+        /^Budget(?:\s+limit)?:/i.test(
+          value
+        )
+    );
+
+  const activePlanLineageType =
+    previousPlanLineageType ??
+    inferredStructuredPlanType ??
+    (
+      previousPlan?.products.length &&
+      hasBudgetControlledLineage
+        ? 'SHOPPING_PLAN'
+        : null
+    );
+
+  const preserveActivePlanType =
+    activePlanLineageType !==
+      null &&
+    (
+      confirmedBudgetFromPrompt !==
+        null ||
+      pendingBudgetClarification ||
+      isPlanMutationInstruction(
+        prompt
+      )
+    );
+
+  const outputType =
+    preserveActivePlanType &&
+    activePlanLineageType
+      ? activePlanLineageType
+      : classifyCustomer(
+          normalizedPrompt
+        );
 
   if (
     outputType ===
@@ -1752,7 +3745,16 @@ async function customerResponse({
               slug
             ) ||
             item.product.id ===
-              context.productId
+              context.productId ||
+            item.marketplace
+              .matchType ===
+              'EXACT_MATCH' ||
+            item.marketplace
+              .matchType ===
+              'ALTERNATIVE_FOUND' ||
+            item.marketplace
+              .score >=
+              70
           );
         }
       );
@@ -1775,15 +3777,57 @@ async function customerResponse({
           ) =>
             productCard(
               item.product,
-              index ===
-                0
-                ? 'Best combined availability, rating and preference match.'
-                : 'Useful alternative for price, category or style comparison.'
+              marketplaceReason(
+                item.marketplace,
+                index ===
+                  0
+                  ? 'Best combined availability, rating and preference match.'
+                  : 'Useful alternative for price, category or style comparison.'
+              )
             )
         );
 
+    const selectedProductRecords =
+      selected
+        .map(
+          product =>
+            products.find(
+              candidate =>
+                candidate.id ===
+                product.id
+            ) ??
+            null
+        )
+        .filter(
+          (
+            product
+          ): product is
+            ProductRecord =>
+            Boolean(
+              product
+            )
+        );
+
+    const priceComparison =
+      marketplacePriceComparison(
+        selectedProductRecords
+      );
+
     const sections:
       AIAssistantSection[] = [
+      ...marketplaceResolutionSections(
+        marketplaceResolution
+      ),
+      ...(priceComparison.length
+        ? [
+            {
+              title:
+                'Price and value',
+              bullets:
+                priceComparison
+            }
+          ]
+        : []),
       {
         title:
           'Meaningful differences',
@@ -1809,7 +3853,9 @@ async function customerResponse({
       headline:
         'Live product comparison',
       summary:
-        `I compared ${selected.length} available products using current price, stock, rating and your permitted personalization signals.`,
+        marketplaceSummary(
+          `I compared ${selected.length} available products using current price, stock, rating and your permitted personalization signals.`
+        ),
       outputType,
       confidence:
         selected.length >=
@@ -1819,13 +3865,16 @@ async function customerResponse({
       products:
         selected,
       sections,
-      warnings:
-        selected.length <
+      warnings: [
+        ...marketplaceResolution
+          .warnings,
+        ...(selected.length <
         2
           ? [
               'Only one strong product match was found. Name two products for a more precise comparison.'
             ]
-          : [],
+          : [])
+      ],
       suggestedPrompts: [
         'Compare the two cheapest available options',
         'Which one is better for a gift?',
@@ -1850,180 +3899,291 @@ async function customerResponse({
     });
   }
 
+  /* AJ_MS12_PAIRING_CONSTRAINT_AUTHORITY_V2 */
   if (
     outputType ===
     'PAIRING'
   ) {
-    const chosen:
-      ProductRecord[] = [];
+    const composition =
+      composeShoppingPlan({
+        ranked,
+        constraints:
+          planConstraints,
+        previousPlan,
+        marketplaceResolution
+      });
 
-    const categories =
-      new Set<string>();
+    const {
+      selected,
+      estimatedTotal,
+      budgetLimit,
+      targetBudget,
+      remainingBudget,
+      excludedCount,
+      nonAlcoholicCount,
+      softDecreaseNotes
+    } =
+      composition;
 
-    for (
-      const item of
-      ranked
-    ) {
-      if (
-        chosen.length >=
-        6
-      ) {
-        break;
-      }
-
-      if (
-        availableQuantity(
-          item.product
-        ) <=
-        0
-      ) {
-        continue;
-      }
-
-      if (
-        !categories.has(
-          item.product.category.slug
-        ) ||
-        chosen.length <
-          3
-      ) {
-        chosen.push(
-          item.product
-        );
-
-        categories.add(
-          item.product.category.slug
-        );
-      }
-    }
-
-    const productsForPairing =
-      chosen.map(
-        (
-          product,
-          index
-        ) =>
-          productCard(
-            product,
-            index ===
-              0
-              ? 'Anchor product for the occasion.'
-              : 'Adds variety, balance or a complementary serving option.'
-          )
-      );
-
-    const total =
-      productsForPairing.reduce(
-        (
-          sum,
-          product
-        ) =>
-          sum +
-          (
-            product.price ??
-            0
-          ),
-        0
-      );
-
-    return response({
-      headline:
-        'Occasion pairing draft',
-      summary:
-        'A balanced combination prepared only from products currently published in this workspace.',
-      outputType,
-      confidence:
-        productsForPairing.length >=
-        4
-          ? 0.79
-          : 0.62,
-      metrics: [
+    const pairingMetrics:
+      AIAssistantMetric[] = [
         {
           label:
             'Products',
           value:
             String(
-              productsForPairing.length
+              selected.length
             )
         },
-        {
-          label:
-            'Estimated basket',
-          value:
-            new Intl.NumberFormat(
-              'en-NG',
+        ...(planConstraints
+          .nonAlcoholicMinimum >
+          0
+          ? [
               {
-                style:
-                  'currency',
-                currency:
-                  'NGN',
-                maximumFractionDigits:
-                  0
+                label:
+                  'Non-alcoholic options',
+                value:
+                  `${nonAlcoholicCount} of ${planConstraints.nonAlcoholicMinimum} minimum`,
+                helper:
+                  'Selected deliberately from products without alcoholic signals.',
+                tone:
+                  nonAlcoholicCount >=
+                    planConstraints
+                      .nonAlcoholicMinimum
+                    ? 'positive' as const
+                    : 'warning' as const
               }
-            ).format(
-              total
-            ),
-          helper:
-            'One unit per selected variant'
-        },
+            ]
+          : []),
+        ...(targetBudget
+          ? [
+              {
+                label:
+                  'Budget limit',
+                value:
+                  formatNaira(
+                    targetBudget
+                  ),
+                helper:
+                  planConstraints.reduceCost
+                    ? 'Reduced-cost target applied.'
+                    : 'Saved Journey budget applied.',
+                tone:
+                  'neutral' as const
+              },
+              {
+                label:
+                  'Estimated total',
+                value:
+                  formatNaira(
+                    estimatedTotal
+                  ),
+                helper:
+                  'One available variant per selected product.',
+                tone:
+                  estimatedTotal <=
+                    targetBudget
+                    ? 'positive' as const
+                    : 'critical' as const
+              },
+              {
+                label:
+                  'Remaining budget',
+                value:
+                  formatNaira(
+                    remainingBudget ??
+                      0
+                  ),
+                tone:
+                  'positive' as const
+              }
+            ]
+          : [
+              {
+                label:
+                  'Estimated total',
+                value:
+                  formatNaira(
+                    estimatedTotal
+                  ),
+                helper:
+                  planConstraints.flexibleBudget
+                    ? 'Flexible budget direction applied.'
+                    : 'No fixed Journey budget was available.',
+                tone:
+                  'neutral' as const
+              }
+            ]),
         {
           label:
-            'Available now',
+            'Products excluded',
           value:
             String(
-              productsForPairing.filter(
-                product =>
-                  product.available >
-                  0
-              ).length
+              excludedCount
             ),
+          helper:
+            'Unavailable, over-budget or weak occasion matches were not included.',
           tone:
-            'positive'
+            excludedCount >
+              0
+              ? 'positive'
+              : 'neutral'
         }
-      ],
+      ];
+
+    return response({
+      headline:
+        'Budget-controlled occasion pairing',
+      summary:
+        marketplaceSummary(
+          targetBudget
+            ? `An occasion pairing estimated at ${formatNaira(
+                estimatedTotal
+              )} within the active ${formatNaira(
+                targetBudget
+              )} target. Products that conflicted with the budget, occasion or latest direction were excluded.`
+            : `An occasion pairing estimated at ${formatNaira(
+                estimatedTotal
+              )}, composed from available products using the saved Journey context.`
+        ),
+      outputType,
+      confidence:
+        selected.length >=
+          3
+          ? 0.86
+          : selected.length >
+              0
+            ? 0.68
+            : 0.42,
+      metrics:
+        pairingMetrics,
       products:
-        productsForPairing,
+        selected,
       sections: [
+        ...marketplaceResolutionSections(
+          marketplaceResolution
+        ),
         {
           title:
             'Serving flow',
+          bullets:
+            selected.length >
+              0
+              ? selected
+                  .slice(
+                    0,
+                    4
+                  )
+                  .map(
+                    (
+                      product,
+                      index
+                    ) =>
+                      index ===
+                        0
+                        ? `Begin with ${product.name} as the anchor selection for the occasion.`
+                        : `Use ${product.name} as a complementary option within the current budget.`
+                  )
+              : [
+                  'No available combination currently satisfies all active constraints.'
+                ]
+        },
+        {
+          title:
+            'Constraint reasoning',
           bullets: [
-            'Begin with the lightest or most approachable option.',
-            'Keep one richer product for the centre of the occasion.',
-            'Use the remaining selections as alternatives for different preferences.'
+            ...(budgetLimit
+              ? [
+                  `The saved Journey budget is ${formatNaira(
+                    budgetLimit
+                  )}.`
+                ]
+              : [
+                  'The Journey currently allows a flexible budget.'
+                ]),
+            ...(planConstraints.guestCount
+              ? [
+                  `The pairing is being prepared for ${planConstraints.guestCount} people.`
+                ]
+              : []),
+            ...(planConstraints.preference ===
+              'AFFORDABLE'
+              ? [
+                  'Affordable direction restricted individual product prices and the combined basket total.'
+                ]
+              : []),
+            ...(planConstraints.reduceCost
+              ? [
+                  'Premium and high-cost products were restricted by the latest refinement.'
+                ]
+              : []),
+            ...(planConstraints
+              .nonAlcoholicMinimum >
+              0
+              ? [
+                  `${nonAlcoholicCount} non-alcoholic option${nonAlcoholicCount === 1 ? '' : 's'} were selected against the requested minimum of ${planConstraints.nonAlcoholicMinimum}.`
+                ]
+              : []),
+            ...softDecreaseNotes,
+            `${excludedCount} available catalogue products were excluded by active constraints or weak occasion relevance.`
           ]
         },
         {
           title:
             'Before checkout',
           bullets: [
-            'Confirm guest count and preferred quantities.',
-            'Review current variant prices because this draft does not reserve stock.',
-            'Save the final combination to a Shopping List for preparation.'
+            'Confirm preferred quantities before creating a Shopping List.',
+            'Current prices and availability remain authoritative at the time of preparation.',
+            'This pairing does not reserve stock automatically.'
           ]
         }
       ],
-      suggestedPrompts: [
-        'Turn this into a party Shopping List',
-        'Make the pairing more affordable',
-        'Create a premium gift basket'
+      warnings: [
+        ...marketplaceResolution
+          .warnings,
+        ...(selected.length ===
+          0
+          ? [
+              'No available product combination could satisfy the active pairing constraints. Adjust the budget or preference before continuing.'
+            ]
+          : []),
+        ...(planConstraints
+          .nonAlcoholicMinimum >
+            0 &&
+          nonAlcoholicCount <
+            planConstraints
+              .nonAlcoholicMinimum
+          ? [
+              `Only ${nonAlcoholicCount} non-alcoholic option${nonAlcoholicCount === 1 ? '' : 's'} could be composed within the active catalogue and budget.`
+            ]
+          : []),
+        'This draft does not reserve inventory or create a Shopping List automatically.'
       ],
-      actions: [
-        {
-          label:
-            'Open Shopping Lists',
-          href:
-            '/account/lists',
-          kind:
-            'primary'
-        },
-        {
-          label:
-            'Browse Store',
-          href:
-            '/store'
-        }
-      ]
+      suggestedPrompts: [
+        'Reduce cost further',
+        'Show a different combination within the same budget',
+        'Turn this into a party Shopping List'
+      ],
+      actions:
+        selected.length >
+        0
+          ? [
+              {
+                label:
+                  'Open Shopping Lists',
+                href:
+                  '/account/lists',
+                kind:
+                  'primary'
+              },
+              {
+                label:
+                  'Browse Store',
+                href:
+                  '/store'
+              }
+            ]
+          : []
     });
   }
 
@@ -2031,50 +4191,160 @@ async function customerResponse({
     outputType ===
     'SHOPPING_PLAN'
   ) {
-    const selected =
-      ranked
-        .filter(
-          item =>
-            availableQuantity(
-              item.product
-            ) >
-            0
-        )
-        .slice(
-          0,
-          8
-        )
-        .map(
-          (
-            item,
-            index
-          ) =>
-            productCard(
-              item.product,
-              index <
-                3
-                ? 'Core item for the plan.'
-                : 'Optional supporting item.'
-            )
-        );
+    const composition =
+      composeShoppingPlan({
+        ranked,
+        constraints:
+          planConstraints,
+        previousPlan,
+        marketplaceResolution
+      });
+
+    const {
+      selected,
+      estimatedTotal,
+      budgetLimit,
+      targetBudget,
+      remainingBudget,
+      excludedCount,
+      nonAlcoholicCount,
+      softDecreaseNotes
+    } =
+      composition;
+
+    const budgetMetrics:
+      AIAssistantMetric[] = [
+        ...(planConstraints
+          .nonAlcoholicMinimum >
+          0
+          ? [
+              {
+                label:
+                  'Non-alcoholic options',
+                value:
+                  `${nonAlcoholicCount} of ${planConstraints.nonAlcoholicMinimum} minimum`,
+                helper:
+                  'Selected deliberately from products without alcoholic signals.',
+                tone:
+                  nonAlcoholicCount >=
+                    planConstraints
+                      .nonAlcoholicMinimum
+                    ? 'positive' as const
+                    : 'warning' as const
+              }
+            ]
+          : []),
+        ...(targetBudget
+          ? [
+              {
+                label:
+                  'Budget limit',
+                value:
+                  formatNaira(
+                    targetBudget
+                  ),
+                helper:
+                  planConstraints.reduceCost
+                    ? 'Reduced-cost target applied.'
+                    : 'Saved Journey budget applied.',
+                tone:
+                  'neutral' as const
+              },
+              {
+                label:
+                  'Estimated total',
+                value:
+                  formatNaira(
+                    estimatedTotal
+                  ),
+                helper:
+                  'Based on one available variant of each selected product.',
+                tone:
+                  estimatedTotal <=
+                    targetBudget
+                    ? 'positive' as const
+                    : 'critical' as const
+              },
+              {
+                label:
+                  'Remaining budget',
+                value:
+                  formatNaira(
+                    remainingBudget ??
+                      0
+                  ),
+                tone:
+                  'positive' as const
+              }
+            ]
+          : [
+              {
+                label:
+                  'Estimated total',
+                value:
+                  formatNaira(
+                    estimatedTotal
+                  ),
+                helper:
+                  planConstraints.flexibleBudget
+                    ? 'Flexible budget direction applied.'
+                    : 'No fixed Journey budget was available.',
+                tone:
+                  'neutral' as const
+              }
+            ]),
+        {
+          label:
+            'Products excluded',
+          value:
+            String(
+              excludedCount
+            ),
+          helper:
+            'Unavailable, over-budget or weak occasion matches were not included.',
+          tone:
+            excludedCount >
+              0
+              ? 'positive'
+              : 'neutral'
+        }
+      ];
 
     return response({
       headline:
-        'Shopping plan draft',
+        'Budget-controlled Shopping plan',
       summary:
-        'A reusable starting plan based on the live catalog. Quantities remain for you to confirm.',
+        marketplaceSummary(
+          targetBudget
+            ? `A live-catalog plan estimated at ${formatNaira(
+                estimatedTotal
+              )} within the active ${formatNaira(
+                targetBudget
+              )} target. Products that conflicted with the budget, occasion or latest refinement were excluded.`
+            : `A live-catalog plan estimated at ${formatNaira(
+                estimatedTotal
+              )}, composed around the saved occasion and preference signals.`
+        ),
       outputType,
       confidence:
         selected.length >=
-        5
-          ? 0.78
-          : 0.6,
+          3
+          ? 0.86
+          : selected.length >
+              0
+            ? 0.68
+            : 0.42,
+      metrics:
+        budgetMetrics,
       products:
         selected,
       sections: [
+        ...marketplaceResolutionSections(
+          marketplaceResolution
+        ),
         {
           title:
-            'Core quantities',
+            'Core plan',
           bullets:
             selected
               .slice(
@@ -2083,7 +4353,9 @@ async function customerResponse({
               )
               .map(
                 product =>
-                  `Start with 1 × ${product.name}; increase only after confirming guest count or household need.`
+                  `Start with 1 × ${product.name} at ${product.price ? formatNaira(
+                    product.price
+                  ) : 'the current available price'}.`
               )
         },
         {
@@ -2096,28 +4368,84 @@ async function customerResponse({
               )
               .map(
                 product =>
-                  `${product.name} can be added as an alternative or extra serving option.`
+                  `${product.name} remains within the current composition as an optional supporting item.`
               )
+        },
+        {
+          title:
+            'Constraint reasoning',
+          bullets: [
+            ...(budgetLimit
+              ? [
+                  `The saved Journey budget is ${formatNaira(
+                    budgetLimit
+                  )}.`
+                ]
+              : [
+                  'The Journey currently allows a flexible budget.'
+                ]),
+            ...(planConstraints.guestCount
+              ? [
+                  `The composition is being prepared for ${planConstraints.guestCount} people.`
+                ]
+              : []),
+            ...(planConstraints.reduceCost
+              ? [
+                  'Premium and high-cost products were restricted by the latest refinement.'
+                ]
+              : []),
+            ...(planConstraints
+              .nonAlcoholicMinimum >
+              0
+              ? [
+                  `${nonAlcoholicCount} non-alcoholic option${nonAlcoholicCount === 1 ? '' : 's'} were selected against the requested minimum of ${planConstraints.nonAlcoholicMinimum}.`
+                ]
+              : []),
+            ...softDecreaseNotes,
+            `${excludedCount} available catalogue products were excluded by active constraints or weak occasion relevance.`
+          ]
         }
       ],
       warnings: [
+        ...marketplaceResolution
+          .warnings,
+        ...(selected.length ===
+          0
+          ? [
+              'No available product combination could satisfy the active constraints. Adjust the budget or preference before creating a Shopping List.'
+            ]
+          : []),
+        ...(planConstraints
+          .nonAlcoholicMinimum >
+            0 &&
+          nonAlcoholicCount <
+            planConstraints
+              .nonAlcoholicMinimum
+          ? [
+              `Only ${nonAlcoholicCount} non-alcoholic option${nonAlcoholicCount === 1 ? '' : 's'} could be composed within the active catalogue and budget.`
+            ]
+          : []),
         'This draft does not reserve inventory or create a Shopping List automatically.'
       ],
       suggestedPrompts: [
-        'Make this plan suitable for ten guests',
-        'Remove premium products and reduce cost',
-        'Suggest notes for each Shopping List item'
+        'Reduce cost further',
+        'Show a different combination within the same budget',
+        'Explain why each product fits this occasion'
       ],
-      actions: [
-        {
-          label:
-            'Create Shopping List',
-          href:
-            '/account/lists',
-          kind:
-            'primary'
-        }
-      ]
+      actions:
+        selected.length >
+        0
+          ? [
+              {
+                label:
+                  'Create Shopping List',
+                href:
+                  '/account/lists',
+                kind:
+                  'primary'
+              }
+            ]
+          : []
     });
   }
 
@@ -2141,12 +4469,15 @@ async function customerResponse({
         ) =>
           productCard(
             item.product,
-            index ===
-              0
-              ? 'Strongest live match across availability, rating and current context.'
-              : personalizationEnabled
-                ? 'Matches your permitted browsing, Wishlist or preference signals.'
-                : 'Selected from live catalog quality and availability.'
+            marketplaceReason(
+              item.marketplace,
+              index ===
+                0
+                ? 'Strongest live match across availability, rating and current context.'
+                : personalizationEnabled
+                  ? 'Matches your permitted browsing, Wishlist or preference signals.'
+                  : 'Selected from live catalog quality and availability.'
+            )
           )
       );
 
@@ -2154,9 +4485,11 @@ async function customerResponse({
     headline:
       'Smart picks from the live Store',
     summary:
-      personalizationEnabled
-        ? 'These suggestions combine live availability with your permitted customer experience signals.'
-        : 'Personalization is disabled, so these suggestions use only live catalog quality and availability.',
+      marketplaceSummary(
+        personalizationEnabled
+          ? 'These suggestions combine live availability with your permitted customer experience signals.'
+          : 'Personalization is disabled, so these suggestions use only live catalog quality and availability.'
+      ),
     outputType,
     confidence:
       recommendations.length >=
@@ -2198,6 +4531,9 @@ async function customerResponse({
     products:
       recommendations,
     sections: [
+      ...marketplaceResolutionSections(
+        marketplaceResolution
+      ),
       {
         title:
           'Why these appeared',
@@ -2212,6 +4548,9 @@ async function customerResponse({
         ]
       }
     ],
+    warnings:
+      marketplaceResolution
+        .warnings,
     suggestedPrompts: [
       'Compare the top three products',
       'Build a dinner pairing from these picks',

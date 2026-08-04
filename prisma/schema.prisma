@@ -3017,7 +3017,20 @@ model AiAssistantSession {
 
   contextSnapshot Json?
 
-  messages AiAssistantMessage[]
+
+  // AJ_LIVING_INTELLIGENCE_PHASE_2_PERSISTENCE
+  journeyGoal         String?
+  activePlanMessageId String?
+  currentPlanVersion  Int       @default(0)
+  lastRefinedAt       DateTime?
+
+
+  journeyState          Json?
+  journeyStateVersion   Int       @default(0)
+  journeyStage          String    @default("UNDERSTANDING")
+  journeyStateUpdatedAt DateTime?
+  journeyLastTransition Json?
+messages AiAssistantMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3026,6 +3039,7 @@ model AiAssistantSession {
 
   @@index([workspaceId, userId, audience, updatedAt])
   @@index([vendorProfileId, updatedAt])
+  @@index([activePlanMessageId])
   @@map("ai_assistant_session")
 }
 
@@ -3043,11 +3057,24 @@ model AiAssistantMessage {
   confidence Float?
   feedback   AiAssistantFeedback?
 
+
+  journeyVersion        Int?
+  previousPlanMessageId String?
+  isPlanSnapshot        Boolean @default(false)
+
+  journeyStateSnapshot        Json?
+  journeyStageSnapshot        String?
+  journeyStateVersionSnapshot Int?
+  journeyTransition           Json?
   createdAt DateTime @default(now())
 
   applications AiAssistantApplication[]
 
   @@index([sessionId, createdAt])
+  @@unique([sessionId, journeyVersion])
+  @@index([previousPlanMessageId])
+  @@index([sessionId, isPlanSnapshot, createdAt])
+  @@index([sessionId, journeyStateVersionSnapshot])
   @@map("ai_assistant_message")
 }
 
