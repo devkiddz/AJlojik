@@ -49,6 +49,13 @@ export type ProductType = {
   category: string;
   subcategory?: string;
   tags: string[];
+
+  /**
+   * AJ_PRODUCT_PAGE_GALLERY_ASSETS_V1
+   * Ordered public ProductImage assets for canonical presentation.
+   */
+  images?: string[];
+
   variants: ProductVariantType[];
   rating: number;
   reviews: number;

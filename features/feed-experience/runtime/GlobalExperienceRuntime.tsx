@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_GLOBAL_HUB_PREVIEW_FALLBACK_V1 */
+
 import { useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import type {
   WorkspaceCommerceProjection,
@@ -25,7 +27,14 @@ import { promos } from '@/data/promos';
 import { useCart } from '@/features/cart';
 
 import { useCatalog } from '@/features/catalog';
-import { openCustomerProductExperience } from '@/features/customer-experience';
+
+import {
+  selectProductVariant
+} from '@/features/product-experience-state';
+
+import {
+  previewProductInHub
+} from '@/features/product-experience-state/hubProductPreviewBridge';
 
 import { useWishlist } from '@/features/wishlist';
 
@@ -239,13 +248,39 @@ export default function GlobalExperienceRuntime({
     [pathname, searchParams]
   );
 
+  /* AJ_PRODUCT_ROUTE_INTENT_NORMALIZATION_V1 */
+  const normalizedRouteIntent = useMemo<FeedIntent>(() => {
+    if (
+      routeIntent.type !== 'product' ||
+      !routeIntent.targetId
+    ) {
+      return routeIntent;
+    }
+
+    const routeProduct = products.find(
+      product =>
+        String(product.id) === String(routeIntent.targetId) ||
+        product.slug.toLowerCase() === routeIntent.targetId?.toLowerCase()
+    );
+
+    if (!routeProduct) {
+      return routeIntent;
+    }
+
+    return {
+      ...routeIntent,
+      targetId: routeProduct.id,
+      title: routeProduct.name
+    };
+  }, [products, routeIntent]);
+
   const initialIntent = useMemo<FeedIntent>(() => {
     if (publishedIntent?.pathname === pathname) {
       return publishedIntent.intent;
     }
 
-    return routeIntent;
-  }, [pathname, publishedIntent, routeIntent]);
+    return normalizedRouteIntent;
+  }, [normalizedRouteIntent, pathname, publishedIntent]);
 
   const handleCategoryChange = useCallback<FeedActions['changeCategory']>(
     updates => {
@@ -264,22 +299,57 @@ export default function GlobalExperienceRuntime({
   );
 
   /**
-   * FeedExperienceProvider replaces this with its own
-   * intent-aware product experience action.
+   * Safe global fallback for product preview.
    *
-   * This remains a safe route fallback for the base
-   * FeedActions contract.
+   * Feed-owned providers use the same independent Hub preview
+   * authority, so no product interaction needs to publish or
+   * replace a central Feed intent.
    */
-  const handleProductPreview = useCallback<FeedActions['previewProduct']>(
-    product => {
-      openCustomerProductExperience({
-        id: String(product.id),
-        name: product.name,
-        shortDescription: product.shortDescription
-      });
-    },
-    []
-  );
+  const handleProductPreview =
+    useCallback<
+      FeedActions[
+        'previewProduct'
+      ]
+    >(
+      product => {
+        const variant =
+          product.variants.find(
+            candidate =>
+              candidate.stockLeft >
+              0
+          ) ??
+          product.variants[0];
+
+        if (variant) {
+          selectProductVariant({
+            productId:
+              product.id,
+
+            variantId:
+              variant.id,
+
+            source:
+              'feed'
+          });
+        }
+
+        previewProductInHub({
+          productId:
+            product.id,
+
+          variantId:
+            variant?.id ??
+            null,
+
+          source:
+            'feed',
+
+          reveal:
+            true
+        });
+      },
+      []
+    );
 
   const handleToggleLike = useCallback<FeedActions['toggleLike']>(
     productId => {

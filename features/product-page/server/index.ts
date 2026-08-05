@@ -1,0 +1,3 @@
+export {
+  getProductPage
+} from './getProductPage';

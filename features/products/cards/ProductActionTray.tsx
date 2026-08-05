@@ -6,6 +6,7 @@
 /* AJ_PRODUCT_CARD_OPTION_TRAY_MENU_GROUP_HOTFIX_V1 */
 
 import {
+  Eye,
   Heart,
   ListPlus,
   LoaderCircle,
@@ -20,6 +21,10 @@ import {
   useState,
   type MouseEvent
 } from 'react';
+
+import {
+  useRouter
+} from 'next/navigation';
 
 import {
   DropdownMenu,
@@ -136,6 +141,9 @@ export function ProductActionTray({
   showWishlist = true,
   className
 }: ProductActionTrayProps) {
+  const router =
+    useRouter();
+
   const [
     shoppingListOpen,
     setShoppingListOpen
@@ -354,6 +362,20 @@ export function ProductActionTray({
 
     setShoppingListOpen(
       true
+    );
+  };
+
+  /* AJ_PRODUCT_FULL_PAGE_ACTION_V1 */
+  const handleOpenProductPage = (
+    event:
+      MouseEvent<HTMLElement>
+  ): void => {
+    stopProductActionEvent(
+      event
+    );
+
+    router.push(
+      `/products/${encodeURIComponent(product.slug)}`
     );
   };
 
@@ -733,6 +755,35 @@ export function ProductActionTray({
             </DropdownMenuLabel>
 
             <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className="
+                  cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                  hover:bg-muted/70
+                  hover:text-foreground
+                  focus:bg-muted/70
+                  focus:text-foreground
+                "
+                onClick={
+                  handleOpenProductPage
+                }>
+                <Eye className="size-4 shrink-0 text-primary" />
+
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold">
+                    View Full Product Page
+                  </span>
+
+                  <span className="text-[0.65rem] leading-4 text-muted-foreground">
+                    Open the permanent, shareable product destination.
+                  </span>
+                </span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
               <DropdownMenuItem
                 disabled={
                   !shoppingLists ||

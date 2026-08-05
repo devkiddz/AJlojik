@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_DESKTOP_HUB_PREVIEW_AUTHORITY_V1 */
+
 import {
   useEffect,
   useMemo,
@@ -31,6 +33,11 @@ import {
 import {
   useFeedExperience
 } from '@/features/feed-experience';
+
+import {
+  clearHubProductPreview,
+  useHubProductPreview
+} from '@/features/product-experience-state/hubProductPreviewBridge';
 
 import {
   useProductDeepInsight
@@ -92,9 +99,11 @@ export default function DesktopDiscoveryRail({
 
   const {
     intent,
-    context,
-    continueDiscovery
+    context
   } = useFeedExperience();
+
+  const hubProductPreview =
+    useHubProductPreview();
 
   const productDeepInsight =
     useProductDeepInsight();
@@ -118,7 +127,7 @@ export default function DesktopDiscoveryRail({
     view: HubView;
   } | null>(null);
 
-  const lastExpandedProductIdRef =
+  const lastRevealedPreviewRequestIdRef =
     useRef<string | null>(
       null
     );
@@ -194,11 +203,15 @@ export default function DesktopDiscoveryRail({
     resolutionFocusKey
   ]);
 
-  const activeProductId =
+  const routeProductId =
     intent.type === 'product'
       ? intent.targetId ??
         null
       : null;
+
+  const activeProductId =
+    hubProductPreview?.productId ??
+    routeProductId;
 
   useEffect(() => {
     if (
@@ -251,26 +264,34 @@ export default function DesktopDiscoveryRail({
     hubView === 'product';
 
   useEffect(() => {
-    if (!activeProductId) {
-      lastExpandedProductIdRef.current =
-        null;
-
-      return;
-    }
-
     if (
-      lastExpandedProductIdRef.current ===
-      activeProductId
+      !activeProductId ||
+      !hubProductPreview?.reveal
     ) {
       return;
     }
 
-    lastExpandedProductIdRef.current =
-      activeProductId;
+    if (
+      lastRevealedPreviewRequestIdRef.current ===
+      hubProductPreview.requestId
+    ) {
+      return;
+    }
 
-    onCollapsedChange(false);
+    lastRevealedPreviewRequestIdRef.current =
+      hubProductPreview.requestId;
+
+    setViewPreference(
+      null
+    );
+
+    onCollapsedChange(
+      false
+    );
   }, [
     activeProductId,
+    hubProductPreview?.requestId,
+    hubProductPreview?.reveal,
     onCollapsedChange
   ]);
 
@@ -349,13 +370,23 @@ export default function DesktopDiscoveryRail({
   const handleBackToDiscovery =
     () => {
       /**
-       * Desktop keeps the rail active while the Feed restores
-       * the exact pre-product experience captured by the
-       * provider's continuity stack.
+       * Returning to Hub discovery clears only the independent
+       * Hub preview. The central Feed keeps its current intent,
+       * module composition, history and scroll position.
        */
-      setViewPreference(null);
+      setViewPreference(
+        activeProductId
+          ? {
+              productId:
+                activeProductId,
 
-      continueDiscovery();
+              view:
+                'discovery'
+            }
+          : null
+      );
+
+      clearHubProductPreview();
     };
 
   const handleShowProductDetails =

@@ -76,3 +76,5 @@ aj-ms12-*.txt
 /aj-product-action-tray-deep-insight-v*.zip
 /aj-store-fresh-reset-v*.zip
 /aj-store-fresh-reset-install.log
+.aj-installer-state/
+install-aj-*.payload/

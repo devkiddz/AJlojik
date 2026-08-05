@@ -33,12 +33,27 @@ type DiscoverySurfaceProps = {
 };
 
 function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoverySurfaceProps) {
-  const [collapsed, setCollapsed] = useState(() => !pathname.startsWith('/account'));
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      !(
+        pathname.startsWith('/account') ||
+        pathname.startsWith('/products/')
+      )
+  );
 
   const [
     hubResetVersion,
     setHubResetVersion
   ] = useState(0);
+
+  /* AJ_PRODUCT_PAGE_HUB_EXPANSION_V1 */
+  useEffect(() => {
+    if (
+      pathname.startsWith('/products/')
+    ) {
+      setCollapsed(false);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const handleStartFresh =
@@ -75,9 +90,12 @@ function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoveryS
         {desktopViewport ? (
           <div
             key={`desktop-hub:${hubResetVersion}`}
+            data-aj-fluid-discovery-hub-width
             className={cn(
               'sticky top-[calc(var(--app-navbar-height)+0.75rem)] z-40 hidden h-[calc(100dvh-var(--app-navbar-height)-1.5rem)] shrink-0 overflow-hidden py-3 pl-0 pr-3 transition-[width] duration-300 lg:block',
-              collapsed ? 'w-20' : 'w-[28rem] xl:w-[31rem]'
+              collapsed
+                ? 'w-20'
+                : 'w-[var(--app-panel-width)]'
             )}>
             <DesktopDiscoveryRail
               registry={discoveryRegistry}

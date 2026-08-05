@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_MOBILE_SHEET_HUB_PREVIEW_AUTHORITY_V1 */
+
 import {
   useEffect,
   useRef,
@@ -11,8 +13,8 @@ import {
 } from '@/components/layout/MobileApplicationShell';
 
 import {
-  useFeedExperience
-} from '@/features/feed-experience';
+  useHubProductPreview
+} from '@/features/product-experience-state/hubProductPreviewBridge';
 
 import {
   useProductDeepInsight
@@ -24,9 +26,8 @@ const MOBILE_DISCOVERY_QUERY =
   '(max-width: 1023px)';
 
 export default function MobileDiscoverySheetHost() {
-  const {
-    intent
-  } = useFeedExperience();
+  const hubProductPreview =
+    useHubProductPreview();
 
   const productDeepInsight =
     useProductDeepInsight();
@@ -42,12 +43,12 @@ export default function MobileDiscoverySheetHost() {
     setIsMobileViewport
   ] = useState(false);
 
-  const lastOpenedProductIntentIdRef =
+  const lastOpenedPreviewRequestIdRef =
     useRef<string | null>(null);
 
-  const activeProductIntentId =
-    intent.type === 'product'
-      ? intent.id
+  const activePreviewRequestId =
+    hubProductPreview?.reveal
+      ? hubProductPreview.requestId
       : null;
 
   /**
@@ -76,7 +77,7 @@ export default function MobileDiscoverySheetHost() {
         if (!mobile) {
           setDiscoveryOpen(false);
 
-          lastOpenedProductIntentIdRef.current =
+          lastOpenedPreviewRequestIdRef.current =
             null;
         }
       };
@@ -99,36 +100,35 @@ export default function MobileDiscoverySheetHost() {
   /**
    * Mobile product selection is Hub-first.
    *
-   * A newly published Product Experience opens the Discovery
-   * Sheet and lets ActiveProductWidget provide the preview and
-   * commerce workspace. The Sheet closes only when that widget
-   * explicitly hands full details to the central Feed.
+   * A new Feed preview request opens the Discovery Sheet while
+   * the Feed itself remains unchanged. Product Page synchronization
+   * uses reveal=false and therefore does not force the mobile Sheet.
    */
   useEffect(() => {
     if (!isMobileViewport) {
       return;
     }
 
-    if (!activeProductIntentId) {
-      lastOpenedProductIntentIdRef.current =
+    if (!activePreviewRequestId) {
+      lastOpenedPreviewRequestIdRef.current =
         null;
 
       return;
     }
 
     if (
-      lastOpenedProductIntentIdRef.current ===
-      activeProductIntentId
+      lastOpenedPreviewRequestIdRef.current ===
+      activePreviewRequestId
     ) {
       return;
     }
 
-    lastOpenedProductIntentIdRef.current =
-      activeProductIntentId;
+    lastOpenedPreviewRequestIdRef.current =
+      activePreviewRequestId;
 
     openDiscovery();
   }, [
-    activeProductIntentId,
+    activePreviewRequestId,
     isMobileViewport,
     openDiscovery
   ]);
