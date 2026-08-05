@@ -176,8 +176,8 @@ export const discoveryGroups: DiscoveryGroupDefinition[] = [
       search: 210
     },
     eligibility: {
-      requiresAuthentication: true,
       anySignals: [
+        'products',
         'intelligence',
         'recommendations'
       ]
@@ -873,8 +873,8 @@ export const discoveryWidgets: DiscoveryWidgetDefinition[] = [
       search: 270
     },
     eligibility: {
-      requiresAuthentication: true,
       anySignals: [
+        'products',
         'intelligence',
         'recommendations'
       ]

@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_HUB_PRODUCT_DEEP_INSIGHT_WIRING_V1 */
+
 import {
   useCallback,
   useEffect,
@@ -22,6 +24,12 @@ import {
 import type {
   AIAssistantHubInsight
 } from '@/features/ai-assistance';
+
+import {
+  useProductDeepInsight
+} from '@/features/product-intelligence';
+
+import ProductDeepInsightWidget from './ProductDeepInsightWidget';
 
 import {
   useWorkspace
@@ -62,6 +70,9 @@ export default function AIIntelligenceWidget() {
     isPending
   } =
     useIdentity();
+
+  const productDeepInsight =
+    useProductDeepInsight();
 
   const [
     insight,
@@ -242,6 +253,18 @@ export default function AIIntelligenceWidget() {
   const waiting =
     isPending ||
     loading;
+
+  if (
+    productDeepInsight
+  ) {
+    return (
+      <ProductDeepInsightWidget
+        request={
+          productDeepInsight
+        }
+      />
+    );
+  }
 
   return (
     <section className="overflow-hidden rounded-3xl border border-accent/20 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--accent)_15%,transparent),transparent_45%)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_20px_60px_rgba(0,0,0,0.22)]">

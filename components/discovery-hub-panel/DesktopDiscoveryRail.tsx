@@ -32,6 +32,10 @@ import {
   useFeedExperience
 } from '@/features/feed-experience';
 
+import {
+  useProductDeepInsight
+} from '@/features/product-intelligence';
+
 import { cn } from '@/lib/utils';
 
 import {
@@ -91,6 +95,9 @@ export default function DesktopDiscoveryRail({
     context,
     continueDiscovery
   } = useFeedExperience();
+
+  const productDeepInsight =
+    useProductDeepInsight();
 
   const pageMode =
     resolveDiscoveryPageMode(
@@ -192,6 +199,38 @@ export default function DesktopDiscoveryRail({
       ? intent.targetId ??
         null
       : null;
+
+  useEffect(() => {
+    if (
+      !productDeepInsight
+    ) {
+      return;
+    }
+
+    setActiveHubGroupId(
+      'ai'
+    );
+
+    setViewPreference(
+      activeProductId
+        ? {
+            productId:
+              activeProductId,
+
+            view:
+              'discovery'
+          }
+        : null
+    );
+
+    onCollapsedChange(
+      false
+    );
+  }, [
+    activeProductId,
+    onCollapsedChange,
+    productDeepInsight?.requestId
+  ]);
 
   const hubView: HubView =
     !activeProductId

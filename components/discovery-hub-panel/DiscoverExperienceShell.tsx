@@ -35,6 +35,10 @@ import {
   useFeedExperience
 } from '@/features/feed-experience';
 
+import {
+  useProductDeepInsight
+} from '@/features/product-intelligence';
+
 import { cn } from '@/lib/utils';
 
 import {
@@ -68,6 +72,9 @@ export default function DiscoverExperienceShell() {
     context,
     continueDiscovery
   } = useFeedExperience();
+
+  const productDeepInsight =
+    useProductDeepInsight();
 
   const pageMode =
     resolveDiscoveryPageMode(
@@ -164,6 +171,33 @@ export default function DiscoverExperienceShell() {
       ? intent.targetId ??
         null
       : null;
+
+  useEffect(() => {
+    if (
+      !productDeepInsight
+    ) {
+      return;
+    }
+
+    setActiveGroupId(
+      'ai'
+    );
+
+    setViewPreference(
+      activeProductId
+        ? {
+            productId:
+              activeProductId,
+
+            view:
+              'discovery'
+          }
+        : null
+    );
+  }, [
+    activeProductId,
+    productDeepInsight?.requestId
+  ]);
 
   const activeView: MobileHubView =
     !activeProductId

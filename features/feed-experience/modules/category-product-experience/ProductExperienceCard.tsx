@@ -1,8 +1,13 @@
 'use client';
 
+/* AJ_FEATURED_PRODUCT_RAIL_ONE_LINE_V1 */
+/* AJ_FEATURED_RAIL_PHOTO_CARDS_V1 */
+/* AJ_FEATURED_RAIL_ICON_SEND_V1 */
+/* AJ_FEATURED_RAIL_DARK_SEND_V1 */
+
 import Image from 'next/image';
 
-import { Star } from 'lucide-react';
+import { Send, Star } from 'lucide-react';
 
 import { useMemo } from 'react';
 
@@ -70,6 +75,48 @@ export default function ProductExperienceCard({
     });
   };
 
+  if (compact) {
+    return (
+      <article
+        data-aj-featured-rail-photo-card
+        className={cn(
+          'group relative h-full min-h-0 w-full min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-muted shadow-sm',
+          'transition duration-300 hover:border-primary/25 hover:shadow-lg',
+          className
+        )}>
+        <Image
+          src={selectedVariant.image}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 46vw, 160px"
+          className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"
+        />
+
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/5"
+        />
+
+        <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col items-start p-2.5">
+          <button
+            type="button"
+            onClick={() => actions.previewProduct(product)}
+            aria-label={`Send ${product.name} to Discovery Hub`}
+            title="Send to Discovery Hub"
+            className="mb-2 grid size-8 place-items-center rounded-full border border-white/20 bg-black/80 text-white shadow-[0_8px_24px_rgba(0,0,0,0.48)] backdrop-blur-xl transition hover:scale-105 hover:border-white/30 hover:bg-black/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80">
+            <Send className="size-3.5" />
+          </button>
+
+          <h3
+            title={product.name}
+            className="w-full truncate text-xs font-bold tracking-tight text-white drop-shadow">
+            {product.name}
+          </h3>
+        </div>
+      </article>
+    );
+  }
+
   console.count(`ProductExperienceCard render: ${product.id}`);
 
   return (
@@ -80,7 +127,7 @@ export default function ProductExperienceCard({
         compact ? 'rounded-2xl' : 'rounded-xl',
         className
       )}>
-      <div className={cn('relative overflow-hidden bg-muted', compact ? 'aspect-[5/4]' : 'aspect-square')}>
+      <div className={cn('relative overflow-hidden bg-muted', compact ? 'aspect-[4/3]' : 'aspect-square')}>
         <Image
           src={selectedVariant.image}
           alt={product.name}
@@ -123,8 +170,10 @@ export default function ProductExperienceCard({
         <button type="button" onClick={openProductExperience} className="text-left">
           <h3
             className={cn(
-              'line-clamp-2 font-semibold tracking-tight',
-              compact ? 'min-h-8 text-[11px] leading-4' : 'min-h-10 text-sm leading-5'
+              'font-semibold tracking-tight',
+              compact
+                ? 'line-clamp-1 min-h-4 text-[11px] leading-4'
+                : 'line-clamp-2 min-h-10 text-sm leading-5'
             )}>
             {product.name}
           </h3>
@@ -152,7 +201,10 @@ export default function ProductExperienceCard({
           </p>
         ) : null}
 
-        <div className={cn('mt-auto flex min-h-[4.5rem] flex-col justify-end', compact ? 'pt-2' : 'pt-2.5')}>
+        <div className={cn(
+            'mt-auto flex flex-col justify-end',
+            compact ? 'min-h-[4rem] pt-1.5' : 'min-h-[4.5rem] pt-2.5'
+          )}>
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <p className={cn('shrink-0 font-bold', compact ? 'text-[11px]' : 'text-sm')}>
               {priceFormatter.format(Number(selectedVariant.price))}
