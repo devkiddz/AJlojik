@@ -2,17 +2,25 @@
 
 import Link from 'next/link';
 
-import { useMemo, useState } from 'react';
+import {
+  useRouter
+} from 'next/navigation';
+
+/* AJ_PRODUCT_ACTION_TRAY_DEEP_INSIGHT_V1 */
+
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   ArrowLeft,
   BadgeCheck,
+  BrainCircuit,
   CalendarClock,
   Eye,
   Heart,
   Layers3,
   LoaderCircle,
   Minus,
+  MoreHorizontal,
   PackageCheck,
   Plus,
   ShoppingCart,
@@ -56,6 +64,9 @@ type ActiveProductWidgetProps = {
 };
 
 export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed }: ActiveProductWidgetProps) {
+  const router =
+    useRouter();
+
   const { intent, context, productDetailsDisclosure, productDetailsControls } = useFeedExperience();
 
   const { items: cartItems, addToCart, updateQuantity, removeFromCart, mutating } = useCart();
@@ -72,6 +83,48 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
 
     return context.catalog.products.find(candidate => candidate.id === intent.targetId);
   }, [context.catalog.products, intent.targetId, intent.type]);
+
+  /**
+   * AJ_HUB_PRODUCT_SCROLL_TOP_V1
+   *
+   * ActiveProductWidget is shared by the desktop Discovery Rail
+   * and the mobile Discovery Sheet. Resetting this one internal
+   * scroll root keeps both Hub surfaces aligned without scrolling
+   * the browser window or rebuilding either host.
+   */
+  const productScrollRef =
+    useRef<HTMLDivElement>(
+      null
+    );
+
+  const activeProductScrollKey =
+    intent.type === 'product' &&
+    product
+      ? `${intent.id}:${product.id}`
+      : null;
+
+  useEffect(() => {
+    if (!activeProductScrollKey) {
+      return;
+    }
+
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          productScrollRef.current?.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'auto'
+          });
+        }
+      );
+
+    return () => {
+      window.cancelAnimationFrame(
+        frameId
+      );
+    };
+  }, [activeProductScrollKey]);
 
   const category = useMemo(() => {
     if (!product) {
@@ -94,6 +147,11 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
   const [
     shoppingListPickerOpen,
     setShoppingListPickerOpen
+  ] = useState(false);
+
+  const [
+    actionTrayOpen,
+    setActionTrayOpen
   ] = useState(false);
 
   const selectedVariant = useMemo(
@@ -260,6 +318,45 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       setShoppingListPickerOpen(
         false
       );
+
+      setActionTrayOpen(
+        false
+      );
+    };
+
+  const handleDeepInsight =
+    (): void => {
+      const params =
+        new URLSearchParams({
+          mode:
+            'deep-insight',
+
+          intent:
+            'product-decision',
+
+          productId:
+            String(
+              product.id
+            ),
+
+          productName:
+            product.name,
+
+          category:
+            product.category
+        });
+
+      setActionTrayOpen(
+        false
+      );
+
+      setShoppingListPickerOpen(
+        false
+      );
+
+      router.push(
+        `/ai?${params.toString()}`
+      );
     };
 
   const handleRevealInFeed = (): void => {
@@ -303,7 +400,11 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       {/* ====================================================
           SCROLLABLE PRODUCT INFORMATION
       ==================================================== */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div
+        ref={productScrollRef}
+        data-aj-hub-product-scroll-root
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      >
         <div className="space-y-5 px-3 pb-8 pt-3">
           {/* ==================================================
               FULL-BLEED PRODUCT ARTWORK
@@ -606,54 +707,6 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
               )}
               <button
                 type="button"
-                aria-label="Add to Shopping List"
-                aria-expanded={
-                  shoppingListPickerOpen
-                }
-                disabled={
-                  !shoppingLists ||
-                  shoppingLists.loading ||
-                  shoppingLists.mutating
-                }
-                onClick={() =>
-                  setShoppingListPickerOpen(
-                    value =>
-                      !value
-                  )
-                }
-                className={cn(
-                  `
-                    grid size-11 shrink-0
-                    place-items-center
-                    rounded-xl border
-                    shadow-sm
-                    transition-all duration-200
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-ring
-                    focus-visible:ring-offset-2
-                    focus-visible:ring-offset-background
-                    disabled:cursor-not-allowed
-                    disabled:opacity-45
-                  `,
-                  shoppingListPickerOpen
-                    ? 'border-primary/30 bg-primary/10 text-primary'
-                    : 'border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground'
-                )}>
-                {
-                  shoppingLists?.mutating
-                    ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    )
-                    : (
-                      <ListPlus className="size-4" />
-                    )
-                }
-              </button>
-
-
-              <button
-                type="button"
                 aria-label={saved ? 'Remove from wishlist' : 'Add to wishlist'}
                 aria-pressed={saved}
                 disabled={wishlistMutating}
@@ -702,7 +755,123 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                   />
                 )}
               </button>
+
+              <button
+                type="button"
+                aria-label="More product actions"
+                aria-haspopup="menu"
+                aria-expanded={
+                  actionTrayOpen
+                }
+                onClick={() => {
+                  setActionTrayOpen(
+                    current => {
+                      const next =
+                        !current;
+
+                      if (next) {
+                        setShoppingListPickerOpen(
+                          false
+                        );
+                      }
+
+                      return next;
+                    }
+                  );
+                }}
+                className={cn(
+                  `
+                    grid size-11 shrink-0
+                    place-items-center
+                    rounded-xl border
+                    shadow-sm
+                    transition-all duration-200
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-ring
+                    focus-visible:ring-offset-2
+                    focus-visible:ring-offset-background
+                  `,
+                  actionTrayOpen
+                    ? 'border-primary/30 bg-primary/10 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground'
+                )}>
+                <MoreHorizontal className="size-4" />
+              </button>
             </div>
+            {actionTrayOpen ? (
+              <div
+                role="menu"
+                aria-label="More product actions"
+                className="mt-2 overflow-hidden rounded-xl border border-border bg-background p-1.5 shadow-lg"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={
+                    !shoppingLists ||
+                    shoppingLists.loading ||
+                    shoppingLists.mutating
+                  }
+                  onClick={() => {
+                    setActionTrayOpen(
+                      false
+                    );
+
+                    setShoppingListPickerOpen(
+                      true
+                    );
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    {
+                      shoppingLists?.mutating
+                        ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        )
+                        : (
+                          <ListPlus className="size-4" />
+                        )
+                    }
+                  </span>
+
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold text-foreground">
+                      Add to Shopping List
+                    </span>
+
+                    <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                      Choose an existing list for this option.
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={
+                    handleDeepInsight
+                  }
+                  className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-muted"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
+                    <BrainCircuit className="size-4" />
+                  </span>
+
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold text-foreground">
+                      Deep Insight
+                    </span>
+
+                    <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                      Open AJ Intelligence with this exact product context.
+                    </span>
+                  </span>
+                </button>
+              </div>
+            ) : null}
+
             {shoppingListPickerOpen ? (
               <div className="mt-2 rounded-xl border border-border bg-background p-2 shadow-sm">
                 <div className="flex items-center justify-between gap-3 px-2 py-1.5">

@@ -59,6 +59,11 @@ export default async function AiPage({
       params.category
     );
 
+  const productName =
+    readValue(
+      params.productName
+    );
+
   const contextParts =
     [
       mode
@@ -67,9 +72,11 @@ export default async function AiPage({
       intent
         ? `Intent: ${intent}`
         : null,
-      productId
-        ? `Product: ${productId}`
-        : null,
+      productName
+        ? `Product: ${productName}`
+        : productId
+          ? `Product: ${productId}`
+          : null,
       category
         ? `Category: ${category}`
         : null
@@ -98,6 +105,13 @@ export default async function AiPage({
         productId,
         category
       }}
+      initialPrompt={
+        mode ===
+          'deep-insight' &&
+        productName
+          ? `Give me a deep insight into ${productName}. Explain its strongest use cases, who it suits, important trade-offs, value for the price, and what I should compare before deciding.`
+          : ''
+      }
     />
   );
 }

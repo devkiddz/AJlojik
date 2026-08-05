@@ -406,8 +406,29 @@ export function FeedExperienceProvider({
   );
 
   const resetExperience = useCallback(() => {
-    beginResolution(initialIntent);
-  }, [beginResolution, initialIntent]);
+    /**
+     * Start Fresh resets only navigation continuity.
+     * Commerce and customer-owned state remain untouched.
+     */
+    intentHistoryRef.current = [];
+
+    revealProductInFeedRef.current =
+      null;
+
+    beginResolution(
+      createIntent({
+        type:
+          'store-discovery',
+
+        categorySlug:
+          'all'
+      }),
+      {
+        recordCurrent:
+          false
+      }
+    );
+  }, [beginResolution]);
 
   const revealProductDetails = useCallback((productId: string) => {
     setProductDetailsDisclosure(currentDisclosure => ({
