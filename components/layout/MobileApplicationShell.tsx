@@ -1,8 +1,21 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode
+} from 'react';
 
 import MobileBottomNavigation from '@/components/navigation/MobileBottomNavigation';
+
+import {
+  CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+  requestFreshStoreExperience
+} from '@/features/customer-experience/customerExperienceEvents';
 
 type MobileApplicationShellProps = {
   children: ReactNode;
@@ -45,6 +58,39 @@ export default function MobileApplicationShell({ children }: MobileApplicationSh
     setDiscoveryOpen(current => !current);
   }, []);
 
+  const resetToStore =
+    useCallback(
+      () => {
+        setDiscoveryOpen(
+          false
+        );
+
+        requestFreshStoreExperience();
+      },
+      []
+    );
+
+  useEffect(() => {
+    const closeForFreshStore =
+      () => {
+        setDiscoveryOpen(
+          false
+        );
+      };
+
+    window.addEventListener(
+      CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+      closeForFreshStore
+    );
+
+    return () => {
+      window.removeEventListener(
+        CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+        closeForFreshStore
+      );
+    };
+  }, []);
+
   const contextValue = useMemo<MobileDiscoveryContextValue>(
     () => ({
       discoveryOpen,
@@ -60,7 +106,11 @@ export default function MobileApplicationShell({ children }: MobileApplicationSh
     <MobileDiscoveryContext.Provider value={contextValue}>
       <div className="min-h-dvh pb-24 lg:pb-0">{children}</div>
 
-      <MobileBottomNavigation discoveryOpen={discoveryOpen} onToggleDiscovery={toggleDiscovery} />
+      <MobileBottomNavigation
+        discoveryOpen={discoveryOpen}
+        onToggleDiscovery={toggleDiscovery}
+        onResetToStore={resetToStore}
+      />
     </MobileDiscoveryContext.Provider>
   );
 }

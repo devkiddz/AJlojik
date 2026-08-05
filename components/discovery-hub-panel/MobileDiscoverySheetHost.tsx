@@ -14,6 +14,10 @@ import {
   useFeedExperience
 } from '@/features/feed-experience';
 
+import {
+  useProductDeepInsight
+} from '@/features/product-intelligence';
+
 import MobileDiscoverySheet from './MobileDiscoverySheet';
 
 const MOBILE_DISCOVERY_QUERY =
@@ -23,6 +27,9 @@ export default function MobileDiscoverySheetHost() {
   const {
     intent
   } = useFeedExperience();
+
+  const productDeepInsight =
+    useProductDeepInsight();
 
   const {
     discoveryOpen,
@@ -124,6 +131,21 @@ export default function MobileDiscoverySheetHost() {
     activeProductIntentId,
     isMobileViewport,
     openDiscovery
+  ]);
+
+  useEffect(() => {
+    if (
+      !isMobileViewport ||
+      !productDeepInsight
+    ) {
+      return;
+    }
+
+    openDiscovery();
+  }, [
+    isMobileViewport,
+    openDiscovery,
+    productDeepInsight?.requestId
   ]);
 
   if (!isMobileViewport) {

@@ -2,17 +2,21 @@
 
 import Link from 'next/link';
 
-import { useMemo, useState } from 'react';
+/* AJ_PRODUCT_ACTION_TRAY_DEEP_INSIGHT_V1 */
+
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   ArrowLeft,
   BadgeCheck,
+  BrainCircuit,
   CalendarClock,
   Eye,
   Heart,
   Layers3,
   LoaderCircle,
   Minus,
+  MoreHorizontal,
   PackageCheck,
   Plus,
   ShoppingCart,
@@ -25,6 +29,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/features/cart';
 import { useFeedExperience } from '@/features/feed-experience';
+
+import {
+  openProductDeepInsight
+} from '@/features/product-intelligence';
 
 import {
   DiscoveryContinuityCarousel
@@ -56,7 +64,13 @@ type ActiveProductWidgetProps = {
 };
 
 export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed }: ActiveProductWidgetProps) {
-  const { intent, context, productDetailsDisclosure, productDetailsControls } = useFeedExperience();
+  const {
+    intent,
+    context,
+    openProductInFeed,
+    productDetailsDisclosure,
+    productDetailsControls
+  } = useFeedExperience();
 
   const { items: cartItems, addToCart, updateQuantity, removeFromCart, mutating } = useCart();
 
@@ -72,6 +86,48 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
 
     return context.catalog.products.find(candidate => candidate.id === intent.targetId);
   }, [context.catalog.products, intent.targetId, intent.type]);
+
+  /**
+   * AJ_HUB_PRODUCT_SCROLL_TOP_V1
+   *
+   * ActiveProductWidget is shared by the desktop Discovery Rail
+   * and the mobile Discovery Sheet. Resetting this one internal
+   * scroll root keeps both Hub surfaces aligned without scrolling
+   * the browser window or rebuilding either host.
+   */
+  const productScrollRef =
+    useRef<HTMLDivElement>(
+      null
+    );
+
+  const activeProductScrollKey =
+    intent.type === 'product' &&
+    product
+      ? `${intent.id}:${product.id}`
+      : null;
+
+  useEffect(() => {
+    if (!activeProductScrollKey) {
+      return;
+    }
+
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          productScrollRef.current?.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'auto'
+          });
+        }
+      );
+
+    return () => {
+      window.cancelAnimationFrame(
+        frameId
+      );
+    };
+  }, [activeProductScrollKey]);
 
   const category = useMemo(() => {
     if (!product) {
@@ -94,6 +150,11 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
   const [
     shoppingListPickerOpen,
     setShoppingListPickerOpen
+  ] = useState(false);
+
+  const [
+    actionTrayOpen,
+    setActionTrayOpen
   ] = useState(false);
 
   const selectedVariant = useMemo(
@@ -182,6 +243,275 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
 
   const wishlistMutating = isWishlistMutating(product.id);
 
+  /* AJ_HUB_PRODUCT_INTELLIGENCE_V1 */
+  const selectedProductPrice =
+    Number(
+      selectedVariant?.price ??
+        0
+    );
+
+  const normalizedProductTags =
+    new Set(
+      (
+        product.tags ??
+        []
+      ).map(
+        tag =>
+          tag
+            .trim()
+            .toLowerCase()
+      )
+    );
+
+  const intelligenceCandidates =
+    context.catalog.products
+      .filter(
+        candidate =>
+          String(
+            candidate.id
+          ) !==
+          String(
+            product.id
+          )
+      )
+      .map(
+        candidate => {
+          const candidateVariant =
+            candidate.variants.find(
+              variant =>
+                variant.stockLeft >
+                0
+            ) ??
+            candidate.variants[0];
+
+          const candidatePrice =
+            Number(
+              candidateVariant?.price ??
+                0
+            );
+
+          const sharedTags =
+            (
+              candidate.tags ??
+              []
+            ).filter(
+              tag =>
+                normalizedProductTags.has(
+                  tag
+                    .trim()
+                    .toLowerCase()
+                )
+            );
+
+          const sameCategory =
+            candidate.category ===
+            product.category;
+
+          const sameSubcategory =
+            Boolean(
+              product.subcategory &&
+                candidate.subcategory ===
+                  product.subcategory
+            );
+
+          const priceDistance =
+            selectedProductPrice >
+              0 &&
+            candidatePrice >
+              0
+              ? Math.abs(
+                  candidatePrice -
+                    selectedProductPrice
+                ) /
+                selectedProductPrice
+              : 1;
+
+          const score =
+            (
+              sameCategory
+                ? 40
+                : 0
+            ) +
+            (
+              sameSubcategory
+                ? 24
+                : 0
+            ) +
+            sharedTags.length *
+              7 +
+            Math.min(
+              Number(
+                candidate.rating
+              ) ||
+                0,
+              5
+            ) *
+              2 +
+            (
+              candidate.featured
+                ? 4
+                : 0
+            ) +
+            (
+              candidate.isNew
+                ? 2
+                : 0
+            ) -
+            Math.min(
+              priceDistance *
+                12,
+              12
+            );
+
+          const matchLabel =
+            [
+              sameSubcategory &&
+              candidate.subcategory
+                ? `Same ${formatLabel(
+                    candidate.subcategory
+                  )}`
+                : null,
+
+              sharedTags[0]
+                ? `Shared ${formatLabel(
+                    sharedTags[0]
+                  )}`
+                : null,
+
+              priceDistance <=
+              0.2
+                ? 'Close price range'
+                : null
+            ]
+              .filter(
+                (
+                  value
+                ): value is string =>
+                  Boolean(
+                    value
+                  )
+              )
+              .slice(
+                0,
+                2
+              )
+              .join(
+                ' · '
+              );
+
+          return {
+            product:
+              candidate,
+
+            variant:
+              candidateVariant,
+
+            price:
+              candidatePrice,
+
+            sameCategory,
+
+            score,
+
+            matchLabel:
+              matchLabel ||
+              'Related catalog option'
+          };
+        }
+      )
+      .filter(
+        candidate =>
+          Boolean(
+            candidate.variant
+          )
+      )
+      .sort(
+        (
+          left,
+          right
+        ) =>
+          right.score -
+            left.score ||
+          Number(
+            right.product
+              .rating
+          ) -
+            Number(
+              left.product
+                .rating
+            )
+      );
+
+  const comparisonProducts =
+    intelligenceCandidates
+      .filter(
+        candidate =>
+          candidate.sameCategory
+      )
+      .slice(
+        0,
+        2
+      );
+
+  const comparisonProductIds =
+    new Set(
+      comparisonProducts.map(
+        candidate =>
+          String(
+            candidate.product
+              .id
+          )
+      )
+    );
+
+  const recommendationProducts =
+    intelligenceCandidates
+      .filter(
+        candidate =>
+          !comparisonProductIds.has(
+            String(
+              candidate.product
+                .id
+            )
+          )
+      )
+      .slice(
+        0,
+        4
+      );
+
+  const productInsightSignals =
+    [
+      Number(
+        product.rating
+      ) >=
+      4
+        ? `${product.rating}/5 customer rating across ${numberFormatter.format(
+            product.reviews
+          )} reviews.`
+        : `Customer response currently sits at ${product.rating}/5.`,
+
+      product.soldCount >
+      0
+        ? `${numberFormatter.format(
+            product.soldCount
+          )} sold gives AJ a useful popularity signal.`
+        : `${product.variants.length} ${
+            product.variants.length ===
+            1
+              ? 'option is'
+              : 'options are'
+          } currently available to compare.`,
+
+      product.discountPercentage >
+      0
+        ? `${product.discountPercentage}% off strengthens its current value position.`
+        : isLowStock
+          ? 'Limited availability may matter if this is your preferred option.'
+          : 'Current availability supports a normal purchase decision.'
+    ];
+
+
   const handleIncreaseCartQuantity = async (): Promise<void> => {
     if (!selectedVariant || isOutOfStock || mutating || selectedVariantReachedStockLimit) {
       return;
@@ -260,6 +590,33 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       setShoppingListPickerOpen(
         false
       );
+
+      setActionTrayOpen(
+        false
+      );
+    };
+
+  const handleDeepInsight =
+    (): void => {
+      setActionTrayOpen(
+        false
+      );
+
+      setShoppingListPickerOpen(
+        false
+      );
+
+      openProductDeepInsight({
+        productId:
+          product.id,
+
+        variantId:
+          selectedVariant?.id ??
+          null,
+
+        source:
+          'active-product'
+      });
     };
 
   const handleRevealInFeed = (): void => {
@@ -303,7 +660,11 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       {/* ====================================================
           SCROLLABLE PRODUCT INFORMATION
       ==================================================== */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div
+        ref={productScrollRef}
+        data-aj-hub-product-scroll-root
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      >
         <div className="space-y-5 px-3 pb-8 pt-3">
           {/* ==================================================
               FULL-BLEED PRODUCT ARTWORK
@@ -606,54 +967,6 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
               )}
               <button
                 type="button"
-                aria-label="Add to Shopping List"
-                aria-expanded={
-                  shoppingListPickerOpen
-                }
-                disabled={
-                  !shoppingLists ||
-                  shoppingLists.loading ||
-                  shoppingLists.mutating
-                }
-                onClick={() =>
-                  setShoppingListPickerOpen(
-                    value =>
-                      !value
-                  )
-                }
-                className={cn(
-                  `
-                    grid size-11 shrink-0
-                    place-items-center
-                    rounded-xl border
-                    shadow-sm
-                    transition-all duration-200
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-ring
-                    focus-visible:ring-offset-2
-                    focus-visible:ring-offset-background
-                    disabled:cursor-not-allowed
-                    disabled:opacity-45
-                  `,
-                  shoppingListPickerOpen
-                    ? 'border-primary/30 bg-primary/10 text-primary'
-                    : 'border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground'
-                )}>
-                {
-                  shoppingLists?.mutating
-                    ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    )
-                    : (
-                      <ListPlus className="size-4" />
-                    )
-                }
-              </button>
-
-
-              <button
-                type="button"
                 aria-label={saved ? 'Remove from wishlist' : 'Add to wishlist'}
                 aria-pressed={saved}
                 disabled={wishlistMutating}
@@ -702,7 +1015,123 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                   />
                 )}
               </button>
+
+              <button
+                type="button"
+                aria-label="More product actions"
+                aria-haspopup="menu"
+                aria-expanded={
+                  actionTrayOpen
+                }
+                onClick={() => {
+                  setActionTrayOpen(
+                    current => {
+                      const next =
+                        !current;
+
+                      if (next) {
+                        setShoppingListPickerOpen(
+                          false
+                        );
+                      }
+
+                      return next;
+                    }
+                  );
+                }}
+                className={cn(
+                  `
+                    grid size-11 shrink-0
+                    place-items-center
+                    rounded-xl border
+                    shadow-sm
+                    transition-all duration-200
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-ring
+                    focus-visible:ring-offset-2
+                    focus-visible:ring-offset-background
+                  `,
+                  actionTrayOpen
+                    ? 'border-primary/30 bg-primary/10 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted hover:text-foreground'
+                )}>
+                <MoreHorizontal className="size-4" />
+              </button>
             </div>
+            {actionTrayOpen ? (
+              <div
+                role="menu"
+                aria-label="More product actions"
+                className="mt-2 overflow-hidden rounded-xl border border-border bg-background p-1.5 shadow-lg"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={
+                    !shoppingLists ||
+                    shoppingLists.loading ||
+                    shoppingLists.mutating
+                  }
+                  onClick={() => {
+                    setActionTrayOpen(
+                      false
+                    );
+
+                    setShoppingListPickerOpen(
+                      true
+                    );
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    {
+                      shoppingLists?.mutating
+                        ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        )
+                        : (
+                          <ListPlus className="size-4" />
+                        )
+                    }
+                  </span>
+
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold text-foreground">
+                      Add to Shopping List
+                    </span>
+
+                    <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                      Choose an existing list for this option.
+                    </span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={
+                    handleDeepInsight
+                  }
+                  className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-muted"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
+                    <BrainCircuit className="size-4" />
+                  </span>
+
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold text-foreground">
+                      Deep Insight
+                    </span>
+
+                    <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                      Express this product inside the Hub AI section.
+                    </span>
+                  </span>
+                </button>
+              </div>
+            ) : null}
+
             {shoppingListPickerOpen ? (
               <div className="mt-2 rounded-xl border border-border bg-background p-2 shadow-sm">
                 <div className="flex items-center justify-between gap-3 px-2 py-1.5">
@@ -963,6 +1392,264 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
               <p className="mt-2 text-xs leading-5 text-muted-foreground">{categoryDescription}</p>
             </section>
           ) : null}
+
+          {/* ==================================================
+              AJ PRODUCT INTELLIGENCE
+          ================================================== */}
+          <section
+            data-aj-product-intelligence-panel
+            className="overflow-hidden rounded-3xl border border-accent/20 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_9%,transparent),transparent_58%)] shadow-sm"
+          >
+            <header className="border-b border-border/60 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-accent/20 bg-accent/10 text-accent">
+                    <BrainCircuit className="size-4" />
+                  </span>
+
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      AJ discovery intelligence
+                    </p>
+
+                    <h3 className="mt-1 text-base font-bold tracking-tight text-foreground">
+                      Understand the choice
+                    </h3>
+
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Compare close alternatives, review authentic signals and open a richer product view inside the Hub AI section.
+                    </p>
+                  </div>
+                </div>
+
+                <span className="shrink-0 rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-accent">
+                  Catalog-grounded
+                </span>
+              </div>
+            </header>
+
+            <div className="space-y-5 p-4">
+              <div className="grid gap-2">
+                {productInsightSignals.map(
+                  (
+                    signal,
+                    index
+                  ) => (
+                    <div
+                      key={signal}
+                      className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/65 px-3 py-3"
+                    >
+                      <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-primary/10 text-[10px] font-bold text-primary">
+                        {index + 1}
+                      </span>
+
+                      <p className="text-xs leading-5 text-muted-foreground">
+                        {signal}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+
+              {comparisonProducts.length >
+              0 ? (
+                <section>
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Compare
+                      </p>
+
+                      <h4 className="mt-1 text-sm font-semibold text-foreground">
+                        Closest catalog alternatives
+                      </h4>
+                    </div>
+
+                    <span className="text-[9px] font-medium text-muted-foreground">
+                      Based on category, tags and price
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    {comparisonProducts.map(
+                      item => (
+                        <button
+                          key={
+                            item.product
+                              .id
+                          }
+                          type="button"
+                          onClick={() =>
+                            openProductInFeed(
+                              item.product
+                                .id
+                            )
+                          }
+                          className="group flex w-full items-center gap-3 rounded-2xl border border-border/65 bg-background/70 p-2.5 text-left transition hover:border-accent/30 hover:bg-muted/45"
+                        >
+                          <span className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+                            {item.variant?.image ? (
+                              <Image
+                                src={
+                                  item.variant
+                                    .image
+                                }
+                                alt={
+                                  item.product
+                                    .name
+                                }
+                                fill
+                                sizes="64px"
+                                className="object-cover transition duration-300 group-hover:scale-105"
+                              />
+                            ) : null}
+                          </span>
+
+                          <span className="min-w-0 flex-1">
+                            <span className="line-clamp-2 text-xs font-semibold leading-5 text-foreground">
+                              {
+                                item.product
+                                  .name
+                              }
+                            </span>
+
+                            <span className="mt-1 block truncate text-[10px] text-muted-foreground">
+                              {
+                                item.matchLabel
+                              }
+                            </span>
+
+                            <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+                              <strong className="font-semibold text-foreground">
+                                {
+                                  priceFormatter.format(
+                                    item.price
+                                  )
+                                }
+                              </strong>
+
+                              <span className="text-muted-foreground">
+                                {
+                                  item.product
+                                    .rating
+                                }/5
+                              </span>
+                            </span>
+                          </span>
+
+                          <span className="grid size-8 shrink-0 place-items-center rounded-full border border-border bg-background text-muted-foreground transition group-hover:border-accent/30 group-hover:text-accent">
+                            <Eye className="size-3.5" />
+                          </span>
+                        </button>
+                      )
+                    )}
+                  </div>
+                </section>
+              ) : null}
+
+              {recommendationProducts.length >
+              0 ? (
+                <section>
+                  <div>
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Recommended next
+                    </p>
+
+                    <h4 className="mt-1 text-sm font-semibold text-foreground">
+                      Products worth discovering from here
+                    </h4>
+                  </div>
+
+                  <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                    {recommendationProducts.map(
+                      item => (
+                        <button
+                          key={
+                            item.product
+                              .id
+                          }
+                          type="button"
+                          onClick={() =>
+                            openProductInFeed(
+                              item.product
+                                .id
+                            )
+                          }
+                          className="group w-32 shrink-0 overflow-hidden rounded-2xl border border-border/65 bg-background/70 text-left transition hover:border-accent/30"
+                        >
+                          <span className="relative block aspect-square overflow-hidden bg-muted">
+                            {item.variant?.image ? (
+                              <Image
+                                src={
+                                  item.variant
+                                    .image
+                                }
+                                alt={
+                                  item.product
+                                    .name
+                                }
+                                fill
+                                sizes="128px"
+                                className="object-cover transition duration-300 group-hover:scale-105"
+                              />
+                            ) : null}
+                          </span>
+
+                          <span className="block p-2.5">
+                            <span className="line-clamp-2 min-h-9 text-[11px] font-semibold leading-4 text-foreground">
+                              {
+                                item.product
+                                  .name
+                              }
+                            </span>
+
+                            <span className="mt-1 block truncate text-[9px] text-muted-foreground">
+                              {
+                                item.matchLabel
+                              }
+                            </span>
+                          </span>
+                        </button>
+                      )
+                    )}
+                  </div>
+                </section>
+              ) : null}
+
+              <div className="rounded-2xl border border-accent/20 bg-accent/8 p-3">
+                <button
+                  type="button"
+                  onClick={
+                    handleDeepInsight
+                  }
+                  className="group flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-sm">
+                      <Sparkles className="size-4" />
+                    </span>
+
+                    <span className="min-w-0">
+                      <span className="block text-xs font-bold text-foreground">
+                        Open Deep Insight in Hub AI
+                      </span>
+
+                      <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">
+                        Expand this exact product without leaving the Discovery Hub.
+                      </span>
+                    </span>
+                  </span>
+
+                  <BrainCircuit className="size-4 shrink-0 text-accent transition group-hover:scale-110" />
+                </button>
+
+                <p className="mt-3 border-t border-accent/15 pt-3 text-[9px] leading-4 text-muted-foreground">
+                  This quick view uses AJ Logik catalog signals. Deep Insight stays inside the Hub AI section and is ready for verified media and external sources later.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* ==================================================
               CONTINUITY — KEEP DISCOVERING
           ================================================== */}

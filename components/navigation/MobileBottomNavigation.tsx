@@ -30,11 +30,13 @@ type MobileNavigationItem = RouteNavigationItem | ActionNavigationItem;
 type MobileBottomNavigationProps = {
   discoveryOpen: boolean;
   onToggleDiscovery: () => void;
+  onResetToStore: () => void;
 };
 
 export default function MobileBottomNavigation({
   discoveryOpen,
-  onToggleDiscovery
+  onToggleDiscovery,
+  onResetToStore
 }: MobileBottomNavigationProps) {
   const pathname = usePathname();
 
@@ -135,6 +137,15 @@ export default function MobileBottomNavigation({
             <Link
               key={item.id}
               href={item.href}
+              onClick={event => {
+                if (item.id !== 'store') {
+                  return;
+                }
+
+                event.preventDefault();
+
+                onResetToStore();
+              }}
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition',

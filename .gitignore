@@ -69,3 +69,10 @@ collect-aj-*.mjs
 collect-aj-*.zip
 aj-ms12-*.txt
 *.before-local-css-removal
+
+# Local AJ Discovery Hub implementation packages
+/README.txt
+/aj-hub-product-scroll-top-v*.zip
+/aj-product-action-tray-deep-insight-v*.zip
+/aj-store-fresh-reset-v*.zip
+/aj-store-fresh-reset-install.log

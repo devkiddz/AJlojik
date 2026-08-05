@@ -175,6 +175,7 @@ type AssistantRuntimePageProps = {
   initialWorkspaceId?: string | null;
   vendorProfileId?: string | null;
   initialContext?: Partial<AIAssistantRuntimeContext>;
+  initialPrompt?: string;
 };
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -211,7 +212,8 @@ export function AssistantRuntimePage({
   contextLabel,
   initialWorkspaceId = null,
   vendorProfileId = null,
-  initialContext = {}
+  initialContext = {},
+  initialPrompt = ''
 }: AssistantRuntimePageProps) {
   const profile = getAssistantProfile(audience);
 
@@ -231,7 +233,9 @@ export function AssistantRuntimePage({
 
   const [journeyTitleDraft, setJourneyTitleDraft] = useState('');
 
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(
+    initialPrompt
+  );
 
   const [loading, setLoading] = useState(true);
 
@@ -311,12 +315,30 @@ export function AssistantRuntimePage({
     return () => window.clearTimeout(task);
   }, [loadSessions]); /* AJ_ASSISTANCE_WORKSPACE_STAGE_5_DRAFT */
   useEffect(() => {
-    const savedDraft = window.localStorage.getItem(promptDraftStorageKey) ?? '';
+    const savedDraft =
+      window.localStorage.getItem(
+        promptDraftStorageKey
+      ) ??
+      '';
 
-    const task = window.setTimeout(() => setPrompt(savedDraft), 0);
+    const task =
+      window.setTimeout(
+        () =>
+          setPrompt(
+            savedDraft ||
+              initialPrompt
+          ),
+        0
+      );
 
-    return () => window.clearTimeout(task);
-  }, [promptDraftStorageKey]);
+    return () =>
+      window.clearTimeout(
+        task
+      );
+  }, [
+    initialPrompt,
+    promptDraftStorageKey
+  ]);
 
   useEffect(() => {
     const task = window.setTimeout(() => {
@@ -377,7 +399,9 @@ export function AssistantRuntimePage({
 
     setActiveSession(null);
 
-    setPrompt('');
+    setPrompt(
+      initialPrompt
+    );
 
     setError(null);
   }

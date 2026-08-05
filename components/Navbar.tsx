@@ -29,6 +29,9 @@ import StoreCategoriesPill from '@/components/store/StoreCategoriesPill';
 import { Button } from '@/components/ui/button';
 import PremiumStoreButton from '@/components/ui/premium-store-button';
 import { MarketplaceLink } from '@/features/commerce-mode/components/MarketplaceLink';
+import {
+  requestFreshStoreExperience
+} from '@/features/customer-experience/customerExperienceEvents';
 import { MobileSearchButton } from '@/features/search';
 
 import { CommunicationBell } from '@/features/communication';
@@ -104,12 +107,20 @@ export default function NavbarComponent({
   );
 
   const openStore = useCallback(() => {
-    const query = searchParams.toString();
+    setMobileToolsOpen(
+      false
+    );
 
-    router.push(query ? `/store?${query}` : '/store', {
-      scroll: false
-    });
-  }, [router, searchParams]);
+    requestFreshStoreExperience();
+
+    /**
+     * Route fallback keeps AJ Store usable even during the
+     * brief period before the global experience runtime mounts.
+     */
+    router.replace(
+      '/store'
+    );
+  }, [router]);
 
   return (
     <div className="relative isolate w-full overflow-visible border-b border-white/[0.1] bg-background/78 shadow-[0_14px_46px_rgba(0,0,0,0.22)] backdrop-blur-[34px] backdrop-saturate-[195%] supports-[backdrop-filter]:bg-background/60">

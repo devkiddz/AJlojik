@@ -1,5 +1,10 @@
 'use client';
 
+/* AJ_PRODUCT_CARD_OPTION_TRAY_V1 */
+/* AJ_PRODUCT_TRAY_NEUTRAL_HOVER_V1 */
+/* AJ_PRODUCT_TRAY_HOVER_CONTRAST_HOTFIX_V1 */
+/* AJ_PRODUCT_CARD_OPTION_TRAY_MENU_GROUP_HOTFIX_V1 */
+
 import {
   Heart,
   ListPlus,
@@ -30,6 +35,10 @@ import {
   AddToShoppingListDialog,
   useOptionalShoppingLists
 } from '@/features/shopping-lists';
+
+import {
+  openProductDeepInsight
+} from '@/features/product-intelligence';
 
 import {
   useWishlist
@@ -348,7 +357,7 @@ export function ProductActionTray({
     );
   };
 
-  const handleAskAI = (
+  const handleDeepInsight = (
     event:
       MouseEvent<HTMLElement>
   ): void => {
@@ -356,15 +365,29 @@ export function ProductActionTray({
       event
     );
 
-    if (!onAskAI) {
+    if (
+      onAskAI
+    ) {
+      void onAskAI(
+        product,
+        activeCommerceVariant ??
+          null
+      );
+
       return;
     }
 
-    void onAskAI(
-      product,
-      activeCommerceVariant ??
-        null
-    );
+    openProductDeepInsight({
+      productId:
+        product.id,
+
+      variantId:
+        activeCommerceVariant?.id ??
+        null,
+
+      source:
+        'product-card'
+    });
   };
 
   return (
@@ -588,40 +611,6 @@ export function ProductActionTray({
           </button>
         )}
 
-        <button
-          type="button"
-          title={
-            shoppingLists
-              ? 'Add to Shopping List'
-              : 'Sign in to use Shopping Lists'
-          }
-          aria-label={`Add ${product.name} to a Shopping List`}
-          disabled={
-            !shoppingLists ||
-            !activeCommerceVariant
-          }
-          className={cn(
-            actionClassName,
-            `
-              text-emerald-700
-              dark:text-emerald-300
-            `
-          )}
-          onClick={
-            handleOpenShoppingList
-          }>
-          <ListPlus
-            className={
-              iconSizeClassName
-            }
-          />
-
-          {labelled ? (
-            <span>
-              Add to List
-            </span>
-          ) : null}
-        </button>
 
         {showWishlist ? (
           <button
@@ -701,71 +690,114 @@ export function ProductActionTray({
           </button>
         ) : null}
 
-        {onAskAI &&
-        !compact ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              type="button"
-              title="More product options"
-              aria-label={`More options for ${product.name}`}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            type="button"
+            title="More product actions"
+            aria-label={`More options for ${product.name}`}
+            className={
+              actionClassName
+            }
+            onClick={event => {
+              event.stopPropagation();
+            }}>
+            <MoreHorizontal
               className={
-                actionClassName
+                iconSizeClassName
               }
-              onClick={event => {
-                event.stopPropagation();
-              }}>
-              <MoreHorizontal
-                className={
-                  iconSizeClassName
-                }
-              />
-            </DropdownMenuTrigger>
+            />
+          </DropdownMenuTrigger>
 
-            <DropdownMenuContent
-              align="end"
-              sideOffset={8}
+          <DropdownMenuContent
+            align="end"
+            sideOffset={8}
+            className="
+              z-50 w-64
+              rounded-2xl
+              border-border/70
+              p-1.5 shadow-xl
+            "
+            onClick={event => {
+              event.stopPropagation();
+            }}>
+            <DropdownMenuGroup>
+            <DropdownMenuLabel
               className="
-                z-50 w-56
-                rounded-2xl
-                border-border/70
-                p-1.5 shadow-xl
-              "
-              onClick={event => {
-                event.stopPropagation();
-              }}>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel
-                  className="
-                    px-2.5 py-2
-                    text-[0.65rem]
-                    font-bold uppercase
-                    tracking-[0.14em]
-                    text-muted-foreground
-                  ">
-                  Product intelligence
-                </DropdownMenuLabel>
+                px-2.5 py-2
+                text-[0.65rem]
+                font-bold uppercase
+                tracking-[0.14em]
+                text-muted-foreground
+              ">
+              More product actions
+            </DropdownMenuLabel>
 
-                <DropdownMenuSeparator />
+            <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={
+                  !shoppingLists ||
+                  !activeCommerceVariant
+                }
+                className="
+                  cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                  hover:bg-muted/70
+                  hover:text-foreground
+                  hover:[&_*]:!text-foreground
+                  focus:bg-muted/70
+                  focus:text-foreground
+                  focus:[&_*]:!text-foreground
+                  focus:[&_svg]:!text-emerald-700
+                  dark:focus:[&_svg]:!text-emerald-300
+                "
+                onClick={
+                  handleOpenShoppingList
+                }>
+                <ListPlus className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
 
-                <DropdownMenuItem
-                  className="
-                    cursor-pointer
-                    gap-3 rounded-xl
-                    px-3 py-2.5
-                  "
-                  onClick={
-                    handleAskAI
-                  }>
-                  <Sparkles className="size-4 text-primary" />
-
-                  <span>
-                    Ask AI
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold">
+                    Add to Shopping List
                   </span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+
+                  <span className="text-[0.65rem] leading-4 text-muted-foreground">
+                    Save this option to an active list.
+                  </span>
+                </span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className="
+                  mt-1 cursor-pointer
+                  gap-3 rounded-xl
+                  px-3 py-2.5
+                  hover:bg-muted/70
+                  hover:text-foreground
+                  hover:[&_*]:!text-foreground
+                  focus:bg-muted/70
+                  focus:text-foreground
+                  focus:[&_*]:!text-foreground
+                  focus:[&_svg]:!text-primary
+                "
+                onClick={
+                  handleDeepInsight
+                }>
+                <Sparkles className="size-4 shrink-0 text-primary" />
+
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold">
+                    Deep Insight
+                  </span>
+
+                  <span className="text-[0.65rem] leading-4 text-muted-foreground">
+                    Open suggestions, FAQs and authentic product signals inside Hub AI.
+                  </span>
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {shoppingLists ? (

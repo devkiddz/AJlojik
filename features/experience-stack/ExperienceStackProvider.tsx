@@ -13,6 +13,10 @@ import {
 
 import { useRouter } from 'next/navigation';
 
+import {
+  CUSTOMER_EXPERIENCE_START_FRESH_EVENT
+} from '@/features/customer-experience/customerExperienceEvents';
+
 import { useFeedExperience } from '@/features/feed-experience/hooks/useFeedExperience';
 import type { FeedIntent } from '@/features/feed-experience/contracts';
 
@@ -690,14 +694,64 @@ export function ExperienceStackProvider({
   }, [isAuthenticated, persistGuestState, requireExperienceAccess, runOperation, workspaceId]);
 
   const startFresh = useCallback(async () => {
-    if (!requireExperienceAccess()) {
-      return;
-    }
+    /**
+     * Persistent history cleanup may finish after the visual
+     * reset, but it must not delay the customer's return to the
+     * canonical Store destination.
+     */
+    const clearOperation =
+      canAccessExperienceModes
+        ? clearHistory()
+        : Promise.resolve();
 
-    await clearHistory();
+    suppressNextRecordRef.current =
+      true;
+
+    recordedIntentIdRef.current =
+      null;
+
     actions.resetExperience();
-    router.push('/store', { scroll: false });
-  }, [actions, clearHistory, requireExperienceAccess, router]);
+
+    router.replace(
+      '/store'
+    );
+
+    window.requestAnimationFrame(
+      () => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'auto'
+        });
+      }
+    );
+
+    await clearOperation;
+  }, [
+    actions,
+    canAccessExperienceModes,
+    clearHistory,
+    router
+  ]);
+
+  useEffect(() => {
+    const handleStartFreshRequest =
+      () => {
+        void startFresh();
+      };
+
+    window.addEventListener(
+      CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+      handleStartFreshRequest
+    );
+
+    return () => {
+      window.removeEventListener(
+        CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+        handleStartFreshRequest
+      );
+    };
+  }, [startFresh]);
 
   const updateSettings = useCallback(
     async (input: UpdateHistorySettingsInput) => {

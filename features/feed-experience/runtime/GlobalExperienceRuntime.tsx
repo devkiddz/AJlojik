@@ -14,6 +14,7 @@ import {
 } from '@/features/customer-experience/customerDashboardBridge';
 import {
   CUSTOMER_EXPERIENCE_INTENT_EVENT,
+  CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
   type CustomerExperienceIntentEventDetail
 } from '@/features/customer-experience/customerExperienceEvents';
 import { resolveCustomerRouteIntent } from '@/features/customer-experience/resolveCustomerRouteIntent';
@@ -125,6 +126,16 @@ export default function GlobalExperienceRuntime({
       setPublishedIntent(customEvent.detail);
     };
 
+    const handleStartFresh = () => {
+      /**
+       * Discard a product/category intent published by the
+       * previous route before the bare Store intent resolves.
+       */
+      setPublishedIntent(
+        null
+      );
+    };
+
     const handleDashboardResolution = (event: Event) => {
       const customEvent = event as CustomEvent<{
         assistant?: {
@@ -148,11 +159,13 @@ export default function GlobalExperienceRuntime({
     });
 
     window.addEventListener(CUSTOMER_EXPERIENCE_INTENT_EVENT, handlePublishedIntent);
+    window.addEventListener(CUSTOMER_EXPERIENCE_START_FRESH_EVENT, handleStartFresh);
     window.addEventListener('rcentz:customer-dashboard-resolved', handleDashboardResolution);
 
     return () => {
       unsubscribeDashboardRuntime();
       window.removeEventListener(CUSTOMER_EXPERIENCE_INTENT_EVENT, handlePublishedIntent);
+      window.removeEventListener(CUSTOMER_EXPERIENCE_START_FRESH_EVENT, handleStartFresh);
       window.removeEventListener('rcentz:customer-dashboard-resolved', handleDashboardResolution);
     };
   }, []);

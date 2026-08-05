@@ -9,6 +9,10 @@ import MobileDiscoverySheetHost from '@/components/discovery-hub-panel/MobileDis
 
 import { discoveryRegistry } from '@/data/discoveryHubData';
 
+import {
+  CUSTOMER_EXPERIENCE_START_FRESH_EVENT
+} from '@/features/customer-experience/customerExperienceEvents';
+
 import { isCustomerExperienceRoute } from '@/features/customer-experience/customerExperienceRoutes';
 import CustomerExperienceNavigationPortal from '@/features/experience-stack/CustomerExperienceNavigationPortal';
 import { ExperienceStackProvider } from '@/features/experience-stack/ExperienceStackProvider';
@@ -31,6 +35,37 @@ type DiscoverySurfaceProps = {
 function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoverySurfaceProps) {
   const [collapsed, setCollapsed] = useState(() => !pathname.startsWith('/account'));
 
+  const [
+    hubResetVersion,
+    setHubResetVersion
+  ] = useState(0);
+
+  useEffect(() => {
+    const handleStartFresh =
+      () => {
+        setCollapsed(
+          true
+        );
+
+        setHubResetVersion(
+          current =>
+            current + 1
+        );
+      };
+
+    window.addEventListener(
+      CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+      handleStartFresh
+    );
+
+    return () => {
+      window.removeEventListener(
+        CUSTOMER_EXPERIENCE_START_FRESH_EVENT,
+        handleStartFresh
+      );
+    };
+  }, []);
+
   return (
     <GlobalExperienceRuntime>
       <ExperienceStackProvider workspaceId={workspaceId}>
@@ -39,6 +74,7 @@ function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoveryS
 
         {desktopViewport ? (
           <div
+            key={`desktop-hub:${hubResetVersion}`}
             className={cn(
               'sticky top-[calc(var(--app-navbar-height)+0.75rem)] z-40 hidden h-[calc(100dvh-var(--app-navbar-height)-1.5rem)] shrink-0 overflow-hidden py-3 pl-0 pr-3 transition-[width] duration-300 lg:block',
               collapsed ? 'w-20' : 'w-[28rem] xl:w-[31rem]'
@@ -50,7 +86,9 @@ function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoveryS
             />
           </div>
         ) : (
-          <MobileDiscoverySheetHost />
+          <MobileDiscoverySheetHost
+            key={`mobile-hub:${hubResetVersion}`}
+          />
         )}
       </ExperienceStackProvider>
     </GlobalExperienceRuntime>

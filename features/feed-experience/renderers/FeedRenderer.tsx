@@ -1,12 +1,20 @@
 'use client';
 
+/* AJ_FEATURED_MODULE_UNIFICATION_V1 */
+
 import {
-  Fragment
+  Fragment,
+  useMemo
 } from 'react';
 
 import type {
-  FeedModule
+  FeedModule,
+  FeaturedProductsModule
 } from '../contracts';
+
+import type {
+  ProductType
+} from '@/types/types';
 
 import FeedExperienceLoader from '../providers/FeedExperienceLoader';
 
@@ -33,6 +41,183 @@ const AMBIENT_DISCOVERY_MODULE_TYPES =
     'product-rail'
   ]);
 
+function uniqueProducts(
+  products: ProductType[]
+): ProductType[] {
+  return Array.from(
+    new Map(
+      products.map(
+        product => [
+          product.id,
+          product
+        ]
+      )
+    ).values()
+  );
+}
+
+function isFeaturedProductsModule(
+  module: FeedModule
+): module is FeaturedProductsModule {
+  return module.type ===
+    'featured-products';
+}
+
+function unifyFeaturedProductModules(
+  modules: FeedModule[]
+): FeedModule[] {
+  const featuredModules =
+    modules.filter(
+      isFeaturedProductsModule
+    );
+
+  if (
+    featuredModules.length <=
+    1
+  ) {
+    return modules;
+  }
+
+  const firstFeaturedIndex =
+    modules.findIndex(
+      isFeaturedProductsModule
+    );
+
+  const firstModule =
+    featuredModules[0];
+
+  const combinedFeaturedProducts =
+    uniqueProducts(
+      featuredModules.flatMap(
+        module => [
+          ...(module.data.featuredProduct
+            ? [
+                module.data.featuredProduct
+              ]
+            : []),
+          ...module.data.featuredProducts
+        ]
+      )
+    );
+
+  const combinedProducts =
+    uniqueProducts(
+      featuredModules.flatMap(
+        module => [
+          ...(module.data.products ?? []),
+          ...(module.data.featuredProduct
+            ? [
+                module.data.featuredProduct
+              ]
+            : []),
+          ...module.data.featuredProducts
+        ]
+      )
+    );
+
+  const categorySlugs =
+    new Set(
+      featuredModules
+        .map(
+          module =>
+            module.data.categorySlug
+        )
+        .filter(
+          (
+            value
+          ): value is string =>
+            Boolean(
+              value
+            )
+        )
+    );
+
+  const unifiedModule:
+    FeaturedProductsModule = {
+      id:
+        `featured-products:unified:${featuredModules
+          .map(
+            module =>
+              module.id
+          )
+          .join('|')}`,
+
+      type:
+        'featured-products',
+
+      priority:
+        Math.max(
+          ...featuredModules.map(
+            module =>
+              module.priority
+          )
+        ),
+
+      data: {
+        title:
+          featuredModules.find(
+            module =>
+              module.data.title
+          )?.data.title ??
+          'Featured across AJ Logik',
+
+        subtitle:
+          featuredModules.find(
+            module =>
+              module.data.subtitle
+          )?.data.subtitle,
+
+        categorySlug:
+          categorySlugs.size ===
+          1
+            ? [
+                ...categorySlugs
+              ][0]
+            : 'all',
+
+        featuredProduct:
+          firstModule.data.featuredProduct ??
+          combinedFeaturedProducts[0],
+
+        featuredProducts:
+          combinedFeaturedProducts,
+
+        products:
+          combinedProducts,
+
+        locale:
+          firstModule.data.locale,
+
+        currency:
+          firstModule.data.currency
+      }
+    };
+
+  return modules.flatMap<FeedModule>(
+    (
+      module,
+      index
+    ): FeedModule[] => {
+      if (
+        !isFeaturedProductsModule(
+          module
+        )
+      ) {
+        return [
+          module
+        ];
+      }
+
+      return index ===
+        firstFeaturedIndex
+        ? [
+            unifiedModule
+          ]
+        : [];
+    }
+  );
+}
+
 export function FeedRenderer() {
   const {
     experience,
@@ -41,11 +226,23 @@ export function FeedRenderer() {
     pendingIntent
   } = useFeedExperienceContext();
 
+  const resolvedModules =
+    useMemo(
+      () =>
+        unifyFeaturedProductModules(
+          experience.modules
+        ),
+      [
+        experience.modules
+      ]
+    );
+
   if (isResolving) {
     return (
       <main
         aria-busy="true"
-        aria-live="polite">
+        aria-live="polite"
+      >
         <FeedExperienceLoader
           intentType={
             pendingIntent?.type
@@ -60,7 +257,7 @@ export function FeedRenderer() {
     'development'
   ) {
     console.table(
-      experience.modules.map(
+      resolvedModules.map(
         module => ({
           id:
             module.id,
@@ -76,7 +273,7 @@ export function FeedRenderer() {
   }
 
   const publicListInsertionIndex =
-    experience.modules.findIndex(
+    resolvedModules.findIndex(
       module =>
         AMBIENT_DISCOVERY_MODULE_TYPES.has(
           module.type
@@ -91,9 +288,10 @@ export function FeedRenderer() {
       }
       data-experience-status={
         experience.status
-      }>
+      }
+    >
       <div className="space-y-4 md:space-y-5">
-        {experience.modules.map(
+        {resolvedModules.map(
           (
             module,
             index
@@ -101,7 +299,8 @@ export function FeedRenderer() {
             <Fragment
               key={
                 module.id
-              }>
+              }
+            >
               {index ===
               publicListInsertionIndex ? (
                 <div
