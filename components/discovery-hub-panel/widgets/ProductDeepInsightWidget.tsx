@@ -1,6 +1,9 @@
 'use client';
 
+/* AJ_HUB_DISCOVERY_CARDS_PREVIEW_ONLY_V2I */
+
 import Image from 'next/image';
+
 
 import {
   ArrowLeft,
@@ -29,6 +32,14 @@ import {
   resolveCatalogProductDeepInsight,
   type ProductDeepInsightRequest
 } from '@/features/product-intelligence';
+
+import {
+  selectProductVariant
+} from '@/features/product-experience-state';
+
+import {
+  previewProductInHub
+} from '@/features/product-experience-state/hubProductPreviewBridge';
 
 import {
   useFeedExperience
@@ -197,20 +208,55 @@ export default function ProductDeepInsightWidget({
           )
         )
       : 'Unavailable';
-
   /* AJ_HUB_PRODUCT_PREVIEW_SEPARATION_HOTFIX_V1 */
+  /* AJ_HUB_DISCOVERY_CARDS_PREVIEW_ONLY_V2I */
   const handleOpenProduct =
     (
       productId:
         string
     ): void => {
+      const candidate =
+        context.catalog.products.find(
+          item =>
+            String(item.id) ===
+            String(productId)
+        );
+
+      if (!candidate) {
+        return;
+      }
+
+      const variant =
+        candidate.variants.find(
+          item =>
+            item.stockLeft >
+            0
+        ) ??
+        candidate.variants[0];
+
+      if (variant) {
+        selectProductVariant({
+          productId:
+            candidate.id,
+          variantId:
+            variant.id,
+          source:
+            'hub'
+        });
+      }
+
       clearProductDeepInsight();
 
-      actions.openExperience({
-        type:
-          'product',
-
-        productId
+      previewProductInHub({
+        productId:
+          candidate.id,
+        variantId:
+          variant?.id ??
+          null,
+        source:
+          'deep-insight',
+        reveal:
+          true
       });
     };
 

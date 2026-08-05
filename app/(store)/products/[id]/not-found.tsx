@@ -1,26 +1,27 @@
 import Link from 'next/link';
 
-import { ArrowLeft, PackageX } from 'lucide-react';
-
-export default function ProductNotFound() {
+export default function ProductPageNotFound() {
   return (
-    <main className="grid min-h-[75dvh] place-items-center bg-background px-5 py-10">
-      <section className="w-full max-w-lg rounded-[2rem] border border-border/60 bg-card p-7 text-center shadow-xl">
-        <span className="mx-auto grid size-14 place-items-center rounded-full bg-muted text-muted-foreground">
-          <PackageX className="size-6" />
-        </span>
-        <h1 className="mt-5 text-2xl font-black">Product unavailable</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          This product may have been removed, disabled, or is not available in the live Store.
+    <main className="mx-auto grid min-h-[60vh] max-w-2xl place-items-center px-5 py-16 text-center">
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70">
+          Product unavailable
         </p>
+
+        <h1 className="mt-3 text-3xl font-black tracking-tight">
+          This product could not be found.
+        </h1>
+
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
+          It may have been unpublished, moved or removed from the active AJ Logik catalog.
+        </p>
+
         <Link
           href="/store"
-          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-xs font-bold text-background"
-        >
-          <ArrowLeft className="size-4" />
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground">
           Return to Store
         </Link>
-      </section>
+      </div>
     </main>
   );
 }

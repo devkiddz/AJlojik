@@ -1,43 +1,238 @@
-import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import type {
+  Metadata
+} from 'next';
 
-import { getStoreProductDetail } from '@/features/products/server';
+import {
+  headers
+} from 'next/headers';
 
-type StoreProductPageProps = {
+import {
+  notFound
+} from 'next/navigation';
+
+import {
+  ProductPageExperience
+} from '@/features/product-page/components';
+
+import {
+  getProductPage
+} from '@/features/product-page/server';
+
+import {
+  auth
+} from '@/lib/auth';
+
+type ProductPageProps = {
   params: Promise<{
     id: string;
   }>;
 };
 
+export const dynamic =
+  'force-dynamic';
+
+export const revalidate =
+  0;
+
 export async function generateMetadata({
   params
-}: StoreProductPageProps): Promise<Metadata> {
-  const { id } = await params;
-  const detail = await getStoreProductDetail(id);
+}: ProductPageProps): Promise<Metadata> {
+  const {
+    id: slug
+  } = await params;
 
-  if (!detail) {
+  const data =
+    await getProductPage(
+      slug
+    );
+
+  if (!data) {
     return {
-      title: 'Product | AJ Logik'
+      title:
+        'Product unavailable',
+      robots: {
+        index: false,
+        follow: false
+      }
     };
   }
 
+  const image =
+    data.product.images?.[0] ??
+    data.product.variants[0]?.image;
+
   return {
-    title: `${detail.product.name} | AJ Logik`,
+    title:
+      data.product.name,
+
     description:
-      detail.product.shortDescription ||
-      `Shop ${detail.product.name} on AJ Logik.`
+      data.product.shortDescription ||
+      data.product.longDescription ||
+      `Shop ${data.product.name} on AJ Logik.`,
+
+    alternates: {
+      canonical:
+        `/products/${encodeURIComponent(data.product.slug)}`
+    },
+
+    openGraph: {
+      type:
+        'website',
+      title:
+        data.product.name,
+      description:
+        data.product.shortDescription ||
+        `Shop ${data.product.name} on AJ Logik.`,
+      url:
+        `/products/${encodeURIComponent(data.product.slug)}`,
+      ...(image
+        ? {
+            images: [
+              {
+                url:
+                  image,
+                alt:
+                  data.product.name
+              }
+            ]
+          }
+        : {})
+    }
   };
 }
 
-export default async function StoreProductPage({
+export default async function ProductPage({
   params
-}: StoreProductPageProps) {
-  const { id } = await params;
-  const detail = await getStoreProductDetail(id);
+}: ProductPageProps) {
+  const {
+    id: slug
+  } = await params;
 
-  if (!detail) {
+  const data =
+    await getProductPage(
+      slug
+    );
+
+  if (!data) {
     notFound();
   }
 
-  redirect(`/store?product=${encodeURIComponent(detail.product.id)}`);
+  const session =
+    await auth.api.getSession({
+      headers:
+        await headers()
+    });
+
+  const resolvedData = {
+    ...data,
+    reviews: {
+      ...data.reviews,
+      canWriteReview:
+        Boolean(
+          session?.user?.id
+        )
+    }
+  };
+
+  const firstVariant =
+    data.product.variants.find(
+      variant =>
+        variant.stockLeft > 0
+    ) ??
+    data.product.variants[0];
+
+  const image =
+    data.product.images?.[0] ??
+    firstVariant?.image;
+
+  const productJsonLd = {
+    '@context':
+      'https://schema.org',
+    '@type':
+      'Product',
+    name:
+      data.product.name,
+    description:
+      data.product.longDescription ||
+      data.product.shortDescription,
+    sku:
+      firstVariant?.id,
+    ...(image
+      ? {
+          image: [
+            image
+          ]
+        }
+      : {}),
+    ...(data.brand
+      ? {
+          brand: {
+            '@type':
+              'Brand',
+            name:
+              data.brand.name
+          }
+        }
+      : {}),
+    seller: {
+      '@type':
+        'Organization',
+      name:
+        data.product.merchant?.name ??
+        data.workspace.name
+    },
+    ...(firstVariant
+      ? {
+          offers: {
+            '@type':
+              'Offer',
+            priceCurrency:
+              data.currency,
+            price:
+              firstVariant.price,
+            availability:
+              firstVariant.stockLeft > 0
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+            url:
+              `/products/${encodeURIComponent(data.product.slug)}`
+          }
+        }
+      : {}),
+    ...(data.reviews.reviewCount > 0
+      ? {
+          aggregateRating: {
+            '@type':
+              'AggregateRating',
+            ratingValue:
+              data.reviews.averageRating,
+            reviewCount:
+              data.reviews.reviewCount
+          }
+        }
+      : {})
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html:
+            JSON.stringify(
+              productJsonLd
+            ).replace(
+              /</g,
+              '\\u003c'
+            )
+        }}
+      />
+
+      <ProductPageExperience
+        data={
+          resolvedData
+        }
+      />
+    </>
+  );
 }

@@ -1,5 +1,10 @@
 'use client';
 
+/* AJ_HUB_DISCOVERY_CARDS_PREVIEW_ONLY_V2I */
+
+/* AJ_HUB_PRODUCT_PAGE_AUTHORITY_V2D */
+/* AJ_HUB_CONTINUITY_TO_PRODUCT_PAGE_V1 */
+
 import Image from 'next/image';
 
 import {
@@ -22,6 +27,16 @@ import {
 } from '@/features/feed-experience';
 
 import {
+  previewProductInHub,
+  useHubProductPreview
+} from '@/features/product-experience-state/hubProductPreviewBridge';
+
+import {
+  selectProductVariant
+} from '@/features/product-experience-state';
+
+
+import {
   ProductActionTray
 } from '@/features/products/cards/ProductActionTray';
 
@@ -35,6 +50,9 @@ import {
 
 /* MS9_04_COMPACT_CONTINUITY_CARDS */
 export function DiscoveryContinuityCarousel() {
+  const hubProductPreview =
+    useHubProductPreview();
+
   const stableSeed =
     useId();
 
@@ -63,20 +81,39 @@ export function DiscoveryContinuityCarousel() {
     );
 
   const {
-    context,
-    intent,
-    openProductInFeed
+    context
   } = useFeedExperience();
 
   const shoppingLists =
     useOptionalShoppingLists();
 
   const currentProductId =
-    intent.type ===
-    'product'
-      ? intent.targetId ??
-        null
-      : null;
+    hubProductPreview?.productId ??
+    null;
+
+  const previewContinuityProduct =
+    (
+      productId:
+        string,
+      variantId:
+        string
+    ): void => {
+      selectProductVariant({
+        productId,
+        variantId,
+        source:
+          'hub'
+      });
+
+      previewProductInHub({
+        productId,
+        variantId,
+        source:
+          'hub',
+        reveal:
+          true
+      });
+    };
 
   const shoppingListProductIds =
     useMemo(
@@ -400,8 +437,9 @@ export function DiscoveryContinuityCarousel() {
                 <button
                   type="button"
                   onClick={() =>
-                    openProductInFeed(
-                      item.product.id
+                    previewContinuityProduct(
+                      item.product.id,
+                      variant.id
                     )
                   }
                   className="

@@ -14,11 +14,21 @@ import {
 import { publishCustomerExperienceIntent } from '@/features/customer-experience/customerExperienceEvents';
 import { recordProductView } from '@/features/product-activity';
 
+import {
+  previewProductInHub
+} from '@/features/product-experience-state/hubProductPreviewBridge';
+
+import {
+  selectProductVariant
+} from '@/features/product-experience-state';
+
 import type { ExperienceTarget, FeedActions, FeedContext, FeedExperience, FeedIntent } from '../contracts';
 
 import { feedExperienceEngine } from '../engine';
 
 const MIN_RESOLUTION_DURATION_MS = 320;
+
+/* AJ_FEED_PREVIEW_UPDATES_HUB_ONLY_V1 */
 
 // ============================================================
 // PRODUCT DETAILS DISCLOSURE
@@ -71,11 +81,6 @@ type FeedExperienceContextValue = {
    */
   continueDiscovery: () => void;
 
-  /**
-   * Opens a Product Experience and keeps the central Feed
-   * revealed while the new product replaces the previous one.
-   */
-  openProductInFeed: (productId: string) => void;
 };
 
 const FeedExperienceContext = createContext<FeedExperienceContextValue | null>(null);
@@ -239,11 +244,6 @@ export function FeedExperienceProvider({
    */
   const intentHistoryRef = useRef<FeedIntent[]>([]);
 
-  /**
-   * One-shot handoff used when a product selection must replace
-   * the currently revealed central Feed instead of collapsing it.
-   */
-  const revealProductInFeedRef = useRef<string | null>(null);
 
   const resolutionFrameRef = useRef<number | null>(null);
 
@@ -336,66 +336,131 @@ export function FeedExperienceProvider({
    * experience. A different intent resets the disclosure.
    */
   useEffect(() => {
-    const activeProductId = intent.type === 'product' ? (intent.targetId ?? null) : null;
-
-    const revealInFeed = Boolean(
-      activeProductId && revealProductInFeedRef.current === activeProductId
-    );
-
-    if (revealInFeed) {
-      revealProductInFeedRef.current = null;
-    }
+    const activeProductId =
+      intent.type === 'product'
+        ? intent.targetId ??
+          null
+        : null;
 
     setProductDetailsDisclosure(currentDisclosure => ({
-      productId: activeProductId,
+      productId:
+        activeProductId,
 
-      expanded: revealInFeed,
+      expanded:
+        false,
 
-      requestId: revealInFeed
-        ? currentDisclosure.requestId + 1
-        : currentDisclosure.requestId
+      requestId:
+        currentDisclosure.requestId
     }));
-  }, [intent.id, intent.targetId, intent.type]);
+  }, [
+    intent.id,
+    intent.targetId,
+    intent.type
+  ]);
 
   // ==========================================================
   // EXPERIENCE ACTIONS
   // ==========================================================
 
+  const previewCatalogProductInHub =
+    useCallback(
+      (
+        productId:
+          string
+      ): void => {
+        const normalizedProductId =
+          String(
+            productId
+          ).trim();
+
+        if (!normalizedProductId) {
+          return;
+        }
+
+        const product =
+          context.catalog.products.find(
+            candidate =>
+              String(candidate.id) ===
+              normalizedProductId
+          );
+
+        if (!product) {
+          return;
+        }
+
+        const variant =
+          product.variants.find(
+            candidate =>
+              candidate.stockLeft >
+              0
+          ) ??
+          product.variants[0];
+
+        if (variant) {
+          selectProductVariant({
+            productId:
+              product.id,
+
+            variantId:
+              variant.id,
+
+            source:
+              'feed'
+          });
+        }
+
+        previewProductInHub({
+          productId:
+            product.id,
+
+          variantId:
+            variant?.id ??
+            null,
+
+          source:
+            'feed',
+
+          reveal:
+            true
+        });
+
+        void recordProductView({
+          productId:
+            product.id
+        });
+      },
+      [
+        context.catalog.products
+      ]
+    );
+
   const openExperience = useCallback(
     (target: ExperienceTarget) => {
-      beginResolution(createIntent(target));
-
+      /**
+       * Product discovery no longer mutates the central Feed.
+       *
+       * The Feed remains on its current intent, module composition,
+       * history entry and scroll position while the independent Hub
+       * preview authority receives the selected product.
+       */
       if (target.type === 'product') {
-        void recordProductView({
-          productId: target.productId
-        });
-      }
-    },
-    [beginResolution]
-  );
+        previewCatalogProductInHub(
+          target.productId
+        );
 
-  const openProductInFeed = useCallback(
-    (productId: string) => {
-      const normalizedProductId = String(productId).trim();
-
-      if (!normalizedProductId) {
         return;
       }
 
-      revealProductInFeedRef.current = normalizedProductId;
-
       beginResolution(
-        createIntent({
-          type: 'product',
-          productId: normalizedProductId
-        })
+        createIntent(
+          target
+        )
       );
-
-      void recordProductView({
-        productId: normalizedProductId
-      });
     },
-    [beginResolution]
+    [
+      beginResolution,
+      previewCatalogProductInHub
+    ]
   );
 
   const restoreExperience = useCallback(
@@ -411,9 +476,6 @@ export function FeedExperienceProvider({
      * Commerce and customer-owned state remain untouched.
      */
     intentHistoryRef.current = [];
-
-    revealProductInFeedRef.current =
-      null;
 
     beginResolution(
       createIntent({
@@ -474,24 +536,21 @@ export function FeedExperienceProvider({
    * Inside that exact Product Experience:
    *   toggle its complete Feed details open or closed.
    */
-  const previewProduct = useCallback<FeedActions['previewProduct']>(
-    product => {
-      const isActiveProduct = intent.type === 'product' && intent.targetId === product.id;
-
-      if (isActiveProduct) {
-        toggleProductDetails(product.id);
-
-        return;
-      }
-
-      openExperience({
-        type: 'product',
-
-        productId: product.id
-      });
-    },
-    [intent.targetId, intent.type, openExperience, toggleProductDetails]
-  );
+  const previewProduct =
+    useCallback<
+      FeedActions[
+        'previewProduct'
+      ]
+    >(
+      product => {
+        previewCatalogProductInHub(
+          product.id
+        );
+      },
+      [
+        previewCatalogProductInHub
+      ]
+    );
 
   const productDetailsControls = useMemo<ProductDetailsControls>(
     () => ({
@@ -630,9 +689,7 @@ export function FeedExperienceProvider({
 
       productDetailsControls,
 
-      continueDiscovery,
-
-      openProductInFeed
+      continueDiscovery
     }),
     [
       intent,
@@ -643,8 +700,7 @@ export function FeedExperienceProvider({
       pendingIntent,
       productDetailsDisclosure,
       productDetailsControls,
-      continueDiscovery,
-      openProductInFeed
+      continueDiscovery
     ]
   );
 

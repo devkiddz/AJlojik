@@ -1,8 +1,13 @@
 'use client';
 
+/* AJ_HUB_DISCOVERY_CARDS_PREVIEW_ONLY_V2I */
+
 import Link from 'next/link';
 
 /* AJ_PRODUCT_ACTION_TRAY_DEEP_INSIGHT_V1 */
+/* AJ_HUB_PRODUCT_PAGE_HANDOFF_V2 */
+/* AJ_HUB_PRODUCT_PAGE_AUTHORITY_V2D */
+/* AJ_FEED_HUB_PRODUCT_PAGE_AUTHORITY_V1 */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -35,8 +40,22 @@ import {
 } from '@/features/product-intelligence';
 
 import {
+  selectProductVariant,
+  useProductVariantSelection
+} from '@/features/product-experience-state';
+
+import {
+  previewProductInHub,
+  useHubProductPreview
+} from '@/features/product-experience-state/hubProductPreviewBridge';
+
+import {
   DiscoveryContinuityCarousel
 } from './discovery-hub-panel/components/DiscoveryContinuityCarousel';
+
+import {
+  useHubProductPageNavigation
+} from './discovery-hub-panel/navigation/useHubProductPageNavigation';
 
 import {
   useOptionalShoppingLists
@@ -44,6 +63,10 @@ import {
 
 import { useWishlist } from '@/features/wishlist';
 import { cn } from '@/lib/utils';
+
+import type {
+  ProductType
+} from '@/types/types';
 
 function normalizeText(value?: string): string | undefined {
   const normalized = value?.trim();
@@ -60,17 +83,73 @@ function formatLabel(value: string): string {
 
 type ActiveProductWidgetProps = {
   onBackToDiscovery: () => void;
-  onRevealInFeed?: () => void;
 };
 
-export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed }: ActiveProductWidgetProps) {
+export default function ActiveProductWidget({
+  onBackToDiscovery
+}: ActiveProductWidgetProps) {
   const {
     intent,
-    context,
-    openProductInFeed,
-    productDetailsDisclosure,
-    productDetailsControls
+    context
   } = useFeedExperience();
+
+  const hubProductPreview =
+    useHubProductPreview();
+
+  const openProductPageFromHub =
+    useHubProductPageNavigation();
+
+  const previewProductFromHub =
+    (
+      candidate:
+        ProductType,
+      preferredVariantId?:
+        string |
+        null
+    ): void => {
+      const preferredVariant =
+        preferredVariantId
+          ? candidate.variants.find(
+              variant =>
+                variant.id ===
+                  preferredVariantId &&
+                variant.stockLeft >
+                  0
+            )
+          : undefined;
+
+      const variant =
+        preferredVariant ??
+        candidate.variants.find(
+          item =>
+            item.stockLeft >
+            0
+        ) ??
+        candidate.variants[0];
+
+      if (variant) {
+        selectProductVariant({
+          productId:
+            candidate.id,
+          variantId:
+            variant.id,
+          source:
+            'hub'
+        });
+      }
+
+      previewProductInHub({
+        productId:
+          candidate.id,
+        variantId:
+          variant?.id ??
+          null,
+        source:
+          'hub',
+        reveal:
+          true
+      });
+    };
 
   const { items: cartItems, addToCart, updateQuantity, removeFromCart, mutating } = useCart();
 
@@ -79,21 +158,37 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
   const shoppingLists =
     useOptionalShoppingLists();
 
+  const routeProductId =
+    intent.type === 'product'
+      ? intent.targetId ??
+        null
+      : null;
+
+  const activeProductId =
+    hubProductPreview?.productId ??
+    routeProductId;
+
   const product = useMemo(() => {
-    if (intent.type !== 'product' || !intent.targetId) {
+    if (!activeProductId) {
       return undefined;
     }
 
-    return context.catalog.products.find(candidate => candidate.id === intent.targetId);
-  }, [context.catalog.products, intent.targetId, intent.type]);
+    return context.catalog.products.find(
+      candidate =>
+        String(candidate.id) ===
+        String(activeProductId)
+    );
+  }, [
+    activeProductId,
+    context.catalog.products
+  ]);
 
   /**
-   * AJ_HUB_PRODUCT_SCROLL_TOP_V1
+   * AJ_HUB_PRODUCT_SCROLL_TOP_V2
    *
-   * ActiveProductWidget is shared by the desktop Discovery Rail
-   * and the mobile Discovery Sheet. Resetting this one internal
-   * scroll root keeps both Hub surfaces aligned without scrolling
-   * the browser window or rebuilding either host.
+   * The Hub preview has its own request identity. A repeated Feed
+   * preview for the same product still resets the Hub product panel
+   * without touching the central Feed or browser scroll position.
    */
   const productScrollRef =
     useRef<HTMLDivElement>(
@@ -101,9 +196,10 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
     );
 
   const activeProductScrollKey =
-    intent.type === 'product' &&
     product
-      ? `${intent.id}:${product.id}`
+      ? hubProductPreview
+        ? `${hubProductPreview.requestId}:${product.id}`
+        : `route:${intent.id}:${product.id}`
       : null;
 
   useEffect(() => {
@@ -134,18 +230,32 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       return undefined;
     }
 
-    return context.catalog.categories.find(candidate => candidate.slug === product.category);
-  }, [context.catalog.categories, product]);
+    return context.catalog.categories.find(
+      candidate =>
+        candidate.slug ===
+        product.category
+    );
+  }, [
+    context.catalog.categories,
+    product
+  ]);
 
-  const [variantSelection, setVariantSelection] = useState<{
-    productId: string;
-    variantId: string;
-  } | null>(null);
+  /* AJ_SHARED_PRODUCT_VARIANT_SELECTION_V1 */
+  const sharedVariantSelection =
+    useProductVariantSelection(
+      product?.id ??
+        null
+    );
 
   const selectedVariantId =
-    product && variantSelection?.productId === product.id
-      ? variantSelection.variantId
-      : product?.variants[0]?.id;
+    product &&
+    sharedVariantSelection?.productId === product.id
+      ? sharedVariantSelection.variantId
+      : product &&
+          hubProductPreview?.productId === product.id &&
+          hubProductPreview.variantId
+        ? hubProductPreview.variantId
+        : product?.variants[0]?.id;
 
   const [
     shoppingListPickerOpen,
@@ -195,9 +305,6 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
   if (!product) {
     return null;
   }
-
-  const detailsAreRevealed =
-    productDetailsDisclosure.expanded && productDetailsDisclosure.productId === product.id;
 
   const productArtwork = selectedVariant?.image ?? product.variants[0]?.image ?? category?.image;
 
@@ -619,17 +726,6 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       });
     };
 
-  const handleRevealInFeed = (): void => {
-    /**
-     * Hub handoff always reveals/refocuses details.
-     * It does not toggle them closed. The Feed's own details
-     * action is the independent expand/collapse control.
-     */
-    productDetailsControls.reveal(product.id);
-
-    onRevealInFeed?.();
-  };
-
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       {/* ====================================================
@@ -647,14 +743,14 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
         </div>
 
         <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={onBackToDiscovery}
-          className="h-9 shrink-0 rounded-full bg-background px-3 text-xs font-semibold shadow-sm">
-          <ArrowLeft className="size-3.5" />
-          Continue Discovery
-        </Button>
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onBackToDiscovery}
+            className="h-9 shrink-0 rounded-full bg-background px-3 text-xs font-semibold shadow-sm">
+            <ArrowLeft className="size-3.5" />
+            Continue Discovery
+          </Button>
       </header>
 
       {/* ====================================================
@@ -792,9 +888,10 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                       disabled={unavailable}
                       aria-pressed={active}
                       onClick={() =>
-                        setVariantSelection({
+                        selectProductVariant({
                           productId: product.id,
-                          variantId: variant.id
+                          variantId: variant.id,
+                          source: 'hub'
                         })
                       }
                       className={cn(
@@ -1461,7 +1558,7 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                       </p>
 
                       <h4 className="mt-1 text-sm font-semibold text-foreground">
-                        Closest catalog alternatives
+                        Similar Products
                       </h4>
                     </div>
 
@@ -1480,9 +1577,9 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                           }
                           type="button"
                           onClick={() =>
-                            openProductInFeed(
-                              item.product
-                                .id
+                            previewProductFromHub(
+                              item.product,
+                              item.variant?.id
                             )
                           }
                           className="group flex w-full items-center gap-3 rounded-2xl border border-border/65 bg-background/70 p-2.5 text-left transition hover:border-accent/30 hover:bg-muted/45"
@@ -1552,11 +1649,11 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                 <section>
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Recommended next
+                      Continue discovering
                     </p>
 
                     <h4 className="mt-1 text-sm font-semibold text-foreground">
-                      Products worth discovering from here
+                      Continue Discovering
                     </h4>
                   </div>
 
@@ -1570,9 +1667,9 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
                           }
                           type="button"
                           onClick={() =>
-                            openProductInFeed(
-                              item.product
-                                .id
+                            previewProductFromHub(
+                              item.product,
+                              item.variant?.id
                             )
                           }
                           className="group w-32 shrink-0 overflow-hidden rounded-2xl border border-border/65 bg-background/70 text-left transition hover:border-accent/30"
@@ -1658,13 +1755,19 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
       </div>
 
       {/* ====================================================
-          CENTRAL FEED DETAILS CONTROL
+          CANONICAL PRODUCT PAGE CONTROL
       ==================================================== */}
       <footer className="relative z-50 shrink-0 border-t border-border bg-background/95 p-3 shadow-[0_-18px_45px_rgba(0,0,0,0.2)] backdrop-blur-xl">
-        <Button
+        <button
           type="button"
-          onClick={handleRevealInFeed}
-          className="group h-auto min-h-16 w-full justify-between rounded-2xl bg-primary px-3.5 py-3 text-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-primary/30 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30">
+          onClick={() =>
+            openProductPageFromHub(
+              product,
+              selectedVariant?.id
+            )
+          }
+          aria-label={`View full product details for ${product.name}`}
+          className="group flex min-h-16 w-full items-center justify-between rounded-2xl bg-primary px-3.5 py-3 text-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-primary/30 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <span className="flex min-w-0 items-center gap-3 text-left">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-foreground/15 ring-1 ring-primary-foreground/20">
               <Eye className="size-5 transition-transform group-hover:scale-110" />
@@ -1672,21 +1775,19 @@ export default function ActiveProductWidget({ onBackToDiscovery, onRevealInFeed 
 
             <span className="min-w-0">
               <span className="block text-sm font-bold">
-                {detailsAreRevealed ? 'Refocus details in Feed' : 'View full details in Feed'}
+                View more
               </span>
 
               <span className="mt-0.5 block truncate text-[10px] font-medium text-primary-foreground/75">
-                {detailsAreRevealed
-                  ? 'Return to the expanded product information'
-                  : 'Description, variants, availability, delivery and more'}
+                Open the complete Product Page for details, variants, reviews and delivery
               </span>
             </span>
           </span>
 
           <span className="shrink-0 rounded-full bg-primary-foreground px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-primary shadow-sm">
-            {detailsAreRevealed ? 'Refocus' : 'View details'}
+            Open page
           </span>
-        </Button>
+        </button>
       </footer>
     </section>
   );

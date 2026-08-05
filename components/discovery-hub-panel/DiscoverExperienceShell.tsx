@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_MOBILE_HUB_PREVIEW_AUTHORITY_V1 */
+
 import {
   useEffect,
   useMemo,
@@ -19,10 +21,6 @@ import {
 import ActiveProductWidget from '@/components/ActiveProductWidget';
 
 import {
-  useMobileDiscovery
-} from '@/components/layout/MobileApplicationShell';
-
-import {
   discoveryRegistry
 } from '@/data/discoveryHubData';
 
@@ -34,6 +32,11 @@ import {
 import {
   useFeedExperience
 } from '@/features/feed-experience';
+
+import {
+  clearHubProductPreview,
+  useHubProductPreview
+} from '@/features/product-experience-state/hubProductPreviewBridge';
 
 import {
   useProductDeepInsight
@@ -64,14 +67,12 @@ export default function DiscoverExperienceShell() {
     usePathname();
 
   const {
-    closeDiscovery
-  } = useMobileDiscovery();
-
-  const {
     intent,
-    context,
-    continueDiscovery
+    context
   } = useFeedExperience();
+
+  const hubProductPreview =
+    useHubProductPreview();
 
   const productDeepInsight =
     useProductDeepInsight();
@@ -166,11 +167,47 @@ export default function DiscoverExperienceShell() {
     resolutionFocusKey
   ]);
 
-  const activeProductId =
+  const routeProductId =
     intent.type === 'product'
       ? intent.targetId ??
         null
       : null;
+
+  const activeProductId =
+    hubProductPreview?.productId ??
+    routeProductId;
+
+  const lastRevealedPreviewRequestIdRef =
+    useRef<string | null>(
+      null
+    );
+
+  useEffect(() => {
+    if (
+      !activeProductId ||
+      !hubProductPreview?.reveal
+    ) {
+      return;
+    }
+
+    if (
+      lastRevealedPreviewRequestIdRef.current ===
+      hubProductPreview.requestId
+    ) {
+      return;
+    }
+
+    lastRevealedPreviewRequestIdRef.current =
+      hubProductPreview.requestId;
+
+    setViewPreference(
+      null
+    );
+  }, [
+    activeProductId,
+    hubProductPreview?.requestId,
+    hubProductPreview?.reveal
+  ]);
 
   useEffect(() => {
     if (
@@ -272,14 +309,22 @@ export default function DiscoverExperienceShell() {
   const handleContinueDiscovery =
     () => {
       /**
-       * Restore the captured pre-product intent rather than
-       * merely swapping the Hub's local panel. The Hub stays
-       * open on mobile and continues from its preserved group
-       * and scroll position while the Feed returns to discovery.
+       * Clear only the Hub preview. The Feed remains exactly on
+       * the experience from which the product was previewed.
        */
-      setViewPreference(null);
+      setViewPreference(
+        activeProductId
+          ? {
+              productId:
+                activeProductId,
 
-      continueDiscovery();
+              view:
+                'discovery'
+            }
+          : null
+      );
+
+      clearHubProductPreview();
     };
 
   const handleShowProduct =
@@ -350,9 +395,6 @@ export default function DiscoverExperienceShell() {
                 <ActiveProductWidget
                   onBackToDiscovery={
                     handleContinueDiscovery
-                  }
-                  onRevealInFeed={
-                    closeDiscovery
                   }
                 />
               </div>

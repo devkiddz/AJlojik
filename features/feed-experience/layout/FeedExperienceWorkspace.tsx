@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+/* AJ_STORE_PRODUCT_QUERY_UPDATES_HUB_ONLY_V1 */
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -12,6 +14,18 @@ import { promos, type Promo } from '@/data/promos';
 
 import { useCart } from '@/features/cart';
 import { useCatalog } from '@/features/catalog';
+
+import {
+  selectProductVariant
+} from '@/features/product-experience-state';
+
+import {
+  previewProductInHub
+} from '@/features/product-experience-state/hubProductPreviewBridge';
+
+import {
+  recordProductView
+} from '@/features/product-activity';
 import { useWishlist } from '@/features/wishlist';
 import { useWorkspace } from '@/features/workspace';
 import { useStoreStudioProjection } from '@/features/store-studio/client';
@@ -184,25 +198,81 @@ function FeedExperienceWorkspaceContent({
     setPromoOpen(false);
   }, []);
 
+  /**
+   * Legacy `/store?product=` links now resolve into the Hub only.
+   *
+   * The query remains backward compatible, but it cannot assemble
+   * or replace the central Feed with the retired product block.
+   */
+  useEffect(() => {
+    if (!selectedProductId) {
+      return;
+    }
+
+    const product =
+      catalogProducts.find(
+        candidate =>
+          String(candidate.id) ===
+            String(selectedProductId) ||
+          candidate.slug.toLowerCase() ===
+            selectedProductId.toLowerCase()
+      );
+
+    if (!product) {
+      return;
+    }
+
+    const variant =
+      product.variants.find(
+        candidate =>
+          candidate.stockLeft >
+          0
+      ) ??
+      product.variants[0];
+
+    if (variant) {
+      selectProductVariant({
+        productId:
+          product.id,
+
+        variantId:
+          variant.id,
+
+        source:
+          'feed'
+      });
+    }
+
+    previewProductInHub({
+      productId:
+        product.id,
+
+      variantId:
+        variant?.id ??
+        null,
+
+      source:
+        'legacy-route',
+
+      reveal:
+        true
+    });
+
+    void recordProductView({
+      productId:
+        product.id
+    });
+  }, [
+    catalogProducts,
+    selectedProductId
+  ]);
+
   // ============================================================
   // INITIAL FEED INTENT
   // ============================================================
 
   const initialIntent = useMemo<FeedIntent>(() => {
     const createdAt = new Date().toISOString();
-
-    if (selectedProductId) {
-      return {
-        id: `product:${selectedProductId}:route`,
-        type: 'product',
-        source: 'route',
-        targetId: selectedProductId,
-        route: `/store?product=${encodeURIComponent(selectedProductId)}`,
-        surface: 'product',
-        title: 'Product experience',
-        createdAt
-      };
-    }
 
     if (selectedCollectionId) {
       return {
@@ -246,7 +316,6 @@ function FeedExperienceWorkspaceContent({
   }, [
     selectedCategory,
     selectedCollectionId,
-    selectedProductId,
     selectedPromotionId
   ]);
 

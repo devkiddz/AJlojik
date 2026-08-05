@@ -165,6 +165,24 @@ export function mapDatabaseProduct(
     tags:
       product.tags,
 
+    /* AJ_PRODUCT_PAGE_GALLERY_ASSETS_V1 */
+    images:
+      orderedImages
+        .map(
+          image =>
+            normalizeProductAssetUrl(
+              image.url
+            )
+        )
+        .filter(
+          (
+            imageUrl
+          ): imageUrl is string =>
+            Boolean(
+              imageUrl
+            )
+        ),
+
     variants:
       [...product.variants]
         .sort(

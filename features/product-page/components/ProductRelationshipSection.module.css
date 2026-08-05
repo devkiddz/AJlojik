@@ -1,0 +1,193 @@
+/* AJ_PRODUCT_PAGE_V2C_COMPACT_DISCOVERY_RAIL */
+/* AJ_PRODUCT_PAGE_V2D_DESKTOP_RAIL_CONTROLS */
+
+.section {
+  min-width: 0;
+  overflow: hidden;
+  border-top: 1px solid color-mix(in oklab, var(--accent) 15%, var(--border));
+  padding-top: clamp(1rem, 0.75rem + 0.85cqi, 1.5rem);
+}
+
+.header {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: space-between;
+  gap: clamp(0.8rem, 0.6rem + 0.65cqi, 1.2rem);
+}
+
+.heading {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: clamp(0.6rem, 0.48rem + 0.4cqi, 0.82rem);
+}
+
+.icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
+  border-radius: 0.8rem;
+  background: color-mix(in oklab, var(--accent) 9%, transparent);
+  color: var(--accent);
+}
+
+.headingCopy {
+  min-width: 0;
+}
+
+.eyebrow {
+  color: color-mix(in oklab, var(--muted-foreground) 88%, var(--accent));
+  font-size: clamp(0.61rem, 0.58rem + 0.09cqi, 0.69rem);
+  font-weight: 820;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: 0.22rem;
+  font-size: clamp(1.25rem, 1rem + 0.68cqi, 1.8rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.028em;
+}
+
+.subtitle {
+  display: -webkit-box;
+  max-width: 62ch;
+  margin-top: 0.38rem;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: clamp(0.72rem, 0.68rem + 0.1cqi, 0.8rem);
+  line-height: 1.52;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.headerActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.hint {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: clamp(0.62rem, 0.59rem + 0.08cqi, 0.7rem);
+  font-weight: 720;
+}
+
+.desktopControls {
+  display: none;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.scrollButton {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--card) 86%, transparent);
+  color: var(--foreground);
+  box-shadow:
+    0 10px 28px rgb(0 0 0 / 0.11),
+    inset 0 1px 0 color-mix(in oklab, white 28%, transparent);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+
+.scrollButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--accent) 42%, var(--border));
+  background: color-mix(in oklab, var(--accent) 10%, var(--card));
+}
+
+.scrollButton:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.scrollButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.scrollButtonPrimary {
+  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.scrollButtonPrimary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--foreground) 90%, var(--accent));
+}
+
+.rail {
+  display: grid;
+  min-width: 0;
+  grid-auto-columns: clamp(9.5rem, 20cqi, 12rem);
+  grid-auto-flow: column;
+  gap: var(--app-card-gap);
+  margin-top: clamp(0.8rem, 0.62rem + 0.6cqi, 1.1rem);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 0.08rem 0.08rem 0.55rem;
+  scroll-behavior: smooth;
+  scroll-padding-inline: 0.08rem;
+  scroll-snap-type: inline mandatory;
+  scrollbar-color: color-mix(in oklab, var(--accent) 28%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.productCard {
+  width: 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+@container product-page (max-width: 36rem) {
+  .header {
+    align-items: flex-start;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .rail {
+    grid-auto-columns: clamp(9rem, 44cqi, 11rem);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 48rem) {
+  .desktopControls {
+    display: flex;
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    scroll-behavior: auto;
+  }
+
+  .scrollButton {
+    transition: none;
+  }
+}

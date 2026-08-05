@@ -8,7 +8,8 @@ import {
 
 export type ProductDeepInsightSource =
   | 'active-product'
-  | 'product-card';
+  | 'product-card'
+  | 'product-page';
 
 export type ProductDeepInsightRequest = {
   requestId: string;
