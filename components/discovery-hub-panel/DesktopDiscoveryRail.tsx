@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_DESKTOP_HUB_CLOSE_BEFORE_PRODUCT_PAGE_V2K */
+
 /* AJ_DESKTOP_HUB_PREVIEW_AUTHORITY_V1 */
 
 import {
@@ -483,6 +485,11 @@ export default function DesktopDiscoveryRail({
                         onBackToDiscovery={
                           handleBackToDiscovery
                         }
+                        onBeforeOpenProductPage={() => {
+                          onCollapsedChange(
+                            true
+                          );
+                        }}
                       />
                     </div>
                   ) : null}

@@ -633,7 +633,8 @@
 .mobileBar {
   position: fixed;
   inset-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right));
-  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  /* AJ_PRODUCT_PAGE_MOBILE_NAV_CLEARANCE_V2K */
+  bottom: calc(5.75rem + env(safe-area-inset-bottom));
   z-index: 90;
   border: 1px solid var(--glass-border);
   border-radius: 1.25rem;

@@ -33,12 +33,10 @@ type DiscoverySurfaceProps = {
 };
 
 function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoverySurfaceProps) {
+  /* AJ_PRODUCT_PAGE_HUB_HANDOFF_COLLAPSED_V2K */
   const [collapsed, setCollapsed] = useState(
     () =>
-      !(
-        pathname.startsWith('/account') ||
-        pathname.startsWith('/products/')
-      )
+      !pathname.startsWith('/account')
   );
 
   const [
@@ -46,16 +44,7 @@ function DiscoverySurface({ pathname, workspaceId, desktopViewport }: DiscoveryS
     setHubResetVersion
   ] = useState(0);
 
-  /* AJ_PRODUCT_PAGE_HUB_EXPANSION_V1 */
-  useEffect(() => {
-    if (
-      pathname.startsWith('/products/')
-    ) {
-      setCollapsed(false);
-    }
-  }, [pathname]);
-
-  useEffect(() => {
+useEffect(() => {
     const handleStartFresh =
       () => {
         setCollapsed(

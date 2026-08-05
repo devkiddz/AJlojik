@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_HUB_CLOSE_BEFORE_PRODUCT_PAGE_V2K */
+
 /* AJ_HUB_DISCOVERY_CARDS_PREVIEW_ONLY_V2I */
 
 import Link from 'next/link';
@@ -83,10 +85,12 @@ function formatLabel(value: string): string {
 
 type ActiveProductWidgetProps = {
   onBackToDiscovery: () => void;
+  onBeforeOpenProductPage?: () => void;
 };
 
 export default function ActiveProductWidget({
-  onBackToDiscovery
+  onBackToDiscovery,
+  onBeforeOpenProductPage
 }: ActiveProductWidgetProps) {
   const {
     intent,
@@ -1760,12 +1764,14 @@ export default function ActiveProductWidget({
       <footer className="relative z-50 shrink-0 border-t border-border bg-background/95 p-3 shadow-[0_-18px_45px_rgba(0,0,0,0.2)] backdrop-blur-xl">
         <button
           type="button"
-          onClick={() =>
+          onClick={() => {
+            onBeforeOpenProductPage?.();
+
             openProductPageFromHub(
               product,
               selectedVariant?.id
-            )
-          }
+            );
+          }}
           aria-label={`View full product details for ${product.name}`}
           className="group flex min-h-16 w-full items-center justify-between rounded-2xl bg-primary px-3.5 py-3 text-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-primary/30 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <span className="flex min-w-0 items-center gap-3 text-left">

@@ -1,5 +1,7 @@
 'use client';
 
+/* AJ_MOBILE_HUB_CLOSE_BEFORE_PRODUCT_PAGE_V2K */
+
 /* AJ_MOBILE_HUB_PREVIEW_AUTHORITY_V1 */
 
 import {
@@ -13,6 +15,10 @@ import {
 import {
   usePathname
 } from 'next/navigation';
+
+import {
+  useMobileDiscovery
+} from '@/components/layout/MobileApplicationShell';
 
 import {
   PanelRightOpen
@@ -65,6 +71,10 @@ type MobileHubView =
 export default function DiscoverExperienceShell() {
   const pathname =
     usePathname();
+
+  const {
+    closeDiscovery
+  } = useMobileDiscovery();
 
   const {
     intent,
@@ -395,6 +405,9 @@ export default function DiscoverExperienceShell() {
                 <ActiveProductWidget
                   onBackToDiscovery={
                     handleContinueDiscovery
+                  }
+                  onBeforeOpenProductPage={
+                    closeDiscovery
                   }
                 />
               </div>
