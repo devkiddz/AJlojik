@@ -10,47 +10,42 @@ export async function getUserWorkspaces(
   userId: string,
   preferredWorkspaceId?: string | null
 ): Promise<WorkspaceRuntime> {
-  const coreWorkspaces = await prisma.workspace.findMany({
-    where: {
-      mode: {
-        in: ['LIVE', 'DEMO', 'PRACTICE']
-      },
-      active: true
-    },
-    orderBy: {
-      createdAt: 'asc'
-    },
-    select: {
-      id: true,
-      mode: true
-    }
-  });
-
-  await Promise.all(
-    coreWorkspaces.map(async workspace => {
-      await prisma.workspaceMembership.upsert({
-        where: {
-          workspaceId_userId: {
-            workspaceId: workspace.id,
-            userId
-          }
-        },
-        update: {
-          active: true
-        },
-        create: {
-          workspaceId: workspace.id,
-          userId,
-          role: 'MEMBER',
+  const existingMembership =
+    await prisma.workspaceMembership.findFirst({
+      where: {
+        userId,
+        active: true,
+        workspace: {
           active: true
         }
-      });
+      },
+      select: {
+        id: true
+      }
+    });
 
-      if (
-        workspace.mode === 'DEMO' ||
-        workspace.mode === 'PRACTICE'
-      ) {
-        await prisma.demoWallet.upsert({
+  if (
+    !existingMembership
+  ) {
+    const coreWorkspaces = await prisma.workspace.findMany({
+      where: {
+        mode: {
+          in: ['LIVE', 'DEMO', 'PRACTICE']
+        },
+        active: true
+      },
+      orderBy: {
+        createdAt: 'asc'
+      },
+      select: {
+        id: true,
+        mode: true
+      }
+    });
+  
+    await Promise.all(
+      coreWorkspaces.map(async workspace => {
+        await prisma.workspaceMembership.upsert({
           where: {
             workspaceId_userId: {
               workspaceId: workspace.id,
@@ -63,17 +58,40 @@ export async function getUserWorkspaces(
           create: {
             workspaceId: workspace.id,
             userId,
-            currency: 'NGN',
-            balance:
-              workspace.mode === 'DEMO'
-                ? 1_000_000
-                : 500_000,
+            role: 'MEMBER',
             active: true
           }
         });
-      }
-    })
-  );
+  
+        if (
+          workspace.mode === 'DEMO' ||
+          workspace.mode === 'PRACTICE'
+        ) {
+          await prisma.demoWallet.upsert({
+            where: {
+              workspaceId_userId: {
+                workspaceId: workspace.id,
+                userId
+              }
+            },
+            update: {
+              active: true
+            },
+            create: {
+              workspaceId: workspace.id,
+              userId,
+              currency: 'NGN',
+              balance:
+                workspace.mode === 'DEMO'
+                  ? 1_000_000
+                  : 500_000,
+              active: true
+            }
+          });
+        }
+      })
+    );
+  }
 
   const memberships =
     await prisma.workspaceMembership.findMany({

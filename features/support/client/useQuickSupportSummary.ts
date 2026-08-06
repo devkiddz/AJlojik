@@ -320,6 +320,13 @@ export function useQuickSupportSummary():
   );
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const hasSupportContinuity =
+    Boolean(
+      summary?.activeCase ||
+      summary?.recentCases.length ||
+      summary?.unreadCount
+    );
+
   useEffect(
     () => {
       const handleRefresh =
@@ -337,17 +344,22 @@ export function useQuickSupportSummary():
         handleRefresh
       );
 
-      window.addEventListener(
-        'focus',
-        handleFocus
-      );
+      if (
+        hasSupportContinuity
+      ) {
+        window.addEventListener(
+          'focus',
+          handleFocus
+        );
+      }
 
       const interval =
-        authenticationRequired
+        authenticationRequired ||
+        !hasSupportContinuity
           ? null
           : window.setInterval(
               handleRefresh,
-              30_000
+              120_000
             );
 
       return () => {
@@ -356,10 +368,14 @@ export function useQuickSupportSummary():
           handleRefresh
         );
 
-        window.removeEventListener(
-          'focus',
-          handleFocus
-        );
+        if (
+          hasSupportContinuity
+        ) {
+          window.removeEventListener(
+            'focus',
+            handleFocus
+          );
+        }
 
         if (interval !== null) {
           window.clearInterval(
@@ -370,6 +386,7 @@ export function useQuickSupportSummary():
     },
     [
       authenticationRequired,
+      hasSupportContinuity,
       refresh
     ]
   );
